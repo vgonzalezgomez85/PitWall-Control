@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/calculo_clasificacion.dart';
+import 'pantalla_importar_clasificacion.dart';
 import 'repositorio_clasificacion.dart';
 
 class PantallaClasificacion extends ConsumerWidget {
@@ -75,6 +76,15 @@ class PantallaClasificacion extends ConsumerWidget {
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Clasificación'),
+              actions: [
+                IconButton(
+                  tooltip: 'Importar clasificación',
+                  icon: const Icon(Icons.upload_outlined),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const PantallaImportarClasificacion(),
+                  )),
+                ),
+              ],
               bottom: TabBar(
                 isScrollable: true,
                 tabs: [
