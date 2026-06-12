@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -6,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import '../../core/proveedores.dart';
 import '../../core/widgets/selector_buscable.dart';
@@ -60,6 +60,14 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   bool _validada = false;
   bool _cargando = true;
   bool _guardando = false;
+
+  // Autoguardado de borrador.
+  int? _verifId;
+  Timer? _debounce;
+  bool _dirty = false;
+  bool _autoguardando = false;
+  _EstadoAuto _estado = _EstadoAuto.idle;
+
   Equipo? _equipo;
   Piloto? _piloto1;
   Piloto? _piloto2;
@@ -70,7 +78,55 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   @override
   void initState() {
     super.initState();
+    _verifId = widget.verificacionId;
+    // Autoguardar al editar cualquier campo de texto.
+    for (final c in _controllers) {
+      c.addListener(_onCambio);
+    }
     _cargar();
+  }
+
+  List<TextEditingController> get _controllers => [
+        _pesoIni, _pesoFin, _pesoIniCoche, _pesoFinCoche,
+        _motor, _motorRpm, _motorUms, _pinonDientes, _coronaDientes,
+        _suspension, _trencilla, _observaciones,
+      ];
+
+  /// Programa un autoguardado de borrador tras una breve pausa sin cambios.
+  void _onCambio() {
+    if (_cargando) return;
+    _dirty = true;
+    if (_estado != _EstadoAuto.guardando && mounted) {
+      setState(() => _estado = _EstadoAuto.pendiente);
+    }
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 800), _autoguardar);
+  }
+
+  /// `setState` + programar autoguardado, para campos no-texto (desplegables).
+  void _cambiar(VoidCallback fn) {
+    setState(fn);
+    _onCambio();
+  }
+
+  Future<void> _autoguardar() async {
+    if (!mounted || _cargando || _guardando || _autoguardando || !_dirty) return;
+    _autoguardando = true;
+    // Optimista: si el usuario edita durante el guardado, _dirty volverá a
+    // true y se reprogramará otro autoguardado (no se pierde el cambio).
+    _dirty = false;
+    if (mounted) setState(() => _estado = _EstadoAuto.guardando);
+    try {
+      // Guarda conservando el estado (borrador o validada) sin recalcular
+      // créditos: eso solo ocurre al pulsar "Validar" o al borrar.
+      await _persistir(validado: _validada, recalcularCreditos: false);
+      if (mounted) setState(() => _estado = _EstadoAuto.guardado);
+    } catch (_) {
+      _dirty = true;
+      if (mounted) setState(() => _estado = _EstadoAuto.error);
+    } finally {
+      _autoguardando = false;
+    }
   }
 
   Future<void> _cargar() async {
@@ -168,6 +224,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
       final destino = File(p.join(dir.path, nombre));
       await File(xfile.path).copy(destino.path);
       setState(() => _fotos.add(nombre));
+      _onCambio();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -180,6 +237,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     if (idx < 0 || idx >= _fotos.length) return;
     final entrada = _fotos[idx];
     setState(() => _fotos.removeAt(idx));
+    _onCambio();
     try {
       final f = await FotosVerificacion.resolver(entrada);
       if (f.existsSync()) f.deleteSync();
@@ -188,6 +246,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    for (final c in _controllers) {
+      c.removeListener(_onCambio);
+    }
     _pesoIni.dispose();
     _pesoFin.dispose();
     _pesoIniCoche.dispose();
@@ -213,48 +275,62 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     return int.tryParse(s.trim());
   }
 
+  /// Guarda (o actualiza) la verificación y memoriza el id para reusarlo en
+  /// los siguientes autoguardados.
+  Future<int> _persistir({
+    required bool validado,
+    bool recalcularCreditos = true,
+  }) async {
+    final db = ref.read(dbProvider);
+    double? pesoMin;
+    if (_cocheId != null) {
+      final c = await (db.select(db.catalogoCoches)
+            ..where((t) => t.id.equals(_cocheId!)))
+          .getSingleOrNull();
+      pesoMin = c?.pesoMin;
+    }
+    final id = await ref.read(repoVerificacionesProvider).guardar(
+          id: _verifId,
+          recalcularCreditos: recalcularCreditos,
+          mangaId: widget.mangaId,
+          equipoId: widget.equipoId,
+          cocheCatalogoId: _cocheId,
+          pesoInicial: _parseDouble(_pesoIni.text),
+          pesoFinal: _parseDouble(_pesoFin.text),
+          pesoMin: pesoMin,
+          pesoInicialCoche: _parseDouble(_pesoIniCoche.text),
+          pesoFinalCoche: _parseDouble(_pesoFinCoche.text),
+          motor: _vacio(_motor),
+          motorTipo: _motorTipo,
+          motorRpm: _parseInt(_motorRpm.text),
+          motorUms: _parseDouble(_motorUms.text),
+          pinonMarca: _pinonMarca,
+          pinonDientes: _parseInt(_pinonDientes.text),
+          coronaMarca: _coronaMarca,
+          coronaDientes: _parseInt(_coronaDientes.text),
+          llantaDelMarca: _llantaDelMarca,
+          llantaDelDimension: _llantaDelDim,
+          llantaTraMarca: _llantaTraMarca,
+          llantaTraDimension: _llantaTraDim,
+          trencilla: _vacio(_trencilla),
+          suspension: _vacio(_suspension),
+          bancada: _bancada,
+          chasis: _chasis,
+          neumatico: _neumatico,
+          observaciones: _vacio(_observaciones),
+          validado: validado,
+          fotosJson: json.encode(_fotos),
+        );
+    _verifId = id;
+    return id;
+  }
+
   Future<void> _guardar({bool validar = false}) async {
+    _debounce?.cancel();
     setState(() => _guardando = true);
     try {
-      final db = ref.read(dbProvider);
-      double? pesoMin;
-      if (_cocheId != null) {
-        final c = await (db.select(db.catalogoCoches)
-              ..where((t) => t.id.equals(_cocheId!)))
-            .getSingleOrNull();
-        pesoMin = c?.pesoMin;
-      }
-      await ref.read(repoVerificacionesProvider).guardar(
-            id: widget.verificacionId,
-            mangaId: widget.mangaId,
-            equipoId: widget.equipoId,
-            cocheCatalogoId: _cocheId,
-            pesoInicial: _parseDouble(_pesoIni.text),
-            pesoFinal: _parseDouble(_pesoFin.text),
-            pesoMin: pesoMin,
-            pesoInicialCoche: _parseDouble(_pesoIniCoche.text),
-            pesoFinalCoche: _parseDouble(_pesoFinCoche.text),
-            motor: _vacio(_motor),
-            motorTipo: _motorTipo,
-            motorRpm: _parseInt(_motorRpm.text),
-            motorUms: _parseDouble(_motorUms.text),
-            pinonMarca: _pinonMarca,
-            pinonDientes: _parseInt(_pinonDientes.text),
-            coronaMarca: _coronaMarca,
-            coronaDientes: _parseInt(_coronaDientes.text),
-            llantaDelMarca: _llantaDelMarca,
-            llantaDelDimension: _llantaDelDim,
-            llantaTraMarca: _llantaTraMarca,
-            llantaTraDimension: _llantaTraDim,
-            trencilla: _vacio(_trencilla),
-            suspension: _vacio(_suspension),
-            bancada: _bancada,
-            chasis: _chasis,
-            neumatico: _neumatico,
-            observaciones: _vacio(_observaciones),
-            validado: validar ? true : _validada,
-            fotosJson: json.encode(_fotos),
-          );
+      await _persistir(validado: validar ? true : _validada);
+      _dirty = false;
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
@@ -283,18 +359,37 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     // ignore: unused_local_variable
     final bancadasAsync = ref.watch(bancadasProvider);
     final neumaticosAsync = ref.watch(neumaticosProvider);
-    // Filtramos coches y bancadas por la copa del equipo
+    // Filtramos coches, bancadas y motores por la copa del equipo
     final copaEquipo = _equipo?.copa;
     final cochesAsync = ref.watch(cochesFiltradosProvider(copaEquipo));
     final bancadasFiltAsync = ref.watch(bancadasFiltradasProvider(copaEquipo));
+    final motoresAsync = ref.watch(motoresFiltradosProvider(copaEquipo));
+    final motores =
+        motoresAsync.maybeWhen(data: (d) => d, orElse: () => <CatalogoMotore>[]);
+    // Motor del catálogo seleccionado (se guarda su nombre en `motor`).
+    final motorSel = _motorTipo == 'PROPIO'
+        ? motores
+            .where((m) => m.nombre == _motor.text.trim())
+            .firstOrNull
+        : null;
 
     final cs = Theme.of(context).colorScheme;
 
-    return Scaffold(
+    return PopScope(
+      canPop: !_dirty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final nav = Navigator.of(context);
+        _debounce?.cancel();
+        if (_dirty) await _autoguardar();
+        if (mounted) nav.pop();
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text(_equipo?.nombre ?? 'Verificación'),
         actions: [
-          if (widget.verificacionId != null)
+          _IndicadorGuardado(estado: _estado),
+          if (_verifId != null)
             IconButton(
               tooltip: 'Eliminar verificación',
               icon: const Icon(Icons.delete_outline),
@@ -315,11 +410,16 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                     ],
                   ),
                 );
-                if (ok == true) {
+                if (!context.mounted) return;
+                if (ok == true && _verifId != null) {
+                  final nav = Navigator.of(context);
+                  // Evitar que un autoguardado pendiente resucite la verificación.
+                  _debounce?.cancel();
+                  _dirty = false;
                   await ref
                       .read(repoVerificacionesProvider)
-                      .borrar(widget.verificacionId!);
-                  if (mounted) Navigator.of(context).pop();
+                      .borrar(_verifId!);
+                  if (mounted) nav.pop();
                 }
               },
             ),
@@ -343,6 +443,12 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             pesoMinCoche: cocheSel.id < 0 ? null : cocheSel.pesoMin,
             creditosCoche: cocheSel.id < 0 ? null : cocheSel.creditosCoche,
             motor: _vacio(_motor),
+            motorTipo: _motorTipo,
+            motorRpm: _parseInt(_motorRpm.text),
+            motorUms: _parseDouble(_motorUms.text),
+            motorRefNombre: motorSel?.nombre,
+            motorRefRpm: motorSel?.rpm,
+            motorRefGauss: motorSel?.gauss,
             pinonMarca: _pinonMarca,
             pinonDientes: _parseInt(_pinonDientes.text),
             coronaMarca: _coronaMarca,
@@ -385,6 +491,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   creditosP1: _creditosP1,
                   piloto2: _piloto2,
                   creditosP2: _creditosP2,
+                  coche: cocheSel.id < 0 ? null : cocheSel,
+                  validada: _validada,
                 ),
               if (usaCreditos && _piloto1 != null)
                 const SizedBox(height: 12),
@@ -403,8 +511,12 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                 etiquetaOpcion: (c) => c.nombre,
                 subtituloOpcion: (c) =>
                     '${c.pesoMin.toStringAsFixed(2)}g · ${c.creditosCoche >= 0 ? "+" : ""}${c.creditosCoche} créd',
-                onCambio: (c) => setState(() => _cocheId = c?.id),
+                onCambio: (c) => _cambiar(() => _cocheId = c?.id),
               ),
+              if (cocheSel.id >= 0 && cocheSel.fotoPath != null) ...[
+                const SizedBox(height: 8),
+                _FotoCocheReferencia(fotoPath: cocheSel.fotoPath!),
+              ],
               const SizedBox(height: 16),
 
               // Orden de verificación según flujo solicitado:
@@ -436,7 +548,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                           ],
                           selected: {_motorTipo},
                           onSelectionChanged: (s) {
-                            setState(() => _motorTipo = s.first);
+                            _cambiar(() => _motorTipo = s.first);
                           },
                         ),
                         const SizedBox(height: 8),
@@ -449,32 +561,59 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             ),
                             keyboardType: TextInputType.number,
                           )
-                        else
+                        else ...[
+                          SelectorBuscable<CatalogoMotore>(
+                            etiqueta: 'Motor del catálogo',
+                            titulo: 'Elegir motor',
+                            icono: Icons.bolt_outlined,
+                            helper: motorSel == null
+                                ? 'Motores homologados para la copa $copaEquipo'
+                                : 'Ref: ${motorSel.rpm ?? "—"} RPM · ${motorSel.gauss ?? "—"} gauss',
+                            valor: motorSel,
+                            opciones: motores,
+                            etiquetaOpcion: (m) => m.nombre,
+                            subtituloOpcion: (m) =>
+                                '${m.rpm ?? "—"} RPM · ${m.gauss ?? "—"} gauss',
+                            onCambio: (m) => _cambiar(
+                                () => _motor.text = m?.nombre ?? ''),
+                          ),
+                          const SizedBox(height: 8),
                           Row(
                             children: [
                               Expanded(
                                 child: TextField(
                                   controller: _motorRpm,
-                                  decoration: const InputDecoration(
+                                  decoration: InputDecoration(
                                     labelText: 'RPM',
-                                    prefixIcon: Icon(Icons.speed_outlined),
+                                    prefixIcon:
+                                        const Icon(Icons.speed_outlined),
+                                    helperText: motorSel?.rpm == null
+                                        ? null
+                                        : 'Máx ${motorSel!.rpm}',
                                   ),
                                   keyboardType: TextInputType.number,
+                                  onChanged: (_) => setState(() {}),
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: TextField(
                                   controller: _motorUms,
-                                  decoration: const InputDecoration(
-                                      labelText: 'uMs'),
+                                  decoration: InputDecoration(
+                                    labelText: 'uMs',
+                                    helperText: motorSel?.gauss == null
+                                        ? null
+                                        : 'Mín ${motorSel!.gauss}',
+                                  ),
                                   keyboardType:
                                       const TextInputType.numberWithOptions(
                                           decimal: true),
+                                  onChanged: (_) => setState(() {}),
                                 ),
                               ),
                             ],
                           ),
+                        ],
                       ],
                     ),
                   ),
@@ -524,7 +663,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                   valor: _llantaDelMarca,
                                   marcas: marcas,
                                   onChange: (v) =>
-                                      setState(() => _llantaDelMarca = v),
+                                      _cambiar(() => _llantaDelMarca = v),
                                 ),
                               ),
                             ),
@@ -540,7 +679,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                   opciones:
                                       lls.map((l) => l.dimension).toList(),
                                   onChange: (v) =>
-                                      setState(() => _llantaDelDim = v),
+                                      _cambiar(() => _llantaDelDim = v),
                                 ),
                               ),
                             ),
@@ -566,7 +705,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                   valor: _llantaTraMarca,
                                   marcas: marcas,
                                   onChange: (v) =>
-                                      setState(() => _llantaTraMarca = v),
+                                      _cambiar(() => _llantaTraMarca = v),
                                 ),
                               ),
                             ),
@@ -582,7 +721,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                   opciones:
                                       lls.map((l) => l.dimension).toList(),
                                   onChange: (v) =>
-                                      setState(() => _llantaTraDim = v),
+                                      _cambiar(() => _llantaTraDim = v),
                                 ),
                               ),
                             ),
@@ -616,7 +755,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                   valor: _pinonMarca,
                                   marcas: marcas,
                                   onChange: (v) =>
-                                      setState(() => _pinonMarca = v),
+                                      _cambiar(() => _pinonMarca = v),
                                 ),
                               ),
                             ),
@@ -656,7 +795,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                   valor: _coronaMarca,
                                   marcas: marcas,
                                   onChange: (v) =>
-                                      setState(() => _coronaMarca = v),
+                                      _cambiar(() => _coronaMarca = v),
                                 ),
                               ),
                             ),
@@ -698,7 +837,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             label: 'Bancada',
                             valor: _bancada,
                             opciones: bs.map((b) => b.nombre).toList(),
-                            onChange: (v) => setState(() => _bancada = v),
+                            onChange: (v) => _cambiar(() => _bancada = v),
                           ),
                         ),
                       ],
@@ -720,7 +859,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               label: 'Chasis',
                               valor: _chasis,
                               opciones: cs.map((c) => c.nombre).toList(),
-                              onChange: (v) => setState(() => _chasis = v),
+                              onChange: (v) => _cambiar(() => _chasis = v),
                             ),
                           );
                         }),
@@ -771,7 +910,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                         label: 'Neumático',
                         valor: _neumatico,
                         opciones: ns.map((n) => n.nombre).toList(),
-                        onChange: (v) => setState(() => _neumatico = v),
+                        onChange: (v) => _cambiar(() => _neumatico = v),
                       ),
                     ),
                   ),
@@ -829,29 +968,29 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _guardando ? null : () => _guardar(),
-                      icon: const Icon(Icons.save_outlined),
-                      label: const Text('Guardar borrador'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: (_guardando || res.hayInfracciones)
-                          ? null
-                          : () => _guardar(validar: true),
-                      icon: _guardando
-                          ? const SizedBox(
-                              width: 18, height: 18,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.check),
-                      label: const Text('Validar'),
-                    ),
+                  Icon(Icons.cloud_done_outlined,
+                      size: 18, color: cs.outline),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Se guarda solo como borrador con cada cambio.',
+                    style: TextStyle(color: cs.outline, fontSize: 13),
                   ),
                 ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: (_guardando || res.hayInfracciones)
+                      ? null
+                      : () => _guardar(validar: true),
+                  icon: _guardando
+                      ? const SizedBox(
+                          width: 18, height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.check),
+                  label: const Text('Validar'),
+                ),
               ),
               if (res.hayInfracciones) ...[
                 const SizedBox(height: 8),
@@ -863,6 +1002,90 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             ],
           );
         },
+      ),
+      ),
+    );
+  }
+}
+
+/// Foto de referencia del coche del catálogo, para comprobar que el coche
+/// entregado en la verificación coincide con el seleccionado.
+class _FotoCocheReferencia extends StatelessWidget {
+  const _FotoCocheReferencia({required this.fotoPath});
+  final String fotoPath;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: FutureBuilder<File>(
+        future: FotosVerificacion.resolver(fotoPath),
+        builder: (ctx, snap) {
+          final f = snap.data;
+          if (f == null || !f.existsSync()) return const SizedBox.shrink();
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 220),
+                child: Image.file(f, fit: BoxFit.contain, width: double.infinity),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.fact_check_outlined,
+                        size: 16, color: cs.outline),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Foto de referencia del catálogo: comprueba que coincide.',
+                      style: TextStyle(color: cs.outline, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ----- Estado de autoguardado -----
+
+enum _EstadoAuto { idle, pendiente, guardando, guardado, error }
+
+class _IndicadorGuardado extends StatelessWidget {
+  const _IndicadorGuardado({required this.estado});
+  final _EstadoAuto estado;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final (IconData? icono, String texto, Color color) = switch (estado) {
+      _EstadoAuto.idle => (null, '', cs.outline),
+      _EstadoAuto.pendiente => (Icons.edit_outlined, 'Sin guardar…', cs.outline),
+      _EstadoAuto.guardando => (null, 'Guardando…', cs.outline),
+      _EstadoAuto.guardado => (Icons.cloud_done_outlined, 'Guardado', cs.primary),
+      _EstadoAuto.error => (Icons.error_outline, 'Error', cs.error),
+    };
+    if (estado == _EstadoAuto.idle) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (estado == _EstadoAuto.guardando)
+            const SizedBox(
+                width: 14, height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2))
+          else if (icono != null)
+            Icon(icono, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(texto, style: TextStyle(color: color, fontSize: 13)),
+        ],
       ),
     );
   }
@@ -986,12 +1209,18 @@ class _MarcaSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lista = marcas.toList()..sort();
+    // Tolerar valores guardados que no están en el catálogo (datos
+    // importados/antiguos): se muestran como opción extra en vez de fallar.
+    final desconocido = valor != null && !lista.contains(valor);
     return DropdownButtonFormField<String?>(
       initialValue: valor,
       isExpanded: true,
       decoration: InputDecoration(labelText: label),
       items: [
         const DropdownMenuItem(value: null, child: Text('— sin asignar —')),
+        if (desconocido)
+          DropdownMenuItem(
+              value: valor, child: Text('$valor (no catalogado)')),
         ...lista.map((m) => DropdownMenuItem(value: m, child: Text(m))),
       ],
       onChanged: onChange,
@@ -1014,12 +1243,18 @@ class _DimensionSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Tolerar valores guardados que no están en el catálogo (datos
+    // importados/antiguos): se muestran como opción extra en vez de fallar.
+    final desconocido = valor != null && !opciones.contains(valor);
     return DropdownButtonFormField<String?>(
       initialValue: valor,
       isExpanded: true,
       decoration: InputDecoration(labelText: label),
       items: [
         const DropdownMenuItem(value: null, child: Text('— sin asignar —')),
+        if (desconocido)
+          DropdownMenuItem(
+              value: valor, child: Text('$valor (no catalogado)')),
         ...opciones.map((o) => DropdownMenuItem(value: o, child: Text(o))),
       ],
       onChanged: onChange,
@@ -1034,6 +1269,8 @@ class _BloqueEquipoCreditos extends StatelessWidget {
     required this.creditosP1,
     this.piloto2,
     required this.creditosP2,
+    this.coche,
+    this.validada = false,
   });
 
   final Equipo equipo;
@@ -1041,11 +1278,24 @@ class _BloqueEquipoCreditos extends StatelessWidget {
   final int creditosP1;
   final Piloto? piloto2;
   final int creditosP2;
+  final CatalogoCoche? coche;
+  final bool validada;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final total = creditosP1 + creditosP2;
+
+    // Previsión de créditos al validar con el coche seleccionado.
+    // Si ya está validada, los saldos mostrados ya incluyen el descuento.
+    RepartoCreditos? reparto;
+    if (!validada && coche != null && coche!.creditosCoche != 0) {
+      reparto = repartirCreditos(
+        valor: coche!.creditosCoche,
+        disp1: creditosP1,
+        disp2: piloto2 == null ? null : creditosP2,
+      );
+    }
     return Card(
       color: cs.primaryContainer,
       child: Padding(
@@ -1098,6 +1348,51 @@ class _BloqueEquipoCreditos extends StatelessWidget {
                 creditos: creditosP2,
                 color: cs.onPrimaryContainer,
               ),
+            ],
+            if (reparto != null) ...[
+              const SizedBox(height: 10),
+              Divider(
+                  height: 1,
+                  color: cs.onPrimaryContainer.withValues(alpha: 0.25)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    coche!.creditosCoche > 0
+                        ? Icons.trending_up
+                        : Icons.trending_down,
+                    size: 18,
+                    color: cs.onPrimaryContainer,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Con este coche '
+                      '(${coche!.creditosCoche > 0 ? '+' : ''}${coche!.creditosCoche} créd): '
+                      '${piloto1.nombre} $creditosP1→${creditosP1 + reparto.delta1}'
+                      '${piloto2 == null ? '' : ' · ${piloto2!.nombre} $creditosP2→${creditosP2 + reparto.delta2}'}'
+                      ' · Total $total→${total + reparto.delta1 + reparto.delta2}',
+                      style: TextStyle(
+                        color: cs.onPrimaryContainer,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (reparto.insuficiente)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    '⚠ No tienen créditos suficientes para cubrir el coche.',
+                    style: TextStyle(
+                      color: cs.onPrimaryContainer,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
             ],
           ],
         ),

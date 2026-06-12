@@ -1,10 +1,16 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
 
 import '../../data/database/app_database.dart';
+import '../../services/fotos_verificacion.dart';
+import '../google/actualizador_drive.dart';
+import '../google/repositorio_hojas_vinculadas.dart';
 import 'importar_catalogo.dart';
 import 'repositorio_catalogos.dart';
 
@@ -42,13 +48,17 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
   late final TabController _tabs;
 
   static const _titulos = [
-    'Coches', 'Marcas', 'Llantas', 'Bancadas', 'Chasis', 'Neumáticos', 'Copas', 'Clubs',
+    'Coches', 'Marcas', 'Llantas', 'Engranajes', 'Motores', 'Bancadas', 'Chasis', 'Neumáticos', 'Copas', 'Clubs',
   ];
 
   @override
   void initState() {
     super.initState();
     _tabs = TabController(length: _titulos.length, vsync: this);
+    // Refrescar el appbar (botón de sync) al cambiar de pestaña.
+    _tabs.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -62,12 +72,29 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
       case 0: return TipoCatalogo.coches;
       case 1: return TipoCatalogo.marcas;
       case 2: return TipoCatalogo.llantas;
-      case 3: return TipoCatalogo.bancadas;
-      case 4: return TipoCatalogo.chasis;
-      case 5: return TipoCatalogo.neumaticos;
-      case 6: return TipoCatalogo.copas;
+      case 3: return TipoCatalogo.engranajes;
+      case 4: return TipoCatalogo.motores;
+      case 5: return TipoCatalogo.bancadas;
+      case 6: return TipoCatalogo.chasis;
+      case 7: return TipoCatalogo.neumaticos;
+      case 8: return TipoCatalogo.copas;
       default: return TipoCatalogo.clubs;
     }
+  }
+
+  Future<void> _actualizarDesdeDrive(VinculoHoja v, TipoCatalogo tipo) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(const SnackBar(
+      content: Text('Actualizando desde Drive…'),
+      duration: Duration(seconds: 2),
+    ));
+    final res =
+        await ref.read(actualizadorDriveProvider).actualizarCatalogo(v, tipo);
+    if (!mounted) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text(res.ok ? '✓ ${res.mensaje}' : '✗ ${res.mensaje}'),
+      duration: const Duration(seconds: 5),
+    ));
   }
 
   @override
@@ -76,6 +103,19 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
       appBar: AppBar(
         title: const Text('Catálogos'),
         actions: [
+          Consumer(builder: (context, ref, _) {
+            final tipo = _tipoActual();
+            final vinculoAsync =
+                ref.watch(vinculoEntidadProvider('catalogo_${tipo.name}'));
+            final v = vinculoAsync.asData?.value;
+            if (v == null) return const SizedBox.shrink();
+            return IconButton(
+              tooltip:
+                  'Actualizar desde Drive (${v.fila.hojaNombre} · ${v.fila.pestanaTitulo})',
+              icon: const Icon(Icons.sync),
+              onPressed: () => _actualizarDesdeDrive(v, tipo),
+            );
+          }),
           IconButton(
             tooltip: 'Importar la pestaña actual',
             icon: const Icon(Icons.file_upload_outlined),
@@ -99,6 +139,8 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
           _TabCoches(),
           _TabMarcas(),
           _TabLlantas(),
+          _TabEngranajes(),
+          _TabMotores(),
           _TabBancadas(),
           _TabChasis(),
           _TabNeumaticos(),
@@ -139,7 +181,27 @@ class _TabCoches extends ConsumerWidget {
               final c = xs[i];
               return Card(
                 child: ListTile(
-                  leading: Icon(Icons.directions_car_outlined, color: cs.primary),
+                  leading: c.fotoPath == null
+                      ? Icon(Icons.directions_car_outlined, color: cs.primary)
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: FutureBuilder<File>(
+                              future:
+                                  FotosVerificacion.resolver(c.fotoPath!),
+                              builder: (ctx, snap) {
+                                final f = snap.data;
+                                if (f == null || !f.existsSync()) {
+                                  return Icon(Icons.directions_car_outlined,
+                                      color: cs.primary);
+                                }
+                                return Image.file(f, fit: BoxFit.cover);
+                              },
+                            ),
+                          ),
+                        ),
                   title: Text(c.nombre,
                       style: const TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text(
@@ -184,6 +246,7 @@ class _TabCoches extends ConsumerWidget {
         text: c?.pesoMin.toStringAsFixed(2) ?? '17,00');
     final cred = TextEditingController(text: c?.creditosCoche.toString() ?? '0');
     final copasIniciales = c == null ? <String>{} : _decodeCopas(c.copasJson).toSet();
+    final foto = ValueNotifier<String?>(c?.fotoPath);
 
     final res = await showDialog<({bool ok, Set<String> copas})>(
       context: context,
@@ -194,6 +257,8 @@ class _TabCoches extends ConsumerWidget {
           contenidoExtra: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              _SelectorFotoCoche(foto: foto),
+              const SizedBox(height: 8),
               TextField(
                 controller: nombre,
                 decoration: const InputDecoration(
@@ -240,12 +305,9 @@ class _TabCoches extends ConsumerWidget {
         modelo: modelo.text.trim(),
         pesoMin: pesoNum,
         creditosCoche: credNum,
+        copasJson: copasJson,
+        fotoPath: foto.value,
       );
-      // Actualizar copas tras crear (porque crearCoche no tiene el param)
-      final lista = await repo.db.select(repo.db.catalogoCoches).get();
-      final creado = lista.lastWhere((x) => x.nombre == nombre.text.trim());
-      await repo.actualizarCoche(creado.id,
-          CatalogoCochesCompanion(copasJson: Value(copasJson)));
     } else {
       await repo.actualizarCoche(
         c.id,
@@ -256,9 +318,103 @@ class _TabCoches extends ConsumerWidget {
           pesoMin: Value(pesoNum),
           creditosCoche: Value(credNum),
           copasJson: Value(copasJson),
+          fotoPath: Value(foto.value),
         ),
       );
     }
+  }
+}
+
+/// Selector de foto del coche (galería o cámara) con miniatura.
+class _SelectorFotoCoche extends StatelessWidget {
+  const _SelectorFotoCoche({required this.foto});
+  final ValueNotifier<String?> foto;
+
+  Future<void> _elegir(BuildContext context, ImageSource src) async {
+    try {
+      final xfile = await ImagePicker().pickImage(
+        source: src,
+        imageQuality: 75,
+        maxWidth: 1600,
+      );
+      if (xfile == null) return;
+      final dir = await FotosVerificacion.carpeta();
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final ext = p.extension(xfile.path).isEmpty ? '.jpg' : p.extension(xfile.path);
+      final nombre = 'coche-$ts$ext';
+      await File(xfile.path).copy(p.join(dir.path, nombre));
+      foto.value = nombre;
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo añadir la foto: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return ValueListenableBuilder<String?>(
+      valueListenable: foto,
+      builder: (context, path, _) {
+        return Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                width: 72,
+                height: 72,
+                child: path == null
+                    ? Container(
+                        color: cs.surfaceContainerHighest,
+                        child: Icon(Icons.directions_car_outlined,
+                            color: cs.outline, size: 32),
+                      )
+                    : FutureBuilder<File>(
+                        future: FotosVerificacion.resolver(path),
+                        builder: (ctx, snap) {
+                          final f = snap.data;
+                          if (f == null || !f.existsSync()) {
+                            return Container(
+                              color: cs.surfaceContainerHighest,
+                              child: const Icon(Icons.broken_image_outlined),
+                            );
+                          }
+                          return Image.file(f, fit: BoxFit.cover);
+                        },
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _elegir(context, ImageSource.gallery),
+                    icon: const Icon(Icons.photo_library_outlined, size: 18),
+                    label: const Text('Galería'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => _elegir(context, ImageSource.camera),
+                    icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                    label: const Text('Cámara'),
+                  ),
+                  if (path != null)
+                    IconButton(
+                      tooltip: 'Quitar foto',
+                      onPressed: () => foto.value = null,
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -574,6 +730,265 @@ class _TabLlantas extends ConsumerWidget {
 }
 
 // =====================================================
+// ENGRANAJES (piñones y coronas)
+// =====================================================
+
+class _TabEngranajes extends ConsumerWidget {
+  const _TabEngranajes();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final lista = ref.watch(engranajesCatalogoProvider);
+    return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_engranajes',
+        onPressed: () => _editar(context, ref, null),
+        icon: const Icon(Icons.add),
+        label: const Text('Engranaje'),
+      ),
+      body: lista.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (xs) {
+          if (xs.isEmpty) return const _Vacio(texto: 'Sin engranajes');
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+            itemCount: xs.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 4),
+            itemBuilder: (_, i) {
+              final g = xs[i];
+              return Card(
+                child: ListTile(
+                  leading: Icon(
+                    g.tipo == 'PINON'
+                        ? Icons.settings_outlined
+                        : Icons.album_outlined,
+                    color: cs.primary,
+                  ),
+                  title: Text('${g.marca} · ${g.dientes} dientes'),
+                  subtitle: Text(g.tipo == 'PINON' ? 'Piñón' : 'Corona'),
+                  trailing: PopupMenuButton<String>(
+                    onSelected: (op) async {
+                      if (op == 'editar') {
+                        _editar(context, ref, g);
+                      } else if (op == 'borrar') {
+                        final ok = await _confirmarBorrar(
+                            context, '${g.marca} ${g.dientes}d');
+                        if (ok) {
+                          await ref
+                              .read(repoCatalogosProvider)
+                              .borrarEngranaje(g.id);
+                        }
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(value: 'editar', child: Text('Editar')),
+                      PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _editar(
+      BuildContext context, WidgetRef ref, CatalogoEngranaje? g) async {
+    final marca = TextEditingController(text: g?.marca ?? '');
+    final dientes = TextEditingController(text: g?.dientes.toString() ?? '');
+    String tipo = g?.tipo ?? 'PINON';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSt) => AlertDialog(
+          title: Text(g == null ? 'Nuevo engranaje' : 'Editar engranaje'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                initialValue: tipo,
+                decoration: const InputDecoration(labelText: 'Tipo'),
+                items: const [
+                  DropdownMenuItem(value: 'PINON', child: Text('Piñón')),
+                  DropdownMenuItem(value: 'CORONA', child: Text('Corona')),
+                ],
+                onChanged: (v) => setSt(() => tipo = v ?? 'PINON'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: marca,
+                decoration: const InputDecoration(
+                    labelText: 'Marca *', helperText: 'Ej: Slot.it, Scaleauto'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: dientes,
+                decoration: const InputDecoration(
+                    labelText: 'Dientes *', helperText: 'Ej: 12 piñón, 28 corona'),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancelar')),
+            FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Guardar')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+    final m = marca.text.trim();
+    final d = int.tryParse(dientes.text.trim());
+    if (m.isEmpty || d == null) return;
+    final repo = ref.read(repoCatalogosProvider);
+    if (g == null) {
+      await repo.crearEngranaje(tipo: tipo, marca: m, dientes: d);
+    } else {
+      await repo.actualizarEngranaje(g.id, tipo, m, d);
+    }
+  }
+}
+
+// =====================================================
+// MOTORES (con copas)
+// =====================================================
+
+class _TabMotores extends ConsumerWidget {
+  const _TabMotores();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final lista = ref.watch(motoresCatalogoProvider);
+    return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_motores',
+        onPressed: () => _editar(context, ref, null),
+        icon: const Icon(Icons.add),
+        label: const Text('Motor'),
+      ),
+      body: lista.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (xs) {
+          if (xs.isEmpty) return const _Vacio(texto: 'Sin motores');
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+            itemCount: xs.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 4),
+            itemBuilder: (_, i) {
+              final mo = xs[i];
+              final medidas = [
+                if (mo.rpm != null) '${mo.rpm} RPM',
+                if (mo.gauss != null) '${mo.gauss} gauss',
+              ].join(' · ');
+              return Card(
+                child: ListTile(
+                  leading: Icon(Icons.bolt_outlined, color: cs.primary),
+                  title: Text(mo.nombre,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text(
+                    '${medidas.isEmpty ? 'Sin medidas' : medidas}'
+                    '\nCopas: ${_resumenCopas(_decodeCopas(mo.copasJson))}',
+                  ),
+                  isThreeLine: true,
+                  trailing: PopupMenuButton<String>(
+                    onSelected: (op) async {
+                      if (op == 'editar') {
+                        _editar(context, ref, mo);
+                      } else if (op == 'borrar') {
+                        final ok = await _confirmarBorrar(context, mo.nombre);
+                        if (ok) {
+                          await ref
+                              .read(repoCatalogosProvider)
+                              .borrarMotor(mo.id);
+                        }
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(value: 'editar', child: Text('Editar')),
+                      PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _editar(
+      BuildContext context, WidgetRef ref, CatalogoMotore? mo) async {
+    final nombre = TextEditingController(text: mo?.nombre ?? '');
+    final rpm = TextEditingController(text: mo?.rpm?.toString() ?? '');
+    final gauss = TextEditingController(text: mo?.gauss?.toString() ?? '');
+    final copasIniciales =
+        mo == null ? <String>{} : _decodeCopas(mo.copasJson).toSet();
+
+    final res = await showDialog<({bool ok, Set<String> copas})>(
+      context: context,
+      builder: (_) => _DialogoCocheBancada(
+        titulo: mo == null ? 'Nuevo motor' : 'Editar motor',
+        copasIniciales: copasIniciales,
+        contenidoExtra: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nombre,
+              decoration: const InputDecoration(
+                  labelText: 'Motor *', helperText: 'Identificador o modelo'),
+            ),
+            TextField(
+              controller: rpm,
+              decoration: const InputDecoration(labelText: 'RPM'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: gauss,
+              decoration: const InputDecoration(labelText: 'Gauss'),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (res == null || !res.ok) return;
+    final n = nombre.text.trim();
+    if (n.isEmpty) return;
+    final rpmNum = int.tryParse(rpm.text.trim());
+    final gaussNum =
+        double.tryParse(gauss.text.trim().replaceAll(',', '.'));
+    final copasJson = json.encode(res.copas.toList());
+    final repo = ref.read(repoCatalogosProvider);
+    if (mo == null) {
+      await repo.crearMotor(
+          nombre: n, rpm: rpmNum, gauss: gaussNum, copasJson: copasJson);
+    } else {
+      await repo.actualizarMotor(
+        mo.id,
+        CatalogoMotoresCompanion(
+          nombre: Value(n),
+          rpm: Value(rpmNum),
+          gauss: Value(gaussNum),
+          copasJson: Value(copasJson),
+        ),
+      );
+    }
+  }
+}
+
+// =====================================================
 // CHASIS (con copas, similar a bancadas)
 // =====================================================
 class _TabChasis extends ConsumerWidget {
@@ -866,14 +1281,12 @@ class _TabCopas extends ConsumerWidget {
       vacio: 'Sin copas',
       botonLabel: 'Copa',
       observar: (r) => r.watch(copasCatalogoProvider),
-      titulo: (b) => (b as CatalogoCopa).nombre,
+      titulo: (b) => b.nombre,
       onCrear: (txt) => ref.read(repoCatalogosProvider).crearCopa(txt),
-      onEditar: (item, txt) => ref
-          .read(repoCatalogosProvider)
-          .actualizarCopa((item as CatalogoCopa).id, txt),
-      onBorrar: (item) => ref
-          .read(repoCatalogosProvider)
-          .borrarCopa((item as CatalogoCopa).id),
+      onEditar: (item, txt) =>
+          ref.read(repoCatalogosProvider).actualizarCopa(item.id, txt),
+      onBorrar: (item) =>
+          ref.read(repoCatalogosProvider).borrarCopa(item.id),
       hint: 'Ej: GT, GT2, LMP, HYP',
     );
   }
@@ -887,14 +1300,12 @@ class _TabClubs extends ConsumerWidget {
       vacio: 'Sin clubs',
       botonLabel: 'Club',
       observar: (r) => r.watch(clubsCatalogoProvider),
-      titulo: (b) => (b as CatalogoClub).nombre,
+      titulo: (b) => b.nombre,
       onCrear: (txt) => ref.read(repoCatalogosProvider).crearClub(txt),
-      onEditar: (item, txt) => ref
-          .read(repoCatalogosProvider)
-          .actualizarClub((item as CatalogoClub).id, txt),
-      onBorrar: (item) => ref
-          .read(repoCatalogosProvider)
-          .borrarClub((item as CatalogoClub).id),
+      onEditar: (item, txt) =>
+          ref.read(repoCatalogosProvider).actualizarClub(item.id, txt),
+      onBorrar: (item) =>
+          ref.read(repoCatalogosProvider).borrarClub(item.id),
       hint: 'Ej: EL SOT, GASCLAVAT, SLOTMANIA',
     );
   }

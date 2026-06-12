@@ -107,6 +107,7 @@ class _PantallaEquiposState extends ConsumerState<PantallaEquipos> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_equipos',
         onPressed: () => _abrirEditor(),
         icon: const Icon(Icons.group_add),
         label: const Text('Nuevo equipo'),

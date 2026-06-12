@@ -285,15 +285,24 @@ class _ImportarInscripcionesSheetsState
                 ),
                 if (_hojas.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  ..._hojas.map((h) => RadioListTile<String>(
-                        value: h.id,
-                        groupValue: _hojaSel?.id,
-                        title: Text(h.nombre),
-                        subtitle: h.modificada == null
-                            ? null
-                            : Text('Modificada: ${h.modificada}'),
-                        onChanged: (_) => _elegirHoja(h),
-                      )),
+                  RadioGroup<String>(
+                    groupValue: _hojaSel?.id,
+                    onChanged: (id) {
+                      if (id == null) return;
+                      _elegirHoja(_hojas.firstWhere((h) => h.id == id));
+                    },
+                    child: Column(
+                      children: [
+                        ..._hojas.map((h) => RadioListTile<String>(
+                              value: h.id,
+                              title: Text(h.nombre),
+                              subtitle: h.modificada == null
+                                  ? null
+                                  : Text('Modificada: ${h.modificada}'),
+                            )),
+                      ],
+                    ),
+                  ),
                 ],
               ],
             ),

@@ -20,6 +20,7 @@ class PantallaPruebas extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Pruebas')),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_pruebas',
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const EditorPrueba()),
         ),

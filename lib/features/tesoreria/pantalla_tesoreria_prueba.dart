@@ -136,11 +136,15 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
         );
   }
 
-  void _rellenarRapido(double pagat, double coord, double club) {
+  void _rellenarRapido(double pagat, double coord, double club,
+      {String? observacion}) {
     setState(() {
       _pagat.text = pagat.toStringAsFixed(2);
       _coord.text = coord.toStringAsFixed(2);
       _club.text = club.toStringAsFixed(2);
+      if (observacion != null && _obs.text.trim().isEmpty) {
+        _obs.text = observacion;
+      }
     });
     _guardar();
   }
@@ -225,7 +229,9 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
                       Text(p.pilotosTexto,
                           style: TextStyle(
                               color: cs.outline, fontSize: 13)),
-                      Text('Copa ${p.copa}',
+                      Text(
+                          'Copa ${p.copa}'
+                          '${p.mangaNombre == null ? '' : '  ·  ${p.mangaNombre}'}',
                           style: TextStyle(
                               color: cs.outline, fontSize: 12)),
                     ],
@@ -359,6 +365,33 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
                           _cuotaPagat * p.factorPago,
                           _cuotaCoord * p.factorPago,
                           _cuotaClub * p.factorPago,
+                        ),
+                      ),
+                      // Mitad de todo: un piloto del equipo es de coordinadora.
+                      ActionChip(
+                        avatar: const Icon(Icons.group_outlined, size: 16),
+                        label: const Text('Coord. + piloto'),
+                        tooltip:
+                            'Un piloto es de coordinadora: paga la mitad de todo '
+                            '(€${(_cuotaPagat / 2).toStringAsFixed(2)})',
+                        onPressed: () => _rellenarRapido(
+                          _cuotaPagat / 2,
+                          _cuotaCoord / 2,
+                          _cuotaClub / 2,
+                          observacion: 'Mitad — un piloto de coordinadora',
+                        ),
+                      ),
+                      // Todo el equipo es de coordinadora: no paga.
+                      ActionChip(
+                        avatar: const Icon(Icons.groups_outlined, size: 16),
+                        label: const Text('Coord. total'),
+                        tooltip:
+                            'Todos los pilotos son de coordinadora: no paga',
+                        onPressed: () => _rellenarRapido(
+                          0,
+                          0,
+                          0,
+                          observacion: 'Pilotos de coordinadora — no paga',
                         ),
                       ),
                       ActionChip(

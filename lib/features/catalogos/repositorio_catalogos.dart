@@ -61,6 +61,28 @@ final neumaticosCatalogoProvider =
       .watch();
 });
 
+// ============== Engranajes (piñones y coronas) ==============
+final engranajesCatalogoProvider =
+    StreamProvider.autoDispose<List<CatalogoEngranaje>>((ref) {
+  final db = ref.watch(dbProvider);
+  return (db.select(db.catalogoEngranajes)
+        ..orderBy([
+          (t) => OrderingTerm.asc(t.tipo),
+          (t) => OrderingTerm.asc(t.marca),
+          (t) => OrderingTerm.asc(t.dientes),
+        ]))
+      .watch();
+});
+
+// ============== Motores ==============
+final motoresCatalogoProvider =
+    StreamProvider.autoDispose<List<CatalogoMotore>>((ref) {
+  final db = ref.watch(dbProvider);
+  return (db.select(db.catalogoMotores)
+        ..orderBy([(t) => OrderingTerm.asc(t.nombre)]))
+      .watch();
+});
+
 // ============== Copas ==============
 final copasCatalogoProvider =
     StreamProvider.autoDispose<List<CatalogoCopa>>((ref) {
@@ -90,6 +112,8 @@ class RepositorioCatalogos {
     required String modelo,
     required double pesoMin,
     int creditosCoche = 0,
+    String? copasJson,
+    String? fotoPath,
   }) {
     return db.into(db.catalogoCoches).insert(CatalogoCochesCompanion.insert(
           nombre: nombre,
@@ -97,6 +121,9 @@ class RepositorioCatalogos {
           modelo: modelo,
           pesoMin: pesoMin,
           creditosCoche: Value(creditosCoche),
+          copasJson:
+              copasJson == null ? const Value.absent() : Value(copasJson),
+          fotoPath: Value(fotoPath),
         ));
   }
 
@@ -188,6 +215,54 @@ class RepositorioCatalogos {
   Future<void> borrarNeumatico(int id) async {
     await (db.delete(db.catalogoNeumaticos)..where((t) => t.id.equals(id)))
         .go();
+  }
+
+  // ---- Engranajes (piñones y coronas) ----
+  Future<int> crearEngranaje({
+    required String tipo, // PINON | CORONA
+    required String marca,
+    required int dientes,
+  }) {
+    return db.into(db.catalogoEngranajes).insert(
+        CatalogoEngranajesCompanion.insert(
+            tipo: tipo, marca: marca, dientes: dientes));
+  }
+
+  Future<void> actualizarEngranaje(
+      int id, String tipo, String marca, int dientes) async {
+    await (db.update(db.catalogoEngranajes)..where((t) => t.id.equals(id)))
+        .write(CatalogoEngranajesCompanion(
+            tipo: Value(tipo), marca: Value(marca), dientes: Value(dientes)));
+  }
+
+  Future<void> borrarEngranaje(int id) async {
+    await (db.delete(db.catalogoEngranajes)..where((t) => t.id.equals(id)))
+        .go();
+  }
+
+  // ---- Motores ----
+  Future<int> crearMotor({
+    required String nombre,
+    int? rpm,
+    double? gauss,
+    String? copasJson,
+  }) {
+    return db.into(db.catalogoMotores).insert(CatalogoMotoresCompanion.insert(
+          nombre: nombre,
+          rpm: Value(rpm),
+          gauss: Value(gauss),
+          copasJson:
+              copasJson == null ? const Value.absent() : Value(copasJson),
+        ));
+  }
+
+  Future<void> actualizarMotor(int id, CatalogoMotoresCompanion c) async {
+    await (db.update(db.catalogoMotores)..where((t) => t.id.equals(id)))
+        .write(c);
+  }
+
+  Future<void> borrarMotor(int id) async {
+    await (db.delete(db.catalogoMotores)..where((t) => t.id.equals(id))).go();
   }
 
   // ---- Copas ----

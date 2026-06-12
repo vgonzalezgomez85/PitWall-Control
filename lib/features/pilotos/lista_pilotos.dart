@@ -90,6 +90,7 @@ class _PantallaPilotosState extends ConsumerState<PantallaPilotos> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_pilotos',
         onPressed: () => _abrirEditor(),
         icon: const Icon(Icons.person_add),
         label: const Text('Nuevo piloto'),

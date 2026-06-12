@@ -11,6 +11,7 @@ import '../../services/generador_pdf_mangas.dart';
 import '../../services/generador_pdf_verificaciones.dart';
 import '../resultados/pantalla_resultados_prueba.dart';
 import '../tesoreria/pantalla_tesoreria_prueba.dart';
+import '../verificaciones/pantalla_sorteo_motores.dart';
 import 'detalle_manga.dart';
 import 'editor_manga.dart';
 import 'editor_prueba.dart';
@@ -123,6 +124,15 @@ class DetallePrueba extends ConsumerWidget {
                 ),
               ),
             ],
+          ),
+          IconButton(
+            tooltip: 'Sorteo de motores',
+            icon: const Icon(Icons.casino_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => PantallaSorteoMotores(pruebaId: pruebaId),
+              ),
+            ),
           ),
           IconButton(
             tooltip: 'Tesorería',

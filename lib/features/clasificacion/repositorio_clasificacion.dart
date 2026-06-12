@@ -10,8 +10,15 @@ import '../../domain/calculo_clasificacion.dart';
 class DatosClasificacion {
   final List<Prueba> pruebas;
   final List<FilaClasificacion> filas;
+  /// true cuando el campeonato está cerrado y se ordena por puntos NETOS;
+  /// false durante la temporada (orden por BRUTOS).
+  final bool ordenadoPorNeto;
 
-  DatosClasificacion({required this.pruebas, required this.filas});
+  DatosClasificacion({
+    required this.pruebas,
+    required this.filas,
+    this.ordenadoPorNeto = false,
+  });
 }
 
 /// Stream que recalcula la clasificación cuando cambia cualquier resultado,
@@ -94,21 +101,34 @@ final clasificacionProvider =
       bases.add(PilotoBase.crear(
         pilotoId: pf.pilotoId,
         nombre: nombrePorId[pf.pilotoId] ?? 'Piloto ${pf.pilotoId}',
-        equipoId: eq?.id ?? -1,
-        equipoNombre: eq?.nombre ?? '—',
-        copa: eq?.copa ?? '—',
+        equipoId: eq.id,
+        equipoNombre: eq.nombre,
+        copa: eq.copa,
         categoria: pf.categoria,
         creditosIniciales: pf.creditosIniciales,
         creditosActuales: pf.creditosActuales,
       ));
     }
 
+    // Durante la temporada se ordena por puntos brutos; cuando la ÚLTIMA
+    // prueba del campeonato (mayor orden, no cancelada) está terminada,
+    // se ordena por netos (los descartes ya son definitivos).
+    final noCanceladas =
+        pruebas.where((p) => p.estado != 'CANCELADA').toList();
+    final campeonatoCerrado =
+        noCanceladas.isNotEmpty && noCanceladas.last.estado == 'TERMINADA';
+
     final filas = CalculoClasificacion.calcular(
       pilotos: bases.cast(),
       resultadosPorPiloto: byPiloto,
       numDescartes: activo.numDescartes,
+      ordenarPorNeto: campeonatoCerrado,
     );
-    yield DatosClasificacion(pruebas: pruebas, filas: filas);
+    yield DatosClasificacion(
+      pruebas: pruebas,
+      filas: filas,
+      ordenadoPorNeto: campeonatoCerrado,
+    );
   }
 });
 

@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/calculo_clasificacion.dart';
+import '../../services/exportar_pdf.dart';
+import '../../services/generador_pdf_clasificacion.dart';
 import 'pantalla_importar_clasificacion.dart';
 import 'repositorio_clasificacion.dart';
 
@@ -77,6 +79,52 @@ class PantallaClasificacion extends ConsumerWidget {
             appBar: AppBar(
               title: const Text('Clasificación'),
               actions: [
+                PopupMenuButton<String>(
+                  tooltip: 'Exportar PDF',
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  onSelected: (sel) {
+                    // '*' = clasificación general (un PopupMenuItem con
+                    // value null no dispara onSelected, así que usamos
+                    // un centinela).
+                    final copa = sel == '*' ? null : sel;
+                    final sufijo = copa == null
+                        ? 'general'
+                        : slugArchivo(copa).toLowerCase();
+                    guardarPdf(
+                      context,
+                      sugerido:
+                          'clasificacion-${slugArchivo(activo?.nombre ?? '')}-$sufijo.pdf',
+                      generar: () => ref
+                          .read(generadorPdfClasificacionProvider)
+                          .generar(
+                            datos: datos,
+                            campeonato: activo!,
+                            copa: copa,
+                          ),
+                    );
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem<String>(
+                      value: '*',
+                      child: ListTile(
+                        leading: Icon(Icons.leaderboard_outlined),
+                        title: Text('General'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    if (copasDelCampeonato.isNotEmpty)
+                      const PopupMenuDivider(),
+                    for (final c in copasDelCampeonato)
+                      PopupMenuItem<String>(
+                        value: c,
+                        child: ListTile(
+                          leading: const Icon(Icons.emoji_events_outlined),
+                          title: Text('Copa $c'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                  ],
+                ),
                 IconButton(
                   tooltip: 'Importar clasificación',
                   icon: const Icon(Icons.upload_outlined),
@@ -138,10 +186,8 @@ class _VistaCopa extends StatelessWidget {
         ? List<FilaClasificacion>.from(datos.filas)
         : datos.filas.where((f) => f.copa == copa).toList();
 
-    // Reasignar posiciones para esta vista
-    for (var i = 0; i < filas.length; i++) {
-      filas[i].posicion = i + 1;
-    }
+    // Reasignar posiciones para esta vista (los empatados comparten posición)
+    CalculoClasificacion.asignarPosiciones(filas);
 
     if (filas.isEmpty) {
       return Center(
@@ -191,6 +237,7 @@ class _VistaCopa extends StatelessWidget {
           child: _Tabla(
             pruebas: datos.pruebas,
             filas: filas,
+            ordenadoPorNeto: datos.ordenadoPorNeto,
           ),
         ),
       ],
@@ -198,62 +245,71 @@ class _VistaCopa extends StatelessWidget {
   }
 }
 
-class _Filtros extends StatelessWidget {
-  const _Filtros({
-    required this.copas,
-    required this.copaActiva,
-    required this.onCambio,
-    required this.totalPilotos,
+class _Tabla extends StatefulWidget {
+  const _Tabla({
+    required this.pruebas,
+    required this.filas,
+    this.ordenadoPorNeto = false,
   });
-
-  final List<String> copas;
-  final String copaActiva;
-  final ValueChanged<String> onCambio;
-  final int totalPilotos;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text('Copa:', style: Theme.of(context).textTheme.bodyMedium),
-          ChoiceChip(
-            label: const Text('Todas'),
-            selected: copaActiva == 'TODAS',
-            onSelected: (_) => onCambio('TODAS'),
-          ),
-          ...copas.map((c) => ChoiceChip(
-                label: Text(c),
-                selected: copaActiva == c,
-                onSelected: (_) => onCambio(c),
-              )),
-          const Spacer(),
-          Text('$totalPilotos pilotos',
-              style: TextStyle(color: cs.outline)),
-        ],
-      ),
-    );
-  }
-}
-
-class _Tabla extends StatelessWidget {
-  const _Tabla({required this.pruebas, required this.filas});
   final List<Prueba> pruebas;
   final List<FilaClasificacion> filas;
+  /// Qué columna manda en el orden: TOTAL (neto) al cierre, Bruto en temporada.
+  final bool ordenadoPorNeto;
+
+  @override
+  State<_Tabla> createState() => _TablaState();
+}
+
+class _TablaState extends State<_Tabla> {
+  // Controladores propios para poder mostrar las barras de scroll
+  // (en escritorio la tabla puede no caber ni a lo ancho ni a lo alto).
+  final _ctrlH = ScrollController();
+  final _ctrlV = ScrollController();
+
+  List<Prueba> get pruebas => widget.pruebas;
+  List<FilaClasificacion> get filas => widget.filas;
+
+  @override
+  void dispose() {
+    _ctrlH.dispose();
+    _ctrlV.dispose();
+    super.dispose();
+  }
+
+  /// Top-3 de puntuaciones (>0) de cada prueba dentro de esta vista, para
+  /// colorear oro/plata/bronce. Empates comparten medalla.
+  Map<int, List<int>> get _medallasPorPrueba {
+    final out = <int, List<int>>{};
+    for (final p in pruebas) {
+      final valores = filas
+          .map((f) => f.puntosPorPrueba[p.id] ?? 0)
+          .where((v) => v > 0)
+          .toSet()
+          .toList()
+        ..sort((a, b) => b.compareTo(a));
+      out[p.id] = valores.take(3).toList();
+    }
+    return out;
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: DataTable(
+    final medallas = _medallasPorPrueba;
+    return Scrollbar(
+      controller: _ctrlV,
+      thumbVisibility: true,
+      child: Scrollbar(
+        controller: _ctrlH,
+        thumbVisibility: true,
+        notificationPredicate: (n) => n.metrics.axis == Axis.horizontal,
+        child: SingleChildScrollView(
+          controller: _ctrlV,
+          scrollDirection: Axis.vertical,
+          child: SingleChildScrollView(
+            controller: _ctrlH,
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
           columnSpacing: 18,
           horizontalMargin: 16,
           dataRowMinHeight: 44,
@@ -278,18 +334,52 @@ class _Tabla extends StatelessWidget {
                 ),
                 numeric: true,
               ),
-            const DataColumn(label: Text('Bruto'), numeric: true),
+            // La columna por la que se ordena va resaltada (Bruto durante la
+            // temporada, TOTAL al cierre del campeonato).
+            DataColumn(
+              numeric: true,
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!widget.ordenadoPorNeto)
+                    Icon(Icons.arrow_downward, size: 14, color: cs.primary),
+                  Text('Bruto',
+                      style: !widget.ordenadoPorNeto
+                          ? TextStyle(
+                              color: cs.primary, fontWeight: FontWeight.w800)
+                          : null),
+                ],
+              ),
+            ),
             const DataColumn(label: Text('Desc.'), numeric: true),
-            const DataColumn(label: Text('TOTAL'), numeric: true),
+            DataColumn(
+              numeric: true,
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.ordenadoPorNeto)
+                    Icon(Icons.arrow_downward, size: 14, color: cs.primary),
+                  Text('TOTAL',
+                      style: widget.ordenadoPorNeto
+                          ? TextStyle(
+                              color: cs.primary, fontWeight: FontWeight.w800)
+                          : null),
+                ],
+              ),
+            ),
           ],
-          rows: filas.map((f) => _filaDataRow(context, f, cs)).toList(),
+          rows: filas
+              .map((f) => _filaDataRow(context, f, cs, medallas))
+              .toList(),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  DataRow _filaDataRow(
-      BuildContext context, FilaClasificacion f, ColorScheme cs) {
+  DataRow _filaDataRow(BuildContext context, FilaClasificacion f,
+      ColorScheme cs, Map<int, List<int>> medallas) {
     return DataRow(
       cells: [
         DataCell(_Posicion(numero: f.posicion ?? 0)),
@@ -304,16 +394,26 @@ class _Tabla extends StatelessWidget {
           DataCell(_CeldaPrueba(
             puntos: f.puntosPorPrueba[p.id] ?? 0,
             descarte: f.pruebasDescartadas.contains(p.id),
+            medallas: medallas[p.id] ?? const [],
           )),
         DataCell(Text('${f.totalBruto}',
-            style: TextStyle(color: cs.outline))),
+            style: widget.ordenadoPorNeto
+                ? TextStyle(color: cs.outline)
+                : TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: cs.primary,
+                    fontSize: 16))),
         DataCell(Text(
           f.totalDescarte > 0 ? '-${f.totalDescarte}' : '0',
           style: TextStyle(color: cs.outline),
         )),
         DataCell(Text('${f.totalNeto}',
-            style: TextStyle(
-                fontWeight: FontWeight.w700, color: cs.primary, fontSize: 16))),
+            style: widget.ordenadoPorNeto
+                ? TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: cs.primary,
+                    fontSize: 16)
+                : TextStyle(color: cs.outline))),
       ],
     );
   }
@@ -349,9 +449,22 @@ class _Posicion extends StatelessWidget {
 }
 
 class _CeldaPrueba extends StatelessWidget {
-  const _CeldaPrueba({required this.puntos, required this.descarte});
+  const _CeldaPrueba({
+    required this.puntos,
+    required this.descarte,
+    this.medallas = const [],
+  });
   final int puntos;
   final bool descarte;
+  /// Top-3 de puntuaciones de esta prueba (para oro/plata/bronce).
+  final List<int> medallas;
+
+  static const _oro = Color(0xFFF3D060);
+  static const _plata = Color(0xFFD9D9D9);
+  static const _bronce = Color(0xFFE3B584);
+  static const _oroFg = Color(0xFF7A5C00);
+  static const _plataFg = Color(0xFF555555);
+  static const _bronceFg = Color(0xFF6E441A);
 
   @override
   Widget build(BuildContext context) {
@@ -359,22 +472,39 @@ class _CeldaPrueba extends StatelessWidget {
       return Text('—',
           style: TextStyle(color: Theme.of(context).colorScheme.outline));
     }
+    // Medalla de la prueba (los descartes mantienen su estilo tachado).
+    Color? bg;
+    Color? fg;
+    if (!descarte && puntos > 0 && medallas.isNotEmpty) {
+      if (puntos == medallas[0]) {
+        bg = _oro;
+        fg = _oroFg;
+      } else if (medallas.length > 1 && puntos == medallas[1]) {
+        bg = _plata;
+        fg = _plataFg;
+      } else if (medallas.length > 2 && puntos == medallas[2]) {
+        bg = _bronce;
+        fg = _bronceFg;
+      }
+    }
+    if (descarte) {
+      bg = Theme.of(context).colorScheme.errorContainer;
+      fg = Theme.of(context).colorScheme.onErrorContainer;
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: descarte
-          ? BoxDecoration(
-              color: Theme.of(context).colorScheme.errorContainer,
+      decoration: bg == null
+          ? null
+          : BoxDecoration(
+              color: bg,
               borderRadius: BorderRadius.circular(6),
-            )
-          : null,
+            ),
       child: Text(
         '$puntos',
         style: TextStyle(
           decoration: descarte ? TextDecoration.lineThrough : null,
-          color: descarte
-              ? Theme.of(context).colorScheme.onErrorContainer
-              : null,
-          fontWeight: FontWeight.w600,
+          color: fg,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

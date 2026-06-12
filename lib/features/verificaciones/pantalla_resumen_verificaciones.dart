@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../services/exportar_pdf.dart';
+import '../../services/generador_pdf_verificaciones.dart';
 import 'lista_verificaciones.dart';
 
 /// Cada fila: una manga del campeonato activo con totales de verificación.
@@ -72,8 +74,45 @@ class PantallaResumenVerificaciones extends ConsumerWidget {
     final dataAsync = ref.watch(_resumenProvider);
     final fmt = DateFormat("d MMM, HH:mm", 'es_ES');
 
+    // Pruebas con al menos una verificación (para el menú de exportar PDF).
+    final pruebasConVerif = <int, Prueba>{};
+    for (final m in (dataAsync.asData?.value ?? const <MangaResumen>[])) {
+      if (m.conVerificacion > 0) pruebasConVerif[m.prueba.id] = m.prueba;
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Verificaciones')),
+      appBar: AppBar(
+        title: const Text('Verificaciones'),
+        actions: [
+          if (pruebasConVerif.isNotEmpty)
+            PopupMenuButton<int>(
+              tooltip: 'Exportar verificaciones (PDF)',
+              icon: const Icon(Icons.picture_as_pdf_outlined),
+              onSelected: (pruebaId) {
+                final prueba = pruebasConVerif[pruebaId]!;
+                guardarPdf(
+                  context,
+                  sugerido:
+                      'verificaciones-${slugArchivo(prueba.nombre)}.pdf',
+                  generar: () => ref
+                      .read(generadorPdfVerificacionesProvider)
+                      .generar(pruebaId: pruebaId),
+                );
+              },
+              itemBuilder: (_) => [
+                for (final p in pruebasConVerif.values)
+                  PopupMenuItem(
+                    value: p.id,
+                    child: ListTile(
+                      leading: const Icon(Icons.event_outlined),
+                      title: Text(p.nombre),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+              ],
+            ),
+        ],
+      ),
       body: dataAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),

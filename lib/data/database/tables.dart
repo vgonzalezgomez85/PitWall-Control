@@ -25,6 +25,10 @@ class Campeonatos extends Table {
   RealColumn get cuotaCoordinadora => real().withDefault(const Constant(11.0))();
   /// De esa cuota, la parte que va al club.
   RealColumn get cuotaClub => real().withDefault(const Constant(14.0))();
+  /// Rango de números de motor de organización para el sorteo (inclusive).
+  /// Si están a null, el sorteo de motores no está configurado.
+  IntColumn get motorSorteoMin => integer().nullable()();
+  IntColumn get motorSorteoMax => integer().nullable()();
   DateTimeColumn get creadoEn => dateTime().withDefault(currentDateAndTime)();
 }
 
@@ -271,6 +275,9 @@ class CatalogoCoches extends Table {
   BoolColumn get activo => boolean().withDefault(const Constant(true))();
   /// JSON array de copas donde aplica este coche. Vacío "[]" = aplica a todas.
   TextColumn get copasJson => text().withDefault(const Constant('[]'))();
+  /// Nombre de archivo de la foto del coche (en la carpeta de fotos local).
+  /// Sirve para comprobar en la verificación que el coche entregado coincide.
+  TextColumn get fotoPath => text().nullable()();
 }
 
 class CatalogoMarcas extends Table {
@@ -303,6 +310,24 @@ class CatalogoNeumaticos extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get nombre => text()(); // "AS25 19,0 NEGRO"
   TextColumn get referencia => text().nullable()();
+}
+
+/// Engranajes: piñones y coronas homologados.
+class CatalogoEngranajes extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get tipo => text()(); // PINON | CORONA
+  TextColumn get marca => text()();
+  IntColumn get dientes => integer()();
+}
+
+/// Motores homologados (con sus medidas de referencia).
+class CatalogoMotores extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get nombre => text()(); // identificador / modelo del motor
+  IntColumn get rpm => integer().nullable()();
+  RealColumn get gauss => real().nullable()();
+  /// JSON array de copas donde aplica. Vacío "[]" = aplica a todas.
+  TextColumn get copasJson => text().withDefault(const Constant('[]'))();
 }
 
 class CatalogoCopas extends Table {

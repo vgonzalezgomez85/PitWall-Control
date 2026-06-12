@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 class TemaApp {
   static const _semilla = Color(0xFFD32F2F); // rojo Resisbarna
 
-  static ThemeData claro() {
-    final esquema = ColorScheme.fromSeed(seedColor: _semilla);
+  static ThemeData claro() => _crear(Brightness.light);
+  static ThemeData oscuro() => _crear(Brightness.dark);
+
+  static ThemeData _crear(Brightness brillo) {
+    final esquema =
+        ColorScheme.fromSeed(seedColor: _semilla, brightness: brillo);
     final base = ThemeData(useMaterial3: true, colorScheme: esquema);
 
     return base.copyWith(

@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../services/google_sheets_service.dart';
+import '../catalogos/importar_catalogo.dart';
+import '../catalogos/repositorio_catalogos.dart';
 import '../equipos/importador_equipos.dart';
 import '../equipos/repositorio_equipos.dart';
 import '../pilotos/importador_pilotos.dart';
@@ -257,6 +261,229 @@ class ActualizadorDrive {
       await ref.read(repoHojasVinculadasProvider).marcarSync(v.fila.id, resumen);
       return ResultadoActualizacion(
         ok: true, mensaje: resumen, nuevos: nuevos, saltados: saltados,
+      );
+    } catch (e) {
+      return ResultadoActualizacion(ok: false, mensaje: '$e');
+    }
+  }
+
+  /// Actualizar un catálogo desde su hoja vinculada.
+  /// Upsert por clave natural: añade lo nuevo y actualiza lo existente,
+  /// sin borrar nada (re-sincronizar nunca duplica).
+  Future<ResultadoActualizacion> actualizarCatalogo(
+      VinculoHoja v, TipoCatalogo tipo) async {
+    try {
+      final datos = await _leerPestana(v);
+      final m = MapeoCatalogo()
+        ..colNombre = v.mapeo['colNombre']
+        ..colCopa = v.mapeo['colCopa']
+        ..colMarca = v.mapeo['colMarca']
+        ..colModelo = v.mapeo['colModelo']
+        ..colPesoMin = v.mapeo['colPesoMin']
+        ..colCreditos = v.mapeo['colCreditos']
+        ..colCodigo = v.mapeo['colCodigo']
+        ..colDimension = v.mapeo['colDimension']
+        ..colTipo = v.mapeo['colTipo']
+        ..colReferencia = v.mapeo['colReferencia']
+        ..colDientes = v.mapeo['colDientes']
+        ..colRpm = v.mapeo['colRpm']
+        ..colGauss = v.mapeo['colGauss'];
+
+      final db = ref.read(dbProvider);
+      final repo = ref.read(repoCatalogosProvider);
+      int nuevos = 0, actualizados = 0, saltados = 0;
+
+      switch (tipo) {
+        case TipoCatalogo.coches:
+          final actuales = await db.select(db.catalogoCoches).get();
+          final porNombre = {for (final c in actuales) _norm(c.nombre): c};
+          for (final fila in datos.filas) {
+            final nombre = fila[m.colNombre]?.trim() ?? '';
+            if (nombre.isEmpty) { saltados++; continue; }
+            final marca = fila[m.colMarca]?.trim() ?? '';
+            final modelo = fila[m.colModelo]?.trim() ?? nombre;
+            final peso = double.tryParse(
+                    (fila[m.colPesoMin] ?? '17').replaceAll(',', '.')) ??
+                17.0;
+            final cred =
+                int.tryParse(fila[m.colCreditos]?.trim() ?? '0') ?? 0;
+            final copas = (fila[m.colCopa] ?? '')
+                .split(',')
+                .map((s) => s.trim())
+                .where((s) => s.isNotEmpty)
+                .toList();
+            final ex = porNombre[_norm(nombre)];
+            if (ex == null) {
+              await repo.crearCoche(
+                  nombre: nombre, marca: marca, modelo: modelo,
+                  pesoMin: peso, creditosCoche: cred,
+                  copasJson: copas.isEmpty ? null : json.encode(copas));
+              nuevos++;
+            } else if (ex.marca != marca ||
+                ex.modelo != modelo ||
+                ex.pesoMin != peso ||
+                ex.creditosCoche != cred) {
+              await repo.actualizarCoche(
+                  ex.id,
+                  CatalogoCochesCompanion(
+                    marca: Value(marca),
+                    modelo: Value(modelo),
+                    pesoMin: Value(peso),
+                    creditosCoche: Value(cred),
+                  ));
+              actualizados++;
+            } else {
+              saltados++;
+            }
+          }
+        case TipoCatalogo.marcas:
+          final actuales = await db.select(db.catalogoMarcas).get();
+          final porCodigo = {for (final x in actuales) _norm(x.codigo): x};
+          for (final fila in datos.filas) {
+            final cod = fila[m.colCodigo]?.trim() ?? '';
+            final nom = fila[m.colNombre]?.trim() ?? '';
+            if (cod.isEmpty || nom.isEmpty) { saltados++; continue; }
+            final ex = porCodigo[_norm(cod)];
+            if (ex == null) {
+              await repo.crearMarca(cod, nom);
+              nuevos++;
+            } else if (ex.nombre != nom) {
+              await repo.actualizarMarca(ex.id, ex.codigo, nom);
+              actualizados++;
+            } else {
+              saltados++;
+            }
+          }
+        case TipoCatalogo.llantas:
+          final actuales = await db.select(db.catalogoLlantas).get();
+          final claves = {
+            for (final x in actuales) '${_norm(x.dimension)}|${x.tipo}'
+          };
+          for (final fila in datos.filas) {
+            final dim = fila[m.colDimension]?.trim() ?? '';
+            if (dim.isEmpty) { saltados++; continue; }
+            var t = (fila[m.colTipo] ?? 'DELANTERA').trim().toUpperCase();
+            if (!['DELANTERA', 'TRASERA', 'AMBAS'].contains(t)) {
+              t = 'DELANTERA';
+            }
+            if (claves.contains('${_norm(dim)}|$t')) { saltados++; continue; }
+            await repo.crearLlanta(dim, t);
+            claves.add('${_norm(dim)}|$t');
+            nuevos++;
+          }
+        case TipoCatalogo.engranajes:
+          final actuales = await db.select(db.catalogoEngranajes).get();
+          final claves = {
+            for (final x in actuales)
+              '${x.tipo}|${_norm(x.marca)}|${x.dientes}'
+          };
+          for (final fila in datos.filas) {
+            final marca = fila[m.colMarca]?.trim() ?? '';
+            final dientes = int.tryParse(fila[m.colDientes]?.trim() ?? '');
+            if (marca.isEmpty || dientes == null) { saltados++; continue; }
+            final tNorm = _norm(fila[m.colTipo] ?? '');
+            final t = tNorm.contains('corona') ? 'CORONA' : 'PINON';
+            final clave = '$t|${_norm(marca)}|$dientes';
+            if (claves.contains(clave)) { saltados++; continue; }
+            await repo.crearEngranaje(tipo: t, marca: marca, dientes: dientes);
+            claves.add(clave);
+            nuevos++;
+          }
+        case TipoCatalogo.motores:
+          final actuales = await db.select(db.catalogoMotores).get();
+          final porNombre = {for (final x in actuales) _norm(x.nombre): x};
+          for (final fila in datos.filas) {
+            final n = fila[m.colNombre]?.trim() ?? '';
+            if (n.isEmpty) { saltados++; continue; }
+            final rpm = int.tryParse(fila[m.colRpm]?.trim() ?? '');
+            final gauss = double.tryParse(
+                (fila[m.colGauss] ?? '').trim().replaceAll(',', '.'));
+            final ex = porNombre[_norm(n)];
+            if (ex == null) {
+              final copas = (fila[m.colCopa] ?? '')
+                  .split(',')
+                  .map((s) => s.trim())
+                  .where((s) => s.isNotEmpty)
+                  .toList();
+              await ref.read(repoCatalogosProvider).crearMotor(
+                  nombre: n,
+                  rpm: rpm,
+                  gauss: gauss,
+                  copasJson: copas.isEmpty ? null : json.encode(copas));
+              nuevos++;
+            } else if (ex.rpm != rpm || ex.gauss != gauss) {
+              await ref.read(repoCatalogosProvider).actualizarMotor(
+                  ex.id,
+                  CatalogoMotoresCompanion(
+                      rpm: Value(rpm), gauss: Value(gauss)));
+              actualizados++;
+            } else {
+              saltados++;
+            }
+          }
+        case TipoCatalogo.neumaticos:
+          final actuales = await db.select(db.catalogoNeumaticos).get();
+          final porNombre = {for (final x in actuales) _norm(x.nombre): x};
+          for (final fila in datos.filas) {
+            final n = fila[m.colNombre]?.trim() ?? '';
+            if (n.isEmpty) { saltados++; continue; }
+            final r = fila[m.colReferencia]?.trim();
+            final ex = porNombre[_norm(n)];
+            if (ex == null) {
+              await repo.crearNeumatico(
+                  n, (r == null || r.isEmpty) ? null : r);
+              nuevos++;
+            } else {
+              saltados++;
+            }
+          }
+        case TipoCatalogo.bancadas:
+        case TipoCatalogo.chasis:
+        case TipoCatalogo.copas:
+        case TipoCatalogo.clubs:
+          final nombres = switch (tipo) {
+            TipoCatalogo.bancadas => (await db
+                    .select(db.catalogoBancadas)
+                    .get())
+                .map((x) => _norm(x.nombre))
+                .toSet(),
+            TipoCatalogo.chasis => (await db.select(db.catalogoChasis).get())
+                .map((x) => _norm(x.nombre))
+                .toSet(),
+            TipoCatalogo.copas => (await db.select(db.catalogoCopas).get())
+                .map((x) => _norm(x.nombre))
+                .toSet(),
+            _ => (await db.select(db.catalogoClubs).get())
+                .map((x) => _norm(x.nombre))
+                .toSet(),
+          };
+          for (final fila in datos.filas) {
+            final n = fila[m.colNombre]?.trim() ?? '';
+            if (n.isEmpty || nombres.contains(_norm(n))) {
+              saltados++;
+              continue;
+            }
+            switch (tipo) {
+              case TipoCatalogo.bancadas:
+                await repo.crearBancada(n);
+              case TipoCatalogo.chasis:
+                await repo.crearChasis(n);
+              case TipoCatalogo.copas:
+                await repo.crearCopa(n);
+              default:
+                await repo.crearClub(n);
+            }
+            nombres.add(_norm(n));
+            nuevos++;
+          }
+      }
+
+      final resumen =
+          'Nuevos: $nuevos · Actualizados: $actualizados · Sin cambios: $saltados';
+      await ref.read(repoHojasVinculadasProvider).marcarSync(v.fila.id, resumen);
+      return ResultadoActualizacion(
+        ok: true, mensaje: resumen,
+        nuevos: nuevos, actualizados: actualizados, saltados: saltados,
       );
     } catch (e) {
       return ResultadoActualizacion(ok: false, mensaje: '$e');

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
@@ -31,13 +32,23 @@ class VerificacionConEquipo {
 }
 
 /// Una verificación por cada equipo inscrito en la manga.
+///
+/// Se refresca cuando cambian las inscripciones **o** las verificaciones de la
+/// manga (clave para que el autoguardado actualice la lista al instante).
 final verificacionesMangaProvider = StreamProvider.autoDispose
     .family<List<VerificacionConEquipo>, int>((ref, mangaId) {
   final db = ref.watch(dbProvider);
-  return (db.select(db.inscripciones)
+  final insStream = (db.select(db.inscripciones)
         ..where((t) => t.mangaId.equals(mangaId)))
-      .watch()
-      .asyncMap((inscritos) async {
+      .watch();
+  final verStream = (db.select(db.verificaciones)
+        ..where((t) => t.mangaId.equals(mangaId)))
+      .watch();
+
+  return _ticksDeCualquiera([insStream, verStream]).asyncMap((_) async {
+    final inscritos = await (db.select(db.inscripciones)
+          ..where((t) => t.mangaId.equals(mangaId)))
+        .get();
     final out = <VerificacionConEquipo>[];
     for (final i in inscritos) {
       final eq = await (db.select(db.equipos)
@@ -52,9 +63,11 @@ final verificacionesMangaProvider = StreamProvider.autoDispose
               ..where((t) => t.id.equals(eq.piloto2Id!)))
             .getSingleOrNull();
       }
+      // `limit(1)`: nunca revienta aunque (excepcionalmente) hubiera duplicados.
       final ver = await (db.select(db.verificaciones)
             ..where((t) =>
-                t.mangaId.equals(mangaId) & t.equipoId.equals(eq.id)))
+                t.mangaId.equals(mangaId) & t.equipoId.equals(eq.id))
+            ..limit(1))
           .getSingleOrNull();
       CatalogoCoche? coche;
       if (ver?.cocheCatalogoId != null) {
@@ -72,79 +85,145 @@ final verificacionesMangaProvider = StreamProvider.autoDispose
   });
 });
 
+/// Emite un primer tick y luego uno cada vez que cualquiera de [streams] emite.
+Stream<void> _ticksDeCualquiera(List<Stream> streams) {
+  final ctrl = StreamController<void>();
+  final subs = <StreamSubscription>[];
+  ctrl.onListen = () {
+    ctrl.add(null);
+    for (final s in streams) {
+      subs.add(s.listen((_) => ctrl.add(null), onError: ctrl.addError));
+    }
+  };
+  ctrl.onCancel = () async {
+    for (final s in subs) {
+      await s.cancel();
+    }
+  };
+  return ctrl.stream;
+}
+
+// NOTA: todos los providers de catálogo que alimentan los desplegables de la
+// verificación son StreamProvider sobre la BD: así, cualquier alta o cambio
+// en Catálogos aparece en los desplegables al instante, sin reiniciar.
+
 /// Catálogo de marcas del componente (códigos).
-final marcasCodigosProvider = FutureProvider<Set<String>>((ref) async {
+final marcasCodigosProvider =
+    StreamProvider.autoDispose<Set<String>>((ref) {
   final db = ref.watch(dbProvider);
-  final lista = await db.select(db.catalogoMarcas).get();
-  return lista.map((m) => m.codigo).toSet();
+  return db
+      .select(db.catalogoMarcas)
+      .watch()
+      .map((lista) => lista.map((m) => m.codigo).toSet());
 });
 
-final llantasDelProvider = FutureProvider<List<CatalogoLlanta>>((ref) async {
+/// Llantas para el eje delantero: tipo DELANTERA o AMBAS. Si ninguna llanta
+/// del catálogo encaja (p. ej. todas importadas con otro tipo), se muestran
+/// todas antes que dejar el desplegable vacío.
+final llantasDelProvider =
+    StreamProvider.autoDispose<List<CatalogoLlanta>>((ref) {
   final db = ref.watch(dbProvider);
-  return (db.select(db.catalogoLlantas)
-        ..where((t) => t.tipo.equals('DELANTERA')))
-      .get();
+  return db.select(db.catalogoLlantas).watch().map((todas) {
+    final filtradas = todas
+        .where((l) => l.tipo == 'DELANTERA' || l.tipo == 'AMBAS')
+        .toList();
+    return filtradas.isEmpty ? todas : filtradas;
+  });
 });
-final llantasTraProvider = FutureProvider<List<CatalogoLlanta>>((ref) async {
+
+/// Llantas para el eje trasero: tipo TRASERA o AMBAS (mismo fallback).
+final llantasTraProvider =
+    StreamProvider.autoDispose<List<CatalogoLlanta>>((ref) {
   final db = ref.watch(dbProvider);
-  return (db.select(db.catalogoLlantas)
-        ..where((t) => t.tipo.equals('TRASERA')))
-      .get();
+  return db.select(db.catalogoLlantas).watch().map((todas) {
+    final filtradas = todas
+        .where((l) => l.tipo == 'TRASERA' || l.tipo == 'AMBAS')
+        .toList();
+    return filtradas.isEmpty ? todas : filtradas;
+  });
 });
 /// Bancadas filtradas por la copa del equipo (parámetro `copa`).
 /// Si el catálogo tiene copas marcadas, solo se devuelven las que aplican
 /// a esa copa. Si no tiene copas marcadas, vale para todas.
-final bancadasFiltradasProvider =
-    FutureProvider.family<List<CatalogoBancada>, String?>((ref, copa) async {
+final bancadasFiltradasProvider = StreamProvider.autoDispose
+    .family<List<CatalogoBancada>, String?>((ref, copa) {
   final db = ref.watch(dbProvider);
-  final todas = await db.select(db.catalogoBancadas).get();
-  if (copa == null || copa.isEmpty) return todas;
-  return todas.where((b) => _aplicaA(b.copasJson, copa)).toList();
+  return db.select(db.catalogoBancadas).watch().map((todas) {
+    if (copa == null || copa.isEmpty) return todas;
+    final filtradas = todas.where((b) => _aplicaA(b.copasJson, copa)).toList();
+    return filtradas.isEmpty ? todas : filtradas;
+  });
 });
-final bancadasProvider = FutureProvider<List<CatalogoBancada>>((ref) async {
+final bancadasProvider =
+    StreamProvider.autoDispose<List<CatalogoBancada>>((ref) {
   final db = ref.watch(dbProvider);
-  return db.select(db.catalogoBancadas).get();
+  return db.select(db.catalogoBancadas).watch();
 });
+
+String _normCopa(String s) =>
+    s.toUpperCase().replaceAll(RegExp(r'\s+'), ' ').trim();
 
 bool _aplicaA(String copasJson, String copa) {
   try {
     final raw = (copasJson.isEmpty) ? [] : (jsonDecode(copasJson) as List?);
     if (raw == null || raw.isEmpty) return true; // sin marca = aplica a todas
-    return raw.map((e) => e.toString()).contains(copa);
+    // Comparación tolerante a mayúsculas/minúsculas y espacios.
+    final objetivo = _normCopa(copa);
+    return raw.map((e) => _normCopa(e.toString())).contains(objetivo);
   } catch (_) {
     return true;
   }
 }
 final neumaticosProvider =
-    FutureProvider<List<CatalogoNeumatico>>((ref) async {
+    StreamProvider.autoDispose<List<CatalogoNeumatico>>((ref) {
   final db = ref.watch(dbProvider);
-  return db.select(db.catalogoNeumaticos).get();
+  return db.select(db.catalogoNeumaticos).watch();
 });
 final cochesProvider =
-    FutureProvider<List<CatalogoCoche>>((ref) async {
+    StreamProvider.autoDispose<List<CatalogoCoche>>((ref) {
   final db = ref.watch(dbProvider);
   return (db.select(db.catalogoCoches)..where((t) => t.activo.equals(true)))
-      .get();
+      .watch();
+});
+
+/// Motores del catálogo filtrados por la copa del equipo.
+final motoresFiltradosProvider = StreamProvider.autoDispose
+    .family<List<CatalogoMotore>, String?>((ref, copa) {
+  final db = ref.watch(dbProvider);
+  return (db.select(db.catalogoMotores)
+        ..orderBy([(t) => OrderingTerm.asc(t.nombre)]))
+      .watch()
+      .map((todos) {
+    if (copa == null || copa.isEmpty) return todos;
+    final filtrados = todos.where((m) => _aplicaA(m.copasJson, copa)).toList();
+    return filtrados.isEmpty ? todos : filtrados;
+  });
 });
 
 /// Chasis filtrados por la copa del equipo.
-final chasisFiltradosProvider =
-    FutureProvider.family<List<CatalogoChasi>, String?>((ref, copa) async {
+final chasisFiltradosProvider = StreamProvider.autoDispose
+    .family<List<CatalogoChasi>, String?>((ref, copa) {
   final db = ref.watch(dbProvider);
-  final todos = await db.select(db.catalogoChasis).get();
-  if (copa == null || copa.isEmpty) return todos;
-  return todos.where((c) => _aplicaA(c.copasJson, copa)).toList();
+  return db.select(db.catalogoChasis).watch().map((todos) {
+    if (copa == null || copa.isEmpty) return todos;
+    final filtrados = todos.where((c) => _aplicaA(c.copasJson, copa)).toList();
+    return filtrados.isEmpty ? todos : filtrados;
+  });
 });
 
 /// Coches filtrados por la copa del equipo.
-final cochesFiltradosProvider =
-    FutureProvider.family<List<CatalogoCoche>, String?>((ref, copa) async {
+/// Si el filtro no deja ninguno (catálogo con copas mal cuadradas), se
+/// devuelven todos: mejor elegir entre todos que bloquear la verificación.
+final cochesFiltradosProvider = StreamProvider.autoDispose
+    .family<List<CatalogoCoche>, String?>((ref, copa) {
   final db = ref.watch(dbProvider);
-  final todos = await (db.select(db.catalogoCoches)
-        ..where((t) => t.activo.equals(true)))
-      .get();
-  if (copa == null || copa.isEmpty) return todos;
-  return todos.where((c) => _aplicaA(c.copasJson, copa)).toList();
+  return (db.select(db.catalogoCoches)..where((t) => t.activo.equals(true)))
+      .watch()
+      .map((todos) {
+    if (copa == null || copa.isEmpty) return todos;
+    final filtrados = todos.where((c) => _aplicaA(c.copasJson, copa)).toList();
+    return filtrados.isEmpty ? todos : filtrados;
+  });
 });
 
 /// Resultado del cálculo de reparto de créditos.
@@ -397,7 +476,18 @@ class RepositorioVerificaciones {
     String? observaciones,
     required bool validado,
     String? fotosJson,
+    bool recalcularCreditos = true,
   }) async {
+    // Garantiza una sola verificación por (manga, equipo): si llega sin id
+    // pero ya existe una, se actualiza en lugar de crear un duplicado.
+    if (id == null) {
+      final existente = await (db.select(db.verificaciones)
+            ..where((t) =>
+                t.mangaId.equals(mangaId) & t.equipoId.equals(equipoId))
+            ..limit(1))
+          .getSingleOrNull();
+      id = existente?.id;
+    }
     if (id == null) {
       final nuevoId = await db.into(db.verificaciones).insert(
             VerificacionesCompanion.insert(
@@ -434,10 +524,12 @@ class RepositorioVerificaciones {
                   fotosJson == null ? const Value.absent() : Value(fotosJson),
             ),
           );
-      await _reaplicarCreditos(nuevoId);
+      if (recalcularCreditos) await _reaplicarCreditos(nuevoId);
       return nuevoId;
     }
-    await (db.update(db.verificaciones)..where((t) => t.id.equals(id))).write(
+    final idActual = id;
+    await (db.update(db.verificaciones)..where((t) => t.id.equals(idActual)))
+        .write(
       VerificacionesCompanion(
         cocheCatalogoId: Value(cocheCatalogoId),
         pesoInicial: Value(pesoInicial),
@@ -468,8 +560,78 @@ class RepositorioVerificaciones {
             fotosJson == null ? const Value.absent() : Value(fotosJson),
       ),
     );
-    await _reaplicarCreditos(id);
-    return id;
+    if (recalcularCreditos) await _reaplicarCreditos(idActual);
+    return idActual;
+  }
+
+  /// Elimina verificaciones duplicadas (misma manga+equipo), conservando la
+  /// validada si la hay, o la de menor id. Repara datos creados antes de
+  /// garantizar la unicidad. Devuelve cuántas eliminó.
+  Future<int> limpiarDuplicados() async {
+    final todas = await db.select(db.verificaciones).get();
+    final grupos = <String, List<Verificacione>>{};
+    for (final v in todas) {
+      grupos.putIfAbsent('${v.mangaId}-${v.equipoId}', () => []).add(v);
+    }
+    var eliminadas = 0;
+    for (final grupo in grupos.values) {
+      if (grupo.length <= 1) continue;
+      grupo.sort((a, b) {
+        if (a.validado != b.validado) return a.validado ? -1 : 1;
+        return a.id.compareTo(b.id);
+      });
+      for (final v in grupo.skip(1)) {
+        await borrar(v.id); // borrar() revierte créditos si los tuviera
+        eliminadas++;
+      }
+    }
+    return eliminadas;
+  }
+
+  /// Asigna un motor de organización a la verificación de (manga, equipo) sin
+  /// tocar el resto de campos. Crea la verificación si aún no existe.
+  Future<void> asignarMotor({
+    required int mangaId,
+    required int equipoId,
+    required String motor,
+  }) async {
+    final existente = await (db.select(db.verificaciones)
+          ..where((t) =>
+              t.mangaId.equals(mangaId) & t.equipoId.equals(equipoId))
+          ..limit(1))
+        .getSingleOrNull();
+    if (existente == null) {
+      await db.into(db.verificaciones).insert(
+            VerificacionesCompanion.insert(
+              mangaId: mangaId,
+              equipoId: equipoId,
+              motor: Value(motor),
+              motorTipo: const Value('ORGANIZACION'),
+            ),
+          );
+    } else {
+      await (db.update(db.verificaciones)
+            ..where((t) => t.id.equals(existente.id)))
+          .write(VerificacionesCompanion(
+        motor: Value(motor),
+        motorTipo: const Value('ORGANIZACION'),
+      ));
+    }
+  }
+
+  /// Quita el motor asignado a (manga, equipo) (deja el campo vacío).
+  Future<void> quitarMotor({
+    required int mangaId,
+    required int equipoId,
+  }) async {
+    final existente = await (db.select(db.verificaciones)
+          ..where((t) =>
+              t.mangaId.equals(mangaId) & t.equipoId.equals(equipoId))
+          ..limit(1))
+        .getSingleOrNull();
+    if (existente == null) return;
+    await (db.update(db.verificaciones)..where((t) => t.id.equals(existente.id)))
+        .write(const VerificacionesCompanion(motor: Value(null)));
   }
 
   Future<void> borrar(int id) async {

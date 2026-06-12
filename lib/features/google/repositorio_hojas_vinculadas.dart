@@ -67,6 +67,20 @@ final vinculoInscripcionesProvider =
       .map((f) => f == null ? null : VinculoHoja(f));
 });
 
+/// Provider genérico: vínculo global (sin campeonato/prueba) por entidad.
+/// Se usa p. ej. para catálogos: entidad = 'catalogo_coches', 'catalogo_engranajes'…
+final vinculoEntidadProvider =
+    StreamProvider.autoDispose.family<VinculoHoja?, String>((ref, entidad) {
+  final db = ref.watch(dbProvider);
+  return (db.select(db.hojasVinculadas)
+        ..where((t) =>
+            t.entidad.equals(entidad) &
+            t.campeonatoId.isNull() &
+            t.pruebaId.isNull()))
+      .watchSingleOrNull()
+      .map((f) => f == null ? null : VinculoHoja(f));
+});
+
 class RepositorioHojasVinculadas {
   RepositorioHojasVinculadas(this.db);
   final AppDatabase db;

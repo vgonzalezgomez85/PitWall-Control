@@ -72,7 +72,7 @@ class GoogleSheetsService {
     }
   }
 
-  /// Lee una pestaña entera como List<List<String>>.
+  /// Lee una pestaña entera como `List<List<String>>`.
   Future<List<List<String>>> leerPestana(
       String hojaId, String tituloPestana) async {
     final cli = await _auth.clienteAutenticado();

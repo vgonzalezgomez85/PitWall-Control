@@ -24,6 +24,7 @@ class PantallaTesoreria extends ConsumerWidget {
       floatingActionButton: activo == null
           ? null
           : FloatingActionButton.extended(
+              heroTag: 'fab_tesoreria',
               onPressed: () => _editarMovimiento(
                   context, ref, activo.id, null, null),
               icon: const Icon(Icons.add),

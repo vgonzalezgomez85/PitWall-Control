@@ -7,7 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/proveedores.dart';
 import 'core/tema.dart';
 import 'data/database/seeds.dart';
-import 'features/home/pantalla_inicio.dart';
+import 'features/home/app_shell.dart';
+import 'features/verificaciones/repositorio_verificaciones.dart';
 import 'services/almacen_local.dart';
 
 Future<void> main() async {
@@ -43,15 +44,20 @@ class _AppResisbarnaState extends ConsumerState<AppResisbarna> {
   Future<void> _sembrar() async {
     final db = ref.read(dbProvider);
     await Seeds.sembrar(db);
+    // Repara verificaciones duplicadas creadas antes de garantizar unicidad.
+    await ref.read(repoVerificacionesProvider).limpiarDuplicados();
     if (mounted) setState(() => _semillaLista = true);
   }
 
   @override
   Widget build(BuildContext context) {
+    final oscuro = ref.watch(temaOscuroProvider);
     return MaterialApp(
-      title: 'Resisbarna',
+      title: 'PitWall',
       debugShowCheckedModeBanner: false,
       theme: TemaApp.claro(),
+      darkTheme: TemaApp.oscuro(),
+      themeMode: oscuro ? ThemeMode.dark : ThemeMode.light,
       locale: const Locale('es', 'ES'),
       supportedLocales: const [Locale('es', 'ES'), Locale('en', 'US')],
       localizationsDelegates: const [
@@ -60,7 +66,7 @@ class _AppResisbarnaState extends ConsumerState<AppResisbarna> {
         GlobalCupertinoLocalizations.delegate,
       ],
       home: _semillaLista
-          ? const PantallaInicio()
+          ? const AppShell()
           : const Scaffold(body: Center(child: CircularProgressIndicator())),
     );
   }

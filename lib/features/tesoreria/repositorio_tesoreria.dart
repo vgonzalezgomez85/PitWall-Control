@@ -31,6 +31,8 @@ class PagoEquipo {
   Pago? pago;
   /// El equipo es wildcard (invitado) en esta prueba.
   final bool wildcard;
+  /// Manga en la que corre el equipo (null si aún no está asignado).
+  final String? mangaNombre;
 
   PagoEquipo({
     required this.equipoId,
@@ -40,6 +42,7 @@ class PagoEquipo {
     this.piloto2,
     this.pago,
     this.wildcard = false,
+    this.mangaNombre,
   });
 
   String get pilotosTexto => piloto2 == null
@@ -202,6 +205,9 @@ final pagosPruebaProvider = StreamProvider.autoDispose
     (db.select(db.pagos)..where((t) => t.pruebaId.equals(pruebaId)))
         .watch(),
     db.select(db.pilotos).watch(),
+    // El orden depende de la manga asignada a cada equipo.
+    (db.select(db.mangas)..where((t) => t.pruebaId.equals(pruebaId))).watch(),
+    db.select(db.inscripciones).watch(),
   ]);
 
   late StreamController<List<PagoEquipo>> ctrl;
@@ -227,7 +233,24 @@ final pagosPruebaProvider = StreamProvider.autoDispose
 
 Future<List<PagoEquipo>> _construir(AppDatabase db, int pruebaId,
     List<InscripcionesPruebaData> inscritos) async {
+    // Manga en la que corre cada equipo, para ordenar por día de carrera.
+    final mangas = await (db.select(db.mangas)
+          ..where((t) => t.pruebaId.equals(pruebaId)))
+        .get();
+    final mangaPorId = {for (final m in mangas) m.id: m};
+    final insMangas = mangas.isEmpty
+        ? <Inscripcione>[]
+        : await (db.select(db.inscripciones)
+              ..where((t) => t.mangaId.isIn(mangaPorId.keys.toList())))
+            .get();
+    final mangaDeEquipo = <int, Manga>{};
+    for (final i in insMangas) {
+      final m = mangaPorId[i.mangaId];
+      if (m != null) mangaDeEquipo.putIfAbsent(i.equipoId, () => m);
+    }
+
     final out = <PagoEquipo>[];
+    final clave = <int, num>{};
     for (final i in inscritos) {
       final eq = await (db.select(db.equipos)
             ..where((t) => t.id.equals(i.equipoId)))
@@ -246,6 +269,8 @@ Future<List<PagoEquipo>> _construir(AppDatabase db, int pruebaId,
             ..where((t) =>
                 t.pruebaId.equals(pruebaId) & t.equipoId.equals(eq.id)))
           .getSingleOrNull();
+      final manga = mangaDeEquipo[eq.id];
+      clave[eq.id] = _claveOrdenManga(manga);
       out.add(PagoEquipo(
         equipoId: eq.id,
         nombreEquipo: eq.nombre,
@@ -254,10 +279,48 @@ Future<List<PagoEquipo>> _construir(AppDatabase db, int pruebaId,
         piloto2: p2,
         pago: pago,
         wildcard: i.wildcard,
+        mangaNombre: manga?.nombre,
       ));
     }
-    out.sort((a, b) => a.nombreEquipo.compareTo(b.nombreEquipo));
+    // Orden: día/hora de la manga (sin manga al final); desempate por nombre.
+    out.sort((a, b) {
+      final c = clave[a.equipoId]!.compareTo(clave[b.equipoId]!);
+      return c != 0 ? c : a.nombreEquipo.compareTo(b.nombreEquipo);
+    });
     return out;
+}
+
+/// Clave de orden de una manga: día de la semana (por el nombre) y hora
+/// (de `fechaHora` o del propio nombre, p. ej. "Jueves 21:00").
+/// Equipos sin manga van al final.
+num _claveOrdenManga(Manga? m) {
+  if (m == null) return double.maxFinite;
+  final nombre = m.nombre
+      .toLowerCase()
+      .replaceAll(RegExp(r'[áàä]'), 'a')
+      .replaceAll(RegExp(r'[éèë]'), 'e')
+      .replaceAll(RegExp(r'[íìï]'), 'i')
+      .replaceAll(RegExp(r'[óòö]'), 'o')
+      .replaceAll(RegExp(r'[úùü]'), 'u');
+  const dias = ['lunes', 'martes', 'miercoles', 'jueves',
+      'viernes', 'sabado', 'domingo'];
+  var dia = dias.length; // sin día reconocido: tras los días conocidos
+  for (var i = 0; i < dias.length; i++) {
+    if (nombre.contains(dias[i])) {
+      dia = i;
+      break;
+    }
+  }
+  var minutos = 0;
+  if (m.fechaHora != null) {
+    minutos = m.fechaHora!.hour * 60 + m.fechaHora!.minute;
+  } else {
+    final hm = RegExp(r'(\d{1,2})[:.h](\d{2})').firstMatch(nombre);
+    if (hm != null) {
+      minutos = int.parse(hm.group(1)!) * 60 + int.parse(hm.group(2)!);
+    }
+  }
+  return dia * 10000 + minutos;
 }
 
 class RepositorioTesoreria {

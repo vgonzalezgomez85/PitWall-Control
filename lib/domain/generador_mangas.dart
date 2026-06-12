@@ -66,6 +66,8 @@ class GeneradorMangas {
   /// - Máx `tamMaxManga` por manga (default 10).
   /// - Para 11 equipos del mismo día en 2 mangas: 5 + 6.
   /// - 12+: reparto igualado; impar → 1ª manga MÁS equipos.
+  /// - Los equipos con MÁS puntos van a la manga más TARDÍA del día
+  ///   (las mangas se llenan de la última a la primera).
   ///
   /// Los equipos sin preferencia de día se distribuyen entre las mangas
   /// que aún tengan hueco, llenando primero las que tienen más capacidad.
@@ -136,6 +138,9 @@ class GeneradorMangas {
     }
 
     // Repartir equipos de cada día en sus mangas, aplicando regla 5+6/etc.
+    // Los equipos van en ranking descendente y las mangas del día se llenan
+    // de la ÚLTIMA a la PRIMERA: los equipos con más puntos corren en la
+    // manga más tardía del día.
     for (final entrada in equiposPorDia.entries) {
       final dia = entrada.key;
       final eqs = entrada.value;
@@ -147,17 +152,20 @@ class GeneradorMangas {
       }
       final tamanos = _distribuirEquipos(eqs.length, indices.length,
           tamMax: config.tamMaxManga);
-      var idxLocal = 0;
+      // Orden de llenado: última manga del día primero.
+      final ordenLlenado = [for (var k = indices.length - 1; k >= 0; k--) k];
+      var pos = 0;
       for (final eq in eqs) {
-        while (idxLocal < indices.length &&
-            cubos[indices[idxLocal]].length >= tamanos[idxLocal]) {
-          idxLocal++;
+        while (pos < ordenLlenado.length &&
+            cubos[indices[ordenLlenado[pos]]].length >=
+                tamanos[ordenLlenado[pos]]) {
+          pos++;
         }
-        if (idxLocal >= indices.length) {
+        if (pos >= ordenLlenado.length) {
           sinManga.add(eq);
           continue;
         }
-        cubos[indices[idxLocal]].add(eq);
+        cubos[indices[ordenLlenado[pos]]].add(eq);
         colocados.add(eq.equipoId);
       }
     }

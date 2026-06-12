@@ -29,6 +29,8 @@ part 'app_database.g.dart';
     CatalogoBancadas,
     CatalogoChasis,
     CatalogoNeumaticos,
+    CatalogoEngranajes,
+    CatalogoMotores,
     CatalogoCopas,
     CatalogoClubs,
     HojasVinculadas,
@@ -39,7 +41,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 19;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -135,6 +137,22 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 15) {
             await _aplicar(() => m.createTable(movimientosCreditos));
+          }
+          if (from < 16) {
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN motor_sorteo_min INTEGER'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN motor_sorteo_max INTEGER'));
+          }
+          if (from < 17) {
+            await _aplicar(() => m.createTable(catalogoEngranajes));
+          }
+          if (from < 18) {
+            await _aplicar(() => customStatement(
+                'ALTER TABLE catalogo_coches ADD COLUMN foto_path TEXT'));
+          }
+          if (from < 19) {
+            await _aplicar(() => m.createTable(catalogoMotores));
           }
         },
       );

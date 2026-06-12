@@ -7,7 +7,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../core/proveedores.dart';
-import '../data/database/app_database.dart';
+import 'pdf_marca.dart';
+import 'pdf_util.dart';
 
 class _FilaPiloto {
   final String nombre;
@@ -95,18 +96,20 @@ class GeneradorPdfCreditos {
     filas.sort((a, b) => b.actual.compareTo(a.actual));
 
     final df = DateFormat('dd/MM/yyyy HH:mm');
-    final doc = pw.Document();
-    doc.addPage(pw.MultiPage(
-      pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.fromLTRB(28, 28, 28, 28),
-      build: (ctx) => [
-        pw.Text('Créditos — ${activo.nombre}',
-            style: pw.TextStyle(
-                fontSize: 20, fontWeight: pw.FontWeight.bold, color: _texto)),
-        pw.SizedBox(height: 4),
-        pw.Text('Generado ${df.format(DateTime.now())}',
-            style: pw.TextStyle(fontSize: 10, color: _gris)),
-        pw.SizedBox(height: 16),
+    final marca = await MarcaPdf.cargar();
+    return pdfUnaHoja(
+      filas: filas.length + 3, // hero + pie
+      columnas: 5,
+      contenido: (ctx) => pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+        marca.hero(
+          organizacion: activo.organizacion,
+          subtitulo: 'Control de créditos - ${activo.nombre}',
+          badge: '${filas.length} pilotos',
+          nota: df.format(DateTime.now()),
+        ),
+        pw.SizedBox(height: 12),
         pw.Table(
           border: pw.TableBorder.all(color: _grisClaro, width: 0.5),
           columnWidths: const {
@@ -118,43 +121,66 @@ class GeneradorPdfCreditos {
           },
           children: [
             pw.TableRow(
-              decoration: const pw.BoxDecoration(color: _grisClaro),
+              decoration:
+                  const pw.BoxDecoration(color: MarcaPdf.rojoOscuro),
               children: [
-                _cab('Piloto', align: pw.TextAlign.left),
-                _cab('Inicial'),
-                _cab('Sumados'),
-                _cab('Restados'),
-                _cab('SALDO'),
+                _cabBlanca('PILOTO', align: pw.TextAlign.left),
+                _cabBlanca('INICIAL'),
+                _cabBlanca('SUMADOS'),
+                _cabBlanca('RESTADOS'),
+                _cabBlanca('SALDO'),
               ],
             ),
-            ...filas.map((f) => pw.TableRow(children: [
-                  _celda(f.nombre, align: pw.TextAlign.left, bold: true),
-                  _celda('${f.inicial}'),
-                  _celda(f.sumados > 0 ? '+${f.sumados}' : '0',
-                      color: f.sumados > 0 ? _verde : _gris),
-                  _celda(f.restados > 0 ? '−${f.restados}' : '0',
-                      color: f.restados > 0 ? _rojo : _gris),
-                  _celda('${f.actual}',
-                      bold: true,
-                      color: f.actual < 0 ? _rojo : _texto,
-                      size: 13),
-                ])),
+            ...filas.asMap().entries.map((e) => pw.TableRow(
+                  decoration: pw.BoxDecoration(
+                      color: e.key.isEven
+                          ? PdfColors.white
+                          : MarcaPdf.fondoZebra),
+                  children: [
+                    _celda(e.value.nombre,
+                        align: pw.TextAlign.left, bold: true),
+                    _celda('${e.value.inicial}'),
+                    _celda(e.value.sumados > 0 ? '+${e.value.sumados}' : '0',
+                        color: e.value.sumados > 0 ? _verde : _gris),
+                    _celda(
+                        e.value.restados > 0 ? '-${e.value.restados}' : '0',
+                        color: e.value.restados > 0 ? _rojo : _gris),
+                    _celda('${e.value.actual}',
+                        bold: true,
+                        color: e.value.actual < 0 ? _rojo : _texto,
+                        size: 13),
+                  ],
+                )),
             pw.TableRow(
               decoration: const pw.BoxDecoration(color: _grisClaro),
               children: [
                 _cab('TOTAL (${filas.length} pilotos)', align: pw.TextAlign.left),
                 _cab('${filas.fold<int>(0, (s, f) => s + f.inicial)}'),
                 _cab('+${filas.fold<int>(0, (s, f) => s + f.sumados)}'),
-                _cab('−${filas.fold<int>(0, (s, f) => s + f.restados)}'),
+                _cab('-${filas.fold<int>(0, (s, f) => s + f.restados)}'),
                 _cab('${filas.fold<int>(0, (s, f) => s + f.actual)}'),
               ],
             ),
           ],
         ),
-      ],
-    ));
-    return doc.save();
+        pw.SizedBox(height: 12),
+        marca.pie(),
+        ],
+      ),
+    );
   }
+
+  pw.Widget _cabBlanca(String t, {pw.TextAlign align = pw.TextAlign.center}) =>
+      pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        child: pw.Text(t,
+            textAlign: align,
+            style: pw.TextStyle(
+                fontSize: 9,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+                letterSpacing: 0.5)),
+      );
 
   pw.Widget _cab(String t, {pw.TextAlign align = pw.TextAlign.center}) =>
       pw.Padding(

@@ -98,6 +98,9 @@ class GoogleAuthService {
   }
 
   /// Devuelve un cliente HTTP autenticado, refrescando el token si hace falta.
+  ///
+  /// Si el refresh token ha caducado o fue revocado (`invalid_grant`), limpia
+  /// la sesión guardada y lanza un error claro pidiendo reconectar.
   Future<AuthClient> clienteAutenticado() async {
     final clientId = await obtenerClientId();
     final clientSecret = await obtenerClientSecret();
@@ -105,11 +108,37 @@ class GoogleAuthService {
       throw GoogleAuthException('Configura primero las credenciales de Google Cloud.');
     }
 
-    final creds = await _cargarCredenciales();
+    var creds = await _cargarCredenciales();
     if (creds == null) {
       throw GoogleAuthException('No estás conectado con Google.');
     }
     final id = ClientId(clientId, clientSecret);
+
+    // Refrescar aquí (y no perezosamente) para poder capturar un token
+    // caducado/revocado y convertirlo en un mensaje accionable.
+    final caducado = creds.accessToken.expiry
+        .isBefore(DateTime.now().toUtc().add(const Duration(minutes: 1)));
+    if (caducado) {
+      if (creds.refreshToken == null) {
+        await desconectar();
+        throw GoogleAuthException(
+            'La sesión de Google ha caducado. Vuelve a conectar tu cuenta '
+            'en Google Sheets (menú lateral).');
+      }
+      try {
+        creds = await refreshCredentials(id, creds, _httpClient());
+        await _persistirCredenciales(creds);
+      } catch (e) {
+        if (e.toString().contains('invalid_grant')) {
+          await desconectar();
+          throw GoogleAuthException(
+              'La conexión con Google ha caducado o fue revocada. '
+              'Ve a Google Sheets (menú lateral) y pulsa "Conectar con '
+              'Google" para autorizar de nuevo.');
+        }
+        rethrow;
+      }
+    }
     return autoRefreshingClient(id, creds, _httpClient());
   }
 

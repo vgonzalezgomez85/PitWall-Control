@@ -33,6 +33,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   final _cuotaPagat = TextEditingController(text: '25');
   final _cuotaCoord = TextEditingController(text: '11');
   final _cuotaClub = TextEditingController(text: '14');
+  final _motorMin = TextEditingController();
+  final _motorMax = TextEditingController();
 
   String _formato = 'PAREJAS';
   bool _activo = true;
@@ -66,6 +68,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
         c.cuotaCoordinadora.toStringAsFixed(c.cuotaCoordinadora % 1 == 0 ? 0 : 2);
     _cuotaClub.text =
         c.cuotaClub.toStringAsFixed(c.cuotaClub % 1 == 0 ? 0 : 2);
+    _motorMin.text = c.motorSorteoMin?.toString() ?? '';
+    _motorMax.text = c.motorSorteoMax?.toString() ?? '';
     _formato = c.formato;
     _activo = c.activo;
     _usaCreditos = c.usaCreditos;
@@ -88,6 +92,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
     _cuotaPagat.dispose();
     _cuotaCoord.dispose();
     _cuotaClub.dispose();
+    _motorMin.dispose();
+    _motorMax.dispose();
     super.dispose();
   }
 
@@ -125,6 +131,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       final cuotaP = parseD(_cuotaPagat, 25);
       final cuotaC = parseD(_cuotaCoord, 11);
       final cuotaCl = parseD(_cuotaClub, 14);
+      final motorMin = int.tryParse(_motorMin.text.trim());
+      final motorMax = int.tryParse(_motorMax.text.trim());
 
       if (widget.campeonatoId == null) {
         final id = await Seeds.crearCampeonato(
@@ -142,6 +150,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
             cuotaPagat: Value(cuotaP),
             cuotaCoordinadora: Value(cuotaC),
             cuotaClub: Value(cuotaCl),
+            motorSorteoMin: Value(motorMin),
+            motorSorteoMax: Value(motorMax),
           ),
         );
         if (_activo) {
@@ -165,6 +175,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
           cuotaPagat: Value(cuotaP),
           cuotaCoordinadora: Value(cuotaC),
           cuotaClub: Value(cuotaCl),
+          motorSorteoMin: Value(motorMin),
+          motorSorteoMax: Value(motorMax),
         ));
       }
       if (mounted) Navigator.of(context).pop();
@@ -427,6 +439,53 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                     ),
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            Text('Sorteo de motores (organización)',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w700,
+                    )),
+            const SizedBox(height: 4),
+            Text(
+              'Rango de números de motor que la organización sortea entre los '
+              'equipos en cada prueba. Déjalo vacío si no usáis sorteo.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _motorMin,
+                    decoration: const InputDecoration(
+                      labelText: 'Motor desde',
+                      prefixIcon: Icon(Icons.tag),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: _motorMax,
+                    decoration: const InputDecoration(
+                      labelText: 'Motor hasta',
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (v) {
+                      final min = int.tryParse(_motorMin.text.trim());
+                      final max = int.tryParse(v?.trim() ?? '');
+                      if (min == null && max == null) return null;
+                      if (min == null || max == null) {
+                        return 'Indica ambos';
+                      }
+                      if (max < min) return 'Hasta ≥ desde';
+                      return null;
+                    },
                   ),
                 ),
               ],

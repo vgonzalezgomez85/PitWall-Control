@@ -33,6 +33,15 @@ class DatosVerificacion {
   final int? creditosEquipo;
 
   final String? motor;
+
+  /// Motor propio: medidas introducidas y referencia del catálogo.
+  final String? motorTipo; // 'PROPIO' | 'ORGANIZACION'
+  final int? motorRpm;
+  final double? motorUms;
+  final String? motorRefNombre;
+  final int? motorRefRpm;
+  final double? motorRefGauss;
+
   final String? pinonMarca;
   final int? pinonDientes;
   final String? coronaMarca;
@@ -61,6 +70,12 @@ class DatosVerificacion {
     this.creditosCoche,
     this.creditosEquipo,
     this.motor,
+    this.motorTipo,
+    this.motorRpm,
+    this.motorUms,
+    this.motorRefNombre,
+    this.motorRefRpm,
+    this.motorRefGauss,
     this.pinonMarca,
     this.pinonDientes,
     this.coronaMarca,
@@ -104,6 +119,39 @@ class ValidadorVerificacion {
           NivelValidacion.infraccion,
           'Peso final ${d.pesoFinal!.toStringAsFixed(2)}g por debajo del mínimo ${d.pesoMinCoche!.toStringAsFixed(2)}g.',
         ));
+      }
+    }
+
+    // MOTOR PROPIO — comparar medidas con la referencia del catálogo.
+    // Un motor trucado da más RPM y pierde gauss respecto a la referencia.
+    if (d.motorTipo == 'PROPIO') {
+      if (d.motorRefNombre == null) {
+        if (d.motorRpm != null || d.motorUms != null) {
+          hallazgos.add(HallazgoValidacion(
+            'motor',
+            NivelValidacion.aviso,
+            'Selecciona el motor del catálogo para comprobar las medidas.',
+          ));
+        }
+      } else {
+        if (d.motorRpm != null && d.motorRefRpm != null &&
+            d.motorRpm! > d.motorRefRpm!) {
+          hallazgos.add(HallazgoValidacion(
+            'motorRpm',
+            NivelValidacion.infraccion,
+            'RPM por encima de la referencia del ${d.motorRefNombre} '
+            '(máx ${d.motorRefRpm}, medidas ${d.motorRpm}).',
+          ));
+        }
+        if (d.motorUms != null && d.motorRefGauss != null &&
+            d.motorUms! < d.motorRefGauss!) {
+          hallazgos.add(HallazgoValidacion(
+            'motorUms',
+            NivelValidacion.infraccion,
+            'Imán por debajo de la referencia del ${d.motorRefNombre} '
+            '(mín ${d.motorRefGauss}, medido ${d.motorUms}).',
+          ));
+        }
       }
     }
 

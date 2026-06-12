@@ -9,6 +9,8 @@ import 'package:pdf/widgets.dart' as pw;
 import '../core/proveedores.dart';
 import '../data/database/app_database.dart';
 import 'fotos_verificacion.dart';
+import 'pdf_marca.dart';
+import 'pdf_util.dart';
 
 class _Vrow {
   final String etiqueta;
@@ -45,7 +47,6 @@ class GeneradorPdfVerificaciones {
   static const _gris = PdfColor.fromInt(0xFF8A8A8A);
   static const _grisCl = PdfColor.fromInt(0xFFE8E8E8);
   static const _rojoOscuro = PdfColor.fromInt(0xFF1A0E0E);
-  static const _rojoAcento = PdfColor.fromInt(0xFFD32F2F);
   static const _rojoSuave = PdfColor.fromInt(0xFFFCE4E4);
   static const _verde = PdfColor.fromInt(0xFF2E7D32);
 
@@ -113,34 +114,34 @@ class GeneradorPdfVerificaciones {
         }
       } catch (_) {}
 
-      String motor = '—';
+      String motor = '-';
       if (v.motorTipo == 'PROPIO') {
-        final rpm = v.motorRpm == null ? '—' : '${v.motorRpm} RPM';
-        final ums = v.motorUms == null ? '—' : '${v.motorUms} uMs';
+        final rpm = v.motorRpm == null ? '-' : '${v.motorRpm} RPM';
+        final ums = v.motorUms == null ? '-' : '${v.motorUms} uMs';
         motor = 'Propio · $rpm · $ums';
       } else if (v.motor != null && v.motor!.isNotEmpty) {
         motor = 'Organización · nº ${v.motor}';
       }
 
-      String pinon = '—';
+      String pinon = '-';
       if (v.pinonMarca != null || v.pinonDientes != null) {
         pinon =
-            '${v.pinonMarca ?? "—"} · ${v.pinonDientes ?? "—"} dientes';
+            '${v.pinonMarca ?? "-"} · ${v.pinonDientes ?? "-"} dientes';
       }
-      String corona = '—';
+      String corona = '-';
       if (v.coronaMarca != null || v.coronaDientes != null) {
         corona =
-            '${v.coronaMarca ?? "—"} · ${v.coronaDientes ?? "—"} dientes';
+            '${v.coronaMarca ?? "-"} · ${v.coronaDientes ?? "-"} dientes';
       }
-      String llanD = '—';
+      String llanD = '-';
       if (v.llantaDelMarca != null || v.llantaDelDimension != null) {
         llanD =
-            '${v.llantaDelMarca ?? "—"} · ${v.llantaDelDimension ?? "—"}';
+            '${v.llantaDelMarca ?? "-"} · ${v.llantaDelDimension ?? "-"}';
       }
-      String llanT = '—';
+      String llanT = '-';
       if (v.llantaTraMarca != null || v.llantaTraDimension != null) {
         llanT =
-            '${v.llantaTraMarca ?? "—"} · ${v.llantaTraDimension ?? "—"}';
+            '${v.llantaTraMarca ?? "-"} · ${v.llantaTraDimension ?? "-"}';
       }
 
       lista.add(_VerifData(
@@ -157,11 +158,11 @@ class GeneradorPdfVerificaciones {
           _Vrow('Corona', corona),
           _Vrow('Llanta delantera', llanD),
           _Vrow('Llanta trasera', llanT),
-          _Vrow('Trencilla', v.trencilla ?? '—'),
-          _Vrow('Suspensión', v.suspension ?? '—'),
-          _Vrow('Bancada', v.bancada ?? '—'),
-          _Vrow('Chasis', v.chasis ?? '—'),
-          _Vrow('Neumático', v.neumatico ?? '—'),
+          _Vrow('Trencilla', v.trencilla ?? '-'),
+          _Vrow('Suspensión', v.suspension ?? '-'),
+          _Vrow('Bancada', v.bancada ?? '-'),
+          _Vrow('Chasis', v.chasis ?? '-'),
+          _Vrow('Neumático', v.neumatico ?? '-'),
         ],
         observaciones: v.observaciones,
         validada: v.validado,
@@ -171,245 +172,251 @@ class GeneradorPdfVerificaciones {
     lista.sort((a, b) => a.equipo.compareTo(b.equipo));
 
     final df = DateFormat('d MMM y', 'es_ES');
+    final fechaTxt = prueba.fecha == null ? '' : df.format(prueba.fecha!);
     final pdf = pw.Document();
 
-    pdf.addPage(pw.MultiPage(
-      pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.fromLTRB(20, 16, 20, 16),
-      header: (ctx) => ctx.pageNumber == 1
-          ? pw.SizedBox()
-          : pw.Padding(
-              padding: const pw.EdgeInsets.only(bottom: 8),
-              child: pw.Text(
-                '${campeonato?.nombre ?? "Campeonato"} · ${prueba.nombre}',
-                style: pw.TextStyle(color: _gris, fontSize: 9),
-              ),
-            ),
-      footer: (ctx) => pw.Container(
-        alignment: pw.Alignment.centerRight,
-        padding: const pw.EdgeInsets.only(top: 6),
-        child: pw.Text(
-          'Página ${ctx.pageNumber} / ${ctx.pagesCount}',
-          style: pw.TextStyle(color: _gris, fontSize: 9),
+    // Identidad visual compartida (Base 02 + logos patrocinadores).
+    final marca = await MarcaPdf.cargar();
+    final organizacion = campeonato?.organizacion ?? 'Resisbarna';
+    final subtitulo =
+        'Verificación · ${prueba.nombre} - ${campeonato?.nombre ?? ''}';
+
+    // Una hoja por verificación (ficha de escrutineo por coche). Cada ficha
+    // entra entera en su página (A4 y, si lleva fotos grandes, escalada).
+    if (lista.isEmpty) {
+      agregarHojaUnica(
+        pdf,
+        filas: 0,
+        contenido: (ctx) => marca.hero(
+          organizacion: organizacion,
+          subtitulo: subtitulo,
+          nota: fechaTxt.isEmpty ? null : fechaTxt,
         ),
-      ),
-      build: (ctx) {
-        final children = <pw.Widget>[
-          _hero(
-            campeonato: campeonato?.nombre ?? 'Campeonato',
-            prueba: prueba.nombre,
-            fecha: prueba.fecha == null
-                ? ''
-                : df.format(prueba.fecha!),
-            totalVerifs: lista.length,
-          ),
-          pw.SizedBox(height: 12),
-        ];
-        // 2 por página (en filas de 2 con altura fija ~ media página útil)
-        for (var i = 0; i < lista.length; i += 2) {
-          final a = lista[i];
-          final b = (i + 1 < lista.length) ? lista[i + 1] : null;
-          children.add(pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Expanded(child: _verifCard(a)),
-              pw.SizedBox(width: 10),
-              pw.Expanded(
-                child: b == null ? pw.SizedBox() : _verifCard(b),
-              ),
-            ],
-          ));
-          children.add(pw.SizedBox(height: 10));
-        }
-        return children;
-      },
-    ));
+      );
+    }
+    for (var i = 0; i < lista.length; i++) {
+      final v = lista[i];
+      agregarHojaUnica(
+        pdf,
+        filas: v.filas.length + (v.fotos.isNotEmpty ? 8 : 0),
+        contenido: (ctx) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            marca.hero(
+              organizacion: organizacion,
+              subtitulo: subtitulo,
+              badge: 'Ficha ${i + 1} / ${lista.length}',
+              nota: fechaTxt.isEmpty ? null : fechaTxt,
+            ),
+            pw.SizedBox(height: 12),
+            _verifCard(v),
+            pw.SizedBox(height: 12),
+            marca.pie(),
+          ],
+        ),
+      );
+    }
     return pdf.save();
   }
 
   String _peso(double? ini, double? min) {
-    if (ini == null) return '—';
-    final cumple = (min == null) ? '' : (ini >= min ? '  ✓' : '  ✗');
+    if (ini == null) return '-';
+    final cumple = (min == null) ? '' : (ini >= min ? '  OK' : '  ¡NO!');
     return '${ini.toStringAsFixed(2)} g${min == null ? '' : ' (min ${min.toStringAsFixed(2)})'}$cumple';
   }
 
   String _pesoEntero(double? ini, double? fin) {
-    if (ini == null && fin == null) return '—';
-    final iniS = ini == null ? '—' : '${ini.toStringAsFixed(2)} g';
-    final finS = fin == null ? '—' : '${fin.toStringAsFixed(2)} g';
+    if (ini == null && fin == null) return '-';
+    final iniS = ini == null ? '-' : '${ini.toStringAsFixed(2)} g';
+    final finS = fin == null ? '-' : '${fin.toStringAsFixed(2)} g';
     return 'inicio: $iniS · fin: $finS';
   }
 
   // ---- HERO ----
-  pw.Widget _hero({
-    required String campeonato,
-    required String prueba,
-    required String fecha,
-    required int totalVerifs,
-  }) {
+  // ---- FICHA (una por hoja) ----
+  pw.Widget _verifCard(_VerifData v) {
+    // Datos en dos columnas para aprovechar la hoja.
+    final mitad = (v.filas.length + 1) ~/ 2;
+    final colIzq = v.filas.take(mitad).toList();
+    final colDer = v.filas.skip(mitad).toList();
+
+    pw.Widget fila(_Vrow r) => pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(vertical: 3),
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.SizedBox(
+                width: 95,
+                child: pw.Text(r.etiqueta.toUpperCase(),
+                    style: pw.TextStyle(
+                        fontSize: 8,
+                        color: _gris,
+                        letterSpacing: 0.5,
+                        fontWeight: pw.FontWeight.bold)),
+              ),
+              pw.Expanded(
+                child: pw.Text(r.valor,
+                    maxLines: 2,
+                    style: pw.TextStyle(
+                        fontSize: 10,
+                        color: _negro,
+                        fontWeight: pw.FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+
     return pw.Container(
-      width: double.infinity,
       decoration: pw.BoxDecoration(
-        gradient: pw.LinearGradient(
-          begin: pw.Alignment.topLeft,
-          end: pw.Alignment.bottomRight,
-          colors: const [_rojoOscuro, _rojoAcento],
-        ),
+        border: pw.Border.all(color: _grisCl, width: 0.8),
         borderRadius: pw.BorderRadius.circular(10),
       ),
-      padding: const pw.EdgeInsets.fromLTRB(18, 12, 18, 12),
       child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
         children: [
-          pw.Text(
-            campeonato.toUpperCase(),
-            style: pw.TextStyle(
-                color: PdfColors.white,
-                fontSize: 9,
-                letterSpacing: 2.0,
-                fontWeight: pw.FontWeight.bold),
+          // Cabecera de la ficha: equipo + copa + estado
+          pw.Container(
+            decoration: const pw.BoxDecoration(
+              color: _rojoOscuro,
+              borderRadius: pw.BorderRadius.only(
+                topLeft: pw.Radius.circular(10),
+                topRight: pw.Radius.circular(10),
+              ),
+            ),
+            padding: const pw.EdgeInsets.fromLTRB(14, 10, 14, 10),
+            child: pw.Row(
+              children: [
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(v.equipo,
+                          maxLines: 1,
+                          style: pw.TextStyle(
+                              fontSize: 15,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.white)),
+                      pw.Text(v.pilotos,
+                          maxLines: 1,
+                          style: pw.TextStyle(
+                              fontSize: 9,
+                              color: PdfColors.white.shade(0.85))),
+                    ],
+                  ),
+                ),
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.white,
+                    borderRadius: pw.BorderRadius.circular(12),
+                  ),
+                  child: pw.Text('COPA ${v.copa}',
+                      style: pw.TextStyle(
+                          fontSize: 8,
+                          fontWeight: pw.FontWeight.bold,
+                          color: _rojoOscuro)),
+                ),
+                pw.SizedBox(width: 6),
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
+                  decoration: pw.BoxDecoration(
+                    color: v.validada ? _verde : _gris,
+                    borderRadius: pw.BorderRadius.circular(12),
+                  ),
+                  child: pw.Text(
+                    v.validada ? 'VALIDADA' : 'BORRADOR',
+                    style: pw.TextStyle(
+                        color: PdfColors.white,
+                        fontSize: 8,
+                        fontWeight: pw.FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
           ),
-          pw.SizedBox(height: 4),
-          pw.Text(
-            'VERIFICACIONES · ${prueba.toUpperCase()}',
-            style: pw.TextStyle(
-                color: PdfColors.white,
-                fontSize: 20,
-                fontWeight: pw.FontWeight.bold),
-          ),
-          pw.SizedBox(height: 4),
-          pw.Text(
-            (fecha.isEmpty ? '' : '$fecha  ·  ') +
-                '$totalVerifs verificaciones',
-            style: pw.TextStyle(
-                color: PdfColors.white.shade(0.85), fontSize: 11),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---- CARD ----
-  pw.Widget _verifCard(_VerifData v) {
-    return pw.Container(
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: _grisCl, width: 0.6),
-        borderRadius: pw.BorderRadius.circular(8),
-      ),
-      padding: const pw.EdgeInsets.all(10),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          // Cabecera
-          pw.Row(
-            children: [
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(v.equipo,
-                        maxLines: 2,
+          pw.Padding(
+            padding: const pw.EdgeInsets.all(14),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                if (v.coche != null) ...[
+                  pw.Container(
+                    width: double.infinity,
+                    padding: const pw.EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 6),
+                    decoration: pw.BoxDecoration(
+                      color: _rojoSuave,
+                      borderRadius: pw.BorderRadius.circular(6),
+                    ),
+                    child: pw.Text(v.coche!,
                         style: pw.TextStyle(
                             fontSize: 11,
                             fontWeight: pw.FontWeight.bold,
-                            color: _negro)),
-                    pw.SizedBox(height: 1),
-                    pw.Text(v.pilotos,
-                        maxLines: 2,
-                        style: pw.TextStyle(fontSize: 9, color: _gris)),
-                  ],
-                ),
-              ),
-              pw.Container(
-                padding: const pw.EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 2),
-                decoration: pw.BoxDecoration(
-                  color: _rojoSuave,
-                  borderRadius: pw.BorderRadius.circular(4),
-                ),
-                child: pw.Text(v.copa,
-                    style: pw.TextStyle(
-                        fontSize: 8,
-                        fontWeight: pw.FontWeight.bold,
-                        color: _rojoOscuro)),
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 4),
-          if (v.coche != null)
-            pw.Text('Coche: ${v.coche}',
-                style: pw.TextStyle(fontSize: 9, color: _negro)),
-          pw.SizedBox(height: 6),
-          pw.Divider(height: 0.6, color: _grisCl),
-          pw.SizedBox(height: 4),
-          // Filas de datos
-          ...v.filas.map((r) => pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(vertical: 1.5),
-                child: pw.Row(
+                            color: _rojoOscuro)),
+                  ),
+                  pw.SizedBox(height: 10),
+                ],
+                // Datos en dos columnas
+                pw.Row(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.SizedBox(
-                      width: 80,
-                      child: pw.Text(r.etiqueta,
-                          style: pw.TextStyle(
-                              fontSize: 8.5, color: _gris)),
-                    ),
                     pw.Expanded(
-                      child: pw.Text(r.valor,
-                          maxLines: 2,
-                          style: pw.TextStyle(fontSize: 8.5, color: _negro)),
-                    ),
+                        child: pw.Column(
+                            children: colIzq.map(fila).toList())),
+                    pw.SizedBox(width: 18),
+                    pw.Expanded(
+                        child: pw.Column(
+                            children: colDer.map(fila).toList())),
                   ],
                 ),
-              )),
-          if (v.observaciones != null && v.observaciones!.isNotEmpty) ...[
-            pw.SizedBox(height: 4),
-            pw.Container(
-              padding: const pw.EdgeInsets.all(5),
-              decoration: pw.BoxDecoration(
-                color: PdfColors.grey100,
-                borderRadius: pw.BorderRadius.circular(4),
-              ),
-              child: pw.Text(v.observaciones!,
-                  maxLines: 3,
-                  style: pw.TextStyle(fontSize: 8, color: _negro)),
-            ),
-          ],
-          if (v.fotos.isNotEmpty) ...[
-            pw.SizedBox(height: 6),
-            pw.Row(
-              children: v.fotos.map((bytes) {
-                return pw.Padding(
-                  padding: const pw.EdgeInsets.only(right: 4),
-                  child: pw.ClipRRect(
-                    horizontalRadius: 4,
-                    verticalRadius: 4,
-                    child: pw.Image(pw.MemoryImage(bytes),
-                        width: 56, height: 56, fit: pw.BoxFit.cover),
+                if (v.observaciones != null &&
+                    v.observaciones!.isNotEmpty) ...[
+                  pw.SizedBox(height: 10),
+                  pw.Container(
+                    width: double.infinity,
+                    padding: const pw.EdgeInsets.all(8),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.grey100,
+                      borderRadius: pw.BorderRadius.circular(6),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('OBSERVACIONES',
+                            style: pw.TextStyle(
+                                fontSize: 7,
+                                color: _gris,
+                                letterSpacing: 1,
+                                fontWeight: pw.FontWeight.bold)),
+                        pw.SizedBox(height: 2),
+                        pw.Text(v.observaciones!,
+                            maxLines: 4,
+                            style:
+                                pw.TextStyle(fontSize: 9, color: _negro)),
+                      ],
+                    ),
                   ),
-                );
-              }).toList(),
+                ],
+                if (v.fotos.isNotEmpty) ...[
+                  pw.SizedBox(height: 10),
+                  pw.Row(
+                    children: v.fotos.map((bytes) {
+                      return pw.Padding(
+                        padding: const pw.EdgeInsets.only(right: 8),
+                        child: pw.ClipRRect(
+                          horizontalRadius: 6,
+                          verticalRadius: 6,
+                          child: pw.Image(pw.MemoryImage(bytes),
+                              width: 110, height: 110, fit: pw.BoxFit.cover),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ],
             ),
-          ],
-          pw.SizedBox(height: 4),
-          pw.Row(
-            children: [
-              pw.Container(
-                padding: const pw.EdgeInsets.symmetric(
-                    horizontal: 5, vertical: 1),
-                decoration: pw.BoxDecoration(
-                  color: v.validada ? _verde : _gris,
-                  borderRadius: pw.BorderRadius.circular(3),
-                ),
-                child: pw.Text(
-                  v.validada ? 'VALIDADA' : 'BORRADOR',
-                  style: pw.TextStyle(
-                      color: PdfColors.white,
-                      fontSize: 7,
-                      fontWeight: pw.FontWeight.bold),
-                ),
-              ),
-            ],
           ),
         ],
       ),

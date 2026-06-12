@@ -8,6 +8,8 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../core/proveedores.dart';
 import '../data/database/app_database.dart';
+import 'pdf_marca.dart';
+import 'pdf_util.dart';
 
 /// Datos de una manga para el PDF.
 class _MangaPdf {
@@ -47,7 +49,7 @@ class GeneradorPdfMangas {
   GeneradorPdfMangas(this.ref);
   final Ref ref;
 
-  // Paleta — diseño moderno
+  // Paleta - diseño moderno
   static const _rojoOscuro = PdfColor.fromInt(0xFF1A0E0E);
   static const _rojoAcento = PdfColor.fromInt(0xFFD32F2F);
   static const _rojoSuave = PdfColor.fromInt(0xFFFCE4E4);
@@ -139,47 +141,53 @@ class GeneradorPdfMangas {
     final fechaTexto =
         prueba.fecha == null ? '' : fmtFecha.format(prueba.fecha!);
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.fromLTRB(22, 22, 22, 22),
-        header: (ctx) => ctx.pageNumber == 1
-            ? _hero(
-                campeonato: activo?.nombre ?? '',
-                prueba: prueba.nombre,
-                fecha: fechaTexto,
-                totalEquipos:
-                    mangasPdf.fold<int>(0, (s, m) => s + m.totalEquipos),
-                totalMangas: mangasPdf.length,
-              )
-            : _headerSecundario(prueba.nombre),
-        footer: (ctx) => _footer(ctx.pageNumber, ctx.pagesCount),
-        build: (ctx) {
-          final children = <pw.Widget>[];
-          children.add(pw.SizedBox(height: 10));
-          for (final m in mangasPdf) {
-            // Banda con título de la manga (se imprime una vez por manga)
-            children.add(_bandaManga(m));
-            // Cabecera de columnas
-            children.add(pw.Container(
+    // Identidad visual compartida (Base 02 + logos patrocinadores).
+    final marca = await MarcaPdf.cargar();
+    final organizacion = activo?.organizacion ?? 'Resisbarna';
+    final subtitulo = 'Mangas · ${prueba.nombre} - ${activo?.nombre ?? ''}';
+
+    // Una hoja por manga: cada manga entra entera en su propia página (A4 y,
+    // si tiene muchos equipos, A3), escalada si hiciera falta.
+    if (mangasPdf.isEmpty) {
+      agregarHojaUnica(
+        pdf,
+        filas: 0,
+        contenido: (ctx) => marca.hero(
+          organizacion: organizacion,
+          subtitulo: subtitulo,
+          nota: fechaTexto.isEmpty ? null : fechaTexto,
+        ),
+      );
+    }
+    for (final m in mangasPdf) {
+      agregarHojaUnica(
+        pdf,
+        filas: m.filas.length + 6, // margen para hero + banda + cabecera
+        contenido: (ctx) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            marca.hero(
+              organizacion: organizacion,
+              subtitulo: subtitulo,
+              badge: '${m.totalEquipos} equipos',
+              nota: fechaTexto.isEmpty ? null : fechaTexto,
+            ),
+            pw.SizedBox(height: 10),
+            _bandaManga(m),
+            pw.Container(
               color: PdfColors.white,
               padding: const pw.EdgeInsets.fromLTRB(10, 6, 10, 4),
               child: _cabeceraTabla(),
-            ));
-            children.add(pw.Container(
-              color: _grisClaro,
-              height: 0.5,
-            ));
-            // Filas — cada una un widget separado para que pueda paginarse
-            for (var i = 0; i < m.filas.length; i++) {
-              children.add(_filaTabla(m.filas[i], i));
-            }
-            children.add(pw.SizedBox(height: 12));
-          }
-          return children;
-        },
-      ),
-    );
+            ),
+            pw.Container(color: _grisClaro, height: 0.5),
+            for (var i = 0; i < m.filas.length; i++)
+              _filaTabla(m.filas[i], i),
+            pw.SizedBox(height: 12),
+            marca.pie(),
+          ],
+        ),
+      );
+    }
 
     return pdf.save();
   }
@@ -214,150 +222,6 @@ class GeneradorPdfMangas {
       }
     }
     return map;
-  }
-
-  // ---- HERO ----
-
-  pw.Widget _hero({
-    required String campeonato,
-    required String prueba,
-    required String fecha,
-    required int totalEquipos,
-    required int totalMangas,
-  }) {
-    return pw.Container(
-      width: double.infinity,
-      decoration: pw.BoxDecoration(
-        gradient: pw.LinearGradient(
-          begin: pw.Alignment.topLeft,
-          end: pw.Alignment.bottomRight,
-          colors: const [_rojoOscuro, _rojoAcento],
-        ),
-        borderRadius: pw.BorderRadius.circular(12),
-      ),
-      padding: const pw.EdgeInsets.fromLTRB(20, 12, 20, 12),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                campeonato.toUpperCase(),
-                style: pw.TextStyle(
-                  color: PdfColors.white,
-                  fontSize: 9,
-                  letterSpacing: 2.5,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.Container(
-                padding: const pw.EdgeInsets.symmetric(
-                    horizontal: 7, vertical: 2),
-                decoration: pw.BoxDecoration(
-                  color: PdfColors.white,
-                  borderRadius: pw.BorderRadius.circular(20),
-                ),
-                child: pw.Text(
-                  'MANGAS',
-                  style: pw.TextStyle(
-                    color: _rojoAcento,
-                    fontSize: 8,
-                    letterSpacing: 1.2,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 4),
-          pw.Text(
-            prueba.toUpperCase(),
-            style: pw.TextStyle(
-              color: PdfColors.white,
-              fontSize: 24,
-              fontWeight: pw.FontWeight.bold,
-              letterSpacing: 0.4,
-            ),
-          ),
-          if (fecha.isNotEmpty) ...[
-            pw.SizedBox(height: 2),
-            pw.Text(
-              fecha,
-              style: const pw.TextStyle(
-                color: PdfColors.white,
-                fontSize: 11,
-              ),
-            ),
-          ],
-          pw.SizedBox(height: 8),
-          pw.Row(
-            children: [
-              _statHero('$totalMangas', totalMangas == 1 ? 'manga' : 'mangas'),
-              pw.SizedBox(width: 20),
-              _statHero(
-                  '$totalEquipos', totalEquipos == 1 ? 'equipo' : 'equipos'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  pw.Widget _statHero(String numero, String etiqueta) {
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.end,
-      children: [
-        pw.Text(
-          numero,
-          style: pw.TextStyle(
-            color: PdfColors.white,
-            fontSize: 22,
-            fontWeight: pw.FontWeight.bold,
-            height: 1,
-          ),
-        ),
-        pw.SizedBox(width: 4),
-        pw.Padding(
-          padding: const pw.EdgeInsets.only(bottom: 2),
-          child: pw.Text(
-            etiqueta,
-            style: const pw.TextStyle(
-              color: PdfColors.white,
-              fontSize: 9,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  pw.Widget _headerSecundario(String prueba) {
-    return pw.Container(
-      width: double.infinity,
-      padding: const pw.EdgeInsets.fromLTRB(20, 10, 20, 10),
-      decoration: pw.BoxDecoration(
-        color: _rojoOscuro,
-        borderRadius: pw.BorderRadius.circular(8),
-      ),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text(prueba.toUpperCase(),
-              style: pw.TextStyle(
-                  color: PdfColors.white,
-                  fontSize: 14,
-                  fontWeight: pw.FontWeight.bold,
-                  letterSpacing: 1)),
-          pw.Text('MANGAS',
-              style: pw.TextStyle(
-                  color: _rojoAcento,
-                  fontSize: 10,
-                  letterSpacing: 2,
-                  fontWeight: pw.FontWeight.bold)),
-        ],
-      ),
-    );
   }
 
   // ---- BANDA DE MANGA ----
@@ -563,7 +427,7 @@ class GeneradorPdfMangas {
           pw.Expanded(
             flex: 4,
             child: pw.Text(
-              f.carril ?? '—',
+              f.carril ?? '-',
               textAlign: pw.TextAlign.right,
               style: pw.TextStyle(
                 color: f.carril == null ? _gris : _texto,
@@ -577,31 +441,6 @@ class GeneradorPdfMangas {
     );
   }
 
-  // ---- FOOTER ----
-
-  pw.Widget _footer(int pag, int total) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.only(top: 12),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text(
-            'RESISBARNA',
-            style: pw.TextStyle(
-              color: _gris,
-              fontSize: 8,
-              letterSpacing: 2,
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-          pw.Text(
-            'Página $pag / $total',
-            style: const pw.TextStyle(color: _gris, fontSize: 8),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 final generadorPdfMangasProvider = Provider<GeneradorPdfMangas>((ref) {

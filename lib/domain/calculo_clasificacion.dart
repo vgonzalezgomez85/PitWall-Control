@@ -59,10 +59,14 @@ class CalculoClasificacion {
   /// - [pilotos]: lista de pilotos con sus datos (id, nombre, equipo, copa, categoría, créditos).
   /// - [resultadosPorPiloto]: mapa pilotoId → FilaResultados.
   /// - [numDescartes]: cuántas pruebas se descartan por piloto (las de peor puntuación).
+  /// - [ordenarPorNeto]: durante la temporada se ordena por puntos BRUTOS;
+  ///   solo al terminar la última prueba del campeonato se ordena por NETOS
+  ///   (cuando los descartes ya son definitivos).
   static List<FilaClasificacion> calcular({
-    required List<_PilotoBase> pilotos,
+    required List<PilotoBase> pilotos,
     required Map<int, FilaResultados> resultadosPorPiloto,
     required int numDescartes,
+    bool ordenarPorNeto = false,
   }) {
     final out = <FilaClasificacion>[];
     for (final p in pilotos) {
@@ -103,23 +107,40 @@ class CalculoClasificacion {
         totalARestar: totalAR,
       ));
     }
-    // Ordenar por TOTAL NETO descendente, desempate por totalBruto, luego nombre
+    // Orden: por BRUTO durante la temporada; por NETO al cierre del
+    // campeonato. El otro total actúa de desempate, y después el nombre.
     out.sort((a, b) {
-      final n = b.totalNeto.compareTo(a.totalNeto);
-      if (n != 0) return n;
-      final br = b.totalBruto.compareTo(a.totalBruto);
-      if (br != 0) return br;
+      final primario = ordenarPorNeto
+          ? b.totalNeto.compareTo(a.totalNeto)
+          : b.totalBruto.compareTo(a.totalBruto);
+      if (primario != 0) return primario;
+      final secundario = ordenarPorNeto
+          ? b.totalBruto.compareTo(a.totalBruto)
+          : b.totalNeto.compareTo(a.totalNeto);
+      if (secundario != 0) return secundario;
       return a.pilotoNombre.compareTo(b.pilotoNombre);
     });
-    // Asignar posiciones
-    for (var i = 0; i < out.length; i++) {
-      out[i].posicion = i + 1;
-    }
+    asignarPosiciones(out);
     return out;
+  }
+
+  /// Asigna posiciones con ranking denso: los pilotos empatados (mismo total
+  /// neto y mismo bruto) comparten posición y la siguiente NO se salta
+  /// (1, 1, 2, 3, 3, 4…). La lista debe venir ya ordenada.
+  static void asignarPosiciones(List<FilaClasificacion> filas) {
+    var posicion = 0;
+    for (var i = 0; i < filas.length; i++) {
+      final empatado = i > 0 &&
+          filas[i].totalNeto == filas[i - 1].totalNeto &&
+          filas[i].totalBruto == filas[i - 1].totalBruto;
+      if (!empatado) posicion++;
+      filas[i].posicion = posicion;
+    }
   }
 }
 
-class _PilotoBase {
+/// Datos base de un piloto para entrar en el cálculo de la clasificación.
+class PilotoBase {
   final int pilotoId;
   final String nombre;
   final int equipoId;
@@ -129,7 +150,7 @@ class _PilotoBase {
   final int creditosIniciales;
   final int creditosActuales;
 
-  _PilotoBase({
+  PilotoBase({
     required this.pilotoId,
     required this.nombre,
     required this.equipoId,
@@ -139,11 +160,9 @@ class _PilotoBase {
     required this.creditosIniciales,
     required this.creditosActuales,
   });
-}
 
-/// Helper público para construir [_PilotoBase] desde fuera (factory).
-class PilotoBase {
-  static _PilotoBase crear({
+  /// Alias del constructor, mantenido por compatibilidad con los llamadores.
+  static PilotoBase crear({
     required int pilotoId,
     required String nombre,
     required int equipoId,
@@ -153,7 +172,7 @@ class PilotoBase {
     required int creditosIniciales,
     required int creditosActuales,
   }) {
-    return _PilotoBase(
+    return PilotoBase(
       pilotoId: pilotoId,
       nombre: nombre,
       equipoId: equipoId,
