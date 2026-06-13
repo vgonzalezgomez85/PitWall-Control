@@ -53,7 +53,7 @@ class _AppResisbarnaState extends ConsumerState<AppResisbarna> {
   Widget build(BuildContext context) {
     final oscuro = ref.watch(temaOscuroProvider);
     return MaterialApp(
-      title: 'PitWall',
+      title: 'PitWall Control',
       debugShowCheckedModeBanner: false,
       theme: TemaApp.claro(),
       darkTheme: TemaApp.oscuro(),
