@@ -114,6 +114,36 @@ class $CampeonatosTable extends Campeonatos
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _usaTesoreriaMeta = const VerificationMeta(
+    'usaTesoreria',
+  );
+  @override
+  late final GeneratedColumn<bool> usaTesoreria = GeneratedColumn<bool>(
+    'usa_tesoreria',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("usa_tesoreria" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _finalizadoMeta = const VerificationMeta(
+    'finalizado',
+  );
+  @override
+  late final GeneratedColumn<bool> finalizado = GeneratedColumn<bool>(
+    'finalizado',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("finalizado" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _copasJsonMeta = const VerificationMeta(
     'copasJson',
   );
@@ -185,6 +215,76 @@ class $CampeonatosTable extends Campeonatos
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _pinonDientesMinMeta = const VerificationMeta(
+    'pinonDientesMin',
+  );
+  @override
+  late final GeneratedColumn<int> pinonDientesMin = GeneratedColumn<int>(
+    'pinon_dientes_min',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(12),
+  );
+  static const VerificationMeta _pinonDientesMaxMeta = const VerificationMeta(
+    'pinonDientesMax',
+  );
+  @override
+  late final GeneratedColumn<int> pinonDientesMax = GeneratedColumn<int>(
+    'pinon_dientes_max',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(12),
+  );
+  static const VerificationMeta _coronaDientesMinMeta = const VerificationMeta(
+    'coronaDientesMin',
+  );
+  @override
+  late final GeneratedColumn<int> coronaDientesMin = GeneratedColumn<int>(
+    'corona_dientes_min',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(24),
+  );
+  static const VerificationMeta _coronaDientesMaxMeta = const VerificationMeta(
+    'coronaDientesMax',
+  );
+  @override
+  late final GeneratedColumn<int> coronaDientesMax = GeneratedColumn<int>(
+    'corona_dientes_max',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(30),
+  );
+  static const VerificationMeta _marcaTituloMeta = const VerificationMeta(
+    'marcaTitulo',
+  );
+  @override
+  late final GeneratedColumn<String> marcaTitulo = GeneratedColumn<String>(
+    'marca_titulo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _marcaLemaMeta = const VerificationMeta(
+    'marcaLema',
+  );
+  @override
+  late final GeneratedColumn<String> marcaLema = GeneratedColumn<String>(
+    'marca_lema',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _creadoEnMeta = const VerificationMeta(
     'creadoEn',
   );
@@ -208,12 +308,20 @@ class $CampeonatosTable extends Campeonatos
     topeRegularizacion,
     numDescartes,
     usaCreditos,
+    usaTesoreria,
+    finalizado,
     copasJson,
     cuotaPagat,
     cuotaCoordinadora,
     cuotaClub,
     motorSorteoMin,
     motorSorteoMax,
+    pinonDientesMin,
+    pinonDientesMax,
+    coronaDientesMin,
+    coronaDientesMax,
+    marcaTitulo,
+    marcaLema,
     creadoEn,
   ];
   @override
@@ -297,6 +405,21 @@ class $CampeonatosTable extends Campeonatos
         ),
       );
     }
+    if (data.containsKey('usa_tesoreria')) {
+      context.handle(
+        _usaTesoreriaMeta,
+        usaTesoreria.isAcceptableOrUnknown(
+          data['usa_tesoreria']!,
+          _usaTesoreriaMeta,
+        ),
+      );
+    }
+    if (data.containsKey('finalizado')) {
+      context.handle(
+        _finalizadoMeta,
+        finalizado.isAcceptableOrUnknown(data['finalizado']!, _finalizadoMeta),
+      );
+    }
     if (data.containsKey('copas_json')) {
       context.handle(
         _copasJsonMeta,
@@ -340,6 +463,57 @@ class $CampeonatosTable extends Campeonatos
           data['motor_sorteo_max']!,
           _motorSorteoMaxMeta,
         ),
+      );
+    }
+    if (data.containsKey('pinon_dientes_min')) {
+      context.handle(
+        _pinonDientesMinMeta,
+        pinonDientesMin.isAcceptableOrUnknown(
+          data['pinon_dientes_min']!,
+          _pinonDientesMinMeta,
+        ),
+      );
+    }
+    if (data.containsKey('pinon_dientes_max')) {
+      context.handle(
+        _pinonDientesMaxMeta,
+        pinonDientesMax.isAcceptableOrUnknown(
+          data['pinon_dientes_max']!,
+          _pinonDientesMaxMeta,
+        ),
+      );
+    }
+    if (data.containsKey('corona_dientes_min')) {
+      context.handle(
+        _coronaDientesMinMeta,
+        coronaDientesMin.isAcceptableOrUnknown(
+          data['corona_dientes_min']!,
+          _coronaDientesMinMeta,
+        ),
+      );
+    }
+    if (data.containsKey('corona_dientes_max')) {
+      context.handle(
+        _coronaDientesMaxMeta,
+        coronaDientesMax.isAcceptableOrUnknown(
+          data['corona_dientes_max']!,
+          _coronaDientesMaxMeta,
+        ),
+      );
+    }
+    if (data.containsKey('marca_titulo')) {
+      context.handle(
+        _marcaTituloMeta,
+        marcaTitulo.isAcceptableOrUnknown(
+          data['marca_titulo']!,
+          _marcaTituloMeta,
+        ),
+      );
+    }
+    if (data.containsKey('marca_lema')) {
+      context.handle(
+        _marcaLemaMeta,
+        marcaLema.isAcceptableOrUnknown(data['marca_lema']!, _marcaLemaMeta),
       );
     }
     if (data.containsKey('creado_en')) {
@@ -393,6 +567,14 @@ class $CampeonatosTable extends Campeonatos
         DriftSqlType.bool,
         data['${effectivePrefix}usa_creditos'],
       )!,
+      usaTesoreria: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}usa_tesoreria'],
+      )!,
+      finalizado: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}finalizado'],
+      )!,
       copasJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}copas_json'],
@@ -416,6 +598,30 @@ class $CampeonatosTable extends Campeonatos
       motorSorteoMax: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}motor_sorteo_max'],
+      ),
+      pinonDientesMin: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}pinon_dientes_min'],
+      )!,
+      pinonDientesMax: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}pinon_dientes_max'],
+      )!,
+      coronaDientesMin: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}corona_dientes_min'],
+      )!,
+      coronaDientesMax: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}corona_dientes_max'],
+      )!,
+      marcaTitulo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}marca_titulo'],
+      ),
+      marcaLema: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}marca_lema'],
       ),
       creadoEn: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -444,6 +650,12 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   /// Si false, se ocultan todos los campos relacionados con créditos.
   final bool usaCreditos;
 
+  /// Si true, el campeonato gestiona tesorería (cuotas/pagos por prueba).
+  final bool usaTesoreria;
+
+  /// Si true, el campeonato está finalizado (temporada cerrada).
+  final bool finalizado;
+
   /// Lista de copas/categorías activas para este campeonato (JSON array de strings).
   /// Ej: ["GT","GT2","SLOT.IT"] o ["Grupo C","Clásicos"].
   final String copasJson;
@@ -461,6 +673,18 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   /// Si están a null, el sorteo de motores no está configurado.
   final int? motorSorteoMin;
   final int? motorSorteoMax;
+
+  /// Rango de dientes permitido en la verificación (inclusive). Por defecto el
+  /// histórico de Resisbarna: piñón 12 fijo, corona 24-30.
+  final int pinonDientesMin;
+  final int pinonDientesMax;
+  final int coronaDientesMin;
+  final int coronaDientesMax;
+
+  /// Marca propia del campeonato en los PDF (título de cabecera y lema del
+  /// pie). Si están vacíos se usa la marca global de la app.
+  final String? marcaTitulo;
+  final String? marcaLema;
   final DateTime creadoEn;
   const Campeonato({
     required this.id,
@@ -472,12 +696,20 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     required this.topeRegularizacion,
     required this.numDescartes,
     required this.usaCreditos,
+    required this.usaTesoreria,
+    required this.finalizado,
     required this.copasJson,
     required this.cuotaPagat,
     required this.cuotaCoordinadora,
     required this.cuotaClub,
     this.motorSorteoMin,
     this.motorSorteoMax,
+    required this.pinonDientesMin,
+    required this.pinonDientesMax,
+    required this.coronaDientesMin,
+    required this.coronaDientesMax,
+    this.marcaTitulo,
+    this.marcaLema,
     required this.creadoEn,
   });
   @override
@@ -492,6 +724,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     map['tope_regularizacion'] = Variable<int>(topeRegularizacion);
     map['num_descartes'] = Variable<int>(numDescartes);
     map['usa_creditos'] = Variable<bool>(usaCreditos);
+    map['usa_tesoreria'] = Variable<bool>(usaTesoreria);
+    map['finalizado'] = Variable<bool>(finalizado);
     map['copas_json'] = Variable<String>(copasJson);
     map['cuota_pagat'] = Variable<double>(cuotaPagat);
     map['cuota_coordinadora'] = Variable<double>(cuotaCoordinadora);
@@ -501,6 +735,16 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     }
     if (!nullToAbsent || motorSorteoMax != null) {
       map['motor_sorteo_max'] = Variable<int>(motorSorteoMax);
+    }
+    map['pinon_dientes_min'] = Variable<int>(pinonDientesMin);
+    map['pinon_dientes_max'] = Variable<int>(pinonDientesMax);
+    map['corona_dientes_min'] = Variable<int>(coronaDientesMin);
+    map['corona_dientes_max'] = Variable<int>(coronaDientesMax);
+    if (!nullToAbsent || marcaTitulo != null) {
+      map['marca_titulo'] = Variable<String>(marcaTitulo);
+    }
+    if (!nullToAbsent || marcaLema != null) {
+      map['marca_lema'] = Variable<String>(marcaLema);
     }
     map['creado_en'] = Variable<DateTime>(creadoEn);
     return map;
@@ -517,6 +761,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       topeRegularizacion: Value(topeRegularizacion),
       numDescartes: Value(numDescartes),
       usaCreditos: Value(usaCreditos),
+      usaTesoreria: Value(usaTesoreria),
+      finalizado: Value(finalizado),
       copasJson: Value(copasJson),
       cuotaPagat: Value(cuotaPagat),
       cuotaCoordinadora: Value(cuotaCoordinadora),
@@ -527,6 +773,16 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       motorSorteoMax: motorSorteoMax == null && nullToAbsent
           ? const Value.absent()
           : Value(motorSorteoMax),
+      pinonDientesMin: Value(pinonDientesMin),
+      pinonDientesMax: Value(pinonDientesMax),
+      coronaDientesMin: Value(coronaDientesMin),
+      coronaDientesMax: Value(coronaDientesMax),
+      marcaTitulo: marcaTitulo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(marcaTitulo),
+      marcaLema: marcaLema == null && nullToAbsent
+          ? const Value.absent()
+          : Value(marcaLema),
       creadoEn: Value(creadoEn),
     );
   }
@@ -546,12 +802,20 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       topeRegularizacion: serializer.fromJson<int>(json['topeRegularizacion']),
       numDescartes: serializer.fromJson<int>(json['numDescartes']),
       usaCreditos: serializer.fromJson<bool>(json['usaCreditos']),
+      usaTesoreria: serializer.fromJson<bool>(json['usaTesoreria']),
+      finalizado: serializer.fromJson<bool>(json['finalizado']),
       copasJson: serializer.fromJson<String>(json['copasJson']),
       cuotaPagat: serializer.fromJson<double>(json['cuotaPagat']),
       cuotaCoordinadora: serializer.fromJson<double>(json['cuotaCoordinadora']),
       cuotaClub: serializer.fromJson<double>(json['cuotaClub']),
       motorSorteoMin: serializer.fromJson<int?>(json['motorSorteoMin']),
       motorSorteoMax: serializer.fromJson<int?>(json['motorSorteoMax']),
+      pinonDientesMin: serializer.fromJson<int>(json['pinonDientesMin']),
+      pinonDientesMax: serializer.fromJson<int>(json['pinonDientesMax']),
+      coronaDientesMin: serializer.fromJson<int>(json['coronaDientesMin']),
+      coronaDientesMax: serializer.fromJson<int>(json['coronaDientesMax']),
+      marcaTitulo: serializer.fromJson<String?>(json['marcaTitulo']),
+      marcaLema: serializer.fromJson<String?>(json['marcaLema']),
       creadoEn: serializer.fromJson<DateTime>(json['creadoEn']),
     );
   }
@@ -568,12 +832,20 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       'topeRegularizacion': serializer.toJson<int>(topeRegularizacion),
       'numDescartes': serializer.toJson<int>(numDescartes),
       'usaCreditos': serializer.toJson<bool>(usaCreditos),
+      'usaTesoreria': serializer.toJson<bool>(usaTesoreria),
+      'finalizado': serializer.toJson<bool>(finalizado),
       'copasJson': serializer.toJson<String>(copasJson),
       'cuotaPagat': serializer.toJson<double>(cuotaPagat),
       'cuotaCoordinadora': serializer.toJson<double>(cuotaCoordinadora),
       'cuotaClub': serializer.toJson<double>(cuotaClub),
       'motorSorteoMin': serializer.toJson<int?>(motorSorteoMin),
       'motorSorteoMax': serializer.toJson<int?>(motorSorteoMax),
+      'pinonDientesMin': serializer.toJson<int>(pinonDientesMin),
+      'pinonDientesMax': serializer.toJson<int>(pinonDientesMax),
+      'coronaDientesMin': serializer.toJson<int>(coronaDientesMin),
+      'coronaDientesMax': serializer.toJson<int>(coronaDientesMax),
+      'marcaTitulo': serializer.toJson<String?>(marcaTitulo),
+      'marcaLema': serializer.toJson<String?>(marcaLema),
       'creadoEn': serializer.toJson<DateTime>(creadoEn),
     };
   }
@@ -588,12 +860,20 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     int? topeRegularizacion,
     int? numDescartes,
     bool? usaCreditos,
+    bool? usaTesoreria,
+    bool? finalizado,
     String? copasJson,
     double? cuotaPagat,
     double? cuotaCoordinadora,
     double? cuotaClub,
     Value<int?> motorSorteoMin = const Value.absent(),
     Value<int?> motorSorteoMax = const Value.absent(),
+    int? pinonDientesMin,
+    int? pinonDientesMax,
+    int? coronaDientesMin,
+    int? coronaDientesMax,
+    Value<String?> marcaTitulo = const Value.absent(),
+    Value<String?> marcaLema = const Value.absent(),
     DateTime? creadoEn,
   }) => Campeonato(
     id: id ?? this.id,
@@ -605,6 +885,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     topeRegularizacion: topeRegularizacion ?? this.topeRegularizacion,
     numDescartes: numDescartes ?? this.numDescartes,
     usaCreditos: usaCreditos ?? this.usaCreditos,
+    usaTesoreria: usaTesoreria ?? this.usaTesoreria,
+    finalizado: finalizado ?? this.finalizado,
     copasJson: copasJson ?? this.copasJson,
     cuotaPagat: cuotaPagat ?? this.cuotaPagat,
     cuotaCoordinadora: cuotaCoordinadora ?? this.cuotaCoordinadora,
@@ -615,6 +897,12 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     motorSorteoMax: motorSorteoMax.present
         ? motorSorteoMax.value
         : this.motorSorteoMax,
+    pinonDientesMin: pinonDientesMin ?? this.pinonDientesMin,
+    pinonDientesMax: pinonDientesMax ?? this.pinonDientesMax,
+    coronaDientesMin: coronaDientesMin ?? this.coronaDientesMin,
+    coronaDientesMax: coronaDientesMax ?? this.coronaDientesMax,
+    marcaTitulo: marcaTitulo.present ? marcaTitulo.value : this.marcaTitulo,
+    marcaLema: marcaLema.present ? marcaLema.value : this.marcaLema,
     creadoEn: creadoEn ?? this.creadoEn,
   );
   Campeonato copyWithCompanion(CampeonatosCompanion data) {
@@ -636,6 +924,12 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       usaCreditos: data.usaCreditos.present
           ? data.usaCreditos.value
           : this.usaCreditos,
+      usaTesoreria: data.usaTesoreria.present
+          ? data.usaTesoreria.value
+          : this.usaTesoreria,
+      finalizado: data.finalizado.present
+          ? data.finalizado.value
+          : this.finalizado,
       copasJson: data.copasJson.present ? data.copasJson.value : this.copasJson,
       cuotaPagat: data.cuotaPagat.present
           ? data.cuotaPagat.value
@@ -650,6 +944,22 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       motorSorteoMax: data.motorSorteoMax.present
           ? data.motorSorteoMax.value
           : this.motorSorteoMax,
+      pinonDientesMin: data.pinonDientesMin.present
+          ? data.pinonDientesMin.value
+          : this.pinonDientesMin,
+      pinonDientesMax: data.pinonDientesMax.present
+          ? data.pinonDientesMax.value
+          : this.pinonDientesMax,
+      coronaDientesMin: data.coronaDientesMin.present
+          ? data.coronaDientesMin.value
+          : this.coronaDientesMin,
+      coronaDientesMax: data.coronaDientesMax.present
+          ? data.coronaDientesMax.value
+          : this.coronaDientesMax,
+      marcaTitulo: data.marcaTitulo.present
+          ? data.marcaTitulo.value
+          : this.marcaTitulo,
+      marcaLema: data.marcaLema.present ? data.marcaLema.value : this.marcaLema,
       creadoEn: data.creadoEn.present ? data.creadoEn.value : this.creadoEn,
     );
   }
@@ -666,19 +976,27 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           ..write('topeRegularizacion: $topeRegularizacion, ')
           ..write('numDescartes: $numDescartes, ')
           ..write('usaCreditos: $usaCreditos, ')
+          ..write('usaTesoreria: $usaTesoreria, ')
+          ..write('finalizado: $finalizado, ')
           ..write('copasJson: $copasJson, ')
           ..write('cuotaPagat: $cuotaPagat, ')
           ..write('cuotaCoordinadora: $cuotaCoordinadora, ')
           ..write('cuotaClub: $cuotaClub, ')
           ..write('motorSorteoMin: $motorSorteoMin, ')
           ..write('motorSorteoMax: $motorSorteoMax, ')
+          ..write('pinonDientesMin: $pinonDientesMin, ')
+          ..write('pinonDientesMax: $pinonDientesMax, ')
+          ..write('coronaDientesMin: $coronaDientesMin, ')
+          ..write('coronaDientesMax: $coronaDientesMax, ')
+          ..write('marcaTitulo: $marcaTitulo, ')
+          ..write('marcaLema: $marcaLema, ')
           ..write('creadoEn: $creadoEn')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     nombre,
     formato,
@@ -688,14 +1006,22 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     topeRegularizacion,
     numDescartes,
     usaCreditos,
+    usaTesoreria,
+    finalizado,
     copasJson,
     cuotaPagat,
     cuotaCoordinadora,
     cuotaClub,
     motorSorteoMin,
     motorSorteoMax,
+    pinonDientesMin,
+    pinonDientesMax,
+    coronaDientesMin,
+    coronaDientesMax,
+    marcaTitulo,
+    marcaLema,
     creadoEn,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -709,12 +1035,20 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           other.topeRegularizacion == this.topeRegularizacion &&
           other.numDescartes == this.numDescartes &&
           other.usaCreditos == this.usaCreditos &&
+          other.usaTesoreria == this.usaTesoreria &&
+          other.finalizado == this.finalizado &&
           other.copasJson == this.copasJson &&
           other.cuotaPagat == this.cuotaPagat &&
           other.cuotaCoordinadora == this.cuotaCoordinadora &&
           other.cuotaClub == this.cuotaClub &&
           other.motorSorteoMin == this.motorSorteoMin &&
           other.motorSorteoMax == this.motorSorteoMax &&
+          other.pinonDientesMin == this.pinonDientesMin &&
+          other.pinonDientesMax == this.pinonDientesMax &&
+          other.coronaDientesMin == this.coronaDientesMin &&
+          other.coronaDientesMax == this.coronaDientesMax &&
+          other.marcaTitulo == this.marcaTitulo &&
+          other.marcaLema == this.marcaLema &&
           other.creadoEn == this.creadoEn);
 }
 
@@ -728,12 +1062,20 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   final Value<int> topeRegularizacion;
   final Value<int> numDescartes;
   final Value<bool> usaCreditos;
+  final Value<bool> usaTesoreria;
+  final Value<bool> finalizado;
   final Value<String> copasJson;
   final Value<double> cuotaPagat;
   final Value<double> cuotaCoordinadora;
   final Value<double> cuotaClub;
   final Value<int?> motorSorteoMin;
   final Value<int?> motorSorteoMax;
+  final Value<int> pinonDientesMin;
+  final Value<int> pinonDientesMax;
+  final Value<int> coronaDientesMin;
+  final Value<int> coronaDientesMax;
+  final Value<String?> marcaTitulo;
+  final Value<String?> marcaLema;
   final Value<DateTime> creadoEn;
   const CampeonatosCompanion({
     this.id = const Value.absent(),
@@ -745,12 +1087,20 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.topeRegularizacion = const Value.absent(),
     this.numDescartes = const Value.absent(),
     this.usaCreditos = const Value.absent(),
+    this.usaTesoreria = const Value.absent(),
+    this.finalizado = const Value.absent(),
     this.copasJson = const Value.absent(),
     this.cuotaPagat = const Value.absent(),
     this.cuotaCoordinadora = const Value.absent(),
     this.cuotaClub = const Value.absent(),
     this.motorSorteoMin = const Value.absent(),
     this.motorSorteoMax = const Value.absent(),
+    this.pinonDientesMin = const Value.absent(),
+    this.pinonDientesMax = const Value.absent(),
+    this.coronaDientesMin = const Value.absent(),
+    this.coronaDientesMax = const Value.absent(),
+    this.marcaTitulo = const Value.absent(),
+    this.marcaLema = const Value.absent(),
     this.creadoEn = const Value.absent(),
   });
   CampeonatosCompanion.insert({
@@ -763,12 +1113,20 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.topeRegularizacion = const Value.absent(),
     this.numDescartes = const Value.absent(),
     this.usaCreditos = const Value.absent(),
+    this.usaTesoreria = const Value.absent(),
+    this.finalizado = const Value.absent(),
     this.copasJson = const Value.absent(),
     this.cuotaPagat = const Value.absent(),
     this.cuotaCoordinadora = const Value.absent(),
     this.cuotaClub = const Value.absent(),
     this.motorSorteoMin = const Value.absent(),
     this.motorSorteoMax = const Value.absent(),
+    this.pinonDientesMin = const Value.absent(),
+    this.pinonDientesMax = const Value.absent(),
+    this.coronaDientesMin = const Value.absent(),
+    this.coronaDientesMax = const Value.absent(),
+    this.marcaTitulo = const Value.absent(),
+    this.marcaLema = const Value.absent(),
     this.creadoEn = const Value.absent(),
   }) : nombre = Value(nombre),
        formato = Value(formato),
@@ -783,12 +1141,20 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Expression<int>? topeRegularizacion,
     Expression<int>? numDescartes,
     Expression<bool>? usaCreditos,
+    Expression<bool>? usaTesoreria,
+    Expression<bool>? finalizado,
     Expression<String>? copasJson,
     Expression<double>? cuotaPagat,
     Expression<double>? cuotaCoordinadora,
     Expression<double>? cuotaClub,
     Expression<int>? motorSorteoMin,
     Expression<int>? motorSorteoMax,
+    Expression<int>? pinonDientesMin,
+    Expression<int>? pinonDientesMax,
+    Expression<int>? coronaDientesMin,
+    Expression<int>? coronaDientesMax,
+    Expression<String>? marcaTitulo,
+    Expression<String>? marcaLema,
     Expression<DateTime>? creadoEn,
   }) {
     return RawValuesInsertable({
@@ -801,12 +1167,20 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       if (topeRegularizacion != null) 'tope_regularizacion': topeRegularizacion,
       if (numDescartes != null) 'num_descartes': numDescartes,
       if (usaCreditos != null) 'usa_creditos': usaCreditos,
+      if (usaTesoreria != null) 'usa_tesoreria': usaTesoreria,
+      if (finalizado != null) 'finalizado': finalizado,
       if (copasJson != null) 'copas_json': copasJson,
       if (cuotaPagat != null) 'cuota_pagat': cuotaPagat,
       if (cuotaCoordinadora != null) 'cuota_coordinadora': cuotaCoordinadora,
       if (cuotaClub != null) 'cuota_club': cuotaClub,
       if (motorSorteoMin != null) 'motor_sorteo_min': motorSorteoMin,
       if (motorSorteoMax != null) 'motor_sorteo_max': motorSorteoMax,
+      if (pinonDientesMin != null) 'pinon_dientes_min': pinonDientesMin,
+      if (pinonDientesMax != null) 'pinon_dientes_max': pinonDientesMax,
+      if (coronaDientesMin != null) 'corona_dientes_min': coronaDientesMin,
+      if (coronaDientesMax != null) 'corona_dientes_max': coronaDientesMax,
+      if (marcaTitulo != null) 'marca_titulo': marcaTitulo,
+      if (marcaLema != null) 'marca_lema': marcaLema,
       if (creadoEn != null) 'creado_en': creadoEn,
     });
   }
@@ -821,12 +1195,20 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Value<int>? topeRegularizacion,
     Value<int>? numDescartes,
     Value<bool>? usaCreditos,
+    Value<bool>? usaTesoreria,
+    Value<bool>? finalizado,
     Value<String>? copasJson,
     Value<double>? cuotaPagat,
     Value<double>? cuotaCoordinadora,
     Value<double>? cuotaClub,
     Value<int?>? motorSorteoMin,
     Value<int?>? motorSorteoMax,
+    Value<int>? pinonDientesMin,
+    Value<int>? pinonDientesMax,
+    Value<int>? coronaDientesMin,
+    Value<int>? coronaDientesMax,
+    Value<String?>? marcaTitulo,
+    Value<String?>? marcaLema,
     Value<DateTime>? creadoEn,
   }) {
     return CampeonatosCompanion(
@@ -839,12 +1221,20 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       topeRegularizacion: topeRegularizacion ?? this.topeRegularizacion,
       numDescartes: numDescartes ?? this.numDescartes,
       usaCreditos: usaCreditos ?? this.usaCreditos,
+      usaTesoreria: usaTesoreria ?? this.usaTesoreria,
+      finalizado: finalizado ?? this.finalizado,
       copasJson: copasJson ?? this.copasJson,
       cuotaPagat: cuotaPagat ?? this.cuotaPagat,
       cuotaCoordinadora: cuotaCoordinadora ?? this.cuotaCoordinadora,
       cuotaClub: cuotaClub ?? this.cuotaClub,
       motorSorteoMin: motorSorteoMin ?? this.motorSorteoMin,
       motorSorteoMax: motorSorteoMax ?? this.motorSorteoMax,
+      pinonDientesMin: pinonDientesMin ?? this.pinonDientesMin,
+      pinonDientesMax: pinonDientesMax ?? this.pinonDientesMax,
+      coronaDientesMin: coronaDientesMin ?? this.coronaDientesMin,
+      coronaDientesMax: coronaDientesMax ?? this.coronaDientesMax,
+      marcaTitulo: marcaTitulo ?? this.marcaTitulo,
+      marcaLema: marcaLema ?? this.marcaLema,
       creadoEn: creadoEn ?? this.creadoEn,
     );
   }
@@ -879,6 +1269,12 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     if (usaCreditos.present) {
       map['usa_creditos'] = Variable<bool>(usaCreditos.value);
     }
+    if (usaTesoreria.present) {
+      map['usa_tesoreria'] = Variable<bool>(usaTesoreria.value);
+    }
+    if (finalizado.present) {
+      map['finalizado'] = Variable<bool>(finalizado.value);
+    }
     if (copasJson.present) {
       map['copas_json'] = Variable<String>(copasJson.value);
     }
@@ -896,6 +1292,24 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     }
     if (motorSorteoMax.present) {
       map['motor_sorteo_max'] = Variable<int>(motorSorteoMax.value);
+    }
+    if (pinonDientesMin.present) {
+      map['pinon_dientes_min'] = Variable<int>(pinonDientesMin.value);
+    }
+    if (pinonDientesMax.present) {
+      map['pinon_dientes_max'] = Variable<int>(pinonDientesMax.value);
+    }
+    if (coronaDientesMin.present) {
+      map['corona_dientes_min'] = Variable<int>(coronaDientesMin.value);
+    }
+    if (coronaDientesMax.present) {
+      map['corona_dientes_max'] = Variable<int>(coronaDientesMax.value);
+    }
+    if (marcaTitulo.present) {
+      map['marca_titulo'] = Variable<String>(marcaTitulo.value);
+    }
+    if (marcaLema.present) {
+      map['marca_lema'] = Variable<String>(marcaLema.value);
     }
     if (creadoEn.present) {
       map['creado_en'] = Variable<DateTime>(creadoEn.value);
@@ -915,12 +1329,20 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
           ..write('topeRegularizacion: $topeRegularizacion, ')
           ..write('numDescartes: $numDescartes, ')
           ..write('usaCreditos: $usaCreditos, ')
+          ..write('usaTesoreria: $usaTesoreria, ')
+          ..write('finalizado: $finalizado, ')
           ..write('copasJson: $copasJson, ')
           ..write('cuotaPagat: $cuotaPagat, ')
           ..write('cuotaCoordinadora: $cuotaCoordinadora, ')
           ..write('cuotaClub: $cuotaClub, ')
           ..write('motorSorteoMin: $motorSorteoMin, ')
           ..write('motorSorteoMax: $motorSorteoMax, ')
+          ..write('pinonDientesMin: $pinonDientesMin, ')
+          ..write('pinonDientesMax: $pinonDientesMax, ')
+          ..write('coronaDientesMin: $coronaDientesMin, ')
+          ..write('coronaDientesMax: $coronaDientesMax, ')
+          ..write('marcaTitulo: $marcaTitulo, ')
+          ..write('marcaLema: $marcaLema, ')
           ..write('creadoEn: $creadoEn')
           ..write(')'))
         .toString();
@@ -2111,6 +2533,17 @@ class $PilotoCampeonatoTable extends PilotoCampeonato
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _categoriaFinalMeta = const VerificationMeta(
+    'categoriaFinal',
+  );
+  @override
+  late final GeneratedColumn<String> categoriaFinal = GeneratedColumn<String>(
+    'categoria_final',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _creditosInicialesMeta = const VerificationMeta(
     'creditosIniciales',
   );
@@ -2171,6 +2604,7 @@ class $PilotoCampeonatoTable extends PilotoCampeonato
     pilotoId,
     campeonatoId,
     categoria,
+    categoriaFinal,
     creditosIniciales,
     creditosActuales,
     saldoTemporadaAnterior,
@@ -2215,6 +2649,15 @@ class $PilotoCampeonatoTable extends PilotoCampeonato
       );
     } else if (isInserting) {
       context.missing(_categoriaMeta);
+    }
+    if (data.containsKey('categoria_final')) {
+      context.handle(
+        _categoriaFinalMeta,
+        categoriaFinal.isAcceptableOrUnknown(
+          data['categoria_final']!,
+          _categoriaFinalMeta,
+        ),
+      );
     }
     if (data.containsKey('creditos_iniciales')) {
       context.handle(
@@ -2286,6 +2729,10 @@ class $PilotoCampeonatoTable extends PilotoCampeonato
         DriftSqlType.string,
         data['${effectivePrefix}categoria'],
       )!,
+      categoriaFinal: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}categoria_final'],
+      ),
       creditosIniciales: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}creditos_iniciales'],
@@ -2320,6 +2767,11 @@ class PilotoCampeonatoData extends DataClass
   final int pilotoId;
   final int campeonatoId;
   final String categoria;
+
+  /// Categoría tras la revisión de cierre (promoción/descenso). Si es null no
+  /// se ha revisado y se usa [categoria]. Se usa para la bonificación de cierre
+  /// y como categoría inicial al importar al siguiente campeonato.
+  final String? categoriaFinal;
   final int creditosIniciales;
   final int creditosActuales;
   final int saldoTemporadaAnterior;
@@ -2329,6 +2781,7 @@ class PilotoCampeonatoData extends DataClass
     required this.pilotoId,
     required this.campeonatoId,
     required this.categoria,
+    this.categoriaFinal,
     required this.creditosIniciales,
     required this.creditosActuales,
     required this.saldoTemporadaAnterior,
@@ -2341,6 +2794,9 @@ class PilotoCampeonatoData extends DataClass
     map['piloto_id'] = Variable<int>(pilotoId);
     map['campeonato_id'] = Variable<int>(campeonatoId);
     map['categoria'] = Variable<String>(categoria);
+    if (!nullToAbsent || categoriaFinal != null) {
+      map['categoria_final'] = Variable<String>(categoriaFinal);
+    }
     map['creditos_iniciales'] = Variable<int>(creditosIniciales);
     map['creditos_actuales'] = Variable<int>(creditosActuales);
     map['saldo_temporada_anterior'] = Variable<int>(saldoTemporadaAnterior);
@@ -2356,6 +2812,9 @@ class PilotoCampeonatoData extends DataClass
       pilotoId: Value(pilotoId),
       campeonatoId: Value(campeonatoId),
       categoria: Value(categoria),
+      categoriaFinal: categoriaFinal == null && nullToAbsent
+          ? const Value.absent()
+          : Value(categoriaFinal),
       creditosIniciales: Value(creditosIniciales),
       creditosActuales: Value(creditosActuales),
       saldoTemporadaAnterior: Value(saldoTemporadaAnterior),
@@ -2375,6 +2834,7 @@ class PilotoCampeonatoData extends DataClass
       pilotoId: serializer.fromJson<int>(json['pilotoId']),
       campeonatoId: serializer.fromJson<int>(json['campeonatoId']),
       categoria: serializer.fromJson<String>(json['categoria']),
+      categoriaFinal: serializer.fromJson<String?>(json['categoriaFinal']),
       creditosIniciales: serializer.fromJson<int>(json['creditosIniciales']),
       creditosActuales: serializer.fromJson<int>(json['creditosActuales']),
       saldoTemporadaAnterior: serializer.fromJson<int>(
@@ -2393,6 +2853,7 @@ class PilotoCampeonatoData extends DataClass
       'pilotoId': serializer.toJson<int>(pilotoId),
       'campeonatoId': serializer.toJson<int>(campeonatoId),
       'categoria': serializer.toJson<String>(categoria),
+      'categoriaFinal': serializer.toJson<String?>(categoriaFinal),
       'creditosIniciales': serializer.toJson<int>(creditosIniciales),
       'creditosActuales': serializer.toJson<int>(creditosActuales),
       'saldoTemporadaAnterior': serializer.toJson<int>(saldoTemporadaAnterior),
@@ -2405,6 +2866,7 @@ class PilotoCampeonatoData extends DataClass
     int? pilotoId,
     int? campeonatoId,
     String? categoria,
+    Value<String?> categoriaFinal = const Value.absent(),
     int? creditosIniciales,
     int? creditosActuales,
     int? saldoTemporadaAnterior,
@@ -2414,6 +2876,9 @@ class PilotoCampeonatoData extends DataClass
     pilotoId: pilotoId ?? this.pilotoId,
     campeonatoId: campeonatoId ?? this.campeonatoId,
     categoria: categoria ?? this.categoria,
+    categoriaFinal: categoriaFinal.present
+        ? categoriaFinal.value
+        : this.categoriaFinal,
     creditosIniciales: creditosIniciales ?? this.creditosIniciales,
     creditosActuales: creditosActuales ?? this.creditosActuales,
     saldoTemporadaAnterior:
@@ -2430,6 +2895,9 @@ class PilotoCampeonatoData extends DataClass
           ? data.campeonatoId.value
           : this.campeonatoId,
       categoria: data.categoria.present ? data.categoria.value : this.categoria,
+      categoriaFinal: data.categoriaFinal.present
+          ? data.categoriaFinal.value
+          : this.categoriaFinal,
       creditosIniciales: data.creditosIniciales.present
           ? data.creditosIniciales.value
           : this.creditosIniciales,
@@ -2454,6 +2922,7 @@ class PilotoCampeonatoData extends DataClass
           ..write('pilotoId: $pilotoId, ')
           ..write('campeonatoId: $campeonatoId, ')
           ..write('categoria: $categoria, ')
+          ..write('categoriaFinal: $categoriaFinal, ')
           ..write('creditosIniciales: $creditosIniciales, ')
           ..write('creditosActuales: $creditosActuales, ')
           ..write('saldoTemporadaAnterior: $saldoTemporadaAnterior, ')
@@ -2468,6 +2937,7 @@ class PilotoCampeonatoData extends DataClass
     pilotoId,
     campeonatoId,
     categoria,
+    categoriaFinal,
     creditosIniciales,
     creditosActuales,
     saldoTemporadaAnterior,
@@ -2481,6 +2951,7 @@ class PilotoCampeonatoData extends DataClass
           other.pilotoId == this.pilotoId &&
           other.campeonatoId == this.campeonatoId &&
           other.categoria == this.categoria &&
+          other.categoriaFinal == this.categoriaFinal &&
           other.creditosIniciales == this.creditosIniciales &&
           other.creditosActuales == this.creditosActuales &&
           other.saldoTemporadaAnterior == this.saldoTemporadaAnterior &&
@@ -2492,6 +2963,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
   final Value<int> pilotoId;
   final Value<int> campeonatoId;
   final Value<String> categoria;
+  final Value<String?> categoriaFinal;
   final Value<int> creditosIniciales;
   final Value<int> creditosActuales;
   final Value<int> saldoTemporadaAnterior;
@@ -2502,6 +2974,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     this.pilotoId = const Value.absent(),
     this.campeonatoId = const Value.absent(),
     this.categoria = const Value.absent(),
+    this.categoriaFinal = const Value.absent(),
     this.creditosIniciales = const Value.absent(),
     this.creditosActuales = const Value.absent(),
     this.saldoTemporadaAnterior = const Value.absent(),
@@ -2513,6 +2986,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     required int pilotoId,
     required int campeonatoId,
     required String categoria,
+    this.categoriaFinal = const Value.absent(),
     required int creditosIniciales,
     required int creditosActuales,
     this.saldoTemporadaAnterior = const Value.absent(),
@@ -2528,6 +3002,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     Expression<int>? pilotoId,
     Expression<int>? campeonatoId,
     Expression<String>? categoria,
+    Expression<String>? categoriaFinal,
     Expression<int>? creditosIniciales,
     Expression<int>? creditosActuales,
     Expression<int>? saldoTemporadaAnterior,
@@ -2539,6 +3014,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
       if (pilotoId != null) 'piloto_id': pilotoId,
       if (campeonatoId != null) 'campeonato_id': campeonatoId,
       if (categoria != null) 'categoria': categoria,
+      if (categoriaFinal != null) 'categoria_final': categoriaFinal,
       if (creditosIniciales != null) 'creditos_iniciales': creditosIniciales,
       if (creditosActuales != null) 'creditos_actuales': creditosActuales,
       if (saldoTemporadaAnterior != null)
@@ -2554,6 +3030,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     Value<int>? pilotoId,
     Value<int>? campeonatoId,
     Value<String>? categoria,
+    Value<String?>? categoriaFinal,
     Value<int>? creditosIniciales,
     Value<int>? creditosActuales,
     Value<int>? saldoTemporadaAnterior,
@@ -2565,6 +3042,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
       pilotoId: pilotoId ?? this.pilotoId,
       campeonatoId: campeonatoId ?? this.campeonatoId,
       categoria: categoria ?? this.categoria,
+      categoriaFinal: categoriaFinal ?? this.categoriaFinal,
       creditosIniciales: creditosIniciales ?? this.creditosIniciales,
       creditosActuales: creditosActuales ?? this.creditosActuales,
       saldoTemporadaAnterior:
@@ -2586,6 +3064,9 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     }
     if (categoria.present) {
       map['categoria'] = Variable<String>(categoria.value);
+    }
+    if (categoriaFinal.present) {
+      map['categoria_final'] = Variable<String>(categoriaFinal.value);
     }
     if (creditosIniciales.present) {
       map['creditos_iniciales'] = Variable<int>(creditosIniciales.value);
@@ -2616,6 +3097,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
           ..write('pilotoId: $pilotoId, ')
           ..write('campeonatoId: $campeonatoId, ')
           ..write('categoria: $categoria, ')
+          ..write('categoriaFinal: $categoriaFinal, ')
           ..write('creditosIniciales: $creditosIniciales, ')
           ..write('creditosActuales: $creditosActuales, ')
           ..write('saldoTemporadaAnterior: $saldoTemporadaAnterior, ')
@@ -4406,6 +4888,15 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _copaMeta = const VerificationMeta('copa');
+  @override
+  late final GeneratedColumn<String> copa = GeneratedColumn<String>(
+    'copa',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4416,6 +4907,7 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
     notas,
     asignada,
     wildcard,
+    copa,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4484,6 +4976,12 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
         wildcard.isAcceptableOrUnknown(data['wildcard']!, _wildcardMeta),
       );
     }
+    if (data.containsKey('copa')) {
+      context.handle(
+        _copaMeta,
+        copa.isAcceptableOrUnknown(data['copa']!, _copaMeta),
+      );
+    }
     return context;
   }
 
@@ -4528,6 +5026,10 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
         DriftSqlType.bool,
         data['${effectivePrefix}wildcard'],
       )!,
+      copa: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}copa'],
+      ),
     );
   }
 
@@ -4549,6 +5051,11 @@ class InscripcionesPruebaData extends DataClass
 
   /// Si true, el equipo participa como invitado / wildcard y no paga.
   final bool wildcard;
+
+  /// Copa en la que el equipo compitió en ESTA prueba. Permite cambiar de copa
+  /// a mitad de campeonato sin perder los puntos de las pruebas anteriores.
+  /// Si es null, se usa la copa actual del equipo.
+  final String? copa;
   const InscripcionesPruebaData({
     required this.id,
     required this.pruebaId,
@@ -4558,6 +5065,7 @@ class InscripcionesPruebaData extends DataClass
     this.notas,
     required this.asignada,
     required this.wildcard,
+    this.copa,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4574,6 +5082,9 @@ class InscripcionesPruebaData extends DataClass
     }
     map['asignada'] = Variable<bool>(asignada);
     map['wildcard'] = Variable<bool>(wildcard);
+    if (!nullToAbsent || copa != null) {
+      map['copa'] = Variable<String>(copa);
+    }
     return map;
   }
 
@@ -4591,6 +5102,7 @@ class InscripcionesPruebaData extends DataClass
           : Value(notas),
       asignada: Value(asignada),
       wildcard: Value(wildcard),
+      copa: copa == null && nullToAbsent ? const Value.absent() : Value(copa),
     );
   }
 
@@ -4608,6 +5120,7 @@ class InscripcionesPruebaData extends DataClass
       notas: serializer.fromJson<String?>(json['notas']),
       asignada: serializer.fromJson<bool>(json['asignada']),
       wildcard: serializer.fromJson<bool>(json['wildcard']),
+      copa: serializer.fromJson<String?>(json['copa']),
     );
   }
   @override
@@ -4622,6 +5135,7 @@ class InscripcionesPruebaData extends DataClass
       'notas': serializer.toJson<String?>(notas),
       'asignada': serializer.toJson<bool>(asignada),
       'wildcard': serializer.toJson<bool>(wildcard),
+      'copa': serializer.toJson<String?>(copa),
     };
   }
 
@@ -4634,6 +5148,7 @@ class InscripcionesPruebaData extends DataClass
     Value<String?> notas = const Value.absent(),
     bool? asignada,
     bool? wildcard,
+    Value<String?> copa = const Value.absent(),
   }) => InscripcionesPruebaData(
     id: id ?? this.id,
     pruebaId: pruebaId ?? this.pruebaId,
@@ -4645,6 +5160,7 @@ class InscripcionesPruebaData extends DataClass
     notas: notas.present ? notas.value : this.notas,
     asignada: asignada ?? this.asignada,
     wildcard: wildcard ?? this.wildcard,
+    copa: copa.present ? copa.value : this.copa,
   );
   InscripcionesPruebaData copyWithCompanion(InscripcionesPruebaCompanion data) {
     return InscripcionesPruebaData(
@@ -4660,6 +5176,7 @@ class InscripcionesPruebaData extends DataClass
       notas: data.notas.present ? data.notas.value : this.notas,
       asignada: data.asignada.present ? data.asignada.value : this.asignada,
       wildcard: data.wildcard.present ? data.wildcard.value : this.wildcard,
+      copa: data.copa.present ? data.copa.value : this.copa,
     );
   }
 
@@ -4673,7 +5190,8 @@ class InscripcionesPruebaData extends DataClass
           ..write('preferenciaDia: $preferenciaDia, ')
           ..write('notas: $notas, ')
           ..write('asignada: $asignada, ')
-          ..write('wildcard: $wildcard')
+          ..write('wildcard: $wildcard, ')
+          ..write('copa: $copa')
           ..write(')'))
         .toString();
   }
@@ -4688,6 +5206,7 @@ class InscripcionesPruebaData extends DataClass
     notas,
     asignada,
     wildcard,
+    copa,
   );
   @override
   bool operator ==(Object other) =>
@@ -4700,7 +5219,8 @@ class InscripcionesPruebaData extends DataClass
           other.preferenciaDia == this.preferenciaDia &&
           other.notas == this.notas &&
           other.asignada == this.asignada &&
-          other.wildcard == this.wildcard);
+          other.wildcard == this.wildcard &&
+          other.copa == this.copa);
 }
 
 class InscripcionesPruebaCompanion
@@ -4713,6 +5233,7 @@ class InscripcionesPruebaCompanion
   final Value<String?> notas;
   final Value<bool> asignada;
   final Value<bool> wildcard;
+  final Value<String?> copa;
   const InscripcionesPruebaCompanion({
     this.id = const Value.absent(),
     this.pruebaId = const Value.absent(),
@@ -4722,6 +5243,7 @@ class InscripcionesPruebaCompanion
     this.notas = const Value.absent(),
     this.asignada = const Value.absent(),
     this.wildcard = const Value.absent(),
+    this.copa = const Value.absent(),
   });
   InscripcionesPruebaCompanion.insert({
     this.id = const Value.absent(),
@@ -4732,6 +5254,7 @@ class InscripcionesPruebaCompanion
     this.notas = const Value.absent(),
     this.asignada = const Value.absent(),
     this.wildcard = const Value.absent(),
+    this.copa = const Value.absent(),
   }) : pruebaId = Value(pruebaId),
        equipoId = Value(equipoId);
   static Insertable<InscripcionesPruebaData> custom({
@@ -4743,6 +5266,7 @@ class InscripcionesPruebaCompanion
     Expression<String>? notas,
     Expression<bool>? asignada,
     Expression<bool>? wildcard,
+    Expression<String>? copa,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4753,6 +5277,7 @@ class InscripcionesPruebaCompanion
       if (notas != null) 'notas': notas,
       if (asignada != null) 'asignada': asignada,
       if (wildcard != null) 'wildcard': wildcard,
+      if (copa != null) 'copa': copa,
     });
   }
 
@@ -4765,6 +5290,7 @@ class InscripcionesPruebaCompanion
     Value<String?>? notas,
     Value<bool>? asignada,
     Value<bool>? wildcard,
+    Value<String?>? copa,
   }) {
     return InscripcionesPruebaCompanion(
       id: id ?? this.id,
@@ -4775,6 +5301,7 @@ class InscripcionesPruebaCompanion
       notas: notas ?? this.notas,
       asignada: asignada ?? this.asignada,
       wildcard: wildcard ?? this.wildcard,
+      copa: copa ?? this.copa,
     );
   }
 
@@ -4805,6 +5332,9 @@ class InscripcionesPruebaCompanion
     if (wildcard.present) {
       map['wildcard'] = Variable<bool>(wildcard.value);
     }
+    if (copa.present) {
+      map['copa'] = Variable<String>(copa.value);
+    }
     return map;
   }
 
@@ -4818,7 +5348,8 @@ class InscripcionesPruebaCompanion
           ..write('preferenciaDia: $preferenciaDia, ')
           ..write('notas: $notas, ')
           ..write('asignada: $asignada, ')
-          ..write('wildcard: $wildcard')
+          ..write('wildcard: $wildcard, ')
+          ..write('copa: $copa')
           ..write(')'))
         .toString();
   }
@@ -5494,6 +6025,390 @@ class DescartesPruebaCompanion extends UpdateCompanion<DescartesPruebaData> {
     return (StringBuffer('DescartesPruebaCompanion(')
           ..write('pilotoId: $pilotoId, ')
           ..write('pruebaId: $pruebaId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $OverridesCopaTable extends OverridesCopa
+    with TableInfo<$OverridesCopaTable, OverridesCopaData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OverridesCopaTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _campeonatoIdMeta = const VerificationMeta(
+    'campeonatoId',
+  );
+  @override
+  late final GeneratedColumn<int> campeonatoId = GeneratedColumn<int>(
+    'campeonato_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES campeonatos (id)',
+    ),
+  );
+  static const VerificationMeta _copaMeta = const VerificationMeta('copa');
+  @override
+  late final GeneratedColumn<String> copa = GeneratedColumn<String>(
+    'copa',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pilotoIdMeta = const VerificationMeta(
+    'pilotoId',
+  );
+  @override
+  late final GeneratedColumn<int> pilotoId = GeneratedColumn<int>(
+    'piloto_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES pilotos (id)',
+    ),
+  );
+  static const VerificationMeta _pruebaIdMeta = const VerificationMeta(
+    'pruebaId',
+  );
+  @override
+  late final GeneratedColumn<int> pruebaId = GeneratedColumn<int>(
+    'prueba_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES pruebas (id)',
+    ),
+  );
+  static const VerificationMeta _puntosMeta = const VerificationMeta('puntos');
+  @override
+  late final GeneratedColumn<int> puntos = GeneratedColumn<int>(
+    'puntos',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    campeonatoId,
+    copa,
+    pilotoId,
+    pruebaId,
+    puntos,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'overrides_copa';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OverridesCopaData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('campeonato_id')) {
+      context.handle(
+        _campeonatoIdMeta,
+        campeonatoId.isAcceptableOrUnknown(
+          data['campeonato_id']!,
+          _campeonatoIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_campeonatoIdMeta);
+    }
+    if (data.containsKey('copa')) {
+      context.handle(
+        _copaMeta,
+        copa.isAcceptableOrUnknown(data['copa']!, _copaMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_copaMeta);
+    }
+    if (data.containsKey('piloto_id')) {
+      context.handle(
+        _pilotoIdMeta,
+        pilotoId.isAcceptableOrUnknown(data['piloto_id']!, _pilotoIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pilotoIdMeta);
+    }
+    if (data.containsKey('prueba_id')) {
+      context.handle(
+        _pruebaIdMeta,
+        pruebaId.isAcceptableOrUnknown(data['prueba_id']!, _pruebaIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pruebaIdMeta);
+    }
+    if (data.containsKey('puntos')) {
+      context.handle(
+        _puntosMeta,
+        puntos.isAcceptableOrUnknown(data['puntos']!, _puntosMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_puntosMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {
+    campeonatoId,
+    copa,
+    pilotoId,
+    pruebaId,
+  };
+  @override
+  OverridesCopaData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OverridesCopaData(
+      campeonatoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}campeonato_id'],
+      )!,
+      copa: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}copa'],
+      )!,
+      pilotoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}piloto_id'],
+      )!,
+      pruebaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}prueba_id'],
+      )!,
+      puntos: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}puntos'],
+      )!,
+    );
+  }
+
+  @override
+  $OverridesCopaTable createAlias(String alias) {
+    return $OverridesCopaTable(attachedDatabase, alias);
+  }
+}
+
+class OverridesCopaData extends DataClass
+    implements Insertable<OverridesCopaData> {
+  final int campeonatoId;
+  final String copa;
+  final int pilotoId;
+  final int pruebaId;
+  final int puntos;
+  const OverridesCopaData({
+    required this.campeonatoId,
+    required this.copa,
+    required this.pilotoId,
+    required this.pruebaId,
+    required this.puntos,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['campeonato_id'] = Variable<int>(campeonatoId);
+    map['copa'] = Variable<String>(copa);
+    map['piloto_id'] = Variable<int>(pilotoId);
+    map['prueba_id'] = Variable<int>(pruebaId);
+    map['puntos'] = Variable<int>(puntos);
+    return map;
+  }
+
+  OverridesCopaCompanion toCompanion(bool nullToAbsent) {
+    return OverridesCopaCompanion(
+      campeonatoId: Value(campeonatoId),
+      copa: Value(copa),
+      pilotoId: Value(pilotoId),
+      pruebaId: Value(pruebaId),
+      puntos: Value(puntos),
+    );
+  }
+
+  factory OverridesCopaData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OverridesCopaData(
+      campeonatoId: serializer.fromJson<int>(json['campeonatoId']),
+      copa: serializer.fromJson<String>(json['copa']),
+      pilotoId: serializer.fromJson<int>(json['pilotoId']),
+      pruebaId: serializer.fromJson<int>(json['pruebaId']),
+      puntos: serializer.fromJson<int>(json['puntos']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'campeonatoId': serializer.toJson<int>(campeonatoId),
+      'copa': serializer.toJson<String>(copa),
+      'pilotoId': serializer.toJson<int>(pilotoId),
+      'pruebaId': serializer.toJson<int>(pruebaId),
+      'puntos': serializer.toJson<int>(puntos),
+    };
+  }
+
+  OverridesCopaData copyWith({
+    int? campeonatoId,
+    String? copa,
+    int? pilotoId,
+    int? pruebaId,
+    int? puntos,
+  }) => OverridesCopaData(
+    campeonatoId: campeonatoId ?? this.campeonatoId,
+    copa: copa ?? this.copa,
+    pilotoId: pilotoId ?? this.pilotoId,
+    pruebaId: pruebaId ?? this.pruebaId,
+    puntos: puntos ?? this.puntos,
+  );
+  OverridesCopaData copyWithCompanion(OverridesCopaCompanion data) {
+    return OverridesCopaData(
+      campeonatoId: data.campeonatoId.present
+          ? data.campeonatoId.value
+          : this.campeonatoId,
+      copa: data.copa.present ? data.copa.value : this.copa,
+      pilotoId: data.pilotoId.present ? data.pilotoId.value : this.pilotoId,
+      pruebaId: data.pruebaId.present ? data.pruebaId.value : this.pruebaId,
+      puntos: data.puntos.present ? data.puntos.value : this.puntos,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OverridesCopaData(')
+          ..write('campeonatoId: $campeonatoId, ')
+          ..write('copa: $copa, ')
+          ..write('pilotoId: $pilotoId, ')
+          ..write('pruebaId: $pruebaId, ')
+          ..write('puntos: $puntos')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(campeonatoId, copa, pilotoId, pruebaId, puntos);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OverridesCopaData &&
+          other.campeonatoId == this.campeonatoId &&
+          other.copa == this.copa &&
+          other.pilotoId == this.pilotoId &&
+          other.pruebaId == this.pruebaId &&
+          other.puntos == this.puntos);
+}
+
+class OverridesCopaCompanion extends UpdateCompanion<OverridesCopaData> {
+  final Value<int> campeonatoId;
+  final Value<String> copa;
+  final Value<int> pilotoId;
+  final Value<int> pruebaId;
+  final Value<int> puntos;
+  final Value<int> rowid;
+  const OverridesCopaCompanion({
+    this.campeonatoId = const Value.absent(),
+    this.copa = const Value.absent(),
+    this.pilotoId = const Value.absent(),
+    this.pruebaId = const Value.absent(),
+    this.puntos = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  OverridesCopaCompanion.insert({
+    required int campeonatoId,
+    required String copa,
+    required int pilotoId,
+    required int pruebaId,
+    required int puntos,
+    this.rowid = const Value.absent(),
+  }) : campeonatoId = Value(campeonatoId),
+       copa = Value(copa),
+       pilotoId = Value(pilotoId),
+       pruebaId = Value(pruebaId),
+       puntos = Value(puntos);
+  static Insertable<OverridesCopaData> custom({
+    Expression<int>? campeonatoId,
+    Expression<String>? copa,
+    Expression<int>? pilotoId,
+    Expression<int>? pruebaId,
+    Expression<int>? puntos,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (campeonatoId != null) 'campeonato_id': campeonatoId,
+      if (copa != null) 'copa': copa,
+      if (pilotoId != null) 'piloto_id': pilotoId,
+      if (pruebaId != null) 'prueba_id': pruebaId,
+      if (puntos != null) 'puntos': puntos,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  OverridesCopaCompanion copyWith({
+    Value<int>? campeonatoId,
+    Value<String>? copa,
+    Value<int>? pilotoId,
+    Value<int>? pruebaId,
+    Value<int>? puntos,
+    Value<int>? rowid,
+  }) {
+    return OverridesCopaCompanion(
+      campeonatoId: campeonatoId ?? this.campeonatoId,
+      copa: copa ?? this.copa,
+      pilotoId: pilotoId ?? this.pilotoId,
+      pruebaId: pruebaId ?? this.pruebaId,
+      puntos: puntos ?? this.puntos,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (campeonatoId.present) {
+      map['campeonato_id'] = Variable<int>(campeonatoId.value);
+    }
+    if (copa.present) {
+      map['copa'] = Variable<String>(copa.value);
+    }
+    if (pilotoId.present) {
+      map['piloto_id'] = Variable<int>(pilotoId.value);
+    }
+    if (pruebaId.present) {
+      map['prueba_id'] = Variable<int>(pruebaId.value);
+    }
+    if (puntos.present) {
+      map['puntos'] = Variable<int>(puntos.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OverridesCopaCompanion(')
+          ..write('campeonatoId: $campeonatoId, ')
+          ..write('copa: $copa, ')
+          ..write('pilotoId: $pilotoId, ')
+          ..write('pruebaId: $pruebaId, ')
+          ..write('puntos: $puntos, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -12904,6 +13819,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $DescartesPruebaTable descartesPrueba = $DescartesPruebaTable(
     this,
   );
+  late final $OverridesCopaTable overridesCopa = $OverridesCopaTable(this);
   late final $CatalogoCochesTable catalogoCoches = $CatalogoCochesTable(this);
   late final $VerificacionesTable verificaciones = $VerificacionesTable(this);
   late final $PagosTable pagos = $PagosTable(this);
@@ -12949,6 +13865,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     inscripcionesPrueba,
     resultados,
     descartesPrueba,
+    overridesCopa,
     catalogoCoches,
     verificaciones,
     pagos,
@@ -12979,12 +13896,20 @@ typedef $$CampeonatosTableCreateCompanionBuilder =
       Value<int> topeRegularizacion,
       Value<int> numDescartes,
       Value<bool> usaCreditos,
+      Value<bool> usaTesoreria,
+      Value<bool> finalizado,
       Value<String> copasJson,
       Value<double> cuotaPagat,
       Value<double> cuotaCoordinadora,
       Value<double> cuotaClub,
       Value<int?> motorSorteoMin,
       Value<int?> motorSorteoMax,
+      Value<int> pinonDientesMin,
+      Value<int> pinonDientesMax,
+      Value<int> coronaDientesMin,
+      Value<int> coronaDientesMax,
+      Value<String?> marcaTitulo,
+      Value<String?> marcaLema,
       Value<DateTime> creadoEn,
     });
 typedef $$CampeonatosTableUpdateCompanionBuilder =
@@ -12998,12 +13923,20 @@ typedef $$CampeonatosTableUpdateCompanionBuilder =
       Value<int> topeRegularizacion,
       Value<int> numDescartes,
       Value<bool> usaCreditos,
+      Value<bool> usaTesoreria,
+      Value<bool> finalizado,
       Value<String> copasJson,
       Value<double> cuotaPagat,
       Value<double> cuotaCoordinadora,
       Value<double> cuotaClub,
       Value<int?> motorSorteoMin,
       Value<int?> motorSorteoMax,
+      Value<int> pinonDientesMin,
+      Value<int> pinonDientesMax,
+      Value<int> coronaDientesMin,
+      Value<int> coronaDientesMax,
+      Value<String?> marcaTitulo,
+      Value<String?> marcaLema,
       Value<DateTime> creadoEn,
     });
 
@@ -13120,6 +14053,27 @@ final class $$CampeonatosTableReferences
     );
   }
 
+  static MultiTypedResultKey<$OverridesCopaTable, List<OverridesCopaData>>
+  _overridesCopaRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.overridesCopa,
+    aliasName: $_aliasNameGenerator(
+      db.campeonatos.id,
+      db.overridesCopa.campeonatoId,
+    ),
+  );
+
+  $$OverridesCopaTableProcessedTableManager get overridesCopaRefs {
+    final manager = $$OverridesCopaTableTableManager(
+      $_db,
+      $_db.overridesCopa,
+    ).filter((f) => f.campeonatoId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_overridesCopaRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<
     $MovimientosTesoreriaTable,
     List<MovimientosTesoreriaData>
@@ -13230,6 +14184,16 @@ class $$CampeonatosTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<bool> get usaTesoreria => $composableBuilder(
+    column: $table.usaTesoreria,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get finalizado => $composableBuilder(
+    column: $table.finalizado,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get copasJson => $composableBuilder(
     column: $table.copasJson,
     builder: (column) => ColumnFilters(column),
@@ -13257,6 +14221,36 @@ class $$CampeonatosTableFilterComposer
 
   ColumnFilters<int> get motorSorteoMax => $composableBuilder(
     column: $table.motorSorteoMax,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get pinonDientesMin => $composableBuilder(
+    column: $table.pinonDientesMin,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get pinonDientesMax => $composableBuilder(
+    column: $table.pinonDientesMax,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get coronaDientesMin => $composableBuilder(
+    column: $table.coronaDientesMin,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get coronaDientesMax => $composableBuilder(
+    column: $table.coronaDientesMax,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get marcaTitulo => $composableBuilder(
+    column: $table.marcaTitulo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get marcaLema => $composableBuilder(
+    column: $table.marcaLema,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13390,6 +14384,31 @@ class $$CampeonatosTableFilterComposer
     return f(composer);
   }
 
+  Expression<bool> overridesCopaRefs(
+    Expression<bool> Function($$OverridesCopaTableFilterComposer f) f,
+  ) {
+    final $$OverridesCopaTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.overridesCopa,
+      getReferencedColumn: (t) => t.campeonatoId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$OverridesCopaTableFilterComposer(
+            $db: $db,
+            $table: $db.overridesCopa,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<bool> movimientosTesoreriaRefs(
     Expression<bool> Function($$MovimientosTesoreriaTableFilterComposer f) f,
   ) {
@@ -13495,6 +14514,16 @@ class $$CampeonatosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get usaTesoreria => $composableBuilder(
+    column: $table.usaTesoreria,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get finalizado => $composableBuilder(
+    column: $table.finalizado,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get copasJson => $composableBuilder(
     column: $table.copasJson,
     builder: (column) => ColumnOrderings(column),
@@ -13522,6 +14551,36 @@ class $$CampeonatosTableOrderingComposer
 
   ColumnOrderings<int> get motorSorteoMax => $composableBuilder(
     column: $table.motorSorteoMax,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get pinonDientesMin => $composableBuilder(
+    column: $table.pinonDientesMin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get pinonDientesMax => $composableBuilder(
+    column: $table.pinonDientesMax,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get coronaDientesMin => $composableBuilder(
+    column: $table.coronaDientesMin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get coronaDientesMax => $composableBuilder(
+    column: $table.coronaDientesMax,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get marcaTitulo => $composableBuilder(
+    column: $table.marcaTitulo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get marcaLema => $composableBuilder(
+    column: $table.marcaLema,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -13575,6 +14634,16 @@ class $$CampeonatosTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get usaTesoreria => $composableBuilder(
+    column: $table.usaTesoreria,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get finalizado => $composableBuilder(
+    column: $table.finalizado,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get copasJson =>
       $composableBuilder(column: $table.copasJson, builder: (column) => column);
 
@@ -13600,6 +14669,34 @@ class $$CampeonatosTableAnnotationComposer
     column: $table.motorSorteoMax,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get pinonDientesMin => $composableBuilder(
+    column: $table.pinonDientesMin,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get pinonDientesMax => $composableBuilder(
+    column: $table.pinonDientesMax,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get coronaDientesMin => $composableBuilder(
+    column: $table.coronaDientesMin,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get coronaDientesMax => $composableBuilder(
+    column: $table.coronaDientesMax,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get marcaTitulo => $composableBuilder(
+    column: $table.marcaTitulo,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get marcaLema =>
+      $composableBuilder(column: $table.marcaLema, builder: (column) => column);
 
   GeneratedColumn<DateTime> get creadoEn =>
       $composableBuilder(column: $table.creadoEn, builder: (column) => column);
@@ -13730,6 +14827,31 @@ class $$CampeonatosTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> overridesCopaRefs<T extends Object>(
+    Expression<T> Function($$OverridesCopaTableAnnotationComposer a) f,
+  ) {
+    final $$OverridesCopaTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.overridesCopa,
+      getReferencedColumn: (t) => t.campeonatoId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$OverridesCopaTableAnnotationComposer(
+            $db: $db,
+            $table: $db.overridesCopa,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> movimientosTesoreriaRefs<T extends Object>(
     Expression<T> Function($$MovimientosTesoreriaTableAnnotationComposer a) f,
   ) {
@@ -13802,6 +14924,7 @@ class $$CampeonatosTableTableManager
             bool pilotoCampeonatoRefs,
             bool equiposRefs,
             bool pruebasRefs,
+            bool overridesCopaRefs,
             bool movimientosTesoreriaRefs,
             bool movimientosCreditosRefs,
           })
@@ -13828,12 +14951,20 @@ class $$CampeonatosTableTableManager
                 Value<int> topeRegularizacion = const Value.absent(),
                 Value<int> numDescartes = const Value.absent(),
                 Value<bool> usaCreditos = const Value.absent(),
+                Value<bool> usaTesoreria = const Value.absent(),
+                Value<bool> finalizado = const Value.absent(),
                 Value<String> copasJson = const Value.absent(),
                 Value<double> cuotaPagat = const Value.absent(),
                 Value<double> cuotaCoordinadora = const Value.absent(),
                 Value<double> cuotaClub = const Value.absent(),
                 Value<int?> motorSorteoMin = const Value.absent(),
                 Value<int?> motorSorteoMax = const Value.absent(),
+                Value<int> pinonDientesMin = const Value.absent(),
+                Value<int> pinonDientesMax = const Value.absent(),
+                Value<int> coronaDientesMin = const Value.absent(),
+                Value<int> coronaDientesMax = const Value.absent(),
+                Value<String?> marcaTitulo = const Value.absent(),
+                Value<String?> marcaLema = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
               }) => CampeonatosCompanion(
                 id: id,
@@ -13845,12 +14976,20 @@ class $$CampeonatosTableTableManager
                 topeRegularizacion: topeRegularizacion,
                 numDescartes: numDescartes,
                 usaCreditos: usaCreditos,
+                usaTesoreria: usaTesoreria,
+                finalizado: finalizado,
                 copasJson: copasJson,
                 cuotaPagat: cuotaPagat,
                 cuotaCoordinadora: cuotaCoordinadora,
                 cuotaClub: cuotaClub,
                 motorSorteoMin: motorSorteoMin,
                 motorSorteoMax: motorSorteoMax,
+                pinonDientesMin: pinonDientesMin,
+                pinonDientesMax: pinonDientesMax,
+                coronaDientesMin: coronaDientesMin,
+                coronaDientesMax: coronaDientesMax,
+                marcaTitulo: marcaTitulo,
+                marcaLema: marcaLema,
                 creadoEn: creadoEn,
               ),
           createCompanionCallback:
@@ -13864,12 +15003,20 @@ class $$CampeonatosTableTableManager
                 Value<int> topeRegularizacion = const Value.absent(),
                 Value<int> numDescartes = const Value.absent(),
                 Value<bool> usaCreditos = const Value.absent(),
+                Value<bool> usaTesoreria = const Value.absent(),
+                Value<bool> finalizado = const Value.absent(),
                 Value<String> copasJson = const Value.absent(),
                 Value<double> cuotaPagat = const Value.absent(),
                 Value<double> cuotaCoordinadora = const Value.absent(),
                 Value<double> cuotaClub = const Value.absent(),
                 Value<int?> motorSorteoMin = const Value.absent(),
                 Value<int?> motorSorteoMax = const Value.absent(),
+                Value<int> pinonDientesMin = const Value.absent(),
+                Value<int> pinonDientesMax = const Value.absent(),
+                Value<int> coronaDientesMin = const Value.absent(),
+                Value<int> coronaDientesMax = const Value.absent(),
+                Value<String?> marcaTitulo = const Value.absent(),
+                Value<String?> marcaLema = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
               }) => CampeonatosCompanion.insert(
                 id: id,
@@ -13881,12 +15028,20 @@ class $$CampeonatosTableTableManager
                 topeRegularizacion: topeRegularizacion,
                 numDescartes: numDescartes,
                 usaCreditos: usaCreditos,
+                usaTesoreria: usaTesoreria,
+                finalizado: finalizado,
                 copasJson: copasJson,
                 cuotaPagat: cuotaPagat,
                 cuotaCoordinadora: cuotaCoordinadora,
                 cuotaClub: cuotaClub,
                 motorSorteoMin: motorSorteoMin,
                 motorSorteoMax: motorSorteoMax,
+                pinonDientesMin: pinonDientesMin,
+                pinonDientesMax: pinonDientesMax,
+                coronaDientesMin: coronaDientesMin,
+                coronaDientesMax: coronaDientesMax,
+                marcaTitulo: marcaTitulo,
+                marcaLema: marcaLema,
                 creadoEn: creadoEn,
               ),
           withReferenceMapper: (p0) => p0
@@ -13904,6 +15059,7 @@ class $$CampeonatosTableTableManager
                 pilotoCampeonatoRefs = false,
                 equiposRefs = false,
                 pruebasRefs = false,
+                overridesCopaRefs = false,
                 movimientosTesoreriaRefs = false,
                 movimientosCreditosRefs = false,
               }) {
@@ -13915,6 +15071,7 @@ class $$CampeonatosTableTableManager
                     if (pilotoCampeonatoRefs) db.pilotoCampeonato,
                     if (equiposRefs) db.equipos,
                     if (pruebasRefs) db.pruebas,
+                    if (overridesCopaRefs) db.overridesCopa,
                     if (movimientosTesoreriaRefs) db.movimientosTesoreria,
                     if (movimientosCreditosRefs) db.movimientosCreditos,
                   ],
@@ -14026,6 +15183,27 @@ class $$CampeonatosTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (overridesCopaRefs)
+                        await $_getPrefetchedData<
+                          Campeonato,
+                          $CampeonatosTable,
+                          OverridesCopaData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CampeonatosTableReferences
+                              ._overridesCopaRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CampeonatosTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).overridesCopaRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.campeonatoId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (movimientosTesoreriaRefs)
                         await $_getPrefetchedData<
                           Campeonato,
@@ -14094,6 +15272,7 @@ typedef $$CampeonatosTableProcessedTableManager =
         bool pilotoCampeonatoRefs,
         bool equiposRefs,
         bool pruebasRefs,
+        bool overridesCopaRefs,
         bool movimientosTesoreriaRefs,
         bool movimientosCreditosRefs,
       })
@@ -14809,6 +15988,24 @@ final class $$PilotosTableReferences
     );
   }
 
+  static MultiTypedResultKey<$OverridesCopaTable, List<OverridesCopaData>>
+  _overridesCopaRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.overridesCopa,
+    aliasName: $_aliasNameGenerator(db.pilotos.id, db.overridesCopa.pilotoId),
+  );
+
+  $$OverridesCopaTableProcessedTableManager get overridesCopaRefs {
+    final manager = $$OverridesCopaTableTableManager(
+      $_db,
+      $_db.overridesCopa,
+    ).filter((f) => f.pilotoId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_overridesCopaRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<
     $MovimientosCreditosTable,
     List<MovimientosCredito>
@@ -14947,6 +16144,31 @@ class $$PilotosTableFilterComposer
           }) => $$DescartesPruebaTableFilterComposer(
             $db: $db,
             $table: $db.descartesPrueba,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> overridesCopaRefs(
+    Expression<bool> Function($$OverridesCopaTableFilterComposer f) f,
+  ) {
+    final $$OverridesCopaTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.overridesCopa,
+      getReferencedColumn: (t) => t.pilotoId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$OverridesCopaTableFilterComposer(
+            $db: $db,
+            $table: $db.overridesCopa,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -15136,6 +16358,31 @@ class $$PilotosTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> overridesCopaRefs<T extends Object>(
+    Expression<T> Function($$OverridesCopaTableAnnotationComposer a) f,
+  ) {
+    final $$OverridesCopaTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.overridesCopa,
+      getReferencedColumn: (t) => t.pilotoId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$OverridesCopaTableAnnotationComposer(
+            $db: $db,
+            $table: $db.overridesCopa,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> movimientosCreditosRefs<T extends Object>(
     Expression<T> Function($$MovimientosCreditosTableAnnotationComposer a) f,
   ) {
@@ -15180,6 +16427,7 @@ class $$PilotosTableTableManager
             bool pilotoCampeonatoRefs,
             bool resultadosRefs,
             bool descartesPruebaRefs,
+            bool overridesCopaRefs,
             bool movimientosCreditosRefs,
           })
         > {
@@ -15243,6 +16491,7 @@ class $$PilotosTableTableManager
                 pilotoCampeonatoRefs = false,
                 resultadosRefs = false,
                 descartesPruebaRefs = false,
+                overridesCopaRefs = false,
                 movimientosCreditosRefs = false,
               }) {
                 return PrefetchHooks(
@@ -15251,6 +16500,7 @@ class $$PilotosTableTableManager
                     if (pilotoCampeonatoRefs) db.pilotoCampeonato,
                     if (resultadosRefs) db.resultados,
                     if (descartesPruebaRefs) db.descartesPrueba,
+                    if (overridesCopaRefs) db.overridesCopa,
                     if (movimientosCreditosRefs) db.movimientosCreditos,
                   ],
                   addJoins: null,
@@ -15319,6 +16569,27 @@ class $$PilotosTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (overridesCopaRefs)
+                        await $_getPrefetchedData<
+                          Piloto,
+                          $PilotosTable,
+                          OverridesCopaData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$PilotosTableReferences
+                              ._overridesCopaRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$PilotosTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).overridesCopaRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.pilotoId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (movimientosCreditosRefs)
                         await $_getPrefetchedData<
                           Piloto,
@@ -15364,6 +16635,7 @@ typedef $$PilotosTableProcessedTableManager =
         bool pilotoCampeonatoRefs,
         bool resultadosRefs,
         bool descartesPruebaRefs,
+        bool overridesCopaRefs,
         bool movimientosCreditosRefs,
       })
     >;
@@ -15372,6 +16644,7 @@ typedef $$PilotoCampeonatoTableCreateCompanionBuilder =
       required int pilotoId,
       required int campeonatoId,
       required String categoria,
+      Value<String?> categoriaFinal,
       required int creditosIniciales,
       required int creditosActuales,
       Value<int> saldoTemporadaAnterior,
@@ -15384,6 +16657,7 @@ typedef $$PilotoCampeonatoTableUpdateCompanionBuilder =
       Value<int> pilotoId,
       Value<int> campeonatoId,
       Value<String> categoria,
+      Value<String?> categoriaFinal,
       Value<int> creditosIniciales,
       Value<int> creditosActuales,
       Value<int> saldoTemporadaAnterior,
@@ -15458,6 +16732,11 @@ class $$PilotoCampeonatoTableFilterComposer
   });
   ColumnFilters<String> get categoria => $composableBuilder(
     column: $table.categoria,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get categoriaFinal => $composableBuilder(
+    column: $table.categoriaFinal,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15547,6 +16826,11 @@ class $$PilotoCampeonatoTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get categoriaFinal => $composableBuilder(
+    column: $table.categoriaFinal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get creditosIniciales => $composableBuilder(
     column: $table.creditosIniciales,
     builder: (column) => ColumnOrderings(column),
@@ -15630,6 +16914,11 @@ class $$PilotoCampeonatoTableAnnotationComposer
   });
   GeneratedColumn<String> get categoria =>
       $composableBuilder(column: $table.categoria, builder: (column) => column);
+
+  GeneratedColumn<String> get categoriaFinal => $composableBuilder(
+    column: $table.categoriaFinal,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get creditosIniciales => $composableBuilder(
     column: $table.creditosIniciales,
@@ -15736,6 +17025,7 @@ class $$PilotoCampeonatoTableTableManager
                 Value<int> pilotoId = const Value.absent(),
                 Value<int> campeonatoId = const Value.absent(),
                 Value<String> categoria = const Value.absent(),
+                Value<String?> categoriaFinal = const Value.absent(),
                 Value<int> creditosIniciales = const Value.absent(),
                 Value<int> creditosActuales = const Value.absent(),
                 Value<int> saldoTemporadaAnterior = const Value.absent(),
@@ -15746,6 +17036,7 @@ class $$PilotoCampeonatoTableTableManager
                 pilotoId: pilotoId,
                 campeonatoId: campeonatoId,
                 categoria: categoria,
+                categoriaFinal: categoriaFinal,
                 creditosIniciales: creditosIniciales,
                 creditosActuales: creditosActuales,
                 saldoTemporadaAnterior: saldoTemporadaAnterior,
@@ -15758,6 +17049,7 @@ class $$PilotoCampeonatoTableTableManager
                 required int pilotoId,
                 required int campeonatoId,
                 required String categoria,
+                Value<String?> categoriaFinal = const Value.absent(),
                 required int creditosIniciales,
                 required int creditosActuales,
                 Value<int> saldoTemporadaAnterior = const Value.absent(),
@@ -15768,6 +17060,7 @@ class $$PilotoCampeonatoTableTableManager
                 pilotoId: pilotoId,
                 campeonatoId: campeonatoId,
                 categoria: categoria,
+                categoriaFinal: categoriaFinal,
                 creditosIniciales: creditosIniciales,
                 creditosActuales: creditosActuales,
                 saldoTemporadaAnterior: saldoTemporadaAnterior,
@@ -17078,6 +18371,24 @@ final class $$PruebasTableReferences
     );
   }
 
+  static MultiTypedResultKey<$OverridesCopaTable, List<OverridesCopaData>>
+  _overridesCopaRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.overridesCopa,
+    aliasName: $_aliasNameGenerator(db.pruebas.id, db.overridesCopa.pruebaId),
+  );
+
+  $$OverridesCopaTableProcessedTableManager get overridesCopaRefs {
+    final manager = $$OverridesCopaTableTableManager(
+      $_db,
+      $_db.overridesCopa,
+    ).filter((f) => f.pruebaId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_overridesCopaRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$PagosTable, List<Pago>> _pagosRefsTable(
     _$AppDatabase db,
   ) => MultiTypedResultKey.fromTable(
@@ -17281,6 +18592,31 @@ class $$PruebasTableFilterComposer
           }) => $$DescartesPruebaTableFilterComposer(
             $db: $db,
             $table: $db.descartesPrueba,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> overridesCopaRefs(
+    Expression<bool> Function($$OverridesCopaTableFilterComposer f) f,
+  ) {
+    final $$OverridesCopaTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.overridesCopa,
+      getReferencedColumn: (t) => t.pruebaId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$OverridesCopaTableFilterComposer(
+            $db: $db,
+            $table: $db.overridesCopa,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -17555,6 +18891,31 @@ class $$PruebasTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> overridesCopaRefs<T extends Object>(
+    Expression<T> Function($$OverridesCopaTableAnnotationComposer a) f,
+  ) {
+    final $$OverridesCopaTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.overridesCopa,
+      getReferencedColumn: (t) => t.pruebaId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$OverridesCopaTableAnnotationComposer(
+            $db: $db,
+            $table: $db.overridesCopa,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> pagosRefs<T extends Object>(
     Expression<T> Function($$PagosTableAnnotationComposer a) f,
   ) {
@@ -17651,6 +19012,7 @@ class $$PruebasTableTableManager
             bool mangasRefs,
             bool inscripcionesPruebaRefs,
             bool descartesPruebaRefs,
+            bool overridesCopaRefs,
             bool pagosRefs,
             bool movimientosTesoreriaRefs,
             bool movimientosCreditosRefs,
@@ -17717,6 +19079,7 @@ class $$PruebasTableTableManager
                 mangasRefs = false,
                 inscripcionesPruebaRefs = false,
                 descartesPruebaRefs = false,
+                overridesCopaRefs = false,
                 pagosRefs = false,
                 movimientosTesoreriaRefs = false,
                 movimientosCreditosRefs = false,
@@ -17727,6 +19090,7 @@ class $$PruebasTableTableManager
                     if (mangasRefs) db.mangas,
                     if (inscripcionesPruebaRefs) db.inscripcionesPrueba,
                     if (descartesPruebaRefs) db.descartesPrueba,
+                    if (overridesCopaRefs) db.overridesCopa,
                     if (pagosRefs) db.pagos,
                     if (movimientosTesoreriaRefs) db.movimientosTesoreria,
                     if (movimientosCreditosRefs) db.movimientosCreditos,
@@ -17824,6 +19188,27 @@ class $$PruebasTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (overridesCopaRefs)
+                        await $_getPrefetchedData<
+                          Prueba,
+                          $PruebasTable,
+                          OverridesCopaData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$PruebasTableReferences
+                              ._overridesCopaRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$PruebasTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).overridesCopaRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.pruebaId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (pagosRefs)
                         await $_getPrefetchedData<Prueba, $PruebasTable, Pago>(
                           currentTable: table,
@@ -17904,6 +19289,7 @@ typedef $$PruebasTableProcessedTableManager =
         bool mangasRefs,
         bool inscripcionesPruebaRefs,
         bool descartesPruebaRefs,
+        bool overridesCopaRefs,
         bool pagosRefs,
         bool movimientosTesoreriaRefs,
         bool movimientosCreditosRefs,
@@ -18945,6 +20331,7 @@ typedef $$InscripcionesPruebaTableCreateCompanionBuilder =
       Value<String?> notas,
       Value<bool> asignada,
       Value<bool> wildcard,
+      Value<String?> copa,
     });
 typedef $$InscripcionesPruebaTableUpdateCompanionBuilder =
     InscripcionesPruebaCompanion Function({
@@ -18956,6 +20343,7 @@ typedef $$InscripcionesPruebaTableUpdateCompanionBuilder =
       Value<String?> notas,
       Value<bool> asignada,
       Value<bool> wildcard,
+      Value<String?> copa,
     });
 
 final class $$InscripcionesPruebaTableReferences
@@ -19049,6 +20437,11 @@ class $$InscripcionesPruebaTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get copa => $composableBuilder(
+    column: $table.copa,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$PruebasTableFilterComposer get pruebaId {
     final $$PruebasTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -19135,6 +20528,11 @@ class $$InscripcionesPruebaTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get copa => $composableBuilder(
+    column: $table.copa,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PruebasTableOrderingComposer get pruebaId {
     final $$PruebasTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -19212,6 +20610,9 @@ class $$InscripcionesPruebaTableAnnotationComposer
 
   GeneratedColumn<bool> get wildcard =>
       $composableBuilder(column: $table.wildcard, builder: (column) => column);
+
+  GeneratedColumn<String> get copa =>
+      $composableBuilder(column: $table.copa, builder: (column) => column);
 
   $$PruebasTableAnnotationComposer get pruebaId {
     final $$PruebasTableAnnotationComposer composer = $composerBuilder(
@@ -19304,6 +20705,7 @@ class $$InscripcionesPruebaTableTableManager
                 Value<String?> notas = const Value.absent(),
                 Value<bool> asignada = const Value.absent(),
                 Value<bool> wildcard = const Value.absent(),
+                Value<String?> copa = const Value.absent(),
               }) => InscripcionesPruebaCompanion(
                 id: id,
                 pruebaId: pruebaId,
@@ -19313,6 +20715,7 @@ class $$InscripcionesPruebaTableTableManager
                 notas: notas,
                 asignada: asignada,
                 wildcard: wildcard,
+                copa: copa,
               ),
           createCompanionCallback:
               ({
@@ -19324,6 +20727,7 @@ class $$InscripcionesPruebaTableTableManager
                 Value<String?> notas = const Value.absent(),
                 Value<bool> asignada = const Value.absent(),
                 Value<bool> wildcard = const Value.absent(),
+                Value<String?> copa = const Value.absent(),
               }) => InscripcionesPruebaCompanion.insert(
                 id: id,
                 pruebaId: pruebaId,
@@ -19333,6 +20737,7 @@ class $$InscripcionesPruebaTableTableManager
                 notas: notas,
                 asignada: asignada,
                 wildcard: wildcard,
+                copa: copa,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -20308,6 +21713,517 @@ typedef $$DescartesPruebaTableProcessedTableManager =
       (DescartesPruebaData, $$DescartesPruebaTableReferences),
       DescartesPruebaData,
       PrefetchHooks Function({bool pilotoId, bool pruebaId})
+    >;
+typedef $$OverridesCopaTableCreateCompanionBuilder =
+    OverridesCopaCompanion Function({
+      required int campeonatoId,
+      required String copa,
+      required int pilotoId,
+      required int pruebaId,
+      required int puntos,
+      Value<int> rowid,
+    });
+typedef $$OverridesCopaTableUpdateCompanionBuilder =
+    OverridesCopaCompanion Function({
+      Value<int> campeonatoId,
+      Value<String> copa,
+      Value<int> pilotoId,
+      Value<int> pruebaId,
+      Value<int> puntos,
+      Value<int> rowid,
+    });
+
+final class $$OverridesCopaTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $OverridesCopaTable, OverridesCopaData> {
+  $$OverridesCopaTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $CampeonatosTable _campeonatoIdTable(_$AppDatabase db) =>
+      db.campeonatos.createAlias(
+        $_aliasNameGenerator(db.overridesCopa.campeonatoId, db.campeonatos.id),
+      );
+
+  $$CampeonatosTableProcessedTableManager get campeonatoId {
+    final $_column = $_itemColumn<int>('campeonato_id')!;
+
+    final manager = $$CampeonatosTableTableManager(
+      $_db,
+      $_db.campeonatos,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_campeonatoIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $PilotosTable _pilotoIdTable(_$AppDatabase db) =>
+      db.pilotos.createAlias(
+        $_aliasNameGenerator(db.overridesCopa.pilotoId, db.pilotos.id),
+      );
+
+  $$PilotosTableProcessedTableManager get pilotoId {
+    final $_column = $_itemColumn<int>('piloto_id')!;
+
+    final manager = $$PilotosTableTableManager(
+      $_db,
+      $_db.pilotos,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_pilotoIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $PruebasTable _pruebaIdTable(_$AppDatabase db) =>
+      db.pruebas.createAlias(
+        $_aliasNameGenerator(db.overridesCopa.pruebaId, db.pruebas.id),
+      );
+
+  $$PruebasTableProcessedTableManager get pruebaId {
+    final $_column = $_itemColumn<int>('prueba_id')!;
+
+    final manager = $$PruebasTableTableManager(
+      $_db,
+      $_db.pruebas,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_pruebaIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$OverridesCopaTableFilterComposer
+    extends Composer<_$AppDatabase, $OverridesCopaTable> {
+  $$OverridesCopaTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get copa => $composableBuilder(
+    column: $table.copa,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get puntos => $composableBuilder(
+    column: $table.puntos,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CampeonatosTableFilterComposer get campeonatoId {
+    final $$CampeonatosTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.campeonatoId,
+      referencedTable: $db.campeonatos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CampeonatosTableFilterComposer(
+            $db: $db,
+            $table: $db.campeonatos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PilotosTableFilterComposer get pilotoId {
+    final $$PilotosTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.pilotoId,
+      referencedTable: $db.pilotos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PilotosTableFilterComposer(
+            $db: $db,
+            $table: $db.pilotos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PruebasTableFilterComposer get pruebaId {
+    final $$PruebasTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.pruebaId,
+      referencedTable: $db.pruebas,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PruebasTableFilterComposer(
+            $db: $db,
+            $table: $db.pruebas,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$OverridesCopaTableOrderingComposer
+    extends Composer<_$AppDatabase, $OverridesCopaTable> {
+  $$OverridesCopaTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get copa => $composableBuilder(
+    column: $table.copa,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get puntos => $composableBuilder(
+    column: $table.puntos,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CampeonatosTableOrderingComposer get campeonatoId {
+    final $$CampeonatosTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.campeonatoId,
+      referencedTable: $db.campeonatos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CampeonatosTableOrderingComposer(
+            $db: $db,
+            $table: $db.campeonatos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PilotosTableOrderingComposer get pilotoId {
+    final $$PilotosTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.pilotoId,
+      referencedTable: $db.pilotos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PilotosTableOrderingComposer(
+            $db: $db,
+            $table: $db.pilotos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PruebasTableOrderingComposer get pruebaId {
+    final $$PruebasTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.pruebaId,
+      referencedTable: $db.pruebas,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PruebasTableOrderingComposer(
+            $db: $db,
+            $table: $db.pruebas,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$OverridesCopaTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OverridesCopaTable> {
+  $$OverridesCopaTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get copa =>
+      $composableBuilder(column: $table.copa, builder: (column) => column);
+
+  GeneratedColumn<int> get puntos =>
+      $composableBuilder(column: $table.puntos, builder: (column) => column);
+
+  $$CampeonatosTableAnnotationComposer get campeonatoId {
+    final $$CampeonatosTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.campeonatoId,
+      referencedTable: $db.campeonatos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CampeonatosTableAnnotationComposer(
+            $db: $db,
+            $table: $db.campeonatos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PilotosTableAnnotationComposer get pilotoId {
+    final $$PilotosTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.pilotoId,
+      referencedTable: $db.pilotos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PilotosTableAnnotationComposer(
+            $db: $db,
+            $table: $db.pilotos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PruebasTableAnnotationComposer get pruebaId {
+    final $$PruebasTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.pruebaId,
+      referencedTable: $db.pruebas,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PruebasTableAnnotationComposer(
+            $db: $db,
+            $table: $db.pruebas,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$OverridesCopaTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $OverridesCopaTable,
+          OverridesCopaData,
+          $$OverridesCopaTableFilterComposer,
+          $$OverridesCopaTableOrderingComposer,
+          $$OverridesCopaTableAnnotationComposer,
+          $$OverridesCopaTableCreateCompanionBuilder,
+          $$OverridesCopaTableUpdateCompanionBuilder,
+          (OverridesCopaData, $$OverridesCopaTableReferences),
+          OverridesCopaData,
+          PrefetchHooks Function({
+            bool campeonatoId,
+            bool pilotoId,
+            bool pruebaId,
+          })
+        > {
+  $$OverridesCopaTableTableManager(_$AppDatabase db, $OverridesCopaTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OverridesCopaTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OverridesCopaTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$OverridesCopaTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> campeonatoId = const Value.absent(),
+                Value<String> copa = const Value.absent(),
+                Value<int> pilotoId = const Value.absent(),
+                Value<int> pruebaId = const Value.absent(),
+                Value<int> puntos = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OverridesCopaCompanion(
+                campeonatoId: campeonatoId,
+                copa: copa,
+                pilotoId: pilotoId,
+                pruebaId: pruebaId,
+                puntos: puntos,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int campeonatoId,
+                required String copa,
+                required int pilotoId,
+                required int pruebaId,
+                required int puntos,
+                Value<int> rowid = const Value.absent(),
+              }) => OverridesCopaCompanion.insert(
+                campeonatoId: campeonatoId,
+                copa: copa,
+                pilotoId: pilotoId,
+                pruebaId: pruebaId,
+                puntos: puntos,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$OverridesCopaTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({campeonatoId = false, pilotoId = false, pruebaId = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (campeonatoId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.campeonatoId,
+                                    referencedTable:
+                                        $$OverridesCopaTableReferences
+                                            ._campeonatoIdTable(db),
+                                    referencedColumn:
+                                        $$OverridesCopaTableReferences
+                                            ._campeonatoIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (pilotoId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.pilotoId,
+                                    referencedTable:
+                                        $$OverridesCopaTableReferences
+                                            ._pilotoIdTable(db),
+                                    referencedColumn:
+                                        $$OverridesCopaTableReferences
+                                            ._pilotoIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (pruebaId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.pruebaId,
+                                    referencedTable:
+                                        $$OverridesCopaTableReferences
+                                            ._pruebaIdTable(db),
+                                    referencedColumn:
+                                        $$OverridesCopaTableReferences
+                                            ._pruebaIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$OverridesCopaTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $OverridesCopaTable,
+      OverridesCopaData,
+      $$OverridesCopaTableFilterComposer,
+      $$OverridesCopaTableOrderingComposer,
+      $$OverridesCopaTableAnnotationComposer,
+      $$OverridesCopaTableCreateCompanionBuilder,
+      $$OverridesCopaTableUpdateCompanionBuilder,
+      (OverridesCopaData, $$OverridesCopaTableReferences),
+      OverridesCopaData,
+      PrefetchHooks Function({bool campeonatoId, bool pilotoId, bool pruebaId})
     >;
 typedef $$CatalogoCochesTableCreateCompanionBuilder =
     CatalogoCochesCompanion Function({
@@ -25647,6 +27563,8 @@ class $AppDatabaseManager {
       $$ResultadosTableTableManager(_db, _db.resultados);
   $$DescartesPruebaTableTableManager get descartesPrueba =>
       $$DescartesPruebaTableTableManager(_db, _db.descartesPrueba);
+  $$OverridesCopaTableTableManager get overridesCopa =>
+      $$OverridesCopaTableTableManager(_db, _db.overridesCopa);
   $$CatalogoCochesTableTableManager get catalogoCoches =>
       $$CatalogoCochesTableTableManager(_db, _db.catalogoCoches);
   $$VerificacionesTableTableManager get verificaciones =>

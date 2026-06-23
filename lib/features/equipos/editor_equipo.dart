@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,6 +21,7 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
   final _nombre = TextEditingController();
 
   String? _copa;
+  String? _copaOriginal;
   int? _piloto1Id;
   int? _piloto2Id;
   bool _cargando = true;
@@ -42,6 +44,7 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
         .getSingle();
     _nombre.text = e.nombre;
     _copa = e.copa;
+    _copaOriginal = e.copa;
     _piloto1Id = e.piloto1Id;
     _piloto2Id = e.piloto2Id;
     if (mounted) setState(() => _cargando = false);
@@ -85,6 +88,12 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
           piloto2Id: _piloto2Id,
         );
       } else {
+        // Si cambia la copa a mitad de campeonato, congelar la copa anterior
+        // en TODAS las pruebas donde el equipo ya ha competido (tenga o no
+        // inscripción), para que esos puntos sigan contando en la copa antigua.
+        if (_copaOriginal != null && _copa != _copaOriginal) {
+          await _congelarCopaAnterior(widget.equipoId!, _copaOriginal!);
+        }
         await repo.actualizar(
           id: widget.equipoId!,
           nombre: _nombre.text.trim(),
@@ -102,6 +111,47 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
 
   void _aviso(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  /// Congela [copaAnterior] en todas las pruebas donde el equipo ya compitió
+  /// (por resultados o inscripción) y que aún no tengan copa propia, para que
+  /// esos puntos se mantengan en su copa al cambiar de copa el equipo.
+  Future<void> _congelarCopaAnterior(int equipoId, String copaAnterior) async {
+    final db = ref.read(dbProvider);
+    // Pruebas donde el equipo tiene resultados.
+    final res = await (db.select(db.resultados)
+          ..where((t) => t.equipoId.equals(equipoId)))
+        .get();
+    final mangaIds = res.map((r) => r.mangaId).toSet().toList();
+    final mangas = mangaIds.isEmpty
+        ? []
+        : await (db.select(db.mangas)..where((t) => t.id.isIn(mangaIds))).get();
+    final pruebasConResultado = mangas.map((m) => m.pruebaId).toSet();
+    // Inscripciones existentes del equipo.
+    final ins = await (db.select(db.inscripcionesPrueba)
+          ..where((t) => t.equipoId.equals(equipoId)))
+        .get();
+    final insPorPrueba = {for (final i in ins) i.pruebaId: i};
+
+    final pruebas = {...pruebasConResultado, ...insPorPrueba.keys};
+    for (final pruebaId in pruebas) {
+      final existente = insPorPrueba[pruebaId];
+      if (existente == null) {
+        await db.into(db.inscripcionesPrueba).insert(
+              InscripcionesPruebaCompanion.insert(
+                pruebaId: pruebaId,
+                equipoId: equipoId,
+                copa: drift.Value(copaAnterior),
+                asignada: const drift.Value(true),
+              ),
+            );
+      } else if (existente.copa == null) {
+        await (db.update(db.inscripcionesPrueba)
+              ..where((t) => t.id.equals(existente.id)))
+            .write(InscripcionesPruebaCompanion(
+                copa: drift.Value(copaAnterior)));
+      }
+    }
   }
 
   Future<void> _borrar() async {

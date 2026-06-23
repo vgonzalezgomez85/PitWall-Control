@@ -200,25 +200,41 @@ class PantallaSorteoMotores extends ConsumerWidget {
               ),
             );
           }
-          return Column(
-            children: [
-              _Cabecera(datos: d),
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-                  itemCount: d.filas.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 4),
-                  itemBuilder: (_, i) => _FilaTarjeta(
-                    fila: d.filas[i],
-                    individual: d.individual,
-                    onSortear: () => _sortearUno(context, ref, d, d.filas[i]),
-                    onQuitar: d.filas[i].motor == null
-                        ? null
-                        : () => _quitar(ref, d.filas[i]),
+          return DefaultTabController(
+            length: 2,
+            child: Column(
+              children: [
+                _Cabecera(datos: d),
+                TabBar(
+                  labelColor: cs.primary,
+                  tabs: const [
+                    Tab(text: 'Equipos'),
+                    Tab(text: 'Números'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                        itemCount: d.filas.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 4),
+                        itemBuilder: (_, i) => _FilaTarjeta(
+                          fila: d.filas[i],
+                          individual: d.individual,
+                          onSortear: () =>
+                              _sortearUno(context, ref, d, d.filas[i]),
+                          onQuitar: d.filas[i].motor == null
+                              ? null
+                              : () => _quitar(ref, d.filas[i]),
+                        ),
+                      ),
+                      _VistaNumeros(datos: d),
+                    ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),
@@ -484,6 +500,110 @@ class _SinRango extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Vista "Números": todos los motores del rango con su estado (disponible o
+/// asignado y a quién).
+class _VistaNumeros extends StatelessWidget {
+  const _VistaNumeros({required this.datos});
+  final DatosSorteo datos;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final min = datos.campeonato.motorSorteoMin;
+    final max = datos.campeonato.motorSorteoMax;
+    if (min == null || max == null || max < min) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text('Rango de motores no configurado.',
+              style: TextStyle(color: cs.outline)),
+        ),
+      );
+    }
+    // Motor asignado → nombre (equipo o piloto según formato).
+    final porMotor = <int, String>{};
+    for (final f in datos.filas) {
+      if (f.motor != null) {
+        porMotor[f.motor!] =
+            datos.individual ? f.pilotoNombre : f.equipoNombre;
+      }
+    }
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (var n = min; n <= max; n++)
+              _ChipMotor(numero: n, asignadoA: porMotor[n]),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ChipMotor extends StatelessWidget {
+  const _ChipMotor({required this.numero, required this.asignadoA});
+  final int numero;
+  final String? asignadoA;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final asignado = asignadoA != null;
+    final fondo = asignado ? cs.errorContainer : Colors.green.shade50;
+    final borde = asignado ? cs.error : Colors.green.shade400;
+    final texto = asignado ? cs.onErrorContainer : Colors.green.shade900;
+    return Container(
+      width: 150,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: fondo,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borde.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: borde.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+            ),
+            child: Text('$numero',
+                style: TextStyle(
+                    fontWeight: FontWeight.w800, color: texto, fontSize: 14)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(asignado ? 'Asignado' : 'Disponible',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: texto)),
+                if (asignado)
+                  Text(asignadoA!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, color: texto)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

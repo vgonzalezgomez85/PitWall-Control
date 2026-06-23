@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../services/exportar_pdf.dart';
 import '../../services/generador_pdf_mangas.dart';
 import '../../services/generador_pdf_verificaciones.dart';
 import '../resultados/pantalla_resultados_prueba.dart';
@@ -24,12 +25,61 @@ class DetallePrueba extends ConsumerWidget {
 
   final int pruebaId;
 
+  void _abrir(BuildContext context, Widget destino) {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => destino));
+  }
+
+  Future<void> _exportarPdf(
+      BuildContext context, WidgetRef ref, String op) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final idi = await elegirIdiomaExport(context, ref);
+    if (idi == null) return;
+    try {
+      final sugerido = op == 'mangas'
+          ? 'mangas-${DateTime.now().millisecondsSinceEpoch}.pdf'
+          : 'verificaciones-${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final destino = await getSaveLocation(
+        acceptedTypeGroups: [
+          XTypeGroup(label: 'PDF', extensions: ['pdf']),
+        ],
+        suggestedName: sugerido,
+      );
+      if (destino == null) return;
+
+      messenger.showSnackBar(const SnackBar(
+          content: Text('Generando PDF…'), duration: Duration(seconds: 2)));
+
+      final bytes = op == 'mangas'
+          ? await ref
+              .read(generadorPdfMangasProvider)
+              .generar(pruebaId: pruebaId, idioma: idi)
+          : await ref
+              .read(generadorPdfVerificacionesProvider)
+              .generar(pruebaId: pruebaId, idioma: idi);
+
+      var ruta = destino.path;
+      if (!ruta.toLowerCase().endsWith('.pdf')) {
+        ruta = '$ruta.pdf';
+      }
+      await File(ruta).writeAsBytes(bytes);
+
+      messenger.showSnackBar(SnackBar(content: Text('PDF guardado en $ruta')));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  void _irAlInicio(BuildContext context, WidgetRef ref) {
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    ref.read(shellIndiceProvider.notifier).ir(0);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.watch(dbProvider);
     final pruebaAsync = ref.watch(_pruebaProvider(pruebaId));
     final mangasAsync = ref.watch(mangasPruebaProvider(pruebaId));
-    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -37,120 +87,22 @@ class DetallePrueba extends ConsumerWidget {
           data: (p) => Text(p?.nombre ?? 'Prueba'),
           orElse: () => const Text('Prueba'),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Inscritos a la prueba',
-            icon: const Icon(Icons.how_to_reg_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => PantallaInscritos(pruebaId: pruebaId),
-              ),
-            ),
+      ),
+      body: Row(
+        children: [
+          _PanelPrueba(
+            pruebaId: pruebaId,
+            onInicio: () => _irAlInicio(context, ref),
+            onAbrir: (d) => _abrir(context, d),
+            onExportar: (op) => _exportarPdf(context, ref, op),
           ),
-          IconButton(
-            tooltip: 'Resultados',
-            icon: const Icon(Icons.emoji_events_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => PantallaResultadosPrueba(pruebaId: pruebaId),
-              ),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Editar mangas',
-            icon: const Icon(Icons.swap_horiz),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => PantallaEditarMangas(pruebaId: pruebaId),
-              ),
-            ),
-          ),
-          PopupMenuButton<String>(
-            tooltip: 'Exportar PDF',
-            icon: const Icon(Icons.picture_as_pdf_outlined),
-            onSelected: (op) async {
-              final messenger = ScaffoldMessenger.of(context);
-              try {
-                final sugerido = op == 'mangas'
-                    ? 'mangas-${DateTime.now().millisecondsSinceEpoch}.pdf'
-                    : 'verificaciones-${DateTime.now().millisecondsSinceEpoch}.pdf';
-                final destino = await getSaveLocation(
-                  acceptedTypeGroups: [
-                    XTypeGroup(label: 'PDF', extensions: ['pdf']),
-                  ],
-                  suggestedName: sugerido,
-                );
-                if (destino == null) return;
-
-                messenger.showSnackBar(const SnackBar(
-                    content: Text('Generando PDF…'),
-                    duration: Duration(seconds: 2)));
-
-                final bytes = op == 'mangas'
-                    ? await ref
-                        .read(generadorPdfMangasProvider)
-                        .generar(pruebaId: pruebaId)
-                    : await ref
-                        .read(generadorPdfVerificacionesProvider)
-                        .generar(pruebaId: pruebaId);
-
-                var ruta = destino.path;
-                if (!ruta.toLowerCase().endsWith('.pdf')) {
-                  ruta = '$ruta.pdf';
-                }
-                await File(ruta).writeAsBytes(bytes);
-
-                messenger.showSnackBar(
-                    SnackBar(content: Text('PDF guardado en $ruta')));
-              } catch (e) {
-                messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
-              }
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: 'mangas',
-                child: ListTile(
-                  leading: Icon(Icons.flag_outlined),
-                  title: Text('PDF de mangas'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              PopupMenuItem(
-                value: 'verifs',
-                child: ListTile(
-                  leading: Icon(Icons.fact_check_outlined),
-                  title: Text('PDF de verificaciones'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
-          IconButton(
-            tooltip: 'Sorteo de motores',
-            icon: const Icon(Icons.casino_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => PantallaSorteoMotores(pruebaId: pruebaId),
-              ),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Tesorería',
-            icon: const Icon(Icons.payments_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) =>
-                    PantallaTesoreriaPrueba(pruebaId: pruebaId),
-              ),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Editar',
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => EditorPrueba(pruebaId: pruebaId),
-              ),
+          const VerticalDivider(width: 1, thickness: 1),
+          Expanded(
+            child: _ContenidoPrueba(
+              pruebaId: pruebaId,
+              db: db,
+              pruebaAsync: pruebaAsync,
+              mangasAsync: mangasAsync,
             ),
           ),
         ],
@@ -164,67 +116,185 @@ class DetallePrueba extends ConsumerWidget {
         icon: const Icon(Icons.add),
         label: const Text('Nueva manga'),
       ),
-      body: pruebaAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (prueba) {
-          if (prueba == null) return const Center(child: Text('No encontrada'));
-          return mangasAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
-            data: (mangas) => ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-              children: [
-                _CabeceraPrueba(prueba: prueba),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Text('Mangas',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: cs.secondaryContainer,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text('${mangas.length}',
-                          style: TextStyle(
-                            color: cs.onSecondaryContainer,
-                            fontWeight: FontWeight.w600,
-                          )),
+    );
+  }
+}
+
+/// Contenido principal de la prueba (cabecera + lista de mangas).
+class _ContenidoPrueba extends StatelessWidget {
+  const _ContenidoPrueba({
+    required this.pruebaId,
+    required this.db,
+    required this.pruebaAsync,
+    required this.mangasAsync,
+  });
+
+  final int pruebaId;
+  final dynamic db;
+  final AsyncValue<Prueba?> pruebaAsync;
+  final AsyncValue<List<Manga>> mangasAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return pruebaAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+      data: (prueba) {
+        if (prueba == null) return const Center(child: Text('No encontrada'));
+        return mangasAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Error: $e')),
+          data: (mangas) => ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+            children: [
+              _CabeceraPrueba(prueba: prueba),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Text('Mangas',
+                      style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: cs.secondaryContainer,
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (mangas.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 32),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(Icons.flag_outlined, size: 64, color: cs.outline),
-                          const SizedBox(height: 8),
-                          Text('Aún no hay mangas',
-                              style: Theme.of(context).textTheme.titleMedium),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Crea las mangas que tendrá esta prueba '
-                            '(Jueves 21:00, Viernes 21:00…).',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
+                    child: Text('${mangas.length}',
+                        style: TextStyle(
+                          color: cs.onSecondaryContainer,
+                          fontWeight: FontWeight.w600,
+                        )),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (mangas.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.flag_outlined, size: 64, color: cs.outline),
+                        const SizedBox(height: 8),
+                        Text('Aún no hay mangas',
+                            style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Crea las mangas que tendrá esta prueba '
+                          '(Jueves 21:00, Viernes 21:00…).',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
                     ),
-                  )
-                else
-                  ...mangas.map((m) => _TarjetaManga(manga: m, db: db)),
-              ],
+                  ),
+                )
+              else
+                ...mangas.map((m) => _TarjetaManga(manga: m, db: db)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Panel lateral fijo de la prueba: replica las acciones de la barra superior
+/// para tenerlas siempre accesibles, con un acceso para volver al inicio.
+class _PanelPrueba extends StatelessWidget {
+  const _PanelPrueba({
+    required this.pruebaId,
+    required this.onInicio,
+    required this.onAbrir,
+    required this.onExportar,
+  });
+
+  final int pruebaId;
+  final VoidCallback onInicio;
+  final void Function(Widget destino) onAbrir;
+  final Future<void> Function(String op) onExportar;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    void abrir(Widget destino) => onAbrir(destino);
+    Future<void> exportar(String op) => onExportar(op);
+
+    return SizedBox(
+      width: 250,
+      child: Material(
+        color: cs.surface,
+        child: SafeArea(
+          right: false,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              Container(
+                width: double.infinity,
+                color: cs.primaryContainer,
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                child: Text('Opciones de la prueba',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: cs.onPrimaryContainer,
+                          fontWeight: FontWeight.w700,
+                        )),
+              ),
+            ListTile(
+              leading: const Icon(Icons.home_outlined),
+              title: const Text('Inicio'),
+              onTap: onInicio,
             ),
-          );
-        },
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.how_to_reg_outlined),
+              title: const Text('Inscritos a la prueba'),
+              onTap: () => abrir(PantallaInscritos(pruebaId: pruebaId)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.emoji_events_outlined),
+              title: const Text('Resultados'),
+              onTap: () =>
+                  abrir(PantallaResultadosPrueba(pruebaId: pruebaId)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.swap_horiz),
+              title: const Text('Editar mangas'),
+              onTap: () => abrir(PantallaEditarMangas(pruebaId: pruebaId)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.casino_outlined),
+              title: const Text('Sorteo de motores'),
+              onTap: () => abrir(PantallaSorteoMotores(pruebaId: pruebaId)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.payments_outlined),
+              title: const Text('Tesorería de la prueba'),
+              onTap: () => abrir(PantallaTesoreriaPrueba(pruebaId: pruebaId)),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined),
+              title: const Text('PDF de mangas'),
+              onTap: () => exportar('mangas'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.fact_check_outlined),
+              title: const Text('PDF de verificaciones'),
+              onTap: () => exportar('verifs'),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Editar prueba'),
+              onTap: () => abrir(EditorPrueba(pruebaId: pruebaId)),
+            ),
+            ],
+          ),
+        ),
       ),
     );
   }

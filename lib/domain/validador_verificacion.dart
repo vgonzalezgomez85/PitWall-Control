@@ -56,6 +56,12 @@ class DatosVerificacion {
   final String? chasis;
   final String? neumatico;
 
+  /// Rango de dientes permitido (inclusive). Tamaño fijo = min == max.
+  final int pinonDientesMin;
+  final int pinonDientesMax;
+  final int coronaDientesMin;
+  final int coronaDientesMax;
+
   /// Conjuntos válidos cargados de los catálogos.
   final Set<String> marcasValidas;
   final Set<String> llantasDelValidas;
@@ -80,6 +86,10 @@ class DatosVerificacion {
     this.pinonDientes,
     this.coronaMarca,
     this.coronaDientes,
+    this.pinonDientesMin = 12,
+    this.pinonDientesMax = 12,
+    this.coronaDientesMin = 24,
+    this.coronaDientesMax = 30,
     this.llantaDelMarca,
     this.llantaDelDimension,
     this.llantaTraMarca,
@@ -155,24 +165,28 @@ class ValidadorVerificacion {
       }
     }
 
-    // PIÑÓN — siempre 12 dientes
-    if (d.pinonDientes != null && d.pinonDientes != 12) {
+    // PIÑÓN — rango (o tamaño fijo) configurado en el campeonato.
+    if (d.pinonDientes != null &&
+        (d.pinonDientes! < d.pinonDientesMin ||
+            d.pinonDientes! > d.pinonDientesMax)) {
       hallazgos.add(HallazgoValidacion(
         'pinonDientes',
         NivelValidacion.infraccion,
-        'El piñón debe tener 12 dientes (actual: ${d.pinonDientes}).',
+        'Piñón fuera de ${_rangoTexto(d.pinonDientesMin, d.pinonDientesMax)} '
+        'dientes. Actual: ${d.pinonDientes}.',
       ));
     }
 
-    // CORONA — rango 24-30 dientes
-    if (d.coronaDientes != null) {
-      if (d.coronaDientes! < 24 || d.coronaDientes! > 30) {
-        hallazgos.add(HallazgoValidacion(
-          'coronaDientes',
-          NivelValidacion.infraccion,
-          'Corona fuera de rango (24-30 dientes). Actual: ${d.coronaDientes}.',
-        ));
-      }
+    // CORONA — rango (o tamaño fijo) configurado en el campeonato.
+    if (d.coronaDientes != null &&
+        (d.coronaDientes! < d.coronaDientesMin ||
+            d.coronaDientes! > d.coronaDientesMax)) {
+      hallazgos.add(HallazgoValidacion(
+        'coronaDientes',
+        NivelValidacion.infraccion,
+        'Corona fuera de ${_rangoTexto(d.coronaDientesMin, d.coronaDientesMax)} '
+        'dientes. Actual: ${d.coronaDientes}.',
+      ));
     }
 
     // Marcas en catálogo
@@ -205,6 +219,10 @@ class ValidadorVerificacion {
 
     return ResultadoValidacion(hallazgos);
   }
+
+  /// "12" si min==max (tamaño fijo), "24-30" si es un rango.
+  static String _rangoTexto(int min, int max) =>
+      min == max ? '$min' : '$min-$max';
 
   static void _verMarca(List<HallazgoValidacion> out, String campo, String? valor,
       Set<String> validas) {

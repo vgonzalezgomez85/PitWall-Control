@@ -3,12 +3,16 @@ import 'dart:io';
 import 'package:drift/drift.dart' as drift;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../services/exportar_pdf.dart';
 import '../../services/generador_pdf_creditos.dart';
+import 'pantalla_revision_categorias.dart';
+import 'repositorio_creditos.dart';
 
 /// Pilotos del campeonato activo con saldo de créditos.
 class _ResumenPiloto {
@@ -80,11 +84,18 @@ final _movimientosPilotoProvider = StreamProvider.autoDispose
       .watch();
 });
 
-class PantallaCreditos extends ConsumerWidget {
+class PantallaCreditos extends ConsumerStatefulWidget {
   const PantallaCreditos({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PantallaCreditos> createState() => _PantallaCreditosState();
+}
+
+class _PantallaCreditosState extends ConsumerState<PantallaCreditos> {
+  String _busqueda = '';
+
+  @override
+  Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final activo = ref.watch(campeonatoActivoProvider);
     final pilotosAsync = ref.watch(_pilotosCampeonatoProvider);
@@ -100,10 +111,30 @@ class PantallaCreditos extends ConsumerWidget {
         title: const Text('Créditos'),
         actions: [
           IconButton(
+            tooltip: 'Revisión de categorías (cierre)',
+            icon: const Icon(Icons.military_tech_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const PantallaRevisionCategorias(),
+            )),
+          ),
+          if (activo.finalizado)
+            IconButton(
+              tooltip: 'Aplicar bonificación de cierre',
+              icon: const Icon(Icons.workspace_premium_outlined),
+              onPressed: () => _aplicarBonificacionCierre(context, ref, activo),
+            ),
+          IconButton(
+            tooltip: 'Exportar CSV',
+            icon: const Icon(Icons.table_view_outlined),
+            onPressed: () => _exportarCsv(context, ref, activo),
+          ),
+          IconButton(
             tooltip: 'Exportar PDF',
             icon: const Icon(Icons.picture_as_pdf_outlined),
             onPressed: () async {
               final messenger = ScaffoldMessenger.of(context);
+              final idi = await elegirIdiomaExport(context, ref);
+              if (idi == null) return;
               try {
                 final destino = await getSaveLocation(
                   acceptedTypeGroups: [
@@ -116,8 +147,9 @@ class PantallaCreditos extends ConsumerWidget {
                 messenger.showSnackBar(const SnackBar(
                     content: Text('Generando PDF…'),
                     duration: Duration(seconds: 2)));
-                final bytes =
-                    await ref.read(generadorPdfCreditosProvider).generar();
+                final bytes = await ref
+                    .read(generadorPdfCreditosProvider)
+                    .generar(idioma: idi);
                 var ruta = destino.path;
                 if (!ruta.toLowerCase().endsWith('.pdf')) ruta = '$ruta.pdf';
                 await File(ruta).writeAsBytes(bytes);
@@ -131,11 +163,31 @@ class PantallaCreditos extends ConsumerWidget {
             },
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(72),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: TextField(
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Buscar por nombre…',
+              ),
+              onChanged: (v) =>
+                  setState(() => _busqueda = v.trim().toLowerCase()),
+            ),
+          ),
+        ),
       ),
       body: pilotosAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (pilotos) {
+        data: (todos) {
+          final pilotos = _busqueda.isEmpty
+              ? todos
+              : todos
+                  .where((p) =>
+                      p.piloto.nombre.toLowerCase().contains(_busqueda))
+                  .toList();
           if (pilotos.isEmpty) {
             return Center(
               child: Padding(
@@ -146,8 +198,10 @@ class PantallaCreditos extends ConsumerWidget {
                     Icon(Icons.savings_outlined,
                         size: 96, color: cs.outline),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Aún no hay pilotos inscritos en este campeonato.',
+                    Text(
+                      todos.isEmpty
+                          ? 'Aún no hay pilotos inscritos en este campeonato.'
+                          : 'No hay coincidencias.',
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -164,6 +218,67 @@ class PantallaCreditos extends ConsumerWidget {
         },
       ),
     );
+  }
+}
+
+/// Aplica la bonificación de cierre a todos los pilotos del campeonato
+/// finalizado, previa confirmación.
+Future<void> _aplicarBonificacionCierre(
+    BuildContext context, WidgetRef ref, Campeonato activo) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('Bonificación de cierre'),
+      content: Text(
+        'Se regularizará el saldo de cada piloto que haya competido:\n\n'
+        'saldo = mín(saldo actual + bonificación según categoría y nº de '
+        'carreras, ${activo.topeRegularizacion}).\n\n'
+        'Solo se aplica a quien aún no la tenga. ¿Continuar?',
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar')),
+        FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Aplicar')),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    final n = await ref
+        .read(repoCreditosProvider)
+        .aplicarBonificacionCierre(activo.id);
+    messenger.showSnackBar(
+        SnackBar(content: Text('Bonificación aplicada a $n pilotos.')));
+  } catch (e) {
+    messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+  }
+}
+
+/// Exporta el estado de créditos del campeonato a un CSV.
+Future<void> _exportarCsv(
+    BuildContext context, WidgetRef ref, Campeonato activo) async {
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    final destino = await getSaveLocation(
+      acceptedTypeGroups: [
+        XTypeGroup(label: 'CSV', extensions: ['csv']),
+      ],
+      suggestedName: 'creditos-${activo.nombre.replaceAll(' ', '_')}.csv',
+    );
+    if (destino == null) return;
+    final csv = await ref.read(repoCreditosProvider).exportarCsv(activo.id);
+    var ruta = destino.path;
+    if (!ruta.toLowerCase().endsWith('.csv')) ruta = '$ruta.csv';
+    // BOM para que Excel reconozca UTF-8.
+    await File(ruta).writeAsString('﻿$csv');
+    messenger.showSnackBar(
+        SnackBar(content: Text('CSV guardado en $ruta')));
+  } catch (e) {
+    messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
   }
 }
 
@@ -230,6 +345,93 @@ class _TarjetaPiloto extends StatelessWidget {
   }
 }
 
+/// Ajuste manual de créditos: permite fijar el saldo (y los créditos
+/// iniciales) de un piloto, p. ej. para quitar créditos que vinieron de una
+/// verificación. El cambio del saldo se registra como movimiento "Ajuste
+/// manual" para que el historial siga cuadrando.
+Future<void> _ajustarCreditos(
+    BuildContext context, WidgetRef ref, _ResumenPiloto r) async {
+  final iniCtrl = TextEditingController(text: '${r.inicial}');
+  final actCtrl = TextEditingController(text: '${r.actual}');
+  final fmt = [
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
+  ];
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: Text('Ajustar créditos · ${r.piloto.nombre}'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: iniCtrl,
+            decoration: const InputDecoration(labelText: 'Créditos iniciales'),
+            keyboardType: TextInputType.number,
+            inputFormatters: fmt,
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: actCtrl,
+            decoration: const InputDecoration(labelText: 'Créditos actuales (saldo)'),
+            keyboardType: TextInputType.number,
+            inputFormatters: fmt,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'El cambio del saldo se anota como "Ajuste manual" en el historial.',
+            style: TextStyle(fontSize: 12),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar')),
+        FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Guardar')),
+      ],
+    ),
+  );
+  if (ok != true) return;
+  final newIni = int.tryParse(iniCtrl.text.trim()) ?? r.inicial;
+  final newAct = int.tryParse(actCtrl.text.trim()) ?? r.actual;
+  final db = ref.read(dbProvider);
+  final pid = r.piloto.id;
+  final campId = r.pc.campeonatoId;
+
+  if (newIni != r.inicial) {
+    await (db.update(db.pilotoCampeonato)
+          ..where((t) =>
+              t.pilotoId.equals(pid) & t.campeonatoId.equals(campId)))
+        .write(PilotoCampeonatoCompanion(
+            creditosIniciales: drift.Value(newIni)));
+  }
+  final delta = newAct - r.actual;
+  if (delta != 0) {
+    await (db.update(db.pilotoCampeonato)
+          ..where((t) =>
+              t.pilotoId.equals(pid) & t.campeonatoId.equals(campId)))
+        .write(PilotoCampeonatoCompanion(
+            creditosActuales: drift.Value(newAct)));
+    await db.into(db.movimientosCreditos).insert(
+          MovimientosCreditosCompanion.insert(
+            pilotoId: pid,
+            campeonatoId: campId,
+            delta: delta,
+            saldoResultante: newAct,
+            motivo: 'Ajuste manual',
+          ),
+        );
+  }
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Créditos ajustados')),
+    );
+    Navigator.of(context).pop();
+  }
+}
+
 class _PantallaHistorialPiloto extends ConsumerWidget {
   const _PantallaHistorialPiloto({required this.resumen});
   final _ResumenPiloto resumen;
@@ -242,7 +444,16 @@ class _PantallaHistorialPiloto extends ConsumerWidget {
     final pruebasAsync = ref.watch(_pruebasMapProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(resumen.piloto.nombre)),
+      appBar: AppBar(
+        title: Text(resumen.piloto.nombre),
+        actions: [
+          IconButton(
+            tooltip: 'Ajustar créditos a mano',
+            icon: const Icon(Icons.tune),
+            onPressed: () => _ajustarCreditos(context, ref, resumen),
+          ),
+        ],
+      ),
       body: movsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),

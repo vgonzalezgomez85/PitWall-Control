@@ -93,6 +93,54 @@ class GoogleSheetsService {
       cli.close();
     }
   }
+
+  /// Sobrescribe una fila (1-based) de una pestaña con [valores].
+  Future<void> escribirFila(
+      String hojaId, String tituloPestana, int fila1, List<String> valores) async {
+    final cli = await _auth.clienteAutenticado();
+    try {
+      final api = sheets.SheetsApi(cli);
+      final rango =
+          "'$tituloPestana'!A$fila1:${columnaLetra(valores.length - 1)}$fila1";
+      final vr = sheets.ValueRange(values: [valores]);
+      await api.spreadsheets.values
+          .update(vr, hojaId, rango, valueInputOption: 'USER_ENTERED');
+    } finally {
+      cli.close();
+    }
+  }
+
+  /// Añade [filas] al final de la pestaña.
+  Future<void> anadirFilas(
+      String hojaId, String tituloPestana, List<List<String>> filas) async {
+    if (filas.isEmpty) return;
+    final cli = await _auth.clienteAutenticado();
+    try {
+      final api = sheets.SheetsApi(cli);
+      final vr = sheets.ValueRange(values: filas);
+      await api.spreadsheets.values.append(
+        vr,
+        hojaId,
+        "'$tituloPestana'",
+        valueInputOption: 'USER_ENTERED',
+        insertDataOption: 'INSERT_ROWS',
+      );
+    } finally {
+      cli.close();
+    }
+  }
+
+  /// Letra de columna a partir del índice 0-based (0→A, 25→Z, 26→AA…).
+  static String columnaLetra(int index) {
+    var n = index + 1;
+    var s = '';
+    while (n > 0) {
+      final r = (n - 1) % 26;
+      s = String.fromCharCode(65 + r) + s;
+      n = (n - 1) ~/ 26;
+    }
+    return s.isEmpty ? 'A' : s;
+  }
 }
 
 final googleSheetsServiceProvider = Provider<GoogleSheetsService>((ref) {

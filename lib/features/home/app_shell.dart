@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../ajustes/pantalla_marca.dart';
 import '../campeonatos/editor_campeonato.dart';
 import '../campeonatos/pantalla_campeonatos.dart';
 import '../catalogos/pantalla_catalogos.dart';
@@ -13,6 +14,7 @@ import '../google/pantalla_configuracion_google.dart';
 import '../pilotos/lista_pilotos.dart';
 import '../pruebas/lista_pruebas.dart';
 import '../tesoreria/pantalla_tesoreria.dart';
+import '../verificaciones/pantalla_elegir_prueba_sorteo.dart';
 import '../verificaciones/pantalla_resumen_verificaciones.dart';
 import '../wordpress/pantalla_wordpress.dart';
 import 'pantalla_resumen.dart';
@@ -43,6 +45,21 @@ const _destinos = <_Destino>[
   _Destino(Icons.cloud_upload_outlined, Icons.cloud_upload, 'Publicar',
       PantallaWordpress()),
 ];
+
+/// Destinos visibles según las reglas del campeonato activo: oculta Tesorería
+/// y/o Créditos cuando el campeonato no los usa.
+List<_Destino> _destinosVisibles(Campeonato? activo) => [
+      for (final d in _destinos)
+        if (!(d.titulo == 'Tesorería' && !(activo?.usaTesoreria ?? true)) &&
+            !(d.titulo == 'Créditos' && !(activo?.usaCreditos ?? true)))
+          d,
+    ];
+
+/// Índice del destino con [titulo] dentro de la lista visible para [activo],
+/// o -1 si ese destino está oculto. Lo usan los accesos rápidos del dashboard
+/// para navegar al módulo correcto aunque haya botones ocultos.
+int indiceDestinoVisible(String titulo, Campeonato? activo) =>
+    _destinosVisibles(activo).indexWhere((d) => d.titulo == titulo);
 
 class AppShell extends ConsumerWidget {
   const AppShell({super.key});
@@ -81,7 +98,10 @@ class _ShellConContenido extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final indice = ref.watch(shellIndiceProvider);
+    final activo = ref.watch(campeonatoActivoProvider);
+    final destinos = _destinosVisibles(activo);
+    final indice =
+        ref.watch(shellIndiceProvider).clamp(0, destinos.length - 1);
     final ancho = MediaQuery.sizeOf(context).width;
     final extendida = ancho > 1100;
 
@@ -92,12 +112,13 @@ class _ShellConContenido extends ConsumerWidget {
             indice: indice,
             extendida: extendida,
             campeonatos: campeonatos,
+            destinos: destinos,
           ),
           const VerticalDivider(width: 1, thickness: 1),
           Expanded(
             child: IndexedStack(
               index: indice,
-              children: [for (final d in _destinos) d.pantalla],
+              children: [for (final d in destinos) d.pantalla],
             ),
           ),
         ],
@@ -111,11 +132,13 @@ class _BarraLateral extends ConsumerWidget {
     required this.indice,
     required this.extendida,
     required this.campeonatos,
+    required this.destinos,
   });
 
   final int indice;
   final bool extendida;
   final List<Campeonato> campeonatos;
+  final List<_Destino> destinos;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -150,6 +173,12 @@ class _BarraLateral extends ConsumerWidget {
                         children: [
                           const Divider(indent: 12, endIndent: 12),
                           _AccionSecundaria(
+                            icono: Icons.casino_outlined,
+                            etiqueta: 'Sorteo de motor',
+                            extendida: extendida,
+                            destino: const PantallaElegirPruebaSorteo(),
+                          ),
+                          _AccionSecundaria(
                             icono: Icons.emoji_events_outlined,
                             etiqueta: 'Campeonatos',
                             extendida: extendida,
@@ -167,6 +196,12 @@ class _BarraLateral extends ConsumerWidget {
                             extendida: extendida,
                             destino: const PantallaConfiguracionGoogle(),
                           ),
+                          _AccionSecundaria(
+                            icono: Icons.branding_watermark_outlined,
+                            etiqueta: 'Marca / Exportaciones',
+                            extendida: extendida,
+                            destino: const PantallaMarca(),
+                          ),
                           _BotonTema(extendida: extendida),
                         ],
                       ),
@@ -175,7 +210,7 @@ class _BarraLateral extends ConsumerWidget {
                   ),
                 ),
                 destinations: [
-                  for (final d in _destinos)
+                  for (final d in destinos)
                     NavigationRailDestination(
                       icon: Icon(d.icono),
                       selectedIcon: Icon(d.iconoSel, color: color.primary),

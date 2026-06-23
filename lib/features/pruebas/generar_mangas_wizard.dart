@@ -22,7 +22,8 @@ class GenerarMangasWizard extends ConsumerStatefulWidget {
 }
 
 class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
-  static const _tamMax = 10;
+  /// Carriles de la pista = máximo de equipos por manga (corren a la vez).
+  int _carriles = 6;
   int _numMangas = 1;
   List<TextEditingController> _nombresControllers = [];
   bool _sustituir = true;
@@ -96,11 +97,11 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
       );
     }).toList();
     var nombres = GeneradorMangas.sugerirMangasPorPreferencia(
-        equipos: semillasTmp, tamMax: _tamMax);
+        equipos: semillasTmp, tamMax: _carriles);
     if (nombres.isEmpty) {
       // fallback: número sugerido sobre el total
       final n = GeneradorMangas.numMangasSugerido(
-          totalEquipos: widget.inscritos.length, tamMax: _tamMax);
+          totalEquipos: widget.inscritos.length, tamMax: _carriles);
       nombres = GeneradorMangas.sugerirNombresMangas(n);
     }
     _numMangas = nombres.length;
@@ -110,6 +111,16 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
 
     setState(() => _listo = true);
     _recalcular();
+  }
+
+  void _ajustarCarriles(int n) {
+    final clamped = n.clamp(2, 32);
+    // Al cambiar los carriles, re-sugiere el número de mangas para que quepan
+    // todos los equipos respetando el nuevo máximo por manga.
+    final sugerido = GeneradorMangas.numMangasSugerido(
+        totalEquipos: widget.inscritos.length, tamMax: clamped);
+    setState(() => _carriles = clamped);
+    _ajustarNumMangas(sugerido);
   }
 
   void _ajustarNumMangas(int n) {
@@ -145,7 +156,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
         equipos: semillas,
         config: ConfigGenerador(
           nombresMangas: nombres,
-          tamMaxManga: _tamMax,
+          tamMaxManga: _carriles,
         ),
       );
     });
@@ -244,12 +255,45 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
             ),
           ),
           const SizedBox(height: 20),
-          Text('1. Número de mangas',
+          Text('1. Carriles de la pista',
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Text(
-            'Sugerido: ${GeneradorMangas.numMangasSugerido(totalEquipos: total, tamMax: _tamMax)} '
-            '(máximo $_tamMax equipos por manga). Puedes cambiarlo.',
+            'Cuántos coches corren a la vez. Marca el máximo de equipos por '
+            'manga para repartirlos bien.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              IconButton.filledTonal(
+                onPressed: _carriles > 2
+                    ? () => _ajustarCarriles(_carriles - 1)
+                    : null,
+                icon: const Icon(Icons.remove),
+              ),
+              const SizedBox(width: 16),
+              Text('$_carriles',
+                  style: const TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.w700)),
+              const SizedBox(width: 16),
+              IconButton.filledTonal(
+                onPressed: _carriles < 32
+                    ? () => _ajustarCarriles(_carriles + 1)
+                    : null,
+                icon: const Icon(Icons.add),
+              ),
+              const SizedBox(width: 8),
+              Text('carriles', style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text('2. Número de mangas',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(
+            'Sugerido: ${GeneradorMangas.numMangasSugerido(totalEquipos: total, tamMax: _carriles)} '
+            '(máximo $_carriles equipos por manga). Puedes cambiarlo.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -274,7 +318,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
             ],
           ),
           const SizedBox(height: 20),
-          Text('2. Nombres y horarios',
+          Text('3. Nombres y horarios',
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           ..._nombresControllers.asMap().entries.map((e) => Padding(
@@ -289,7 +333,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
                 ),
               )),
           const SizedBox(height: 24),
-          Text('3. Vista previa',
+          Text('4. Vista previa',
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Text(

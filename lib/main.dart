@@ -13,7 +13,8 @@ import 'services/almacen_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('es_ES');
+  // Todos los locales: las exportaciones se pueden generar en varios idiomas.
+  await initializeDateFormatting();
   final prefs = await SharedPreferences.getInstance();
   runApp(
     ProviderScope(

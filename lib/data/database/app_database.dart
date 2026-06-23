@@ -19,6 +19,7 @@ part 'app_database.g.dart';
     InscripcionesPrueba,
     Resultados,
     DescartesPrueba,
+    OverridesCopa,
     Verificaciones,
     Pagos,
     MovimientosTesoreria,
@@ -41,7 +42,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 25;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -153,6 +154,45 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 19) {
             await _aplicar(() => m.createTable(catalogoMotores));
+          }
+          if (from < 20) {
+            await _aplicar(() => customStatement(
+                'ALTER TABLE inscripciones_prueba ADD COLUMN copa TEXT'));
+            // Snapshot de la copa actual de cada equipo en sus inscripciones
+            // existentes, para que un cambio de copa futuro no mueva el pasado.
+            await _aplicar(() => customStatement(
+                'UPDATE inscripciones_prueba SET copa = '
+                '(SELECT copa FROM equipos WHERE equipos.id = '
+                'inscripciones_prueba.equipo_id) WHERE copa IS NULL'));
+          }
+          if (from < 21) {
+            await _aplicar(() => m.createTable(overridesCopa));
+          }
+          if (from < 22) {
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN usa_tesoreria INTEGER NOT NULL DEFAULT 1'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN finalizado INTEGER NOT NULL DEFAULT 0'));
+          }
+          if (from < 23) {
+            await _aplicar(() => customStatement(
+                'ALTER TABLE piloto_campeonato ADD COLUMN categoria_final TEXT'));
+          }
+          if (from < 24) {
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN pinon_dientes_min INTEGER NOT NULL DEFAULT 12'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN pinon_dientes_max INTEGER NOT NULL DEFAULT 12'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN corona_dientes_min INTEGER NOT NULL DEFAULT 24'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN corona_dientes_max INTEGER NOT NULL DEFAULT 30'));
+          }
+          if (from < 25) {
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN marca_titulo TEXT'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN marca_lema TEXT'));
           }
         },
       );

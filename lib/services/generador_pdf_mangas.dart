@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../core/proveedores.dart';
 import '../data/database/app_database.dart';
+import 'exportar_config.dart';
 import 'pdf_marca.dart';
 import 'pdf_util.dart';
 
@@ -59,7 +60,10 @@ class GeneradorPdfMangas {
   static const _fondo = PdfColor.fromInt(0xFFFAF7F4);
 
   /// Genera el PDF de las mangas de una prueba y devuelve los bytes.
-  Future<Uint8List> generar({required int pruebaId}) async {
+  Future<Uint8List> generar(
+      {required int pruebaId, IdiomaExport idioma = IdiomaExport.es}) async {
+    final cfg = ref.read(marcaConfigProvider);
+    String t(String k) => tr(idioma, k);
     final db = ref.read(dbProvider);
     final activo = ref.read(campeonatoActivoProvider);
     final prueba = await (db.select(db.pruebas)
@@ -137,14 +141,19 @@ class GeneradorPdfMangas {
       author: 'Resisbarna',
     );
 
-    final fmtFecha = DateFormat("EEEE d 'de' MMMM y", 'es_ES');
+    final fmtFecha = DateFormat("EEEE d 'de' MMMM y", idioma.intlLocale);
     final fechaTexto =
         prueba.fecha == null ? '' : fmtFecha.format(prueba.fecha!);
 
     // Identidad visual compartida (Base 02 + logos patrocinadores).
     final marca = await MarcaPdf.cargar();
-    final organizacion = activo?.organizacion ?? 'Resisbarna';
-    final subtitulo = 'Mangas · ${prueba.nombre} - ${activo?.nombre ?? ''}';
+    final tituloMarca = (activo?.marcaTitulo?.trim().isNotEmpty ?? false)
+        ? activo!.marcaTitulo!.trim()
+        : cfg.titulo;
+    final lemaMarca = (activo?.marcaLema?.trim().isNotEmpty ?? false)
+        ? activo!.marcaLema!.trim()
+        : cfg.lema;
+    final subtitulo = '${t('Mangas')} · ${prueba.nombre} - ${activo?.nombre ?? ''}';
 
     // Una hoja por manga: cada manga entra entera en su propia página (A4 y,
     // si tiene muchos equipos, A3), escalada si hiciera falta.
@@ -153,7 +162,7 @@ class GeneradorPdfMangas {
         pdf,
         filas: 0,
         contenido: (ctx) => marca.hero(
-          organizacion: organizacion,
+          titulo: tituloMarca,
           subtitulo: subtitulo,
           nota: fechaTexto.isEmpty ? null : fechaTexto,
         ),
@@ -167,9 +176,9 @@ class GeneradorPdfMangas {
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
           children: [
             marca.hero(
-              organizacion: organizacion,
+              titulo: tituloMarca,
               subtitulo: subtitulo,
-              badge: '${m.totalEquipos} equipos',
+              badge: '${m.totalEquipos} ${t('equipos')}',
               nota: fechaTexto.isEmpty ? null : fechaTexto,
             ),
             pw.SizedBox(height: 10),
@@ -177,13 +186,13 @@ class GeneradorPdfMangas {
             pw.Container(
               color: PdfColors.white,
               padding: const pw.EdgeInsets.fromLTRB(10, 6, 10, 4),
-              child: _cabeceraTabla(),
+              child: _cabeceraTabla(t),
             ),
             pw.Container(color: _grisClaro, height: 0.5),
             for (var i = 0; i < m.filas.length; i++)
               _filaTabla(m.filas[i], i),
             pw.SizedBox(height: 12),
-            marca.pie(),
+            marca.pie(lema: lemaMarca, conApoyo: t('Con el apoyo de')),
           ],
         ),
       );
@@ -290,7 +299,7 @@ class GeneradorPdfMangas {
     );
   }
 
-  pw.Widget _cabeceraTabla() {
+  pw.Widget _cabeceraTabla(String Function(String) t) {
     pw.Widget col(String texto, int flex, {pw.TextAlign? align}) {
       return pw.Expanded(
         flex: flex,
@@ -310,11 +319,11 @@ class GeneradorPdfMangas {
     return pw.Row(
       children: [
         col('#', 2),
-        col('EQUIPO', 12),
-        col('PILOTOS', 16),
-        col('PUNTOS', 5, align: pw.TextAlign.right),
-        col('COPA', 4, align: pw.TextAlign.right),
-        col('CARRIL', 4, align: pw.TextAlign.right),
+        col(t('EQUIPO'), 12),
+        col(t('PILOTOS'), 16),
+        col(t('PUNTOS'), 5, align: pw.TextAlign.right),
+        col(t('COPA'), 4, align: pw.TextAlign.right),
+        col(t('CARRIL'), 4, align: pw.TextAlign.right),
       ],
     );
   }

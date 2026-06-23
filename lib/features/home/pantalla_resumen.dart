@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../clasificacion/repositorio_clasificacion.dart';
+import '../verificaciones/pantalla_elegir_prueba_sorteo.dart';
+import 'app_shell.dart';
 
 /// Datos agregados del campeonato activo para el dashboard de inicio.
 class _DatosResumen {
@@ -181,17 +183,25 @@ class PantallaResumen extends ConsumerWidget {
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
             childAspectRatio: 1.4,
-            children: const [
-              // El índice coincide con el orden de _destinos en app_shell.dart.
-              _TarjetaAcceso(Icons.people_alt_outlined, 'Pilotos', 1),
-              _TarjetaAcceso(Icons.groups_outlined, 'Equipos', 2),
-              _TarjetaAcceso(Icons.event_outlined, 'Pruebas y mangas', 3),
-              _TarjetaAcceso(
-                  Icons.fact_check_outlined, 'Verificaciones', 4),
-              _TarjetaAcceso(Icons.leaderboard_outlined, 'Clasificación', 5),
-              _TarjetaAcceso(Icons.payments_outlined, 'Tesorería', 6),
-              _TarjetaAcceso(Icons.savings_outlined, 'Créditos', 7),
-              _TarjetaAcceso(Icons.cloud_upload_outlined, 'Publicar en web', 8),
+            children: [
+              // Cada acceso resuelve su índice dentro de la lista de destinos
+              // visible (oculta Tesorería/Créditos si el campeonato no los usa).
+              for (final a in const [
+                (Icons.people_alt_outlined, 'Pilotos', 'Pilotos'),
+                (Icons.groups_outlined, 'Equipos', 'Equipos'),
+                (Icons.event_outlined, 'Pruebas y mangas', 'Pruebas'),
+                (Icons.fact_check_outlined, 'Verificaciones', 'Verificaciones'),
+                (Icons.leaderboard_outlined, 'Clasificación', 'Clasificación'),
+                (Icons.payments_outlined, 'Tesorería', 'Tesorería'),
+                (Icons.savings_outlined, 'Créditos', 'Créditos'),
+                (Icons.cloud_upload_outlined, 'Publicar en web', 'Publicar'),
+              ])
+                if (indiceDestinoVisible(a.$3, activo) >= 0)
+                  _TarjetaAcceso(
+                      a.$1, a.$2, indiceDestinoVisible(a.$3, activo)),
+              const _TarjetaRuta(
+                  Icons.casino_outlined, 'Sorteo de motor',
+                  PantallaElegirPruebaSorteo()),
             ],
           ),
         ],
@@ -360,6 +370,43 @@ class _TarjetaLider extends ConsumerWidget {
               ),
               Icon(Icons.chevron_right, color: cs.outline),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Acceso rápido que empuja una pantalla nueva (no un módulo del shell).
+class _TarjetaRuta extends StatelessWidget {
+  const _TarjetaRuta(this.icono, this.titulo, this.destino);
+
+  final IconData icono;
+  final String titulo;
+  final Widget destino;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => destino)),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icono, size: 44, color: color.primary),
+                const SizedBox(height: 12),
+                Text(titulo,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
           ),
         ),
       ),

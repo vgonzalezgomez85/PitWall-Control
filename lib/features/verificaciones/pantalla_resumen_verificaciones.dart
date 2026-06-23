@@ -88,15 +88,17 @@ class PantallaResumenVerificaciones extends ConsumerWidget {
             PopupMenuButton<int>(
               tooltip: 'Exportar verificaciones (PDF)',
               icon: const Icon(Icons.picture_as_pdf_outlined),
-              onSelected: (pruebaId) {
+              onSelected: (pruebaId) async {
                 final prueba = pruebasConVerif[pruebaId]!;
+                final idi = await elegirIdiomaExport(context, ref);
+                if (idi == null || !context.mounted) return;
                 guardarPdf(
                   context,
                   sugerido:
                       'verificaciones-${slugArchivo(prueba.nombre)}.pdf',
                   generar: () => ref
                       .read(generadorPdfVerificacionesProvider)
-                      .generar(pruebaId: pruebaId),
+                      .generar(pruebaId: pruebaId, idioma: idi),
                 );
               },
               itemBuilder: (_) => [

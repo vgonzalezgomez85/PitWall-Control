@@ -16,6 +16,10 @@ class Campeonatos extends Table {
   /// Si true, el campeonato usa el sistema de créditos/handicap (Resisbarna).
   /// Si false, se ocultan todos los campos relacionados con créditos.
   BoolColumn get usaCreditos => boolean().withDefault(const Constant(true))();
+  /// Si true, el campeonato gestiona tesorería (cuotas/pagos por prueba).
+  BoolColumn get usaTesoreria => boolean().withDefault(const Constant(true))();
+  /// Si true, el campeonato está finalizado (temporada cerrada).
+  BoolColumn get finalizado => boolean().withDefault(const Constant(false))();
   /// Lista de copas/categorías activas para este campeonato (JSON array de strings).
   /// Ej: ["GT","GT2","SLOT.IT"] o ["Grupo C","Clásicos"].
   TextColumn get copasJson => text().withDefault(const Constant('[]'))();
@@ -29,6 +33,16 @@ class Campeonatos extends Table {
   /// Si están a null, el sorteo de motores no está configurado.
   IntColumn get motorSorteoMin => integer().nullable()();
   IntColumn get motorSorteoMax => integer().nullable()();
+  /// Rango de dientes permitido en la verificación (inclusive). Por defecto el
+  /// histórico de Resisbarna: piñón 12 fijo, corona 24-30.
+  IntColumn get pinonDientesMin => integer().withDefault(const Constant(12))();
+  IntColumn get pinonDientesMax => integer().withDefault(const Constant(12))();
+  IntColumn get coronaDientesMin => integer().withDefault(const Constant(24))();
+  IntColumn get coronaDientesMax => integer().withDefault(const Constant(30))();
+  /// Marca propia del campeonato en los PDF (título de cabecera y lema del
+  /// pie). Si están vacíos se usa la marca global de la app.
+  TextColumn get marcaTitulo => text().nullable()();
+  TextColumn get marcaLema => text().nullable()();
   DateTimeColumn get creadoEn => dateTime().withDefault(currentDateAndTime)();
 }
 
@@ -71,6 +85,10 @@ class PilotoCampeonato extends Table {
   IntColumn get pilotoId => integer().references(Pilotos, #id)();
   IntColumn get campeonatoId => integer().references(Campeonatos, #id)();
   TextColumn get categoria => text()(); // PLATINO | ORO | PLATA | BRONCE
+  /// Categoría tras la revisión de cierre (promoción/descenso). Si es null no
+  /// se ha revisado y se usa [categoria]. Se usa para la bonificación de cierre
+  /// y como categoría inicial al importar al siguiente campeonato.
+  TextColumn get categoriaFinal => text().nullable()();
   IntColumn get creditosIniciales => integer()();
   IntColumn get creditosActuales => integer()();
   IntColumn get saldoTemporadaAnterior => integer().withDefault(const Constant(0))();
@@ -138,6 +156,10 @@ class InscripcionesPrueba extends Table {
   BoolColumn get asignada => boolean().withDefault(const Constant(false))();
   /// Si true, el equipo participa como invitado / wildcard y no paga.
   BoolColumn get wildcard => boolean().withDefault(const Constant(false))();
+  /// Copa en la que el equipo compitió en ESTA prueba. Permite cambiar de copa
+  /// a mitad de campeonato sin perder los puntos de las pruebas anteriores.
+  /// Si es null, se usa la copa actual del equipo.
+  TextColumn get copa => text().nullable()();
 }
 
 class Resultados extends Table {
@@ -155,6 +177,19 @@ class DescartesPrueba extends Table {
   IntColumn get pruebaId => integer().references(Pruebas, #id)();
   @override
   Set<Column> get primaryKey => {pilotoId, pruebaId};
+}
+
+/// Corrección manual de puntos en la clasificación de una copa. Si existe,
+/// PREVALECE sobre el cálculo automático (re-ranking) de esa copa para ese
+/// piloto y prueba.
+class OverridesCopa extends Table {
+  IntColumn get campeonatoId => integer().references(Campeonatos, #id)();
+  TextColumn get copa => text()();
+  IntColumn get pilotoId => integer().references(Pilotos, #id)();
+  IntColumn get pruebaId => integer().references(Pruebas, #id)();
+  IntColumn get puntos => integer()();
+  @override
+  Set<Column> get primaryKey => {campeonatoId, copa, pilotoId, pruebaId};
 }
 
 // ============================================================

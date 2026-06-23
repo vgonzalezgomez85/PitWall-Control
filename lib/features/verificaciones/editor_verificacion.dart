@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
@@ -14,6 +15,22 @@ import '../../data/database/app_database.dart';
 import '../../domain/validador_verificacion.dart';
 import '../../services/fotos_verificacion.dart';
 import 'repositorio_verificaciones.dart';
+
+/// Copas/categorías de un campeonato (de su copas_json) unidas por '|', para
+/// pasarlas al filtro de coches de la verificación.
+/// "12" si min==max (fijo), "24–30" si es rango.
+String _rangoDientesTxt(int min, int max) => min == max ? '$min' : '$min–$max';
+
+String _copasDeCampeonato(String? copasJson) {
+  if (copasJson == null || copasJson.isEmpty) return '';
+  try {
+    final raw = jsonDecode(copasJson);
+    if (raw is List) {
+      return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).join('|');
+    }
+  } catch (_) {}
+  return '';
+}
 
 class EditorVerificacion extends ConsumerStatefulWidget {
   const EditorVerificacion({
@@ -46,6 +63,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   final _observaciones = TextEditingController();
   String? _chasis;
   String _motorTipo = 'ORGANIZACION';
+  int? _pruebaId;
 
   int? _cocheId;
   String? _pinonMarca;
@@ -104,6 +122,102 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   }
 
   /// `setState` + programar autoguardado, para campos no-texto (desplegables).
+  /// Sortea un nº de motor de organización entre los disponibles de la prueba
+  /// (rango del campeonato menos los ya asignados), sin salir de la verificación.
+  Future<void> _sortearMotor() async {
+    final pruebaId = _pruebaId;
+    if (pruebaId == null) return;
+    final db = ref.read(dbProvider);
+    final prueba = await (db.select(db.pruebas)
+          ..where((t) => t.id.equals(pruebaId)))
+        .getSingleOrNull();
+    if (prueba == null) return;
+    final camp = await (db.select(db.campeonatos)
+          ..where((t) => t.id.equals(prueba.campeonatoId)))
+        .getSingleOrNull();
+    final min = camp?.motorSorteoMin, max = camp?.motorSorteoMax;
+    if (!mounted) return;
+    if (min == null || max == null || max < min) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Configura el rango de motores en el campeonato para sortear.')));
+      return;
+    }
+    // Motores ya asignados en la prueba (verificaciones de organización).
+    final mangas = await (db.select(db.mangas)
+          ..where((t) => t.pruebaId.equals(pruebaId)))
+        .get();
+    final mangaIds = mangas.map((m) => m.id).toList();
+    final verifs = mangaIds.isEmpty
+        ? <Verificacione>[]
+        : await (db.select(db.verificaciones)
+              ..where((t) => t.mangaId.isIn(mangaIds)))
+            .get();
+    final asignados = <int>{};
+    for (final v in verifs) {
+      if (v.motorTipo == 'ORGANIZACION' &&
+          (v.motor?.trim().isNotEmpty ?? false)) {
+        final n = int.tryParse(v.motor!.trim());
+        if (n != null) asignados.add(n);
+      }
+    }
+    // El motor actual del equipo vuelve a estar disponible (para re-sortear).
+    final actual = int.tryParse(_motor.text.trim());
+    final candidatos = <int>{
+      for (var n = min; n <= max; n++)
+        if (!asignados.contains(n)) n,
+      ?actual,
+    }.toList();
+    if (!mounted) return;
+    if (candidatos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No quedan motores disponibles.')),
+      );
+      return;
+    }
+    final rng = Random();
+    final elegido = await showDialog<int>(
+      context: context,
+      builder: (ctx) {
+        var n = candidatos[rng.nextInt(candidatos.length)];
+        return StatefulBuilder(
+          builder: (ctx, setSt) => AlertDialog(
+            title: const Text('Sorteo de motor'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Motor sorteado',
+                    style: Theme.of(ctx).textTheme.labelLarge),
+                const SizedBox(height: 8),
+                Text('$n',
+                    style: Theme.of(ctx).textTheme.displayMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: Theme.of(ctx).colorScheme.primary)),
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar')),
+              if (candidatos.length > 1)
+                TextButton.icon(
+                  onPressed: () =>
+                      setSt(() => n = candidatos[rng.nextInt(candidatos.length)]),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Repetir'),
+                ),
+              FilledButton(
+                  onPressed: () => Navigator.pop(ctx, n),
+                  child: const Text('Asignar')),
+            ],
+          ),
+        );
+      },
+    );
+    if (elegido == null) return;
+    _cambiar(() => _motor.text = '$elegido');
+  }
+
   void _cambiar(VoidCallback fn) {
     setState(fn);
     _onCambio();
@@ -131,6 +245,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
 
   Future<void> _cargar() async {
     final db = ref.read(dbProvider);
+    final manga = await (db.select(db.mangas)
+          ..where((t) => t.id.equals(widget.mangaId)))
+        .getSingleOrNull();
+    _pruebaId = manga?.pruebaId;
     _equipo = await (db.select(db.equipos)
           ..where((t) => t.id.equals(widget.equipoId)))
         .getSingle();
@@ -361,7 +479,17 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     final neumaticosAsync = ref.watch(neumaticosProvider);
     // Filtramos coches, bancadas y motores por la copa del equipo
     final copaEquipo = _equipo?.copa;
-    final cochesAsync = ref.watch(cochesFiltradosProvider(copaEquipo));
+    // Categorías del campeonato (p. ej. CLASSICOS), para que si la copa del
+    // equipo (P1/P2…) no cuadra con ningún coche, se filtre por la categoría
+    // del campeonato en vez de mostrar todos.
+    final campActivo = ref.watch(campeonatoActivoProvider);
+    final champCopas = _copasDeCampeonato(campActivo?.copasJson);
+    final reglaPinon = _rangoDientesTxt(
+        campActivo?.pinonDientesMin ?? 12, campActivo?.pinonDientesMax ?? 12);
+    final reglaCorona = _rangoDientesTxt(
+        campActivo?.coronaDientesMin ?? 24, campActivo?.coronaDientesMax ?? 30);
+    final cochesAsync = ref.watch(
+        cochesFiltradosProvider((copa: copaEquipo, camp: champCopas)));
     final bancadasFiltAsync = ref.watch(bancadasFiltradasProvider(copaEquipo));
     final motoresAsync = ref.watch(motoresFiltradosProvider(copaEquipo));
     final motores =
@@ -453,6 +581,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             pinonDientes: _parseInt(_pinonDientes.text),
             coronaMarca: _coronaMarca,
             coronaDientes: _parseInt(_coronaDientes.text),
+            pinonDientesMin: campActivo?.pinonDientesMin ?? 12,
+            pinonDientesMax: campActivo?.pinonDientesMax ?? 12,
+            coronaDientesMin: campActivo?.coronaDientesMin ?? 24,
+            coronaDientesMax: campActivo?.coronaDientesMax ?? 30,
             llantaDelMarca: _llantaDelMarca,
             llantaDelDimension: _llantaDelDim,
             llantaTraMarca: _llantaTraMarca,
@@ -553,13 +685,26 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                         ),
                         const SizedBox(height: 8),
                         if (_motorTipo == 'ORGANIZACION')
-                          TextField(
-                            controller: _motor,
-                            decoration: const InputDecoration(
-                              labelText: 'Número de motor',
-                              prefixIcon: Icon(Icons.tag),
-                            ),
-                            keyboardType: TextInputType.number,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _motor,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Número de motor',
+                                    prefixIcon: Icon(Icons.tag),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              FilledButton.tonalIcon(
+                                onPressed: _sortearMotor,
+                                icon: const Icon(Icons.casino_outlined),
+                                label: const Text('Sortear'),
+                              ),
+                            ],
                           )
                         else ...[
                           SelectorBuscable<CatalogoMotore>(
@@ -764,9 +909,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               flex: 2,
                               child: TextField(
                                 controller: _pinonDientes,
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   labelText: 'Dientes',
-                                  helperText: 'Regla: 12',
+                                  helperText: 'Regla: $reglaPinon',
                                 ),
                                 keyboardType: TextInputType.number,
                                 onChanged: (_) => setState(() {}),
@@ -804,9 +949,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               flex: 2,
                               child: TextField(
                                 controller: _coronaDientes,
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   labelText: 'Dientes',
-                                  helperText: '24–30',
+                                  helperText: reglaCorona,
                                 ),
                                 keyboardType: TextInputType.number,
                                 onChanged: (_) => setState(() {}),

@@ -55,7 +55,7 @@ class MarcaPdf {
   /// subtítulo en mayúsculas y, a la derecha, un badge opcional (p. ej.
   /// "34 PILOTOS", "FICHA 3/7") y una nota (p. ej. la fecha).
   pw.Widget hero({
-    required String organizacion,
+    required String titulo,
     required String subtitulo,
     String? badge,
     String? nota,
@@ -79,7 +79,7 @@ class MarcaPdf {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  organizacion.toUpperCase(),
+                  titulo.toUpperCase(),
                   style: pw.TextStyle(
                     font: fuenteTitulo,
                     color: PdfColors.white,
@@ -135,7 +135,7 @@ class MarcaPdf {
   }
 
   /// Pie estándar: lema + logos de patrocinadores.
-  pw.Widget pie() {
+  pw.Widget pie({String lema = '', String conApoyo = 'Con el apoyo de'}) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
@@ -146,7 +146,7 @@ class MarcaPdf {
           crossAxisAlignment: pw.CrossAxisAlignment.center,
           children: [
             pw.Text(
-              'RESISBARNA · resistencias de slot en Barcelona',
+              lema,
               style: pw.TextStyle(
                   fontSize: 8,
                   color: gris,
@@ -156,7 +156,7 @@ class MarcaPdf {
             if (logos.isNotEmpty)
               pw.Row(
                 children: [
-                  pw.Text('Con el apoyo de  ',
+                  pw.Text('$conApoyo  ',
                       style: const pw.TextStyle(fontSize: 7, color: gris)),
                   for (final l in logos) ...[
                     pw.SizedBox(width: 10),
