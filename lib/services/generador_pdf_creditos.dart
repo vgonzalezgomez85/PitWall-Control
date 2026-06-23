@@ -7,6 +7,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../core/proveedores.dart';
+import 'exportar_config.dart';
 import 'pdf_marca.dart';
 import 'pdf_util.dart';
 
@@ -35,10 +36,12 @@ class GeneradorPdfCreditos {
   static const _rojo = PdfColor.fromInt(0xFFD32F2F);
   static const _verde = PdfColor.fromInt(0xFF2E7D32);
 
-  Future<Uint8List> generar() async {
+  Future<Uint8List> generar({IdiomaExport idioma = IdiomaExport.es}) async {
     final db = ref.read(dbProvider);
     final activo = ref.read(campeonatoActivoProvider);
     if (activo == null) return Uint8List(0);
+    final cfg = ref.read(marcaConfigProvider);
+    String tx(String k) => tr(idioma, k);
 
     // Solo pilotos que han participado (con inscripción en alguna prueba).
     final pruebas = await (db.select(db.pruebas)
@@ -104,9 +107,11 @@ class GeneradorPdfCreditos {
         crossAxisAlignment: pw.CrossAxisAlignment.stretch,
         children: [
         marca.hero(
-          organizacion: activo.organizacion,
-          subtitulo: 'Control de créditos - ${activo.nombre}',
-          badge: '${filas.length} pilotos',
+          titulo: (activo.marcaTitulo?.trim().isNotEmpty ?? false)
+              ? activo.marcaTitulo!.trim()
+              : cfg.titulo,
+          subtitulo: '${tx('Control de créditos')} - ${activo.nombre}',
+          badge: '${filas.length} ${tx('pilotos')}',
           nota: df.format(DateTime.now()),
         ),
         pw.SizedBox(height: 12),
@@ -124,11 +129,11 @@ class GeneradorPdfCreditos {
               decoration:
                   const pw.BoxDecoration(color: MarcaPdf.rojoOscuro),
               children: [
-                _cabBlanca('PILOTO', align: pw.TextAlign.left),
-                _cabBlanca('INICIAL'),
-                _cabBlanca('SUMADOS'),
-                _cabBlanca('RESTADOS'),
-                _cabBlanca('SALDO'),
+                _cabBlanca(tx('PILOTO'), align: pw.TextAlign.left),
+                _cabBlanca(tx('INICIAL')),
+                _cabBlanca(tx('SUMADOS')),
+                _cabBlanca(tx('RESTADOS')),
+                _cabBlanca(tx('SALDO')),
               ],
             ),
             ...filas.asMap().entries.map((e) => pw.TableRow(
@@ -164,7 +169,11 @@ class GeneradorPdfCreditos {
           ],
         ),
         pw.SizedBox(height: 12),
-        marca.pie(),
+        marca.pie(
+            lema: (activo.marcaLema?.trim().isNotEmpty ?? false)
+                ? activo.marcaLema!.trim()
+                : cfg.lema,
+            conApoyo: tx('Con el apoyo de')),
         ],
       ),
     );

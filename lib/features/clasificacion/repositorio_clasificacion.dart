@@ -10,6 +10,9 @@ import '../../domain/calculo_clasificacion.dart';
 class DatosClasificacion {
   final List<Prueba> pruebas;
   final List<FilaClasificacion> filas;
+  /// Clasificación independiente por copa: en cada prueba los puntos se
+  /// recalculan SOLO entre los equipos de esa copa (copa → filas).
+  final Map<String, List<FilaClasificacion>> porCopa;
   /// true cuando el campeonato está cerrado y se ordena por puntos NETOS;
   /// false durante la temporada (orden por BRUTOS).
   final bool ordenadoPorNeto;
@@ -17,6 +20,7 @@ class DatosClasificacion {
   DatosClasificacion({
     required this.pruebas,
     required this.filas,
+    this.porCopa = const {},
     this.ordenadoPorNeto = false,
   });
 }
@@ -49,11 +53,6 @@ final clasificacionProvider =
     final equipos = await (db.select(db.equipos)
           ..where((t) => t.campeonatoId.equals(activo.id)))
         .get();
-    final equipoPorPiloto = <int, Equipo>{};
-    for (final e in equipos) {
-      equipoPorPiloto[e.piloto1Id] = e;
-      if (e.piloto2Id != null) equipoPorPiloto[e.piloto2Id!] = e;
-    }
 
     // Equipos con al menos una inscripción a alguna prueba del campeonato.
     final inscripcionesPrueba = pruebaIds.isEmpty
@@ -64,19 +63,55 @@ final clasificacionProvider =
     final equiposParticipantes =
         inscripcionesPrueba.map((i) => i.equipoId).toSet();
 
+    // Mapa piloto → equipo. Un piloto puede estar en varios equipos (p. ej.
+    // distintas copas); preferimos el equipo que PARTICIPA (tiene inscripción)
+    // para que no se le excluya de la clasificación.
+    final equipoPorPiloto = <int, Equipo>{};
+    void asignarEquipo(int pilotoId, Equipo e) {
+      final actual = equipoPorPiloto[pilotoId];
+      if (actual == null) {
+        equipoPorPiloto[pilotoId] = e;
+        return;
+      }
+      final actualParticipa = equiposParticipantes.contains(actual.id);
+      final nuevoParticipa = equiposParticipantes.contains(e.id);
+      if (nuevoParticipa && !actualParticipa) equipoPorPiloto[pilotoId] = e;
+    }
+
+    for (final e in equipos) {
+      asignarEquipo(e.piloto1Id, e);
+      if (e.piloto2Id != null) asignarEquipo(e.piloto2Id!, e);
+    }
+
     // Resultados de todas las mangas de las pruebas del campeonato
     final mangasCamp = await (db.select(db.mangas)
           ..where((t) => t.pruebaId.isIn(pruebaIds)))
         .get();
     final pruebaPorManga = {for (final m in mangasCamp) m.id: m.pruebaId};
     final mangaIds = mangasCamp.map((m) => m.id).toSet();
+    // Mangas "IMPORTADA": canal de edición manual. Su valor PISA (override) el
+    // de la prueba en vez de sumarse a los resultados de las mangas reales.
+    final importadaIds = mangasCamp
+        .where((m) => m.nombre == 'IMPORTADA')
+        .map((m) => m.id)
+        .toSet();
     final resultados = await (db.select(db.resultados)
           ..where((t) => t.mangaId.isIn(mangaIds)))
         .get();
 
-    // Agrupar resultados por pilotoId → prueba → (puntos, aRestar)
+    // Pruebas ya disputadas: las que tienen algún resultado registrado. En
+    // ellas, un piloto sin puntos cuenta 0 (su peor resultado → descarte).
+    final disputadas = <int>{};
+    for (final r in resultados) {
+      final pid = pruebaPorManga[r.mangaId];
+      if (pid != null) disputadas.add(pid);
+    }
+
+    // Agrupar resultados por pilotoId → prueba → (puntos, aRestar).
+    // 1) Mangas reales: se suman. 2) Manga IMPORTADA: pisa el total.
     final byPiloto = <int, FilaResultados>{};
     for (final r in resultados) {
+      if (importadaIds.contains(r.mangaId)) continue;
       final pruebaId = pruebaPorManga[r.mangaId];
       if (pruebaId == null) continue;
       final f = byPiloto.putIfAbsent(
@@ -85,6 +120,14 @@ final clasificacionProvider =
           .update(pruebaId, (v) => v + r.puntos, ifAbsent: () => r.puntos);
       f.aRestarPorPrueba
           .update(pruebaId, (v) => v + r.aRestar, ifAbsent: () => r.aRestar);
+    }
+    for (final r in resultados) {
+      if (!importadaIds.contains(r.mangaId)) continue;
+      final pruebaId = pruebaPorManga[r.mangaId];
+      if (pruebaId == null) continue;
+      final f = byPiloto.putIfAbsent(
+          r.pilotoId, () => FilaResultados({}, {}));
+      f.puntosPorPrueba[pruebaId] = r.puntos; // override manual
     }
 
     // Nombre de cada piloto
@@ -115,18 +158,118 @@ final clasificacionProvider =
     // se ordena por netos (los descartes ya son definitivos).
     final noCanceladas =
         pruebas.where((p) => p.estado != 'CANCELADA').toList();
-    final campeonatoCerrado =
-        noCanceladas.isNotEmpty && noCanceladas.last.estado == 'TERMINADA';
+    final campeonatoCerrado = activo.finalizado ||
+        (noCanceladas.isNotEmpty && noCanceladas.last.estado == 'TERMINADA');
 
     final filas = CalculoClasificacion.calcular(
       pilotos: bases.cast(),
       resultadosPorPiloto: byPiloto,
       numDescartes: activo.numDescartes,
+      pruebasDisputadas: disputadas,
       ordenarPorNeto: campeonatoCerrado,
     );
+
+    // ===== Clasificaciones independientes por copa =====
+    // Cada equipo tiene una copa (por prueba: snapshot en inscripciones; si
+    // falta, la copa actual). En cada prueba se RECALCULAN los puntos solo
+    // entre los equipos de esa copa: 1º de la copa = puntos máximos de la
+    // tabla. Los dos pilotos de un equipo comparten puntos.
+    final tp = await (db.select(db.tablaPuntos)
+          ..where((t) => t.campeonatoId.equals(activo.id)))
+        .get();
+    final puntosPos = {for (final r in tp) r.posicion: r.puntos};
+    int puntosDe(int pos) => puntosPos[pos] ?? 0;
+
+    // Correcciones manuales por copa (prevalecen sobre el re-ranking).
+    final overrides = await (db.select(db.overridesCopa)
+          ..where((t) => t.campeonatoId.equals(activo.id)))
+        .get();
+    final overridesPorCopa = <String, List<OverridesCopaData>>{};
+    for (final o in overrides) {
+      (overridesPorCopa[o.copa] ??= []).add(o);
+    }
+
+    final equipoActualCopa = {for (final e in equipos) e.id: e.copa};
+    final copaEnPrueba = <int, Map<int, String>>{};
+    for (final ins in inscripcionesPrueba) {
+      final c = ins.copa ?? equipoActualCopa[ins.equipoId];
+      if (c == null) continue;
+      (copaEnPrueba[ins.equipoId] ??= {})[ins.pruebaId] = c;
+    }
+    String copaDe(int equipoId, int pruebaId) =>
+        copaEnPrueba[equipoId]?[pruebaId] ?? equipoActualCopa[equipoId] ?? '';
+
+    final copas = <String>{
+      ...equipoActualCopa.values,
+      for (final m in copaEnPrueba.values) ...m.values,
+      ...overridesPorCopa.keys,
+    };
+
+    final porCopa = <String, List<FilaClasificacion>>{};
+    for (final copa in copas) {
+      final byCopa = <int, FilaResultados>{};
+      final miembros = <int>{};
+      final disputadasCopa = <int>{};
+
+      for (final p in pruebas) {
+        // Puntos del equipo en P (los pilotos del equipo comparten resultado),
+        // solo equipos que corrieron P EN esta copa.
+        final puntosEquipo = <int, int>{};
+        for (final b in bases) {
+          final pid = b.pilotoId as int;
+          final eqId = b.equipoId as int;
+          if (copaDe(eqId, p.id) != copa) continue;
+          final pts = byPiloto[pid]?.puntosPorPrueba[p.id];
+          if (pts == null) continue;
+          puntosEquipo[eqId] =
+              puntosEquipo.containsKey(eqId) && puntosEquipo[eqId]! >= pts
+                  ? puntosEquipo[eqId]!
+                  : pts;
+        }
+        if (puntosEquipo.isEmpty) continue;
+        disputadasCopa.add(p.id);
+        // Ranking de competición por equipo: empatados comparten puntos.
+        final copaPtsEquipo = <int, int>{};
+        for (final eqId in puntosEquipo.keys) {
+          final mejores =
+              puntosEquipo.values.where((v) => v > puntosEquipo[eqId]!).length;
+          copaPtsEquipo[eqId] = puntosDe(mejores + 1);
+        }
+        // Asignar a cada piloto los puntos de copa de su equipo.
+        for (final b in bases) {
+          final pid = b.pilotoId as int;
+          final eqId = b.equipoId as int;
+          if (copaDe(eqId, p.id) != copa) continue;
+          if (!copaPtsEquipo.containsKey(eqId)) continue;
+          (byCopa[pid] ??= FilaResultados(
+                  {}, {...?byPiloto[pid]?.aRestarPorPrueba}))
+              .puntosPorPrueba[p.id] = copaPtsEquipo[eqId]!;
+          miembros.add(pid);
+        }
+      }
+      // Correcciones manuales: prevalecen sobre el re-ranking automático.
+      for (final o in overridesPorCopa[copa] ?? const []) {
+        (byCopa[o.pilotoId] ??= FilaResultados(
+                {}, {...?byPiloto[o.pilotoId]?.aRestarPorPrueba}))
+            .puntosPorPrueba[o.pruebaId] = o.puntos;
+        miembros.add(o.pilotoId);
+        disputadasCopa.add(o.pruebaId);
+      }
+      if (miembros.isEmpty) continue;
+      final pilotosCopa = bases.where((b) => miembros.contains(b.pilotoId as int)).toList();
+      porCopa[copa] = CalculoClasificacion.calcular(
+        pilotos: pilotosCopa.cast(),
+        resultadosPorPiloto: byCopa,
+        numDescartes: activo.numDescartes,
+        pruebasDisputadas: disputadasCopa,
+        ordenarPorNeto: campeonatoCerrado,
+      );
+    }
+
     yield DatosClasificacion(
       pruebas: pruebas,
       filas: filas,
+      porCopa: porCopa,
       ordenadoPorNeto: campeonatoCerrado,
     );
   }

@@ -8,6 +8,7 @@ import '../../data/database/app_database.dart';
 import '../../domain/calculo_clasificacion.dart';
 import '../../services/exportar_pdf.dart';
 import '../../services/generador_pdf_clasificacion.dart';
+import 'pantalla_editor_clasificacion_manual.dart';
 import 'pantalla_importar_clasificacion.dart';
 import 'repositorio_clasificacion.dart';
 
@@ -21,6 +22,9 @@ class PantallaClasificacion extends ConsumerWidget {
     final activo = ref.watch(campeonatoActivoProvider);
 
     return datosAsync.when(
+      // Al recalcular (tras editar), mantener la vista actual en vez de
+      // parpadear a "cargando" y perder la pestaña de copa seleccionada.
+      skipLoadingOnReload: true,
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),
@@ -28,7 +32,29 @@ class PantallaClasificacion extends ConsumerWidget {
       data: (datos) {
         if (datos.filas.isEmpty) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Clasificación')),
+            appBar: AppBar(
+              title: const Text('Clasificación'),
+              actions: [
+                IconButton(
+                  tooltip: 'Clasificación a mano',
+                  icon: const Icon(Icons.edit_note_outlined),
+                  onPressed: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) =>
+                          const PantallaEditorClasificacionManual(),
+                    ));
+                    ref.invalidate(clasificacionProvider);
+                  },
+                ),
+                IconButton(
+                  tooltip: 'Importar clasificación',
+                  icon: const Icon(Icons.upload_outlined),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const PantallaImportarClasificacion(),
+                  )),
+                ),
+              ],
+            ),
             body: Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
@@ -42,9 +68,19 @@ class PantallaClasificacion extends ConsumerWidget {
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     const Text(
-                      'Crea pilotos y registra al menos un resultado de manga '
-                      'para que aparezca aquí.',
+                      'Registra resultados de manga, impórtala desde un archivo '
+                      'o rellénala a mano.',
                       textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton.icon(
+                      icon: const Icon(Icons.edit_note_outlined),
+                      label: const Text('Rellenar a mano'),
+                      onPressed: () =>
+                          Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) =>
+                            const PantallaEditorClasificacionManual(),
+                      )),
                     ),
                   ],
                 ),
@@ -79,10 +115,29 @@ class PantallaClasificacion extends ConsumerWidget {
             appBar: AppBar(
               title: const Text('Clasificación'),
               actions: [
+                Builder(builder: (context) {
+                  return IconButton(
+                    tooltip: 'Clasificación a mano',
+                    icon: const Icon(Icons.edit_note_outlined),
+                    onPressed: () async {
+                      // Copa de la pestaña activa: 0 = General (null).
+                      final idx = DefaultTabController.of(context).index;
+                      final copa = idx == 0
+                          ? null
+                          : copasDelCampeonato[idx - 1];
+                      await Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => PantallaEditorClasificacionManual(
+                            copa: copa),
+                      ));
+                      // Recalcular al volver, por si el stream no refrescó.
+                      ref.invalidate(clasificacionProvider);
+                    },
+                  );
+                }),
                 PopupMenuButton<String>(
                   tooltip: 'Exportar PDF',
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  onSelected: (sel) {
+                  onSelected: (sel) async {
                     // '*' = clasificación general (un PopupMenuItem con
                     // value null no dispara onSelected, así que usamos
                     // un centinela).
@@ -90,6 +145,8 @@ class PantallaClasificacion extends ConsumerWidget {
                     final sufijo = copa == null
                         ? 'general'
                         : slugArchivo(copa).toLowerCase();
+                    final idi = await elegirIdiomaExport(context, ref);
+                    if (idi == null || !context.mounted) return;
                     guardarPdf(
                       context,
                       sugerido:
@@ -100,6 +157,7 @@ class PantallaClasificacion extends ConsumerWidget {
                             datos: datos,
                             campeonato: activo!,
                             copa: copa,
+                            idioma: idi,
                           ),
                     );
                   },
@@ -182,9 +240,12 @@ class _VistaCopa extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    // General = puntos globales. Copa = clasificación específica con los
+    // puntos recalculados solo entre los pilotos de esa copa.
     final filas = copa == null
         ? List<FilaClasificacion>.from(datos.filas)
-        : datos.filas.where((f) => f.copa == copa).toList();
+        : List<FilaClasificacion>.from(
+            datos.porCopa[copa] ?? const <FilaClasificacion>[]);
 
     // Reasignar posiciones para esta vista (los empatados comparten posición)
     CalculoClasificacion.asignarPosiciones(filas);
@@ -392,7 +453,7 @@ class _TablaState extends State<_Tabla> {
             style: TextStyle(fontSize: 12, color: cs.outline))),
         for (final p in pruebas)
           DataCell(_CeldaPrueba(
-            puntos: f.puntosPorPrueba[p.id] ?? 0,
+            puntos: f.puntosPorPrueba[p.id],
             descarte: f.pruebasDescartadas.contains(p.id),
             medallas: medallas[p.id] ?? const [],
           )),
@@ -454,7 +515,9 @@ class _CeldaPrueba extends StatelessWidget {
     required this.descarte,
     this.medallas = const [],
   });
-  final int puntos;
+  /// null = el piloto no tiene resultado en esa prueba (prueba no disputada);
+  /// 0 = prueba disputada en la que no puntuó.
+  final int? puntos;
   final bool descarte;
   /// Top-3 de puntuaciones de esta prueba (para oro/plata/bronce).
   final List<int> medallas;
@@ -468,21 +531,23 @@ class _CeldaPrueba extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (puntos == 0 && !descarte) {
+    // Sin resultado en una prueba no disputada → guion.
+    if (puntos == null && !descarte) {
       return Text('—',
           style: TextStyle(color: Theme.of(context).colorScheme.outline));
     }
+    final v = puntos ?? 0;
     // Medalla de la prueba (los descartes mantienen su estilo tachado).
     Color? bg;
     Color? fg;
-    if (!descarte && puntos > 0 && medallas.isNotEmpty) {
-      if (puntos == medallas[0]) {
+    if (!descarte && v > 0 && medallas.isNotEmpty) {
+      if (v == medallas[0]) {
         bg = _oro;
         fg = _oroFg;
-      } else if (medallas.length > 1 && puntos == medallas[1]) {
+      } else if (medallas.length > 1 && v == medallas[1]) {
         bg = _plata;
         fg = _plataFg;
-      } else if (medallas.length > 2 && puntos == medallas[2]) {
+      } else if (medallas.length > 2 && v == medallas[2]) {
         bg = _bronce;
         fg = _bronceFg;
       }
@@ -500,7 +565,7 @@ class _CeldaPrueba extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
       child: Text(
-        '$puntos',
+        '$v',
         style: TextStyle(
           decoration: descarte ? TextDecoration.lineThrough : null,
           color: fg,

@@ -11,7 +11,9 @@ import '../../data/database/app_database.dart';
 import '../../services/fotos_verificacion.dart';
 import '../google/actualizador_drive.dart';
 import '../google/repositorio_hojas_vinculadas.dart';
+import '../google/subidor_catalogo.dart';
 import 'importar_catalogo.dart';
+import 'pantalla_subir_sheet.dart';
 import 'repositorio_catalogos.dart';
 
 /// Carga las copas disponibles del catálogo para mostrarlas como opciones.
@@ -97,6 +99,29 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
     ));
   }
 
+  Future<void> _subirAlSheet(VinculoHoja v, TipoCatalogo tipo) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    messenger.showSnackBar(const SnackBar(
+      content: Text('Calculando cambios para subir…'),
+      duration: Duration(seconds: 2),
+    ));
+    try {
+      final plan = await ref.read(subidorCatalogoProvider).preparar(v, tipo);
+      if (!mounted) return;
+      if (plan.error != null) {
+        messenger.showSnackBar(SnackBar(content: Text('✗ ${plan.error}')));
+        return;
+      }
+      navigator.push(MaterialPageRoute(
+        builder: (_) => PantallaSubirSheet(plan: plan),
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,11 +134,21 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
                 ref.watch(vinculoEntidadProvider('catalogo_${tipo.name}'));
             final v = vinculoAsync.asData?.value;
             if (v == null) return const SizedBox.shrink();
-            return IconButton(
-              tooltip:
-                  'Actualizar desde Drive (${v.fila.hojaNombre} · ${v.fila.pestanaTitulo})',
-              icon: const Icon(Icons.sync),
-              onPressed: () => _actualizarDesdeDrive(v, tipo),
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip:
+                      'Bajar desde Drive (${v.fila.hojaNombre} · ${v.fila.pestanaTitulo})',
+                  icon: const Icon(Icons.sync),
+                  onPressed: () => _actualizarDesdeDrive(v, tipo),
+                ),
+                IconButton(
+                  tooltip: 'Subir mis cambios al Sheet',
+                  icon: const Icon(Icons.cloud_upload_outlined),
+                  onPressed: () => _subirAlSheet(v, tipo),
+                ),
+              ],
             );
           }),
           IconButton(

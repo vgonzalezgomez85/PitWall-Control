@@ -3,7 +3,37 @@ import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
+
+import 'exportar_config.dart';
+
+/// Pregunta el idioma de la exportación (recuerda el último usado). Devuelve
+/// null si se cancela.
+Future<IdiomaExport?> elegirIdiomaExport(
+    BuildContext context, WidgetRef ref) async {
+  final actual = ref.read(idiomaExportProvider);
+  final sel = await showDialog<IdiomaExport>(
+    context: context,
+    builder: (_) => SimpleDialog(
+      title: const Text('Idioma del PDF'),
+      children: [
+        for (final i in IdiomaExport.values)
+          ListTile(
+            leading: Icon(i == actual
+                ? Icons.radio_button_checked
+                : Icons.radio_button_unchecked),
+            title: Text(i.etiqueta),
+            onTap: () => Navigator.pop(context, i),
+          ),
+      ],
+    ),
+  );
+  if (sel != null) {
+    await ref.read(idiomaExportProvider.notifier).set(sel);
+  }
+  return sel;
+}
 
 /// Exporta el PDF generado por [generar].
 ///

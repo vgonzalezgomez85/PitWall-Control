@@ -1,18 +1,29 @@
 import 'dart:convert';
 
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart' show Value, OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/seeds.dart';
+import '../creditos/repositorio_creditos.dart';
 
 /// Provider con todas las copas del catálogo global (para sugerirlas).
 final _catalogoCopasProvider = FutureProvider<List<String>>((ref) async {
   final db = ref.watch(dbProvider);
   final lista = await db.select(db.catalogoCopas).get();
   return lista.map((c) => c.nombre).toList()..sort();
+});
+
+/// Campeonatos finalizados, candidatos para importar sus pilotos y saldos.
+final _campeonatosFinalizadosProvider =
+    FutureProvider<List<Campeonato>>((ref) async {
+  final db = ref.watch(dbProvider);
+  return (db.select(db.campeonatos)
+        ..where((t) => t.finalizado.equals(true))
+        ..orderBy([(t) => OrderingTerm.desc(t.anio)]))
+      .get();
 });
 
 class EditorCampeonato extends ConsumerStatefulWidget {
@@ -35,10 +46,22 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   final _cuotaClub = TextEditingController(text: '14');
   final _motorMin = TextEditingController();
   final _motorMax = TextEditingController();
+  final _pinonMin = TextEditingController(text: '12');
+  final _pinonMax = TextEditingController(text: '12');
+  final _coronaMin = TextEditingController(text: '24');
+  final _coronaMax = TextEditingController(text: '30');
+  bool _pinonFijo = true;
+  bool _coronaFijo = false;
+  final _marcaTitulo = TextEditingController();
+  final _marcaLema = TextEditingController();
 
   String _formato = 'PAREJAS';
   bool _activo = true;
   bool _usaCreditos = true;
+  bool _usaTesoreria = true;
+  bool _finalizado = false;
+  bool _finalizadoOriginal = false;
+  int? _importarDesdeId;
   Set<String> _copasSel = {};
   bool _cargando = true;
   bool _guardando = false;
@@ -70,9 +93,20 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
         c.cuotaClub.toStringAsFixed(c.cuotaClub % 1 == 0 ? 0 : 2);
     _motorMin.text = c.motorSorteoMin?.toString() ?? '';
     _motorMax.text = c.motorSorteoMax?.toString() ?? '';
+    _pinonMin.text = c.pinonDientesMin.toString();
+    _pinonMax.text = c.pinonDientesMax.toString();
+    _coronaMin.text = c.coronaDientesMin.toString();
+    _coronaMax.text = c.coronaDientesMax.toString();
+    _pinonFijo = c.pinonDientesMin == c.pinonDientesMax;
+    _coronaFijo = c.coronaDientesMin == c.coronaDientesMax;
+    _marcaTitulo.text = c.marcaTitulo ?? '';
+    _marcaLema.text = c.marcaLema ?? '';
     _formato = c.formato;
     _activo = c.activo;
     _usaCreditos = c.usaCreditos;
+    _usaTesoreria = c.usaTesoreria;
+    _finalizado = c.finalizado;
+    _finalizadoOriginal = c.finalizado;
     try {
       final raw = json.decode(c.copasJson);
       if (raw is List) {
@@ -94,7 +128,50 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
     _cuotaClub.dispose();
     _motorMin.dispose();
     _motorMax.dispose();
+    _pinonMin.dispose();
+    _pinonMax.dispose();
+    _coronaMin.dispose();
+    _coronaMax.dispose();
+    _marcaTitulo.dispose();
+    _marcaLema.dispose();
     super.dispose();
+  }
+
+  /// Selector para importar pilotos (y su saldo de cierre) de un campeonato
+  /// finalizado al crear este. Solo aparece si hay campeonatos finalizados.
+  Widget _selectorImportarPilotos() {
+    final finalizadosAsync = ref.watch(_campeonatosFinalizadosProvider);
+    return finalizadosAsync.maybeWhen(
+      data: (finalizados) {
+        if (finalizados.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 4),
+          child: DropdownButtonFormField<int?>(
+            initialValue: _importarDesdeId,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Importar pilotos de un campeonato finalizado',
+              helperText:
+                  'Trae sus pilotos con el saldo de cierre como créditos iniciales.',
+              prefixIcon: Icon(Icons.download_outlined),
+            ),
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('No importar'),
+              ),
+              for (final c in finalizados)
+                DropdownMenuItem<int?>(
+                  value: c.id,
+                  child: Text('${c.nombre} (${c.anio})'),
+                ),
+            ],
+            onChanged: (v) => setState(() => _importarDesdeId = v),
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
   }
 
   Future<void> _anadirCopaNueva() async {
@@ -133,6 +210,14 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       final cuotaCl = parseD(_cuotaClub, 14);
       final motorMin = int.tryParse(_motorMin.text.trim());
       final motorMax = int.tryParse(_motorMax.text.trim());
+      // Piñón/corona: si es "tamaño fijo", máx = mín.
+      final pinMin = int.tryParse(_pinonMin.text.trim()) ?? 12;
+      final pinMax = _pinonFijo ? pinMin : (int.tryParse(_pinonMax.text.trim()) ?? pinMin);
+      final corMin = int.tryParse(_coronaMin.text.trim()) ?? 24;
+      final corMax = _coronaFijo ? corMin : (int.tryParse(_coronaMax.text.trim()) ?? corMin);
+      // Marca propia del campeonato en los PDF (vacío = usar marca global).
+      final mTitulo = _marcaTitulo.text.trim();
+      final mLema = _marcaLema.text.trim();
 
       if (widget.campeonatoId == null) {
         final id = await Seeds.crearCampeonato(
@@ -146,14 +231,28 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
             numDescartes: Value(int.parse(_descartes.text.trim())),
             topeRegularizacion: Value(int.parse(_tope.text.trim())),
             usaCreditos: Value(_usaCreditos),
+            usaTesoreria: Value(_usaTesoreria),
+            finalizado: Value(_finalizado),
             copasJson: Value(copasJson),
             cuotaPagat: Value(cuotaP),
             cuotaCoordinadora: Value(cuotaC),
             cuotaClub: Value(cuotaCl),
             motorSorteoMin: Value(motorMin),
             motorSorteoMax: Value(motorMax),
+            pinonDientesMin: Value(pinMin),
+            pinonDientesMax: Value(pinMax),
+            coronaDientesMin: Value(corMin),
+            coronaDientesMax: Value(corMax),
+            marcaTitulo: Value(mTitulo.isEmpty ? null : mTitulo),
+            marcaLema: Value(mLema.isEmpty ? null : mLema),
           ),
         );
+        if (_usaCreditos && _importarDesdeId != null) {
+          await ref.read(repoCreditosProvider).importarDesdeCampeonato(
+                origenId: _importarDesdeId!,
+                destinoId: id,
+              );
+        }
         if (_activo) {
           final c = await (db.select(db.campeonatos)
                 ..where((t) => t.id.equals(id)))
@@ -171,13 +270,35 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
           topeRegularizacion: Value(int.parse(_tope.text.trim())),
           activo: Value(_activo),
           usaCreditos: Value(_usaCreditos),
+          usaTesoreria: Value(_usaTesoreria),
+          finalizado: Value(_finalizado),
           copasJson: Value(copasJson),
           cuotaPagat: Value(cuotaP),
           cuotaCoordinadora: Value(cuotaC),
           cuotaClub: Value(cuotaCl),
           motorSorteoMin: Value(motorMin),
           motorSorteoMax: Value(motorMax),
+          pinonDientesMin: Value(pinMin),
+          pinonDientesMax: Value(pinMax),
+          coronaDientesMin: Value(corMin),
+          coronaDientesMax: Value(corMax),
+          marcaTitulo: Value(mTitulo.isEmpty ? null : mTitulo),
+          marcaLema: Value(mLema.isEmpty ? null : mLema),
         ));
+        // Acaba de marcarse como finalizado: ofrecer la bonificación de cierre.
+        if (_usaCreditos && _finalizado && !_finalizadoOriginal && mounted) {
+          await _ofrecerBonificacionCierre(widget.campeonatoId!);
+        }
+        // Si es el campeonato activo, refrescar la copia en memoria para que
+        // los cambios (rangos de dientes, etc.) se reflejen al instante.
+        if (ref.read(campeonatoActivoProvider)?.id == widget.campeonatoId) {
+          final fresh = await (db.select(db.campeonatos)
+                ..where((t) => t.id.equals(widget.campeonatoId!)))
+              .getSingleOrNull();
+          if (fresh != null) {
+            ref.read(campeonatoActivoProvider.notifier).seleccionar(fresh);
+          }
+        }
       }
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
@@ -190,6 +311,44 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
 
   void _aviso(String m) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+  }
+
+  /// Al marcar finalizado un campeonato con créditos, ofrece aplicar ya la
+  /// bonificación de cierre (cada piloto recibe un movimiento que indica la
+  /// bonificación por su nº de carreras y categoría).
+  Future<void> _ofrecerBonificacionCierre(int campeonatoId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Bonificación de cierre'),
+        content: Text(
+          'Has marcado el campeonato como finalizado.\n\n'
+          'Se regularizará el saldo de cada piloto que haya competido: '
+          'saldo = mín(saldo actual + bonificación según categoría y nº de '
+          'carreras, ${_tope.text.trim()}). Cada ajuste queda registrado como '
+          'movimiento indicando la bonificación aplicada.\n\n'
+          'Importante: la bonificación usa la categoría de cierre (revísala '
+          'antes en Créditos → Revisión de categorías si hay promociones o '
+          'descensos).\n\n'
+          '¿Aplicarla ahora?',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Ahora no')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Aplicar')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final n = await ref
+        .read(repoCreditosProvider)
+        .aplicarBonificacionCierre(campeonatoId);
+    if (mounted) {
+      _aviso('Bonificación de cierre aplicada a $n pilotos.');
+    }
   }
 
   Future<void> _borrar() async {
@@ -268,6 +427,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               items: const [
                 DropdownMenuItem(value: 'PAREJAS', child: Text('Parejas')),
                 DropdownMenuItem(value: 'INDIVIDUAL', child: Text('Individual')),
+                DropdownMenuItem(value: '24H', child: Text('24h')),
+                DropdownMenuItem(value: '12H', child: Text('12h')),
               ],
               onChanged: (v) => setState(() => _formato = v ?? 'PAREJAS'),
             ),
@@ -363,6 +524,14 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               subtitle: const Text(
                   'Activo en Resisbarna. Apágalo si el campeonato no usa créditos.'),
             ),
+            SwitchListTile(
+              value: _usaTesoreria,
+              onChanged: (v) => setState(() => _usaTesoreria = v),
+              title: const Text('Gestiona tesorería (cuotas/pagos)'),
+              subtitle: const Text(
+                  'Apágalo si este campeonato no controla el dinero.'),
+            ),
+            if (esNuevo && _usaCreditos) _selectorImportarPilotos(),
             const SizedBox(height: 8),
             TextFormField(
               controller: _descartes,
@@ -396,53 +565,55 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 },
               ),
             ],
-            const SizedBox(height: 20),
-            Text('Cuotas por prueba (tesorería)',
-                style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 4),
-            Text(
-              'PAGAT es la cuota total. APORTACIÓN COORDINADORA + APORTACIÓN CLUB '
-              'deben sumar el PAGAT (es el desglose de a dónde va el dinero).',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _cuotaPagat,
-                    decoration: const InputDecoration(
-                      labelText: 'Pagat (€) *',
-                      prefixIcon: Icon(Icons.payments_outlined),
+            if (_usaTesoreria) ...[
+              const SizedBox(height: 20),
+              Text('Cuotas por prueba (tesorería)',
+                  style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 4),
+              Text(
+                'PAGAT es la cuota total. APORTACIÓN COORDINADORA + APORTACIÓN CLUB '
+                'deben sumar el PAGAT (es el desglose de a dónde va el dinero).',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _cuotaPagat,
+                      decoration: const InputDecoration(
+                        labelText: 'Pagat (€) *',
+                        prefixIcon: Icon(Icons.payments_outlined),
+                      ),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    controller: _cuotaCoord,
-                    decoration: const InputDecoration(
-                      labelText: 'Coordinadora (€)',
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _cuotaCoord,
+                      decoration: const InputDecoration(
+                        labelText: 'Coordinadora (€)',
+                      ),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    controller: _cuotaClub,
-                    decoration: const InputDecoration(
-                      labelText: 'Club (€)',
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _cuotaClub,
+                      decoration: const InputDecoration(
+                        labelText: 'Club (€)',
+                      ),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
             const SizedBox(height: 28),
             Text('Sorteo de motores (organización)',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -490,6 +661,67 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 ),
               ],
             ),
+            const SizedBox(height: 28),
+            Text('Transmisión (verificación)',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w700,
+                    )),
+            const SizedBox(height: 4),
+            Text(
+              'Dientes permitidos en piñón y corona. En la verificación, fuera '
+              'de este rango salta infracción. Activa "Tamaño fijo" si solo se '
+              'permite un valor.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            _RangoDientes(
+              etiqueta: 'Piñón',
+              fijo: _pinonFijo,
+              min: _pinonMin,
+              max: _pinonMax,
+              onFijo: (v) => setState(() => _pinonFijo = v),
+            ),
+            const SizedBox(height: 8),
+            _RangoDientes(
+              etiqueta: 'Corona',
+              fijo: _coronaFijo,
+              min: _coronaMin,
+              max: _coronaMax,
+              onFijo: (v) => setState(() => _coronaFijo = v),
+            ),
+            const SizedBox(height: 28),
+            Text('Marca en los PDF (opcional)',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w700,
+                    )),
+            const SizedBox(height: 4),
+            Text(
+              'Título de cabecera y lema del pie en las exportaciones de ESTE '
+              'campeonato. Si lo dejas vacío, se usa la marca global de la app.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _marcaTitulo,
+              decoration: const InputDecoration(
+                labelText: 'Título de cabecera',
+                hintText: 'Ej: RESISBARNA',
+                prefixIcon: Icon(Icons.title),
+              ),
+              textCapitalization: TextCapitalization.characters,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _marcaLema,
+              decoration: const InputDecoration(
+                labelText: 'Lema del pie',
+                hintText: 'Ej: RESISBARNA · resistencias de slot en Barcelona',
+                prefixIcon: Icon(Icons.notes),
+              ),
+              maxLines: 2,
+            ),
             const SizedBox(height: 16),
             SwitchListTile(
               value: _activo,
@@ -500,6 +732,15 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               subtitle: const Text(
                   'Solo los campeonatos visibles aparecen en el selector'),
             ),
+            if (!esNuevo)
+              SwitchListTile(
+                value: _finalizado,
+                onChanged: (v) => setState(() => _finalizado = v),
+                title: const Text('Campeonato finalizado'),
+                subtitle: const Text(
+                    'Temporada cerrada: la clasificación ordena por netos y se '
+                    'habilita la bonificación de cierre.'),
+              ),
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: _guardando ? null : _guardar,
@@ -513,6 +754,75 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Configurador del rango de dientes (piñón o corona): interruptor "Tamaño
+/// fijo" (un campo) o rango mín-máx (dos campos).
+class _RangoDientes extends StatelessWidget {
+  const _RangoDientes({
+    required this.etiqueta,
+    required this.fijo,
+    required this.min,
+    required this.max,
+    required this.onFijo,
+  });
+
+  final String etiqueta;
+  final bool fijo;
+  final TextEditingController min;
+  final TextEditingController max;
+  final ValueChanged<bool> onFijo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: TextFormField(
+            controller: min,
+            decoration: InputDecoration(
+              labelText: fijo ? '$etiqueta · dientes' : '$etiqueta · mín',
+              prefixIcon: const Icon(Icons.settings_outlined),
+            ),
+            keyboardType: TextInputType.number,
+            validator: (v) {
+              final n = int.tryParse(v?.trim() ?? '');
+              if (n == null || n < 1) return 'Nº positivo';
+              if (!fijo) {
+                final mx = int.tryParse(max.text.trim());
+                if (mx != null && mx < n) return 'máx ≥ mín';
+              }
+              return null;
+            },
+          ),
+        ),
+        if (!fijo) ...[
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextFormField(
+              controller: max,
+              decoration: InputDecoration(labelText: '$etiqueta · máx'),
+              keyboardType: TextInputType.number,
+              validator: (v) {
+                final n = int.tryParse(v?.trim() ?? '');
+                if (n == null || n < 1) return 'Nº positivo';
+                return null;
+              },
+            ),
+          ),
+        ],
+        const SizedBox(width: 8),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Fijo', style: TextStyle(fontSize: 11)),
+            Switch(value: fijo, onChanged: onFijo),
+          ],
+        ),
+      ],
     );
   }
 }

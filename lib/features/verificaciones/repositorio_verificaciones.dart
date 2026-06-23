@@ -174,6 +174,28 @@ bool _aplicaA(String copasJson, String copa) {
     return true;
   }
 }
+
+/// True si el coche tiene [copa] en su lista (NO cuenta la lista vacía).
+bool _tieneCopa(String copasJson, String copa) {
+  try {
+    final raw = (copasJson.isEmpty) ? [] : (jsonDecode(copasJson) as List?);
+    if (raw == null || raw.isEmpty) return false;
+    final objetivo = _normCopa(copa);
+    return raw.map((e) => _normCopa(e.toString())).contains(objetivo);
+  } catch (_) {
+    return false;
+  }
+}
+
+/// True si el coche no tiene copa marcada = vale para "todos".
+bool _esTodos(String copasJson) {
+  try {
+    final raw = (copasJson.isEmpty) ? [] : (jsonDecode(copasJson) as List?);
+    return raw == null || raw.isEmpty;
+  } catch (_) {
+    return true;
+  }
+}
 final neumaticosProvider =
     StreamProvider.autoDispose<List<CatalogoNeumatico>>((ref) {
   final db = ref.watch(dbProvider);
@@ -211,18 +233,41 @@ final chasisFiltradosProvider = StreamProvider.autoDispose
   });
 });
 
-/// Coches filtrados por la copa del equipo.
-/// Si el filtro no deja ninguno (catálogo con copas mal cuadradas), se
-/// devuelven todos: mejor elegir entre todos que bloquear la verificación.
+/// Coches a mostrar en la verificación.
+/// - `copa`: copa del equipo. `camp`: copas/categorías del campeonato separadas
+///   por '|' (p. ej. "CLASSICOS").
+/// Regla:
+///   1) Si algún coche cuadra con la copa REAL del equipo → esos (+ los "todos").
+///   2) Si no (p. ej. equipos P1/P2 en un campeonato de clásicos) → coches que
+///      cuadren con la categoría del campeonato + los coches "todos".
+///   3) Último recurso: todos.
 final cochesFiltradosProvider = StreamProvider.autoDispose
-    .family<List<CatalogoCoche>, String?>((ref, copa) {
+    .family<List<CatalogoCoche>, ({String? copa, String camp})>((ref, args) {
   final db = ref.watch(dbProvider);
   return (db.select(db.catalogoCoches)..where((t) => t.activo.equals(true)))
       .watch()
       .map((todos) {
-    if (copa == null || copa.isEmpty) return todos;
-    final filtrados = todos.where((c) => _aplicaA(c.copasJson, copa)).toList();
-    return filtrados.isEmpty ? todos : filtrados;
+    final copa = args.copa;
+    // 1) Copa real del equipo cuadra con algún coche.
+    if (copa != null &&
+        copa.isNotEmpty &&
+        todos.any((c) => _tieneCopa(c.copasJson, copa))) {
+      return todos.where((c) => _aplicaA(c.copasJson, copa)).toList();
+    }
+    // 2) Filtrar por la categoría del campeonato + coches "todos".
+    final champCopas = args.camp.isEmpty
+        ? const <String>[]
+        : args.camp.split('|').where((s) => s.isNotEmpty).toList();
+    if (champCopas.isNotEmpty) {
+      final porCamp = todos
+          .where((c) =>
+              _esTodos(c.copasJson) ||
+              champCopas.any((cc) => _tieneCopa(c.copasJson, cc)))
+          .toList();
+      if (porCamp.isNotEmpty) return porCamp;
+    }
+    // 3) Último recurso.
+    return todos;
   });
 });
 

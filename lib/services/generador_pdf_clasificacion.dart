@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../data/database/app_database.dart';
 import '../domain/calculo_clasificacion.dart';
 import '../features/clasificacion/repositorio_clasificacion.dart';
+import 'exportar_config.dart';
 import 'pdf_marca.dart';
 import 'pdf_util.dart';
 
@@ -39,16 +40,27 @@ class GeneradorPdfClasificacion {
     required DatosClasificacion datos,
     required Campeonato campeonato,
     String? copa,
+    IdiomaExport idioma = IdiomaExport.es,
   }) async {
+    final cfg = ref.read(marcaConfigProvider);
+    String t(String k) => tr(idioma, k);
     final pruebas = datos.pruebas;
+    // Copa = clasificación independiente (puntos recalculados dentro de la copa).
     final filas = (copa == null
         ? List<FilaClasificacion>.from(datos.filas)
-        : datos.filas.where((f) => f.copa == copa).toList());
+        : List<FilaClasificacion>.from(
+            datos.porCopa[copa] ?? const <FilaClasificacion>[]));
     // Posiciones dentro de la vista exportada (empates comparten posición).
     CalculoClasificacion.asignarPosiciones(filas);
 
     // Identidad visual compartida (Base 02 + logos patrocinadores).
     final marca = await MarcaPdf.cargar();
+    final tituloMarca = (campeonato.marcaTitulo?.trim().isNotEmpty ?? false)
+        ? campeonato.marcaTitulo!.trim()
+        : cfg.titulo;
+    final lemaMarca = (campeonato.marcaLema?.trim().isNotEmpty ?? false)
+        ? campeonato.marcaLema!.trim()
+        : cfg.lema;
 
     // Umbrales de medalla por prueba: oro/plata/bronce según los puntos de
     // ESA prueba dentro de la vista exportada (empates comparten medalla).
@@ -64,8 +76,9 @@ class GeneradorPdfClasificacion {
     }
 
     final df = DateFormat('dd/MM/yyyy HH:mm');
-    final subtitulo =
-        copa == null ? 'CLASIFICACIÓN GENERAL' : 'CLASIFICACIÓN · COPA $copa';
+    final subtitulo = copa == null
+        ? t('CLASIFICACIÓN GENERAL')
+        : '${t('CLASIFICACIÓN · COPA')} $copa';
     final columnas = 8 + pruebas.length;
 
     return pdfUnaHoja(
@@ -76,17 +89,17 @@ class GeneradorPdfClasificacion {
         crossAxisAlignment: pw.CrossAxisAlignment.stretch,
         children: [
           marca.hero(
-            organizacion: campeonato.organizacion,
+            titulo: tituloMarca,
             subtitulo: '$subtitulo - ${campeonato.nombre}',
-            badge: '${filas.length} pilotos',
+            badge: '${filas.length} ${t('pilotos')}',
             nota: df.format(DateTime.now()),
           ),
           pw.SizedBox(height: 10),
-          _tabla(pruebas, filas, medallasPorPrueba),
+          _tabla(pruebas, filas, medallasPorPrueba, t),
           pw.SizedBox(height: 8),
-          _leyenda(),
+          _leyenda(t),
           pw.SizedBox(height: 10),
-          marca.pie(),
+          marca.pie(lema: lemaMarca, conApoyo: t('Con el apoyo de')),
         ],
       ),
     );
@@ -95,7 +108,7 @@ class GeneradorPdfClasificacion {
   // ---------- TABLA ----------
 
   pw.Widget _tabla(List<Prueba> pruebas, List<FilaClasificacion> filas,
-      Map<int, List<int>> medallas) {
+      Map<int, List<int>> medallas, String Function(String) t) {
     final anchos = <int, pw.TableColumnWidth>{
       0: const pw.FixedColumnWidth(28),
       1: const pw.FlexColumnWidth(2.6),
@@ -119,14 +132,14 @@ class GeneradorPdfClasificacion {
           decoration: const pw.BoxDecoration(color: _rojoOscuro),
           children: [
             _cab('#'),
-            _cab('PILOTO', align: pw.TextAlign.left),
-            _cab('EQUIPO', align: pw.TextAlign.left),
-            _cab('COPA', align: pw.TextAlign.left),
-            _cab('CAT.'),
+            _cab(t('PILOTO'), align: pw.TextAlign.left),
+            _cab(t('EQUIPO'), align: pw.TextAlign.left),
+            _cab(t('COPA'), align: pw.TextAlign.left),
+            _cab(t('CAT.')),
             for (final p in pruebas) _cab(p.nombre.toUpperCase()),
-            _cab('BRUTO'),
-            _cab('DESC.'),
-            _cab('TOTAL'),
+            _cab(t('BRUTO')),
+            _cab(t('DESC.')),
+            _cab(t('TOTAL')),
           ],
         ),
         ...filas.asMap().entries.map((e) {
@@ -143,7 +156,7 @@ class GeneradorPdfClasificacion {
               _celda(f.categoria, color: _gris, size: 8),
               for (final p in pruebas)
                 _celdaPrueba(
-                  f.puntosPorPrueba[p.id] ?? 0,
+                  f.puntosPorPrueba[p.id],
                   f.pruebasDescartadas.contains(p.id),
                   medallas[p.id] ?? const [],
                 ),
@@ -191,18 +204,20 @@ class GeneradorPdfClasificacion {
 
   /// Celda de puntos de una prueba con fondo oro/plata/bronce para el top-3
   /// de ESA prueba, y tachado rojo si es un descarte.
-  pw.Widget _celdaPrueba(int puntos, bool descarte, List<int> medallas) {
-    if (puntos == 0 && !descarte) return _celda('-', color: _gris);
+  pw.Widget _celdaPrueba(int? puntos, bool descarte, List<int> medallas) {
+    // Sin resultado en prueba no disputada → guion. 0 disputado → "0".
+    if (puntos == null && !descarte) return _celda('-', color: _gris);
+    final v = puntos ?? 0;
     PdfColor? bg;
     PdfColor fg = _texto;
-    if (puntos > 0 && medallas.isNotEmpty) {
-      if (puntos == medallas[0]) {
+    if (v > 0 && medallas.isNotEmpty) {
+      if (v == medallas[0]) {
         bg = _oro;
         fg = _oroFg;
-      } else if (medallas.length > 1 && puntos == medallas[1]) {
+      } else if (medallas.length > 1 && v == medallas[1]) {
         bg = _plata;
         fg = _plataFg;
-      } else if (medallas.length > 2 && puntos == medallas[2]) {
+      } else if (medallas.length > 2 && v == medallas[2]) {
         bg = _bronce;
         fg = _bronceFg;
       }
@@ -211,7 +226,7 @@ class GeneradorPdfClasificacion {
       color: bg,
       padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: pw.Text(
-        '$puntos',
+        '$v',
         textAlign: pw.TextAlign.center,
         style: pw.TextStyle(
           fontSize: 9,
@@ -266,7 +281,7 @@ class GeneradorPdfClasificacion {
 
   // ---------- LEYENDA Y PIE ----------
 
-  pw.Widget _leyenda() {
+  pw.Widget _leyenda(String Function(String) tf) {
     pw.Widget chip(PdfColor c, String t) => pw.Row(
           mainAxisSize: pw.MainAxisSize.min,
           children: [
@@ -283,7 +298,7 @@ class GeneradorPdfClasificacion {
         pw.SizedBox(width: 10),
         chip(_bronce, '3º'),
         pw.SizedBox(width: 10),
-        pw.Text('Tachado en rojo = resultado descartado',
+        pw.Text(tf('Tachado en rojo = resultado descartado'),
             style: const pw.TextStyle(fontSize: 7, color: _gris)),
       ],
     );

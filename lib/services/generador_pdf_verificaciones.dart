@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../core/proveedores.dart';
 import '../data/database/app_database.dart';
+import 'exportar_config.dart';
 import 'fotos_verificacion.dart';
 import 'pdf_marca.dart';
 import 'pdf_util.dart';
@@ -51,8 +52,11 @@ class GeneradorPdfVerificaciones {
   static const _verde = PdfColor.fromInt(0xFF2E7D32);
 
   /// Genera el PDF de todas las verificaciones de una prueba.
-  Future<Uint8List> generar({required int pruebaId}) async {
+  Future<Uint8List> generar(
+      {required int pruebaId, IdiomaExport idioma = IdiomaExport.es}) async {
     final db = ref.read(dbProvider);
+    final cfg = ref.read(marcaConfigProvider);
+    String t(String k) => tr(idioma, k);
     final prueba = await (db.select(db.pruebas)
           ..where((t) => t.id.equals(pruebaId)))
         .getSingle();
@@ -118,20 +122,20 @@ class GeneradorPdfVerificaciones {
       if (v.motorTipo == 'PROPIO') {
         final rpm = v.motorRpm == null ? '-' : '${v.motorRpm} RPM';
         final ums = v.motorUms == null ? '-' : '${v.motorUms} uMs';
-        motor = 'Propio · $rpm · $ums';
+        motor = '${t('Propio')} · $rpm · $ums';
       } else if (v.motor != null && v.motor!.isNotEmpty) {
-        motor = 'Organización · nº ${v.motor}';
+        motor = '${t('Organización')} · nº ${v.motor}';
       }
 
       String pinon = '-';
       if (v.pinonMarca != null || v.pinonDientes != null) {
         pinon =
-            '${v.pinonMarca ?? "-"} · ${v.pinonDientes ?? "-"} dientes';
+            '${v.pinonMarca ?? "-"} · ${v.pinonDientes ?? "-"} ${t('dientes')}';
       }
       String corona = '-';
       if (v.coronaMarca != null || v.coronaDientes != null) {
         corona =
-            '${v.coronaMarca ?? "-"} · ${v.coronaDientes ?? "-"} dientes';
+            '${v.coronaMarca ?? "-"} · ${v.coronaDientes ?? "-"} ${t('dientes')}';
       }
       String llanD = '-';
       if (v.llantaDelMarca != null || v.llantaDelDimension != null) {
@@ -150,19 +154,19 @@ class GeneradorPdfVerificaciones {
         pilotos: p2 == null ? p1.nombre : '${p1.nombre} + ${p2.nombre}',
         coche: coche?.nombre,
         filas: [
-          _Vrow('Peso carrocería', _peso(v.pesoInicial, v.pesoMin)),
-          _Vrow('Peso coche entero',
-              _pesoEntero(v.pesoInicialCoche, v.pesoFinalCoche)),
-          _Vrow('Motor', motor),
-          _Vrow('Piñón', pinon),
-          _Vrow('Corona', corona),
-          _Vrow('Llanta delantera', llanD),
-          _Vrow('Llanta trasera', llanT),
-          _Vrow('Trencilla', v.trencilla ?? '-'),
-          _Vrow('Suspensión', v.suspension ?? '-'),
-          _Vrow('Bancada', v.bancada ?? '-'),
-          _Vrow('Chasis', v.chasis ?? '-'),
-          _Vrow('Neumático', v.neumatico ?? '-'),
+          _Vrow(t('Peso carrocería'), _peso(v.pesoInicial, v.pesoMin)),
+          _Vrow(t('Peso coche entero'),
+              _pesoEntero(v.pesoInicialCoche, v.pesoFinalCoche, t)),
+          _Vrow(t('Motor'), motor),
+          _Vrow(t('Piñón'), pinon),
+          _Vrow(t('Corona'), corona),
+          _Vrow(t('Llanta delantera'), llanD),
+          _Vrow(t('Llanta trasera'), llanT),
+          _Vrow(t('Trencilla'), v.trencilla ?? '-'),
+          _Vrow(t('Suspensión'), v.suspension ?? '-'),
+          _Vrow(t('Bancada'), v.bancada ?? '-'),
+          _Vrow(t('Chasis'), v.chasis ?? '-'),
+          _Vrow(t('Neumático'), v.neumatico ?? '-'),
         ],
         observaciones: v.observaciones,
         validada: v.validado,
@@ -171,15 +175,20 @@ class GeneradorPdfVerificaciones {
     }
     lista.sort((a, b) => a.equipo.compareTo(b.equipo));
 
-    final df = DateFormat('d MMM y', 'es_ES');
+    final df = DateFormat('d MMM y', idioma.intlLocale);
     final fechaTxt = prueba.fecha == null ? '' : df.format(prueba.fecha!);
     final pdf = pw.Document();
 
     // Identidad visual compartida (Base 02 + logos patrocinadores).
     final marca = await MarcaPdf.cargar();
-    final organizacion = campeonato?.organizacion ?? 'Resisbarna';
+    final tituloMarca = (campeonato?.marcaTitulo?.trim().isNotEmpty ?? false)
+        ? campeonato!.marcaTitulo!.trim()
+        : cfg.titulo;
+    final lemaMarca = (campeonato?.marcaLema?.trim().isNotEmpty ?? false)
+        ? campeonato!.marcaLema!.trim()
+        : cfg.lema;
     final subtitulo =
-        'Verificación · ${prueba.nombre} - ${campeonato?.nombre ?? ''}';
+        '${t('Verificación')} · ${prueba.nombre} - ${campeonato?.nombre ?? ''}';
 
     // Una hoja por verificación (ficha de escrutineo por coche). Cada ficha
     // entra entera en su página (A4 y, si lleva fotos grandes, escalada).
@@ -188,7 +197,7 @@ class GeneradorPdfVerificaciones {
         pdf,
         filas: 0,
         contenido: (ctx) => marca.hero(
-          organizacion: organizacion,
+          titulo: tituloMarca,
           subtitulo: subtitulo,
           nota: fechaTxt.isEmpty ? null : fechaTxt,
         ),
@@ -203,15 +212,15 @@ class GeneradorPdfVerificaciones {
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
           children: [
             marca.hero(
-              organizacion: organizacion,
+              titulo: tituloMarca,
               subtitulo: subtitulo,
-              badge: 'Ficha ${i + 1} / ${lista.length}',
+              badge: '${t('Ficha')} ${i + 1} / ${lista.length}',
               nota: fechaTxt.isEmpty ? null : fechaTxt,
             ),
             pw.SizedBox(height: 12),
-            _verifCard(v),
+            _verifCard(v, t),
             pw.SizedBox(height: 12),
-            marca.pie(),
+            marca.pie(lema: lemaMarca, conApoyo: t("Con el apoyo de")),
           ],
         ),
       );
@@ -225,16 +234,16 @@ class GeneradorPdfVerificaciones {
     return '${ini.toStringAsFixed(2)} g${min == null ? '' : ' (min ${min.toStringAsFixed(2)})'}$cumple';
   }
 
-  String _pesoEntero(double? ini, double? fin) {
+  String _pesoEntero(double? ini, double? fin, String Function(String) t) {
     if (ini == null && fin == null) return '-';
     final iniS = ini == null ? '-' : '${ini.toStringAsFixed(2)} g';
     final finS = fin == null ? '-' : '${fin.toStringAsFixed(2)} g';
-    return 'inicio: $iniS · fin: $finS';
+    return '${t('inicio')}: $iniS · ${t('fin')}: $finS';
   }
 
   // ---- HERO ----
   // ---- FICHA (una por hoja) ----
-  pw.Widget _verifCard(_VerifData v) {
+  pw.Widget _verifCard(_VerifData v, String Function(String) t) {
     // Datos en dos columnas para aprovechar la hoja.
     final mitad = (v.filas.length + 1) ~/ 2;
     final colIzq = v.filas.take(mitad).toList();
@@ -311,7 +320,7 @@ class GeneradorPdfVerificaciones {
                     color: PdfColors.white,
                     borderRadius: pw.BorderRadius.circular(12),
                   ),
-                  child: pw.Text('COPA ${v.copa}',
+                  child: pw.Text('${t('COPA')} ${v.copa}',
                       style: pw.TextStyle(
                           fontSize: 8,
                           fontWeight: pw.FontWeight.bold,
@@ -326,7 +335,7 @@ class GeneradorPdfVerificaciones {
                     borderRadius: pw.BorderRadius.circular(12),
                   ),
                   child: pw.Text(
-                    v.validada ? 'VALIDADA' : 'BORRADOR',
+                    v.validada ? t('VALIDADA') : t('BORRADOR'),
                     style: pw.TextStyle(
                         color: PdfColors.white,
                         fontSize: 8,
@@ -384,7 +393,7 @@ class GeneradorPdfVerificaciones {
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text('OBSERVACIONES',
+                        pw.Text(t('OBSERVACIONES'),
                             style: pw.TextStyle(
                                 fontSize: 7,
                                 color: _gris,

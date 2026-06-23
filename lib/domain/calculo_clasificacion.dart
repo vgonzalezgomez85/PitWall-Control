@@ -59,6 +59,9 @@ class CalculoClasificacion {
   /// - [pilotos]: lista de pilotos con sus datos (id, nombre, equipo, copa, categoría, créditos).
   /// - [resultadosPorPiloto]: mapa pilotoId → FilaResultados.
   /// - [numDescartes]: cuántas pruebas se descartan por piloto (las de peor puntuación).
+  /// - [pruebasDisputadas]: pruebas ya disputadas (con resultados de alguien).
+  ///   Un piloto que no puntúa una prueba disputada cuenta **0** en ella, y ese
+  ///   0 es su peor resultado, que entra en el descarte (no se trata como "—").
   /// - [ordenarPorNeto]: durante la temporada se ordena por puntos BRUTOS;
   ///   solo al terminar la última prueba del campeonato se ordena por NETOS
   ///   (cuando los descartes ya son definitivos).
@@ -66,6 +69,7 @@ class CalculoClasificacion {
     required List<PilotoBase> pilotos,
     required Map<int, FilaResultados> resultadosPorPiloto,
     required int numDescartes,
+    Set<int> pruebasDisputadas = const {},
     bool ordenarPorNeto = false,
   }) {
     final out = <FilaClasificacion>[];
@@ -73,6 +77,10 @@ class CalculoClasificacion {
       final r = resultadosPorPiloto[p.pilotoId] ??
           FilaResultados(const {}, const {});
       final puntos = Map<int, int>.from(r.puntosPorPrueba);
+      // Toda prueba disputada en la que el piloto no puntuó cuenta como 0.
+      for (final pid in pruebasDisputadas) {
+        puntos.putIfAbsent(pid, () => 0);
+      }
 
       // Identificar las N pruebas con menos puntos como descartes
       final descartadas = <int>{};

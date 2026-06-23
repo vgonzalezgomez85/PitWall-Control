@@ -26,6 +26,7 @@ class _ImportarPilotosSheetsState
   bool _cargandoFilas = false;
   bool _importando = false;
   String? _error;
+  String? _diag;
 
   List<HojaResumen> _hojas = [];
   String _busqueda = '';
@@ -88,6 +89,12 @@ class _ImportarPilotosSheetsState
       _columnas = norm.columnas;
       _filasArchivo = norm.filas;
       _mapeo = ImportadorPilotos.detectarMapeo(_columnas);
+      // Diagnóstico para ver qué está leyendo realmente de la hoja.
+      final primera = filas.isEmpty
+          ? '(ninguna)'
+          : filas.first.take(8).map((c) => c.isEmpty ? '∅' : c).join(' | ');
+      _diag = 'Leídas ${filas.length} filas · ${_columnas.length} columnas '
+          'detectadas · piloto=${_mapeo.colNombre ?? "—"}\n1ª fila: $primera';
       await _recalcular();
     } catch (e) {
       _error = 'No se pudo leer la pestaña: $e';
@@ -281,6 +288,27 @@ class _ImportarPilotosSheetsState
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
+        if (_diag != null) ...[
+          Card(
+            color: cs.tertiaryContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(Icons.bug_report_outlined,
+                      size: 18, color: cs.onTertiaryContainer),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SelectableText(_diag!,
+                        style: TextStyle(
+                            color: cs.onTertiaryContainer, fontSize: 12)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         Card(
           color: cs.surfaceContainer,
           child: Padding(

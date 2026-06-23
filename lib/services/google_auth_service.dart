@@ -8,11 +8,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'almacen_local.dart';
 
 /// Scopes:
-/// - sheets.readonly: leer hojas vinculadas
+/// - spreadsheets: leer Y escribir hojas vinculadas (subida bidireccional)
 /// - drive.readonly: listar las hojas del usuario
 /// - drive.file: leer/escribir archivos creados por la app (backup BD)
 const List<String> _scopesGoogle = [
-  'https://www.googleapis.com/auth/spreadsheets.readonly',
+  'https://www.googleapis.com/auth/spreadsheets',
   'https://www.googleapis.com/auth/drive.readonly',
   'https://www.googleapis.com/auth/drive.file',
 ];

@@ -142,6 +142,8 @@ class RepositorioPilotos {
     required String categoria,
     required int creditosIniciales,
   }) async {
+    // insertOrIgnore: si el piloto ya está inscrito en este campeonato, no
+    // falla por la clave única (piloto_id, campeonato_id) ni pisa sus datos.
     await db.into(db.pilotoCampeonato).insert(
           PilotoCampeonatoCompanion.insert(
             pilotoId: pilotoId,
@@ -150,6 +152,7 @@ class RepositorioPilotos {
             creditosIniciales: creditosIniciales,
             creditosActuales: creditosIniciales,
           ),
+          mode: InsertMode.insertOrIgnore,
         );
   }
 

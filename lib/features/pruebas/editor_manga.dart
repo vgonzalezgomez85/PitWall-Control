@@ -196,14 +196,14 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
               controller: _numCarriles,
               decoration: const InputDecoration(
                 labelText: 'Número de carriles',
-                helperText: 'Habitualmente 6, 7 u 8',
+                helperText: 'Habitualmente 6, 7 u 8 (hasta 32)',
                 prefixIcon: Icon(Icons.linear_scale),
               ),
               keyboardType: TextInputType.number,
               validator: (v) {
                 final n = int.tryParse(v ?? '');
-                if (n == null || n < 1 || n > 16) {
-                  return 'Indica un número entre 1 y 16';
+                if (n == null || n < 1 || n > 32) {
+                  return 'Indica un número entre 1 y 32';
                 }
                 return null;
               },
