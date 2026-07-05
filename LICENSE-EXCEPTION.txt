@@ -1,0 +1,32 @@
+PitWall — Permiso adicional para la distribución a través de tiendas de aplicaciones
+PitWall — Additional Permission for distribution through application stores
+
+Copyright (C) 2026 Víctor González Gómez <vgonzalezgomez@outlook.es>
+
+This software is licensed under the GNU General Public License, version 3
+(GPLv3), or (at your option) any later version — see the LICENSE file.
+
+As an additional permission under section 7 of the GNU General Public License
+version 3, the copyright holder (Víctor González Gómez), being the sole holder
+of copyright in this software, grants permission to distribute copies of this
+software — whether unmodified or modified — through application distribution
+platforms, including but not limited to Apple's App Store and Google Play, even
+where the terms of service of those platforms would otherwise be incompatible
+with the GNU GPL (for example, by imposing digital rights management or usage
+restrictions).
+
+This additional permission applies solely to the act of distributing the
+software through such platforms and does not otherwise restrict, waive, or
+enlarge any right granted by the GNU GPL. Everyone who receives the software
+retains all rights granted by the GNU GPL, including the right to obtain the
+corresponding source code and to redistribute it under the GPL.
+
+---
+
+Permiso adicional (resumen en español): como titular único del copyright, se
+concede permiso para distribuir este software a través de tiendas de
+aplicaciones (App Store de Apple, Google Play, etc.) aunque los términos de esas
+tiendas sean por lo demás incompatibles con la GPL. Este permiso solo cubre la
+distribución por esas tiendas y no limita ningún otro derecho de la GPL: quien
+recibe el software conserva todos los derechos de la GPL, incluido el de obtener
+el código fuente y redistribuirlo bajo la GPL.
