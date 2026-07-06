@@ -33,11 +33,21 @@ class GeneradorTandaJson {
 
   static const schema = 'pitwall.tanda/v1';
 
-  // carrilSalida es texto ("D3" o "5"): extrae el nº de carril. null si no hay.
-  int? _carrilNum(String? c) {
-    if (c == null) return null;
-    final m = RegExp(r'\d+').firstMatch(c);
-    return m == null ? null : int.tryParse(m.group(0)!);
+  // carrilSalida es texto. "1".."N" = carril de CARRERA. "D1".."Dk" = DESCANSO:
+  // cuando una manga tiene más equipos que carriles, esos equipos descansan esa
+  // manga (D1 = descanso 1, D2 = descanso 2…). Los descansos NO ocupan carril;
+  // se marcan con carril_salida 0 (+ nº de descanso) y Manager los rota con su
+  // motor de resistencia.
+  int? _carrilCarrera(String? c) {
+    final t = (c ?? '').trim();
+    if (t.isEmpty || t.toUpperCase().startsWith('D')) return null;
+    return int.tryParse(t);
+  }
+
+  int? _numeroDescanso(String? c) {
+    final t = (c ?? '').trim().toUpperCase();
+    if (!t.startsWith('D')) return null;
+    return int.tryParse(t.substring(1)) ?? 0;
   }
 
   /// Construye el mapa JSON `pitwall.tanda/v1` de la prueba.
@@ -60,7 +70,6 @@ class GeneradorTandaJson {
 
     for (var mi = 0; mi < mangas.length; mi++) {
       final m = mangas[mi];
-      if (m.numCarriles > maxCarril) maxCarril = m.numCarriles;
 
       final inscritos = await (db.select(db.inscripciones)
             ..where((t) => t.mangaId.equals(m.id)))
@@ -68,9 +77,10 @@ class GeneradorTandaJson {
 
       final equipos = <Map<String, dynamic>>[];
       for (final ins in inscritos) {
-        final carril = _carrilNum(ins.carrilSalida);
-        if (carril == null) continue; // sin carril asignado → no se puede colocar
-        if (carril > maxCarril) maxCarril = carril;
+        final carril = _carrilCarrera(ins.carrilSalida);
+        final descanso = _numeroDescanso(ins.carrilSalida);
+        if (carril == null && descanso == null) continue; // sin asignar → fuera
+        if (carril != null && carril > maxCarril) maxCarril = carril;
 
         final eq = await (db.select(db.equipos)
               ..where((t) => t.id.equals(ins.equipoId)))
@@ -80,13 +90,22 @@ class GeneradorTandaJson {
         equipos.add({
           'nombre': eq.nombre,
           'copa': eq.copa,
-          'carril_salida': carril,
+          'carril_salida': carril ?? 0, // 0 = descanso
+          'descanso': ?descanso,
           'pilotos': pilotos,
         });
       }
-      // Orden por carril (legibilidad; Manager lo recoloca igualmente).
-      equipos.sort((a, b) =>
-          (a['carril_salida'] as int).compareTo(b['carril_salida'] as int));
+      // Primero los que corren (por carril), luego los descansos (por su nº).
+      equipos.sort((a, b) {
+        final ca = a['carril_salida'] as int, cb = b['carril_salida'] as int;
+        if (ca == 0 && cb == 0) {
+          return ((a['descanso'] ?? 0) as int)
+              .compareTo((b['descanso'] ?? 0) as int);
+        }
+        if (ca == 0) return 1;
+        if (cb == 0) return -1;
+        return ca.compareTo(cb);
+      });
 
       if (equipos.isNotEmpty) {
         tandas.add({'numero': mi + 1, 'equipos': equipos});
