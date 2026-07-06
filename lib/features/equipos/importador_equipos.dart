@@ -26,6 +26,8 @@ class EquipoImportado {
   String nombreEquipo;
   String piloto1Nombre;
   String? piloto2Nombre;
+  /// Pilotos 3+ (formatos de resistencia): solo nombre.
+  List<String> pilotosExtra;
   String? copa;
 
   String? piloto1Email;
@@ -50,6 +52,7 @@ class EquipoImportado {
     required this.nombreEquipo,
     required this.piloto1Nombre,
     this.piloto2Nombre,
+    this.pilotosExtra = const [],
     this.copa,
     this.piloto1Email,
     this.piloto1Telefono,
@@ -81,6 +84,9 @@ class MapeoColumnasEquipo {
   String? colP2Telefono;
   String? colP2Categoria;
   String? colP2Palmares;
+
+  /// Columnas de los pilotos 3+ (resistencia), en orden. Solo nombre.
+  List<String> colPilotosExtra = [];
 
   bool get esValido => colEquipo != null && colP1Nombre != null;
 }
@@ -249,6 +255,19 @@ class ImportadorEquipos {
         continue;
       }
     }
+
+    // Pilotos 3+ (resistencia): solo nombre.
+    final extra = <int, String>{};
+    for (final col in columnas) {
+      final n = _norm(col);
+      for (var k = 3; k <= 6; k++) {
+        if (_match(n, ['piloto $k', 'piloto$k', 'p$k', 'pilot $k', 'driver $k'])) {
+          extra.putIfAbsent(k, () => col);
+        }
+      }
+    }
+    m.colPilotosExtra =
+        (extra.keys.toList()..sort()).map((k) => extra[k]!).toList();
     return m;
   }
 
@@ -303,10 +322,17 @@ class ImportadorEquipos {
         return c;
       }
 
+      final extra = <String>[];
+      for (final c in m.colPilotosExtra) {
+        final v = norm(fila[c]);
+        if (v != null) extra.add(_formatearNombre(v));
+      }
+
       out.add(EquipoImportado(
         nombreEquipo: _capitalizarEquipo(eq),
         piloto1Nombre: _formatearNombre(p1),
         piloto2Nombre: norm(fila[m.colP2Nombre])?.let(_formatearNombre),
+        pilotosExtra: extra,
         copa: norm(fila[m.colCopa])?.toUpperCase(),
         piloto1Email: norm(fila[m.colP1Email]),
         piloto1Telefono: norm(fila[m.colP1Telefono]),

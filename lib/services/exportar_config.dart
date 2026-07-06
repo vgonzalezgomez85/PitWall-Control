@@ -105,41 +105,14 @@ const Map<String, List<String>> _textos = {
 };
 
 // ============================================================
-// Branding global de los PDF (título de cabecera y lema del pie).
+// Marca por defecto de los PDF cuando el campeonato no define la suya.
+// La marca es propia de cada campeonato (título de cabecera y lema del pie);
+// se configura en el editor de campeonato.
 // ============================================================
 
-class MarcaConfig {
-  final String titulo;
-  final String lema;
-  const MarcaConfig(this.titulo, this.lema);
-}
-
-const _defTitulo = 'RESISBARNA';
-const _defLema = 'RESISBARNA · resistencias de slot en Barcelona';
-const _kTitulo = 'marca_titulo';
-const _kLema = 'marca_lema';
+const marcaTituloPorDefecto = 'PITWALL';
+const marcaLemaPorDefecto = 'PitWall Control · gestión de campeonatos de slot';
 const _kIdioma = 'export_idioma';
-
-class MarcaConfigNotifier extends Notifier<MarcaConfig> {
-  @override
-  MarcaConfig build() {
-    final a = ref.read(almacenSyncProvider);
-    return MarcaConfig(
-      a.readSync(key: _kTitulo) ?? _defTitulo,
-      a.readSync(key: _kLema) ?? _defLema,
-    );
-  }
-
-  Future<void> guardar(String titulo, String lema) async {
-    final a = ref.read(almacenSyncProvider);
-    await a.write(key: _kTitulo, value: titulo);
-    await a.write(key: _kLema, value: lema);
-    state = MarcaConfig(titulo, lema);
-  }
-}
-
-final marcaConfigProvider =
-    NotifierProvider<MarcaConfigNotifier, MarcaConfig>(MarcaConfigNotifier.new);
 
 /// Último idioma usado al exportar (se recuerda entre exportaciones).
 class IdiomaExportNotifier extends Notifier<IdiomaExport> {

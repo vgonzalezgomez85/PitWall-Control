@@ -79,7 +79,6 @@ class GeneradorPdfMangas {
   /// Genera el PDF de las mangas de una prueba y devuelve los bytes.
   Future<Uint8List> generar(
       {required int pruebaId, IdiomaExport idioma = IdiomaExport.es}) async {
-    final cfg = ref.read(marcaConfigProvider);
     String t(String k) => tr(idioma, k);
     final db = ref.read(dbProvider);
     final activo = ref.read(campeonatoActivoProvider);
@@ -155,7 +154,7 @@ class GeneradorPdfMangas {
 
     final pdf = pw.Document(
       title: 'Mangas ${prueba.nombre}',
-      author: 'Resisbarna',
+      author: 'PitWall Control',
     );
 
     final fmtFecha = DateFormat("EEEE d 'de' MMMM y", idioma.intlLocale);
@@ -166,10 +165,10 @@ class GeneradorPdfMangas {
     final marca = await MarcaPdf.cargar();
     final tituloMarca = (activo?.marcaTitulo?.trim().isNotEmpty ?? false)
         ? activo!.marcaTitulo!.trim()
-        : cfg.titulo;
+        : marcaTituloPorDefecto;
     final lemaMarca = (activo?.marcaLema?.trim().isNotEmpty ?? false)
         ? activo!.marcaLema!.trim()
-        : cfg.lema;
+        : marcaLemaPorDefecto;
     final subtitulo = '${t('Mangas')} · ${prueba.nombre} - ${activo?.nombre ?? ''}';
 
     // Una hoja por manga: cada manga entra entera en su propia página (A4 y,

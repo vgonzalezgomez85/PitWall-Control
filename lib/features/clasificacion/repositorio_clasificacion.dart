@@ -70,6 +70,18 @@ final clasificacionProvider =
     final equipos = await (db.select(db.equipos)
           ..where((t) => t.campeonatoId.equals(activo.id)))
         .get();
+    final equipoIdsCamp = equipos.map((e) => e.id).toSet();
+    // Miembros de cada equipo (unión): incluye equipos de N pilotos.
+    final unionMiembros = equipoIdsCamp.isEmpty
+        ? <EquipoPiloto>[]
+        : await (db.select(db.equipoPilotos)
+              ..where((t) => t.equipoId.isIn(equipoIdsCamp.toList()))
+              ..orderBy([(t) => OrderingTerm.asc(t.orden)]))
+            .get();
+    final miembrosPorEquipo = <int, List<int>>{};
+    for (final m in unionMiembros) {
+      (miembrosPorEquipo[m.equipoId] ??= []).add(m.pilotoId);
+    }
 
     // Equipos con al menos una inscripción a alguna prueba del campeonato.
     final inscripcionesPrueba = pruebaIds.isEmpty
@@ -96,8 +108,12 @@ final clasificacionProvider =
     }
 
     for (final e in equipos) {
-      asignarEquipo(e.piloto1Id, e);
-      if (e.piloto2Id != null) asignarEquipo(e.piloto2Id!, e);
+      // Todos los miembros del equipo (unión); si no hay, cae a piloto1/2.
+      final ids = miembrosPorEquipo[e.id] ??
+          [e.piloto1Id, if (e.piloto2Id != null) e.piloto2Id!];
+      for (final pid in ids) {
+        asignarEquipo(pid, e);
+      }
     }
 
     // Resultados de todas las mangas de las pruebas del campeonato

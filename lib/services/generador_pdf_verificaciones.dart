@@ -18,6 +18,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -72,7 +73,6 @@ class GeneradorPdfVerificaciones {
   Future<Uint8List> generar(
       {required int pruebaId, IdiomaExport idioma = IdiomaExport.es}) async {
     final db = ref.read(dbProvider);
-    final cfg = ref.read(marcaConfigProvider);
     String t(String k) => tr(idioma, k);
     final prueba = await (db.select(db.pruebas)
           ..where((t) => t.id.equals(pruebaId)))
@@ -105,14 +105,20 @@ class GeneradorPdfVerificaciones {
       final eq = await (db.select(db.equipos)
             ..where((t) => t.id.equals(v.equipoId)))
           .getSingle();
-      final p1 = await (db.select(db.pilotos)
-            ..where((t) => t.id.equals(eq.piloto1Id)))
-          .getSingle();
-      Piloto? p2;
-      if (eq.piloto2Id != null) {
-        p2 = await (db.select(db.pilotos)
-              ..where((t) => t.id.equals(eq.piloto2Id!)))
+      // Todos los miembros del equipo (unión; cae a piloto1/2 si vacía).
+      final union = await (db.select(db.equipoPilotos)
+            ..where((t) => t.equipoId.equals(eq.id))
+            ..orderBy([(t) => OrderingTerm.asc(t.orden)]))
+          .get();
+      var miembroIds = union.map((m) => m.pilotoId).toList();
+      if (miembroIds.isEmpty) {
+        miembroIds = [eq.piloto1Id, if (eq.piloto2Id != null) eq.piloto2Id!];
+      }
+      final nombresMiembros = <String>[];
+      for (final id in miembroIds) {
+        final p = await (db.select(db.pilotos)..where((t) => t.id.equals(id)))
             .getSingleOrNull();
+        if (p != null) nombresMiembros.add(p.nombre);
       }
       CatalogoCoche? coche;
       if (v.cocheCatalogoId != null) {
@@ -168,7 +174,7 @@ class GeneradorPdfVerificaciones {
       lista.add(_VerifData(
         equipo: eq.nombre,
         copa: eq.copa,
-        pilotos: p2 == null ? p1.nombre : '${p1.nombre} + ${p2.nombre}',
+        pilotos: nombresMiembros.join(' + '),
         coche: coche?.nombre,
         filas: [
           _Vrow(t('Peso carrocería'), _peso(v.pesoInicial, v.pesoMin)),
@@ -200,10 +206,10 @@ class GeneradorPdfVerificaciones {
     final marca = await MarcaPdf.cargar();
     final tituloMarca = (campeonato?.marcaTitulo?.trim().isNotEmpty ?? false)
         ? campeonato!.marcaTitulo!.trim()
-        : cfg.titulo;
+        : marcaTituloPorDefecto;
     final lemaMarca = (campeonato?.marcaLema?.trim().isNotEmpty ?? false)
         ? campeonato!.marcaLema!.trim()
-        : cfg.lema;
+        : marcaLemaPorDefecto;
     final subtitulo =
         '${t('Verificación')} · ${prueba.nombre} - ${campeonato?.nombre ?? ''}';
 

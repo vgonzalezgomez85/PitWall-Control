@@ -216,17 +216,25 @@ class RepositorioCatalogos {
   }
 
   // ---- Neumáticos ----
-  Future<int> crearNeumatico(String nombre, String? referencia) {
+  Future<int> crearNeumatico(String nombre, String? referencia,
+      {String? copasJson}) {
     return db.into(db.catalogoNeumaticos).insert(
         CatalogoNeumaticosCompanion.insert(
-            nombre: nombre, referencia: Value(referencia)));
+            nombre: nombre,
+            referencia: Value(referencia),
+            copasJson:
+                copasJson == null ? const Value.absent() : Value(copasJson)));
   }
 
   Future<void> actualizarNeumatico(
-      int id, String nombre, String? referencia) async {
+      int id, String nombre, String? referencia,
+      {String? copasJson}) async {
     await (db.update(db.catalogoNeumaticos)..where((t) => t.id.equals(id)))
         .write(CatalogoNeumaticosCompanion(
-            nombre: Value(nombre), referencia: Value(referencia)));
+            nombre: Value(nombre),
+            referencia: Value(referencia),
+            copasJson:
+                copasJson == null ? const Value.absent() : Value(copasJson)));
   }
 
   Future<void> borrarNeumatico(int id) async {
@@ -239,17 +247,27 @@ class RepositorioCatalogos {
     required String tipo, // PINON | CORONA
     required String marca,
     required int dientes,
+    String? copasJson,
   }) {
     return db.into(db.catalogoEngranajes).insert(
         CatalogoEngranajesCompanion.insert(
-            tipo: tipo, marca: marca, dientes: dientes));
+            tipo: tipo,
+            marca: marca,
+            dientes: dientes,
+            copasJson:
+                copasJson == null ? const Value.absent() : Value(copasJson)));
   }
 
   Future<void> actualizarEngranaje(
-      int id, String tipo, String marca, int dientes) async {
+      int id, String tipo, String marca, int dientes,
+      {String? copasJson}) async {
     await (db.update(db.catalogoEngranajes)..where((t) => t.id.equals(id)))
         .write(CatalogoEngranajesCompanion(
-            tipo: Value(tipo), marca: Value(marca), dientes: Value(dientes)));
+            tipo: Value(tipo),
+            marca: Value(marca),
+            dientes: Value(dientes),
+            copasJson:
+                copasJson == null ? const Value.absent() : Value(copasJson)));
   }
 
   Future<void> borrarEngranaje(int id) async {

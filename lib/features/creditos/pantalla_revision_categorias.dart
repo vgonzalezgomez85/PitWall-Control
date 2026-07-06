@@ -21,6 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../equipos/repositorio_equipos.dart';
 import 'repositorio_creditos.dart';
 
 /// Escalera de categorías, de menor a mayor "metal".
@@ -63,15 +64,7 @@ final _revisionProvider =
             ..where((t) => t.pruebaId.isIn(pruebas.map((p) => p.id).toList())))
           .get();
       final equipoIds = inscripciones.map((i) => i.equipoId).toSet();
-      if (equipoIds.isNotEmpty) {
-        final equipos = await (db.select(db.equipos)
-              ..where((t) => t.id.isIn(equipoIds.toList())))
-            .get();
-        for (final e in equipos) {
-          participantes.add(e.piloto1Id);
-          if (e.piloto2Id != null) participantes.add(e.piloto2Id!);
-        }
-      }
+      participantes.addAll(await pilotosDeEquipos(db, equipoIds));
     }
     final carreras =
         await ref.read(repoCreditosProvider).carrerasPorPiloto(activo.id);

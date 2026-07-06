@@ -16,26 +16,76 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+/// Identidad visual del ecosistema PitWall: tema oscuro con acento rojo,
+/// tipografía Saira Condensed (títulos) / Saira (texto) / IBM Plex Mono
+/// (números). Paleta tomada de la landing (misma marca que lap y timer).
 class TemaApp {
-  static const _semilla = Color(0xFFD32F2F); // rojo Resisbarna
+  // Acentos de marca.
+  static const rojo = Color(0xFFEF4651);
+  static const cian = Color(0xFF22B8D6);
+  static const ambar = Color(0xFFF59E0B);
+  static const verde = Color(0xFF22C55E);
 
   static ThemeData claro() => _crear(Brightness.light);
   static ThemeData oscuro() => _crear(Brightness.dark);
 
+  /// Fuente monoespaciada de marca, para números (puntos, tiempos, etc.).
+  static TextStyle mono({double? fontSize, FontWeight? fontWeight, Color? color}) =>
+      GoogleFonts.ibmPlexMono(
+          fontSize: fontSize, fontWeight: fontWeight, color: color);
+
+  static ColorScheme _esquemaOscuro() {
+    return ColorScheme.fromSeed(seedColor: rojo, brightness: Brightness.dark)
+        .copyWith(
+      primary: rojo,
+      onPrimary: Colors.white,
+      secondary: cian,
+      tertiary: ambar,
+      surface: const Color(0xFF121217),
+      onSurface: const Color(0xFFF5F5F7),
+      onSurfaceVariant: const Color(0xFFB6B6C2),
+      surfaceContainerLowest: const Color(0xFF08080A),
+      surfaceContainerLow: const Color(0xFF0D0D11),
+      surfaceContainer: const Color(0xFF181820),
+      surfaceContainerHigh: const Color(0xFF1F1F29),
+      surfaceContainerHighest: const Color(0xFF26262F),
+      outline: const Color(0xFF76767F),
+      outlineVariant: const Color(0xFF2C2C34),
+    );
+  }
+
   static ThemeData _crear(Brightness brillo) {
-    final esquema =
-        ColorScheme.fromSeed(seedColor: _semilla, brightness: brillo);
+    final esquema = brillo == Brightness.dark
+        ? _esquemaOscuro()
+        : ColorScheme.fromSeed(seedColor: rojo, brightness: Brightness.light)
+            .copyWith(primary: rojo);
     final base = ThemeData(useMaterial3: true, colorScheme: esquema);
 
+    // Tipografía: Saira de base; Saira Condensed en títulos/display.
+    final saira = GoogleFonts.sairaTextTheme(base.textTheme);
+    TextStyle cond(TextStyle? s, FontWeight w) =>
+        GoogleFonts.sairaCondensed(textStyle: s, fontWeight: w, letterSpacing: 0.2);
+    final texto = saira.copyWith(
+      displayLarge: cond(saira.displayLarge, FontWeight.w800),
+      displayMedium: cond(saira.displayMedium, FontWeight.w800),
+      displaySmall: cond(saira.displaySmall, FontWeight.w700),
+      headlineLarge: cond(saira.headlineLarge, FontWeight.w700),
+      headlineMedium: cond(saira.headlineMedium, FontWeight.w700),
+      headlineSmall: cond(saira.headlineSmall, FontWeight.w700),
+      titleLarge: cond(saira.titleLarge, FontWeight.w700),
+      titleMedium: saira.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+      bodyLarge: saira.bodyLarge?.copyWith(fontSize: 16),
+      labelLarge: saira.labelLarge?.copyWith(fontSize: 16),
+    );
+
     return base.copyWith(
+      scaffoldBackgroundColor: brillo == Brightness.dark
+          ? esquema.surfaceContainerLowest
+          : esquema.surface,
       visualDensity: VisualDensity.comfortable,
-      textTheme: base.textTheme.copyWith(
-        titleLarge: base.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-        titleMedium: base.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-        bodyLarge: base.textTheme.bodyLarge?.copyWith(fontSize: 16),
-        labelLarge: base.textTheme.labelLarge?.copyWith(fontSize: 16),
-      ),
+      textTheme: texto,
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(0, 52),
@@ -62,14 +112,17 @@ class TemaApp {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: esquema.surface,
+        backgroundColor: brillo == Brightness.dark
+            ? esquema.surfaceContainerLowest
+            : esquema.surface,
         foregroundColor: esquema.onSurface,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.sairaCondensed(
           color: esquema.onSurface,
-          fontSize: 22,
+          fontSize: 24,
           fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
         ),
       ),
     );

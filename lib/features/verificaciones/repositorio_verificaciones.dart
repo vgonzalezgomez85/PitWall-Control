@@ -218,6 +218,39 @@ final neumaticosProvider =
   final db = ref.watch(dbProvider);
   return db.select(db.catalogoNeumaticos).watch();
 });
+
+/// Neumáticos filtrados por la copa del equipo.
+final neumaticosFiltradosProvider = StreamProvider.autoDispose
+    .family<List<CatalogoNeumatico>, String?>((ref, copa) {
+  final db = ref.watch(dbProvider);
+  return (db.select(db.catalogoNeumaticos)
+        ..orderBy([(t) => OrderingTerm.asc(t.nombre)]))
+      .watch()
+      .map((todos) {
+    if (copa == null || copa.isEmpty) return todos;
+    final filtrados =
+        todos.where((n) => _aplicaA(n.copasJson ?? '', copa)).toList();
+    return filtrados.isEmpty ? todos : filtrados;
+  });
+});
+
+/// Engranajes (piñones/coronas) filtrados por copa y tipo.
+final engranajesFiltradosProvider = StreamProvider.autoDispose
+    .family<List<CatalogoEngranaje>, ({String? copa, String tipo})>(
+        (ref, args) {
+  final db = ref.watch(dbProvider);
+  return (db.select(db.catalogoEngranajes)
+        ..where((t) => t.tipo.equals(args.tipo))
+        ..orderBy([(t) => OrderingTerm.asc(t.marca)]))
+      .watch()
+      .map((todos) {
+    final copa = args.copa;
+    if (copa == null || copa.isEmpty) return todos;
+    final filtrados =
+        todos.where((e) => _aplicaA(e.copasJson ?? '', copa)).toList();
+    return filtrados.isEmpty ? todos : filtrados;
+  });
+});
 final cochesProvider =
     StreamProvider.autoDispose<List<CatalogoCoche>>((ref) {
   final db = ref.watch(dbProvider);
@@ -251,12 +284,12 @@ final chasisFiltradosProvider = StreamProvider.autoDispose
 });
 
 /// Coches a mostrar en la verificación.
-/// - `copa`: copa del equipo. `camp`: copas/categorías del campeonato separadas
-///   por '|' (p. ej. "CLASSICOS").
+/// - `copa`: copa que corre el equipo en la prueba. `camp`: copas del
+///   campeonato separadas por '|'.
 /// Regla:
-///   1) Si algún coche cuadra con la copa REAL del equipo → esos (+ los "todos").
-///   2) Si no (p. ej. equipos P1/P2 en un campeonato de clásicos) → coches que
-///      cuadren con la categoría del campeonato + los coches "todos".
+///   1) Coches que aplican a la copa del equipo = marcados con esa copa + los
+///      "todos" (sin marca). Nunca coches de otra copa. Si hay alguno → esos.
+///   2) Si no aplica ninguno → coches de las copas del campeonato + los "todos".
 ///   3) Último recurso: todos.
 final cochesFiltradosProvider = StreamProvider.autoDispose
     .family<List<CatalogoCoche>, ({String? copa, String camp})>((ref, args) {
@@ -265,13 +298,15 @@ final cochesFiltradosProvider = StreamProvider.autoDispose
       .watch()
       .map((todos) {
     final copa = args.copa;
-    // 1) Copa real del equipo cuadra con algún coche.
-    if (copa != null &&
-        copa.isNotEmpty &&
-        todos.any((c) => _tieneCopa(c.copasJson, copa))) {
-      return todos.where((c) => _aplicaA(c.copasJson, copa)).toList();
+    // 1) Coches que aplican a la copa del equipo: los marcados con esa copa
+    //    + los sin marca ("todos"). Nunca coches de OTRA copa (p. ej. no
+    //    mostrar GRUPO C1 a un equipo GRUPO C2). Si hay alguno, se usan estos.
+    if (copa != null && copa.isNotEmpty) {
+      final aplicables =
+          todos.where((c) => _aplicaA(c.copasJson, copa)).toList();
+      if (aplicables.isNotEmpty) return aplicables;
     }
-    // 2) Filtrar por la categoría del campeonato + coches "todos".
+    // 2) Nadie aplica a la copa del equipo: copas del campeonato + coches "todos".
     final champCopas = args.camp.isEmpty
         ? const <String>[]
         : args.camp.split('|').where((s) => s.isNotEmpty).toList();

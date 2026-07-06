@@ -38,19 +38,19 @@ Future<void> main() async {
       overrides: [
         almacenSyncProvider.overrideWithValue(AlmacenLocal(prefs)),
       ],
-      child: const AppResisbarna(),
+      child: const AppPitWall(),
     ),
   );
 }
 
-class AppResisbarna extends ConsumerStatefulWidget {
-  const AppResisbarna({super.key});
+class AppPitWall extends ConsumerStatefulWidget {
+  const AppPitWall({super.key});
 
   @override
-  ConsumerState<AppResisbarna> createState() => _AppResisbarnaState();
+  ConsumerState<AppPitWall> createState() => _AppPitWallState();
 }
 
-class _AppResisbarnaState extends ConsumerState<AppResisbarna> {
+class _AppPitWallState extends ConsumerState<AppPitWall> {
   bool _semillaLista = false;
 
   @override

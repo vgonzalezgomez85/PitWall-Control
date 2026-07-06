@@ -73,7 +73,7 @@ class ConfigGenerador {
 }
 
 class GeneradorMangas {
-  /// Distribuye los equipos en mangas según las reglas de Resisbarna:
+  /// Distribuye los equipos en mangas según las reglas de reparto:
   ///
   /// **Preferencia de día estricta**: un equipo con preferencia "Jueves"
   /// SOLO va a mangas cuyo nombre contiene "Jueves". Si no hay manga de ese

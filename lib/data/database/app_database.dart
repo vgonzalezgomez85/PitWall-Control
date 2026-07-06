@@ -30,6 +30,7 @@ part 'app_database.g.dart';
     Pilotos,
     PilotoCampeonato,
     Equipos,
+    EquipoPilotos,
     Pruebas,
     Mangas,
     Inscripciones,
@@ -59,7 +60,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 25;
+  int get schemaVersion => 27;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -210,6 +211,22 @@ class AppDatabase extends _$AppDatabase {
                 'ALTER TABLE campeonatos ADD COLUMN marca_titulo TEXT'));
             await _aplicar(() => customStatement(
                 'ALTER TABLE campeonatos ADD COLUMN marca_lema TEXT'));
+          }
+          if (from < 26) {
+            await _aplicar(() => m.createTable(equipoPilotos));
+            // Backfill: sembrar la unión con piloto1 (orden 0) y piloto2 (orden 1).
+            await _aplicar(() => customStatement(
+                'INSERT OR IGNORE INTO equipo_pilotos (equipo_id, piloto_id, orden) '
+                'SELECT id, piloto1_id, 0 FROM equipos'));
+            await _aplicar(() => customStatement(
+                'INSERT OR IGNORE INTO equipo_pilotos (equipo_id, piloto_id, orden) '
+                'SELECT id, piloto2_id, 1 FROM equipos WHERE piloto2_id IS NOT NULL'));
+          }
+          if (from < 27) {
+            await _aplicar(() => customStatement(
+                'ALTER TABLE catalogo_neumaticos ADD COLUMN copas_json TEXT'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE catalogo_engranajes ADD COLUMN copas_json TEXT'));
           }
         },
       );

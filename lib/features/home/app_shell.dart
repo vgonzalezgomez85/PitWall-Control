@@ -19,8 +19,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
+import '../../core/widgets/logo_pitwall.dart';
 import '../../data/database/app_database.dart';
-import '../ajustes/pantalla_marca.dart';
 import '../campeonatos/editor_campeonato.dart';
 import '../campeonatos/pantalla_campeonatos.dart';
 import '../catalogos/pantalla_catalogos.dart';
@@ -29,11 +29,11 @@ import '../creditos/pantalla_creditos.dart';
 import '../equipos/lista_equipos.dart';
 import '../google/pantalla_configuracion_google.dart';
 import '../pilotos/lista_pilotos.dart';
+import '../plantillas/pantalla_plantillas_csv.dart';
 import '../pruebas/lista_pruebas.dart';
 import '../tesoreria/pantalla_tesoreria.dart';
 import '../verificaciones/pantalla_elegir_prueba_sorteo.dart';
 import '../verificaciones/pantalla_resumen_verificaciones.dart';
-import '../wordpress/pantalla_wordpress.dart';
 import 'pantalla_resumen.dart';
 
 /// Destino principal del shell (un icono + título en la barra lateral).
@@ -59,8 +59,6 @@ const _destinos = <_Destino>[
       PantallaTesoreria()),
   _Destino(Icons.savings_outlined, Icons.savings, 'Créditos',
       PantallaCreditos()),
-  _Destino(Icons.cloud_upload_outlined, Icons.cloud_upload, 'Publicar',
-      PantallaWordpress()),
 ];
 
 /// Destinos visibles según las reglas del campeonato activo: oculta Tesorería
@@ -174,9 +172,16 @@ class _BarraLateral extends ConsumerWidget {
                 selectedIndex: indice,
                 onDestinationSelected: (i) =>
                     ref.read(shellIndiceProvider.notifier).ir(i),
-                leading: _SelectorCampeonatoRail(
-                  campeonatos: campeonatos,
-                  extendida: extendida,
+                leading: Column(
+                  children: [
+                    const SizedBox(height: 14),
+                    _EncabezadoLogo(extendida: extendida),
+                    const SizedBox(height: 6),
+                    _SelectorCampeonatoRail(
+                      campeonatos: campeonatos,
+                      extendida: extendida,
+                    ),
+                  ],
                 ),
                 trailing: Expanded(
                   child: Align(
@@ -214,10 +219,10 @@ class _BarraLateral extends ConsumerWidget {
                             destino: const PantallaConfiguracionGoogle(),
                           ),
                           _AccionSecundaria(
-                            icono: Icons.branding_watermark_outlined,
-                            etiqueta: 'Marca / Exportaciones',
+                            icono: Icons.file_download_outlined,
+                            etiqueta: 'Plantillas CSV',
                             extendida: extendida,
-                            destino: const PantallaMarca(),
+                            destino: const PantallaPlantillasCsv(),
                           ),
                           _BotonTema(extendida: extendida),
                         ],
@@ -239,6 +244,48 @@ class _BarraLateral extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Logo + wordmark de PitWall Control en la cabecera del menú lateral.
+class _EncabezadoLogo extends StatelessWidget {
+  const _EncabezadoLogo({required this.extendida});
+  final bool extendida;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    if (!extendida) {
+      return const LogoPitwall(size: 34);
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          const LogoPitwall(size: 34),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('PitWall',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          height: 1,
+                        )),
+                Text('CONTROL',
+                    style: TextStyle(
+                      fontSize: 11,
+                      letterSpacing: 3,
+                      fontWeight: FontWeight.w700,
+                      color: cs.primary,
+                    )),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -400,8 +447,7 @@ class _Vacio extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.emoji_events_outlined,
-                  size: 96, color: Theme.of(context).colorScheme.outline),
+              const LogoPitwall(size: 96),
               const SizedBox(height: 24),
               Text('Aún no hay campeonatos',
                   style: Theme.of(context).textTheme.headlineSmall),

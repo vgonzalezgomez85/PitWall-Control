@@ -1,20 +1,3 @@
-// PitWall Control — gestor de campeonatos de slot
-// Copyright (C) 2026 Víctor González Gómez <vgonzalezgomez@outlook.es>
-//
-// This program is free software: you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by the Free
-// Software Foundation, either version 3 of the License, or (at your option)
-// any later version.
-//
-// This program is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along with
-// this program. If not, see <https://www.gnu.org/licenses/>.
-//
-// Additional permission under GPLv3 section 7: distribution through application
-// stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'app_database.dart';
@@ -78,7 +61,7 @@ class $CampeonatosTable extends Campeonatos
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-    defaultValue: const Constant('Resisbarna'),
+    defaultValue: const Constant('PitWall Control'),
   );
   static const VerificationMeta _activoMeta = const VerificationMeta('activo');
   @override
@@ -663,7 +646,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   final int topeRegularizacion;
   final int numDescartes;
 
-  /// Si true, el campeonato usa el sistema de créditos/handicap (Resisbarna).
+  /// Si true, el campeonato usa el sistema de créditos/handicap.
   /// Si false, se ocultan todos los campos relacionados con créditos.
   final bool usaCreditos;
 
@@ -691,8 +674,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   final int? motorSorteoMin;
   final int? motorSorteoMax;
 
-  /// Rango de dientes permitido en la verificación (inclusive). Por defecto el
-  /// histórico de Resisbarna: piñón 12 fijo, corona 24-30.
+  /// Rango de dientes permitido en la verificación (inclusive). Por defecto,
+  /// valores habituales: piñón 12 fijo, corona 24-30.
   final int pinonDientesMin;
   final int pinonDientesMax;
   final int coronaDientesMin;
@@ -3340,6 +3323,10 @@ class Equipo extends DataClass implements Insertable<Equipo> {
   final int campeonatoId;
   final String nombre;
   final String copa;
+
+  /// Compatibilidad: los dos primeros miembros del equipo. La lista completa
+  /// (para formatos de resistencia con 4-5 pilotos) vive en [EquipoPilotos];
+  /// piloto1Id/piloto2Id se mantienen sincronizados con los dos primeros.
   final int piloto1Id;
   final int? piloto2Id;
   final bool activo;
@@ -3577,6 +3564,274 @@ class EquiposCompanion extends UpdateCompanion<Equipo> {
           ..write('piloto1Id: $piloto1Id, ')
           ..write('piloto2Id: $piloto2Id, ')
           ..write('activo: $activo')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $EquipoPilotosTable extends EquipoPilotos
+    with TableInfo<$EquipoPilotosTable, EquipoPiloto> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EquipoPilotosTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _equipoIdMeta = const VerificationMeta(
+    'equipoId',
+  );
+  @override
+  late final GeneratedColumn<int> equipoId = GeneratedColumn<int>(
+    'equipo_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES equipos (id)',
+    ),
+  );
+  static const VerificationMeta _pilotoIdMeta = const VerificationMeta(
+    'pilotoId',
+  );
+  @override
+  late final GeneratedColumn<int> pilotoId = GeneratedColumn<int>(
+    'piloto_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES pilotos (id)',
+    ),
+  );
+  static const VerificationMeta _ordenMeta = const VerificationMeta('orden');
+  @override
+  late final GeneratedColumn<int> orden = GeneratedColumn<int>(
+    'orden',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [equipoId, pilotoId, orden];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'equipo_pilotos';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EquipoPiloto> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('equipo_id')) {
+      context.handle(
+        _equipoIdMeta,
+        equipoId.isAcceptableOrUnknown(data['equipo_id']!, _equipoIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_equipoIdMeta);
+    }
+    if (data.containsKey('piloto_id')) {
+      context.handle(
+        _pilotoIdMeta,
+        pilotoId.isAcceptableOrUnknown(data['piloto_id']!, _pilotoIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pilotoIdMeta);
+    }
+    if (data.containsKey('orden')) {
+      context.handle(
+        _ordenMeta,
+        orden.isAcceptableOrUnknown(data['orden']!, _ordenMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {equipoId, pilotoId};
+  @override
+  EquipoPiloto map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EquipoPiloto(
+      equipoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}equipo_id'],
+      )!,
+      pilotoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}piloto_id'],
+      )!,
+      orden: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}orden'],
+      )!,
+    );
+  }
+
+  @override
+  $EquipoPilotosTable createAlias(String alias) {
+    return $EquipoPilotosTable(attachedDatabase, alias);
+  }
+}
+
+class EquipoPiloto extends DataClass implements Insertable<EquipoPiloto> {
+  final int equipoId;
+  final int pilotoId;
+  final int orden;
+  const EquipoPiloto({
+    required this.equipoId,
+    required this.pilotoId,
+    required this.orden,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['equipo_id'] = Variable<int>(equipoId);
+    map['piloto_id'] = Variable<int>(pilotoId);
+    map['orden'] = Variable<int>(orden);
+    return map;
+  }
+
+  EquipoPilotosCompanion toCompanion(bool nullToAbsent) {
+    return EquipoPilotosCompanion(
+      equipoId: Value(equipoId),
+      pilotoId: Value(pilotoId),
+      orden: Value(orden),
+    );
+  }
+
+  factory EquipoPiloto.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EquipoPiloto(
+      equipoId: serializer.fromJson<int>(json['equipoId']),
+      pilotoId: serializer.fromJson<int>(json['pilotoId']),
+      orden: serializer.fromJson<int>(json['orden']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'equipoId': serializer.toJson<int>(equipoId),
+      'pilotoId': serializer.toJson<int>(pilotoId),
+      'orden': serializer.toJson<int>(orden),
+    };
+  }
+
+  EquipoPiloto copyWith({int? equipoId, int? pilotoId, int? orden}) =>
+      EquipoPiloto(
+        equipoId: equipoId ?? this.equipoId,
+        pilotoId: pilotoId ?? this.pilotoId,
+        orden: orden ?? this.orden,
+      );
+  EquipoPiloto copyWithCompanion(EquipoPilotosCompanion data) {
+    return EquipoPiloto(
+      equipoId: data.equipoId.present ? data.equipoId.value : this.equipoId,
+      pilotoId: data.pilotoId.present ? data.pilotoId.value : this.pilotoId,
+      orden: data.orden.present ? data.orden.value : this.orden,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EquipoPiloto(')
+          ..write('equipoId: $equipoId, ')
+          ..write('pilotoId: $pilotoId, ')
+          ..write('orden: $orden')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(equipoId, pilotoId, orden);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EquipoPiloto &&
+          other.equipoId == this.equipoId &&
+          other.pilotoId == this.pilotoId &&
+          other.orden == this.orden);
+}
+
+class EquipoPilotosCompanion extends UpdateCompanion<EquipoPiloto> {
+  final Value<int> equipoId;
+  final Value<int> pilotoId;
+  final Value<int> orden;
+  final Value<int> rowid;
+  const EquipoPilotosCompanion({
+    this.equipoId = const Value.absent(),
+    this.pilotoId = const Value.absent(),
+    this.orden = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  EquipoPilotosCompanion.insert({
+    required int equipoId,
+    required int pilotoId,
+    this.orden = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : equipoId = Value(equipoId),
+       pilotoId = Value(pilotoId);
+  static Insertable<EquipoPiloto> custom({
+    Expression<int>? equipoId,
+    Expression<int>? pilotoId,
+    Expression<int>? orden,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (equipoId != null) 'equipo_id': equipoId,
+      if (pilotoId != null) 'piloto_id': pilotoId,
+      if (orden != null) 'orden': orden,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  EquipoPilotosCompanion copyWith({
+    Value<int>? equipoId,
+    Value<int>? pilotoId,
+    Value<int>? orden,
+    Value<int>? rowid,
+  }) {
+    return EquipoPilotosCompanion(
+      equipoId: equipoId ?? this.equipoId,
+      pilotoId: pilotoId ?? this.pilotoId,
+      orden: orden ?? this.orden,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (equipoId.present) {
+      map['equipo_id'] = Variable<int>(equipoId.value);
+    }
+    if (pilotoId.present) {
+      map['piloto_id'] = Variable<int>(pilotoId.value);
+    }
+    if (orden.present) {
+      map['orden'] = Variable<int>(orden.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EquipoPilotosCompanion(')
+          ..write('equipoId: $equipoId, ')
+          ..write('pilotoId: $pilotoId, ')
+          ..write('orden: $orden, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -11398,8 +11653,19 @@ class $CatalogoNeumaticosTable extends CatalogoNeumaticos
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _copasJsonMeta = const VerificationMeta(
+    'copasJson',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, nombre, referencia];
+  late final GeneratedColumn<String> copasJson = GeneratedColumn<String>(
+    'copas_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, nombre, referencia, copasJson];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -11429,6 +11695,12 @@ class $CatalogoNeumaticosTable extends CatalogoNeumaticos
         referencia.isAcceptableOrUnknown(data['referencia']!, _referenciaMeta),
       );
     }
+    if (data.containsKey('copas_json')) {
+      context.handle(
+        _copasJsonMeta,
+        copasJson.isAcceptableOrUnknown(data['copas_json']!, _copasJsonMeta),
+      );
+    }
     return context;
   }
 
@@ -11450,6 +11722,10 @@ class $CatalogoNeumaticosTable extends CatalogoNeumaticos
         DriftSqlType.string,
         data['${effectivePrefix}referencia'],
       ),
+      copasJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}copas_json'],
+      ),
     );
   }
 
@@ -11464,10 +11740,12 @@ class CatalogoNeumatico extends DataClass
   final int id;
   final String nombre;
   final String? referencia;
+  final String? copasJson;
   const CatalogoNeumatico({
     required this.id,
     required this.nombre,
     this.referencia,
+    this.copasJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -11476,6 +11754,9 @@ class CatalogoNeumatico extends DataClass
     map['nombre'] = Variable<String>(nombre);
     if (!nullToAbsent || referencia != null) {
       map['referencia'] = Variable<String>(referencia);
+    }
+    if (!nullToAbsent || copasJson != null) {
+      map['copas_json'] = Variable<String>(copasJson);
     }
     return map;
   }
@@ -11487,6 +11768,9 @@ class CatalogoNeumatico extends DataClass
       referencia: referencia == null && nullToAbsent
           ? const Value.absent()
           : Value(referencia),
+      copasJson: copasJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(copasJson),
     );
   }
 
@@ -11499,6 +11783,7 @@ class CatalogoNeumatico extends DataClass
       id: serializer.fromJson<int>(json['id']),
       nombre: serializer.fromJson<String>(json['nombre']),
       referencia: serializer.fromJson<String?>(json['referencia']),
+      copasJson: serializer.fromJson<String?>(json['copasJson']),
     );
   }
   @override
@@ -11508,6 +11793,7 @@ class CatalogoNeumatico extends DataClass
       'id': serializer.toJson<int>(id),
       'nombre': serializer.toJson<String>(nombre),
       'referencia': serializer.toJson<String?>(referencia),
+      'copasJson': serializer.toJson<String?>(copasJson),
     };
   }
 
@@ -11515,10 +11801,12 @@ class CatalogoNeumatico extends DataClass
     int? id,
     String? nombre,
     Value<String?> referencia = const Value.absent(),
+    Value<String?> copasJson = const Value.absent(),
   }) => CatalogoNeumatico(
     id: id ?? this.id,
     nombre: nombre ?? this.nombre,
     referencia: referencia.present ? referencia.value : this.referencia,
+    copasJson: copasJson.present ? copasJson.value : this.copasJson,
   );
   CatalogoNeumatico copyWithCompanion(CatalogoNeumaticosCompanion data) {
     return CatalogoNeumatico(
@@ -11527,6 +11815,7 @@ class CatalogoNeumatico extends DataClass
       referencia: data.referencia.present
           ? data.referencia.value
           : this.referencia,
+      copasJson: data.copasJson.present ? data.copasJson.value : this.copasJson,
     );
   }
 
@@ -11535,45 +11824,52 @@ class CatalogoNeumatico extends DataClass
     return (StringBuffer('CatalogoNeumatico(')
           ..write('id: $id, ')
           ..write('nombre: $nombre, ')
-          ..write('referencia: $referencia')
+          ..write('referencia: $referencia, ')
+          ..write('copasJson: $copasJson')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, nombre, referencia);
+  int get hashCode => Object.hash(id, nombre, referencia, copasJson);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CatalogoNeumatico &&
           other.id == this.id &&
           other.nombre == this.nombre &&
-          other.referencia == this.referencia);
+          other.referencia == this.referencia &&
+          other.copasJson == this.copasJson);
 }
 
 class CatalogoNeumaticosCompanion extends UpdateCompanion<CatalogoNeumatico> {
   final Value<int> id;
   final Value<String> nombre;
   final Value<String?> referencia;
+  final Value<String?> copasJson;
   const CatalogoNeumaticosCompanion({
     this.id = const Value.absent(),
     this.nombre = const Value.absent(),
     this.referencia = const Value.absent(),
+    this.copasJson = const Value.absent(),
   });
   CatalogoNeumaticosCompanion.insert({
     this.id = const Value.absent(),
     required String nombre,
     this.referencia = const Value.absent(),
+    this.copasJson = const Value.absent(),
   }) : nombre = Value(nombre);
   static Insertable<CatalogoNeumatico> custom({
     Expression<int>? id,
     Expression<String>? nombre,
     Expression<String>? referencia,
+    Expression<String>? copasJson,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (nombre != null) 'nombre': nombre,
       if (referencia != null) 'referencia': referencia,
+      if (copasJson != null) 'copas_json': copasJson,
     });
   }
 
@@ -11581,11 +11877,13 @@ class CatalogoNeumaticosCompanion extends UpdateCompanion<CatalogoNeumatico> {
     Value<int>? id,
     Value<String>? nombre,
     Value<String?>? referencia,
+    Value<String?>? copasJson,
   }) {
     return CatalogoNeumaticosCompanion(
       id: id ?? this.id,
       nombre: nombre ?? this.nombre,
       referencia: referencia ?? this.referencia,
+      copasJson: copasJson ?? this.copasJson,
     );
   }
 
@@ -11601,6 +11899,9 @@ class CatalogoNeumaticosCompanion extends UpdateCompanion<CatalogoNeumatico> {
     if (referencia.present) {
       map['referencia'] = Variable<String>(referencia.value);
     }
+    if (copasJson.present) {
+      map['copas_json'] = Variable<String>(copasJson.value);
+    }
     return map;
   }
 
@@ -11609,7 +11910,8 @@ class CatalogoNeumaticosCompanion extends UpdateCompanion<CatalogoNeumatico> {
     return (StringBuffer('CatalogoNeumaticosCompanion(')
           ..write('id: $id, ')
           ..write('nombre: $nombre, ')
-          ..write('referencia: $referencia')
+          ..write('referencia: $referencia, ')
+          ..write('copasJson: $copasJson')
           ..write(')'))
         .toString();
   }
@@ -11663,8 +11965,19 @@ class $CatalogoEngranajesTable extends CatalogoEngranajes
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _copasJsonMeta = const VerificationMeta(
+    'copasJson',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, tipo, marca, dientes];
+  late final GeneratedColumn<String> copasJson = GeneratedColumn<String>(
+    'copas_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, tipo, marca, dientes, copasJson];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -11704,6 +12017,12 @@ class $CatalogoEngranajesTable extends CatalogoEngranajes
     } else if (isInserting) {
       context.missing(_dientesMeta);
     }
+    if (data.containsKey('copas_json')) {
+      context.handle(
+        _copasJsonMeta,
+        copasJson.isAcceptableOrUnknown(data['copas_json']!, _copasJsonMeta),
+      );
+    }
     return context;
   }
 
@@ -11729,6 +12048,10 @@ class $CatalogoEngranajesTable extends CatalogoEngranajes
         DriftSqlType.int,
         data['${effectivePrefix}dientes'],
       )!,
+      copasJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}copas_json'],
+      ),
     );
   }
 
@@ -11744,11 +12067,13 @@ class CatalogoEngranaje extends DataClass
   final String tipo;
   final String marca;
   final int dientes;
+  final String? copasJson;
   const CatalogoEngranaje({
     required this.id,
     required this.tipo,
     required this.marca,
     required this.dientes,
+    this.copasJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -11757,6 +12082,9 @@ class CatalogoEngranaje extends DataClass
     map['tipo'] = Variable<String>(tipo);
     map['marca'] = Variable<String>(marca);
     map['dientes'] = Variable<int>(dientes);
+    if (!nullToAbsent || copasJson != null) {
+      map['copas_json'] = Variable<String>(copasJson);
+    }
     return map;
   }
 
@@ -11766,6 +12094,9 @@ class CatalogoEngranaje extends DataClass
       tipo: Value(tipo),
       marca: Value(marca),
       dientes: Value(dientes),
+      copasJson: copasJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(copasJson),
     );
   }
 
@@ -11779,6 +12110,7 @@ class CatalogoEngranaje extends DataClass
       tipo: serializer.fromJson<String>(json['tipo']),
       marca: serializer.fromJson<String>(json['marca']),
       dientes: serializer.fromJson<int>(json['dientes']),
+      copasJson: serializer.fromJson<String?>(json['copasJson']),
     );
   }
   @override
@@ -11789,6 +12121,7 @@ class CatalogoEngranaje extends DataClass
       'tipo': serializer.toJson<String>(tipo),
       'marca': serializer.toJson<String>(marca),
       'dientes': serializer.toJson<int>(dientes),
+      'copasJson': serializer.toJson<String?>(copasJson),
     };
   }
 
@@ -11797,11 +12130,13 @@ class CatalogoEngranaje extends DataClass
     String? tipo,
     String? marca,
     int? dientes,
+    Value<String?> copasJson = const Value.absent(),
   }) => CatalogoEngranaje(
     id: id ?? this.id,
     tipo: tipo ?? this.tipo,
     marca: marca ?? this.marca,
     dientes: dientes ?? this.dientes,
+    copasJson: copasJson.present ? copasJson.value : this.copasJson,
   );
   CatalogoEngranaje copyWithCompanion(CatalogoEngranajesCompanion data) {
     return CatalogoEngranaje(
@@ -11809,6 +12144,7 @@ class CatalogoEngranaje extends DataClass
       tipo: data.tipo.present ? data.tipo.value : this.tipo,
       marca: data.marca.present ? data.marca.value : this.marca,
       dientes: data.dientes.present ? data.dientes.value : this.dientes,
+      copasJson: data.copasJson.present ? data.copasJson.value : this.copasJson,
     );
   }
 
@@ -11818,13 +12154,14 @@ class CatalogoEngranaje extends DataClass
           ..write('id: $id, ')
           ..write('tipo: $tipo, ')
           ..write('marca: $marca, ')
-          ..write('dientes: $dientes')
+          ..write('dientes: $dientes, ')
+          ..write('copasJson: $copasJson')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, tipo, marca, dientes);
+  int get hashCode => Object.hash(id, tipo, marca, dientes, copasJson);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -11832,7 +12169,8 @@ class CatalogoEngranaje extends DataClass
           other.id == this.id &&
           other.tipo == this.tipo &&
           other.marca == this.marca &&
-          other.dientes == this.dientes);
+          other.dientes == this.dientes &&
+          other.copasJson == this.copasJson);
 }
 
 class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
@@ -11840,17 +12178,20 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
   final Value<String> tipo;
   final Value<String> marca;
   final Value<int> dientes;
+  final Value<String?> copasJson;
   const CatalogoEngranajesCompanion({
     this.id = const Value.absent(),
     this.tipo = const Value.absent(),
     this.marca = const Value.absent(),
     this.dientes = const Value.absent(),
+    this.copasJson = const Value.absent(),
   });
   CatalogoEngranajesCompanion.insert({
     this.id = const Value.absent(),
     required String tipo,
     required String marca,
     required int dientes,
+    this.copasJson = const Value.absent(),
   }) : tipo = Value(tipo),
        marca = Value(marca),
        dientes = Value(dientes);
@@ -11859,12 +12200,14 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
     Expression<String>? tipo,
     Expression<String>? marca,
     Expression<int>? dientes,
+    Expression<String>? copasJson,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (tipo != null) 'tipo': tipo,
       if (marca != null) 'marca': marca,
       if (dientes != null) 'dientes': dientes,
+      if (copasJson != null) 'copas_json': copasJson,
     });
   }
 
@@ -11873,12 +12216,14 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
     Value<String>? tipo,
     Value<String>? marca,
     Value<int>? dientes,
+    Value<String?>? copasJson,
   }) {
     return CatalogoEngranajesCompanion(
       id: id ?? this.id,
       tipo: tipo ?? this.tipo,
       marca: marca ?? this.marca,
       dientes: dientes ?? this.dientes,
+      copasJson: copasJson ?? this.copasJson,
     );
   }
 
@@ -11897,6 +12242,9 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
     if (dientes.present) {
       map['dientes'] = Variable<int>(dientes.value);
     }
+    if (copasJson.present) {
+      map['copas_json'] = Variable<String>(copasJson.value);
+    }
     return map;
   }
 
@@ -11906,7 +12254,8 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
           ..write('id: $id, ')
           ..write('tipo: $tipo, ')
           ..write('marca: $marca, ')
-          ..write('dientes: $dientes')
+          ..write('dientes: $dientes, ')
+          ..write('copasJson: $copasJson')
           ..write(')'))
         .toString();
   }
@@ -13827,6 +14176,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $EquiposTable equipos = $EquiposTable(this);
+  late final $EquipoPilotosTable equipoPilotos = $EquipoPilotosTable(this);
   late final $PruebasTable pruebas = $PruebasTable(this);
   late final $MangasTable mangas = $MangasTable(this);
   late final $InscripcionesTable inscripciones = $InscripcionesTable(this);
@@ -13876,6 +14226,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     pilotos,
     pilotoCampeonato,
     equipos,
+    equipoPilotos,
     pruebas,
     mangas,
     inscripciones,
@@ -15967,6 +16318,24 @@ final class $$PilotosTableReferences
     );
   }
 
+  static MultiTypedResultKey<$EquipoPilotosTable, List<EquipoPiloto>>
+  _equipoPilotosRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.equipoPilotos,
+    aliasName: $_aliasNameGenerator(db.pilotos.id, db.equipoPilotos.pilotoId),
+  );
+
+  $$EquipoPilotosTableProcessedTableManager get equipoPilotosRefs {
+    final manager = $$EquipoPilotosTableTableManager(
+      $_db,
+      $_db.equipoPilotos,
+    ).filter((f) => f.pilotoId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_equipoPilotosRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$ResultadosTable, List<Resultado>>
   _resultadosRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.resultados,
@@ -16111,6 +16480,31 @@ class $$PilotosTableFilterComposer
           }) => $$PilotoCampeonatoTableFilterComposer(
             $db: $db,
             $table: $db.pilotoCampeonato,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> equipoPilotosRefs(
+    Expression<bool> Function($$EquipoPilotosTableFilterComposer f) f,
+  ) {
+    final $$EquipoPilotosTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.equipoPilotos,
+      getReferencedColumn: (t) => t.pilotoId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EquipoPilotosTableFilterComposer(
+            $db: $db,
+            $table: $db.equipoPilotos,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -16325,6 +16719,31 @@ class $$PilotosTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> equipoPilotosRefs<T extends Object>(
+    Expression<T> Function($$EquipoPilotosTableAnnotationComposer a) f,
+  ) {
+    final $$EquipoPilotosTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.equipoPilotos,
+      getReferencedColumn: (t) => t.pilotoId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EquipoPilotosTableAnnotationComposer(
+            $db: $db,
+            $table: $db.equipoPilotos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> resultadosRefs<T extends Object>(
     Expression<T> Function($$ResultadosTableAnnotationComposer a) f,
   ) {
@@ -16442,6 +16861,7 @@ class $$PilotosTableTableManager
           Piloto,
           PrefetchHooks Function({
             bool pilotoCampeonatoRefs,
+            bool equipoPilotosRefs,
             bool resultadosRefs,
             bool descartesPruebaRefs,
             bool overridesCopaRefs,
@@ -16506,6 +16926,7 @@ class $$PilotosTableTableManager
           prefetchHooksCallback:
               ({
                 pilotoCampeonatoRefs = false,
+                equipoPilotosRefs = false,
                 resultadosRefs = false,
                 descartesPruebaRefs = false,
                 overridesCopaRefs = false,
@@ -16515,6 +16936,7 @@ class $$PilotosTableTableManager
                   db: db,
                   explicitlyWatchedTables: [
                     if (pilotoCampeonatoRefs) db.pilotoCampeonato,
+                    if (equipoPilotosRefs) db.equipoPilotos,
                     if (resultadosRefs) db.resultados,
                     if (descartesPruebaRefs) db.descartesPrueba,
                     if (overridesCopaRefs) db.overridesCopa,
@@ -16538,6 +16960,27 @@ class $$PilotosTableTableManager
                                 table,
                                 p0,
                               ).pilotoCampeonatoRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.pilotoId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (equipoPilotosRefs)
+                        await $_getPrefetchedData<
+                          Piloto,
+                          $PilotosTable,
+                          EquipoPiloto
+                        >(
+                          currentTable: table,
+                          referencedTable: $$PilotosTableReferences
+                              ._equipoPilotosRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$PilotosTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).equipoPilotosRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.pilotoId == item.id,
@@ -16650,6 +17093,7 @@ typedef $$PilotosTableProcessedTableManager =
       Piloto,
       PrefetchHooks Function({
         bool pilotoCampeonatoRefs,
+        bool equipoPilotosRefs,
         bool resultadosRefs,
         bool descartesPruebaRefs,
         bool overridesCopaRefs,
@@ -17247,6 +17691,24 @@ final class $$EquiposTableReferences
     );
   }
 
+  static MultiTypedResultKey<$EquipoPilotosTable, List<EquipoPiloto>>
+  _equipoPilotosRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.equipoPilotos,
+    aliasName: $_aliasNameGenerator(db.equipos.id, db.equipoPilotos.equipoId),
+  );
+
+  $$EquipoPilotosTableProcessedTableManager get equipoPilotosRefs {
+    final manager = $$EquipoPilotosTableTableManager(
+      $_db,
+      $_db.equipoPilotos,
+    ).filter((f) => f.equipoId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_equipoPilotosRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$InscripcionesTable, List<Inscripcione>>
   _inscripcionesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.inscripciones,
@@ -17471,6 +17933,31 @@ class $$EquiposTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> equipoPilotosRefs(
+    Expression<bool> Function($$EquipoPilotosTableFilterComposer f) f,
+  ) {
+    final $$EquipoPilotosTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.equipoPilotos,
+      getReferencedColumn: (t) => t.equipoId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EquipoPilotosTableFilterComposer(
+            $db: $db,
+            $table: $db.equipoPilotos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
   }
 
   Expression<bool> inscripcionesRefs(
@@ -17813,6 +18300,31 @@ class $$EquiposTableAnnotationComposer
     return composer;
   }
 
+  Expression<T> equipoPilotosRefs<T extends Object>(
+    Expression<T> Function($$EquipoPilotosTableAnnotationComposer a) f,
+  ) {
+    final $$EquipoPilotosTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.equipoPilotos,
+      getReferencedColumn: (t) => t.equipoId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EquipoPilotosTableAnnotationComposer(
+            $db: $db,
+            $table: $db.equipoPilotos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> inscripcionesRefs<T extends Object>(
     Expression<T> Function($$InscripcionesTableAnnotationComposer a) f,
   ) {
@@ -17983,6 +18495,7 @@ class $$EquiposTableTableManager
             bool campeonatoId,
             bool piloto1Id,
             bool piloto2Id,
+            bool equipoPilotosRefs,
             bool inscripcionesRefs,
             bool inscripcionesPruebaRefs,
             bool resultadosRefs,
@@ -18051,6 +18564,7 @@ class $$EquiposTableTableManager
                 campeonatoId = false,
                 piloto1Id = false,
                 piloto2Id = false,
+                equipoPilotosRefs = false,
                 inscripcionesRefs = false,
                 inscripcionesPruebaRefs = false,
                 resultadosRefs = false,
@@ -18061,6 +18575,7 @@ class $$EquiposTableTableManager
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
+                    if (equipoPilotosRefs) db.equipoPilotos,
                     if (inscripcionesRefs) db.inscripciones,
                     if (inscripcionesPruebaRefs) db.inscripcionesPrueba,
                     if (resultadosRefs) db.resultados,
@@ -18128,6 +18643,27 @@ class $$EquiposTableTableManager
                       },
                   getPrefetchedDataCallback: (items) async {
                     return [
+                      if (equipoPilotosRefs)
+                        await $_getPrefetchedData<
+                          Equipo,
+                          $EquiposTable,
+                          EquipoPiloto
+                        >(
+                          currentTable: table,
+                          referencedTable: $$EquiposTableReferences
+                              ._equipoPilotosRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$EquiposTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).equipoPilotosRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.equipoId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (inscripcionesRefs)
                         await $_getPrefetchedData<
                           Equipo,
@@ -18270,6 +18806,7 @@ typedef $$EquiposTableProcessedTableManager =
         bool campeonatoId,
         bool piloto1Id,
         bool piloto2Id,
+        bool equipoPilotosRefs,
         bool inscripcionesRefs,
         bool inscripcionesPruebaRefs,
         bool resultadosRefs,
@@ -18277,6 +18814,379 @@ typedef $$EquiposTableProcessedTableManager =
         bool pagosRefs,
         bool movimientosCreditosRefs,
       })
+    >;
+typedef $$EquipoPilotosTableCreateCompanionBuilder =
+    EquipoPilotosCompanion Function({
+      required int equipoId,
+      required int pilotoId,
+      Value<int> orden,
+      Value<int> rowid,
+    });
+typedef $$EquipoPilotosTableUpdateCompanionBuilder =
+    EquipoPilotosCompanion Function({
+      Value<int> equipoId,
+      Value<int> pilotoId,
+      Value<int> orden,
+      Value<int> rowid,
+    });
+
+final class $$EquipoPilotosTableReferences
+    extends BaseReferences<_$AppDatabase, $EquipoPilotosTable, EquipoPiloto> {
+  $$EquipoPilotosTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $EquiposTable _equipoIdTable(_$AppDatabase db) =>
+      db.equipos.createAlias(
+        $_aliasNameGenerator(db.equipoPilotos.equipoId, db.equipos.id),
+      );
+
+  $$EquiposTableProcessedTableManager get equipoId {
+    final $_column = $_itemColumn<int>('equipo_id')!;
+
+    final manager = $$EquiposTableTableManager(
+      $_db,
+      $_db.equipos,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_equipoIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $PilotosTable _pilotoIdTable(_$AppDatabase db) =>
+      db.pilotos.createAlias(
+        $_aliasNameGenerator(db.equipoPilotos.pilotoId, db.pilotos.id),
+      );
+
+  $$PilotosTableProcessedTableManager get pilotoId {
+    final $_column = $_itemColumn<int>('piloto_id')!;
+
+    final manager = $$PilotosTableTableManager(
+      $_db,
+      $_db.pilotos,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_pilotoIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$EquipoPilotosTableFilterComposer
+    extends Composer<_$AppDatabase, $EquipoPilotosTable> {
+  $$EquipoPilotosTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get orden => $composableBuilder(
+    column: $table.orden,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$EquiposTableFilterComposer get equipoId {
+    final $$EquiposTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.equipoId,
+      referencedTable: $db.equipos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EquiposTableFilterComposer(
+            $db: $db,
+            $table: $db.equipos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PilotosTableFilterComposer get pilotoId {
+    final $$PilotosTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.pilotoId,
+      referencedTable: $db.pilotos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PilotosTableFilterComposer(
+            $db: $db,
+            $table: $db.pilotos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EquipoPilotosTableOrderingComposer
+    extends Composer<_$AppDatabase, $EquipoPilotosTable> {
+  $$EquipoPilotosTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get orden => $composableBuilder(
+    column: $table.orden,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$EquiposTableOrderingComposer get equipoId {
+    final $$EquiposTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.equipoId,
+      referencedTable: $db.equipos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EquiposTableOrderingComposer(
+            $db: $db,
+            $table: $db.equipos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PilotosTableOrderingComposer get pilotoId {
+    final $$PilotosTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.pilotoId,
+      referencedTable: $db.pilotos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PilotosTableOrderingComposer(
+            $db: $db,
+            $table: $db.pilotos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EquipoPilotosTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EquipoPilotosTable> {
+  $$EquipoPilotosTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get orden =>
+      $composableBuilder(column: $table.orden, builder: (column) => column);
+
+  $$EquiposTableAnnotationComposer get equipoId {
+    final $$EquiposTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.equipoId,
+      referencedTable: $db.equipos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EquiposTableAnnotationComposer(
+            $db: $db,
+            $table: $db.equipos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PilotosTableAnnotationComposer get pilotoId {
+    final $$PilotosTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.pilotoId,
+      referencedTable: $db.pilotos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PilotosTableAnnotationComposer(
+            $db: $db,
+            $table: $db.pilotos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EquipoPilotosTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $EquipoPilotosTable,
+          EquipoPiloto,
+          $$EquipoPilotosTableFilterComposer,
+          $$EquipoPilotosTableOrderingComposer,
+          $$EquipoPilotosTableAnnotationComposer,
+          $$EquipoPilotosTableCreateCompanionBuilder,
+          $$EquipoPilotosTableUpdateCompanionBuilder,
+          (EquipoPiloto, $$EquipoPilotosTableReferences),
+          EquipoPiloto,
+          PrefetchHooks Function({bool equipoId, bool pilotoId})
+        > {
+  $$EquipoPilotosTableTableManager(_$AppDatabase db, $EquipoPilotosTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EquipoPilotosTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EquipoPilotosTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EquipoPilotosTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> equipoId = const Value.absent(),
+                Value<int> pilotoId = const Value.absent(),
+                Value<int> orden = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => EquipoPilotosCompanion(
+                equipoId: equipoId,
+                pilotoId: pilotoId,
+                orden: orden,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int equipoId,
+                required int pilotoId,
+                Value<int> orden = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => EquipoPilotosCompanion.insert(
+                equipoId: equipoId,
+                pilotoId: pilotoId,
+                orden: orden,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$EquipoPilotosTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({equipoId = false, pilotoId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (equipoId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.equipoId,
+                                referencedTable: $$EquipoPilotosTableReferences
+                                    ._equipoIdTable(db),
+                                referencedColumn: $$EquipoPilotosTableReferences
+                                    ._equipoIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+                    if (pilotoId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.pilotoId,
+                                referencedTable: $$EquipoPilotosTableReferences
+                                    ._pilotoIdTable(db),
+                                referencedColumn: $$EquipoPilotosTableReferences
+                                    ._pilotoIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$EquipoPilotosTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $EquipoPilotosTable,
+      EquipoPiloto,
+      $$EquipoPilotosTableFilterComposer,
+      $$EquipoPilotosTableOrderingComposer,
+      $$EquipoPilotosTableAnnotationComposer,
+      $$EquipoPilotosTableCreateCompanionBuilder,
+      $$EquipoPilotosTableUpdateCompanionBuilder,
+      (EquipoPiloto, $$EquipoPilotosTableReferences),
+      EquipoPiloto,
+      PrefetchHooks Function({bool equipoId, bool pilotoId})
     >;
 typedef $$PruebasTableCreateCompanionBuilder =
     PruebasCompanion Function({
@@ -26169,12 +27079,14 @@ typedef $$CatalogoNeumaticosTableCreateCompanionBuilder =
       Value<int> id,
       required String nombre,
       Value<String?> referencia,
+      Value<String?> copasJson,
     });
 typedef $$CatalogoNeumaticosTableUpdateCompanionBuilder =
     CatalogoNeumaticosCompanion Function({
       Value<int> id,
       Value<String> nombre,
       Value<String?> referencia,
+      Value<String?> copasJson,
     });
 
 class $$CatalogoNeumaticosTableFilterComposer
@@ -26198,6 +27110,11 @@ class $$CatalogoNeumaticosTableFilterComposer
 
   ColumnFilters<String> get referencia => $composableBuilder(
     column: $table.referencia,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get copasJson => $composableBuilder(
+    column: $table.copasJson,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -26225,6 +27142,11 @@ class $$CatalogoNeumaticosTableOrderingComposer
     column: $table.referencia,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get copasJson => $composableBuilder(
+    column: $table.copasJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CatalogoNeumaticosTableAnnotationComposer
@@ -26246,6 +27168,9 @@ class $$CatalogoNeumaticosTableAnnotationComposer
     column: $table.referencia,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get copasJson =>
+      $composableBuilder(column: $table.copasJson, builder: (column) => column);
 }
 
 class $$CatalogoNeumaticosTableTableManager
@@ -26291,20 +27216,24 @@ class $$CatalogoNeumaticosTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> nombre = const Value.absent(),
                 Value<String?> referencia = const Value.absent(),
+                Value<String?> copasJson = const Value.absent(),
               }) => CatalogoNeumaticosCompanion(
                 id: id,
                 nombre: nombre,
                 referencia: referencia,
+                copasJson: copasJson,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String nombre,
                 Value<String?> referencia = const Value.absent(),
+                Value<String?> copasJson = const Value.absent(),
               }) => CatalogoNeumaticosCompanion.insert(
                 id: id,
                 nombre: nombre,
                 referencia: referencia,
+                copasJson: copasJson,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -26341,6 +27270,7 @@ typedef $$CatalogoEngranajesTableCreateCompanionBuilder =
       required String tipo,
       required String marca,
       required int dientes,
+      Value<String?> copasJson,
     });
 typedef $$CatalogoEngranajesTableUpdateCompanionBuilder =
     CatalogoEngranajesCompanion Function({
@@ -26348,6 +27278,7 @@ typedef $$CatalogoEngranajesTableUpdateCompanionBuilder =
       Value<String> tipo,
       Value<String> marca,
       Value<int> dientes,
+      Value<String?> copasJson,
     });
 
 class $$CatalogoEngranajesTableFilterComposer
@@ -26376,6 +27307,11 @@ class $$CatalogoEngranajesTableFilterComposer
 
   ColumnFilters<int> get dientes => $composableBuilder(
     column: $table.dientes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get copasJson => $composableBuilder(
+    column: $table.copasJson,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -26408,6 +27344,11 @@ class $$CatalogoEngranajesTableOrderingComposer
     column: $table.dientes,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get copasJson => $composableBuilder(
+    column: $table.copasJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CatalogoEngranajesTableAnnotationComposer
@@ -26430,6 +27371,9 @@ class $$CatalogoEngranajesTableAnnotationComposer
 
   GeneratedColumn<int> get dientes =>
       $composableBuilder(column: $table.dientes, builder: (column) => column);
+
+  GeneratedColumn<String> get copasJson =>
+      $composableBuilder(column: $table.copasJson, builder: (column) => column);
 }
 
 class $$CatalogoEngranajesTableTableManager
@@ -26476,11 +27420,13 @@ class $$CatalogoEngranajesTableTableManager
                 Value<String> tipo = const Value.absent(),
                 Value<String> marca = const Value.absent(),
                 Value<int> dientes = const Value.absent(),
+                Value<String?> copasJson = const Value.absent(),
               }) => CatalogoEngranajesCompanion(
                 id: id,
                 tipo: tipo,
                 marca: marca,
                 dientes: dientes,
+                copasJson: copasJson,
               ),
           createCompanionCallback:
               ({
@@ -26488,11 +27434,13 @@ class $$CatalogoEngranajesTableTableManager
                 required String tipo,
                 required String marca,
                 required int dientes,
+                Value<String?> copasJson = const Value.absent(),
               }) => CatalogoEngranajesCompanion.insert(
                 id: id,
                 tipo: tipo,
                 marca: marca,
                 dientes: dientes,
+                copasJson: copasJson,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -27568,6 +28516,8 @@ class $AppDatabaseManager {
       $$PilotoCampeonatoTableTableManager(_db, _db.pilotoCampeonato);
   $$EquiposTableTableManager get equipos =>
       $$EquiposTableTableManager(_db, _db.equipos);
+  $$EquipoPilotosTableTableManager get equipoPilotos =>
+      $$EquipoPilotosTableTableManager(_db, _db.equipoPilotos);
   $$PruebasTableTableManager get pruebas =>
       $$PruebasTableTableManager(_db, _db.pruebas);
   $$MangasTableTableManager get mangas =>
