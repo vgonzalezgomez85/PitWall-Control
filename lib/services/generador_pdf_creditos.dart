@@ -57,7 +57,6 @@ class GeneradorPdfCreditos {
     final db = ref.read(dbProvider);
     final activo = ref.read(campeonatoActivoProvider);
     if (activo == null) return Uint8List(0);
-    final cfg = ref.read(marcaConfigProvider);
     String tx(String k) => tr(idioma, k);
 
     // Solo pilotos que han participado (con inscripción en alguna prueba).
@@ -126,7 +125,7 @@ class GeneradorPdfCreditos {
         marca.hero(
           titulo: (activo.marcaTitulo?.trim().isNotEmpty ?? false)
               ? activo.marcaTitulo!.trim()
-              : cfg.titulo,
+              : marcaTituloPorDefecto,
           subtitulo: '${tx('Control de créditos')} - ${activo.nombre}',
           badge: '${filas.length} ${tx('pilotos')}',
           nota: df.format(DateTime.now()),
@@ -189,7 +188,7 @@ class GeneradorPdfCreditos {
         marca.pie(
             lema: (activo.marcaLema?.trim().isNotEmpty ?? false)
                 ? activo.marcaLema!.trim()
-                : cfg.lema,
+                : marcaLemaPorDefecto,
             conApoyo: tx('Con el apoyo de')),
         ],
       ),

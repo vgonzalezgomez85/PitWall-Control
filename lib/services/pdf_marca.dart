@@ -30,7 +30,7 @@ class MarcaPdf {
   final pw.Font? fuenteTitulo;
   final List<pw.MemoryImage> logos;
 
-  // Paleta Resisbarna para PDFs.
+  // Paleta de marca para PDFs.
   static const texto = PdfColor.fromInt(0xFF1A1A1A);
   static const gris = PdfColor.fromInt(0xFF8A8A8A);
   static const grisClaro = PdfColor.fromInt(0xFFE8E8E8);
@@ -68,7 +68,7 @@ class MarcaPdf {
     ]);
   }
 
-  /// Cabecera estándar: "RESISBARNA" en Base 02 sobre degradado rojo,
+  /// Cabecera estándar: el título en Base 02 sobre degradado rojo,
   /// subtítulo en mayúsculas y, a la derecha, un badge opcional (p. ej.
   /// "34 PILOTOS", "FICHA 3/7") y una nota (p. ej. la fecha).
   pw.Widget hero({

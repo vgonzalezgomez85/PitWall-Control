@@ -18,7 +18,7 @@
 import 'package:drift/drift.dart';
 
 // ============================================================
-// CAMPEONATOS — varios bajo el paraguas Resisbarna
+// CAMPEONATOS
 // ============================================================
 
 class Campeonatos extends Table {
@@ -26,11 +26,11 @@ class Campeonatos extends Table {
   TextColumn get nombre => text()();
   TextColumn get formato => text()(); // 'INDIVIDUAL' | 'PAREJAS'
   IntColumn get anio => integer()();
-  TextColumn get organizacion => text().withDefault(const Constant('Resisbarna'))();
+  TextColumn get organizacion => text().withDefault(const Constant('PitWall Control'))();
   BoolColumn get activo => boolean().withDefault(const Constant(true))();
   IntColumn get topeRegularizacion => integer().withDefault(const Constant(28))();
   IntColumn get numDescartes => integer().withDefault(const Constant(1))();
-  /// Si true, el campeonato usa el sistema de créditos/handicap (Resisbarna).
+  /// Si true, el campeonato usa el sistema de créditos/handicap.
   /// Si false, se ocultan todos los campos relacionados con créditos.
   BoolColumn get usaCreditos => boolean().withDefault(const Constant(true))();
   /// Si true, el campeonato gestiona tesorería (cuotas/pagos por prueba).
@@ -50,8 +50,8 @@ class Campeonatos extends Table {
   /// Si están a null, el sorteo de motores no está configurado.
   IntColumn get motorSorteoMin => integer().nullable()();
   IntColumn get motorSorteoMax => integer().nullable()();
-  /// Rango de dientes permitido en la verificación (inclusive). Por defecto el
-  /// histórico de Resisbarna: piñón 12 fijo, corona 24-30.
+  /// Rango de dientes permitido en la verificación (inclusive). Por defecto,
+  /// valores habituales: piñón 12 fijo, corona 24-30.
   IntColumn get pinonDientesMin => integer().withDefault(const Constant(12))();
   IntColumn get pinonDientesMax => integer().withDefault(const Constant(12))();
   IntColumn get coronaDientesMin => integer().withDefault(const Constant(24))();
@@ -124,9 +124,22 @@ class Equipos extends Table {
   IntColumn get campeonatoId => integer().references(Campeonatos, #id)();
   TextColumn get nombre => text()();
   TextColumn get copa => text()(); // GT | GT2 | SLOT.IT | LMP | LMP2
+  /// Compatibilidad: los dos primeros miembros del equipo. La lista completa
+  /// (para formatos de resistencia con 4-5 pilotos) vive en [EquipoPilotos];
+  /// piloto1Id/piloto2Id se mantienen sincronizados con los dos primeros.
   IntColumn get piloto1Id => integer().references(Pilotos, #id)();
   IntColumn get piloto2Id => integer().references(Pilotos, #id).nullable()();
   BoolColumn get activo => boolean().withDefault(const Constant(true))();
+}
+
+/// Miembros de un equipo (tabla de unión). Fuente canónica de TODOS los pilotos
+/// de un equipo, incluidos los formatos de resistencia (24H/12H) con más de 2.
+class EquipoPilotos extends Table {
+  IntColumn get equipoId => integer().references(Equipos, #id)();
+  IntColumn get pilotoId => integer().references(Pilotos, #id)();
+  IntColumn get orden => integer().withDefault(const Constant(0))();
+  @override
+  Set<Column> get primaryKey => {equipoId, pilotoId};
 }
 
 // ============================================================
@@ -362,6 +375,7 @@ class CatalogoNeumaticos extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get nombre => text()(); // "AS25 19,0 NEGRO"
   TextColumn get referencia => text().nullable()();
+  TextColumn get copasJson => text().nullable()(); // JSON con las copas
 }
 
 /// Engranajes: piñones y coronas homologados.
@@ -370,6 +384,7 @@ class CatalogoEngranajes extends Table {
   TextColumn get tipo => text()(); // PINON | CORONA
   TextColumn get marca => text()();
   IntColumn get dientes => integer()();
+  TextColumn get copasJson => text().nullable()(); // JSON con las copas
 }
 
 /// Motores homologados (con sus medidas de referencia).

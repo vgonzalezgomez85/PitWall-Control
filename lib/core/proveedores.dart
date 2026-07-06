@@ -62,7 +62,8 @@ class TemaOscuroNotifier extends Notifier<bool> {
 
   @override
   bool build() =>
-      ref.read(almacenSyncProvider).readSync(key: _clave) == '1';
+      // Oscuro por defecto (marca del ecosistema); claro solo si se eligió.
+      ref.read(almacenSyncProvider).readSync(key: _clave) != '0';
 
   Future<void> alternar() async {
     state = !state;

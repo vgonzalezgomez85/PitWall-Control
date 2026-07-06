@@ -28,5 +28,11 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>PitWall Control busca PitWall en la red local para enviarle las tandas de la prueba.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_voltrace-manager._tcp</string>
+	</array>
 </dict>
 </plist>

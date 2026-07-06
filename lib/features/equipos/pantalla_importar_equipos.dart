@@ -204,24 +204,28 @@ class _PantallaImportarEquiposState
           categoria: f.piloto1Categoria,
           palmares: f.piloto1Palmares,
         );
-        int? p2Id;
+        final miembros = <int>[p1Id];
         if (f.piloto2Nombre != null && f.piloto2Nombre!.isNotEmpty) {
-          p2Id = await obtenerOCrearPiloto(
+          miembros.add(await obtenerOCrearPiloto(
             nombre: f.piloto2Nombre!,
             email: f.piloto2Email,
             telefono: f.piloto2Telefono,
             categoria: f.piloto2Categoria,
             palmares: f.piloto2Palmares,
-          );
+          ));
+        }
+        // Pilotos 3+ (resistencia): solo nombre, categoría por defecto.
+        for (final nombre in f.pilotosExtra) {
+          final id = await obtenerOCrearPiloto(nombre: nombre);
+          if (!miembros.contains(id)) miembros.add(id);
         }
 
         final copa = (f.copa != null && f.copa!.isNotEmpty) ? f.copa! : 'GT';
-        await repoEq.crear(
+        await repoEq.crearN(
           campeonatoId: activo.id,
           nombre: f.nombreEquipo,
           copa: copa,
-          piloto1Id: p1Id,
-          piloto2Id: p2Id,
+          pilotoIds: miembros,
         );
         equiposCreados++;
       }
@@ -539,9 +543,11 @@ class _FilaPrevia extends StatelessWidget {
                           color: fila.importar ? null : cs.outline,
                         )),
                 Text(
-                  fila.piloto2Nombre == null
-                      ? fila.piloto1Nombre
-                      : '${fila.piloto1Nombre} + ${fila.piloto2Nombre}',
+                  [
+                    fila.piloto1Nombre,
+                    if (fila.piloto2Nombre != null) fila.piloto2Nombre!,
+                    ...fila.pilotosExtra,
+                  ].join(' + '),
                   style: TextStyle(color: cs.onSurfaceVariant),
                 ),
                 if (fila.copa != null)

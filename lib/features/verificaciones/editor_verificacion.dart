@@ -38,6 +38,8 @@ import 'repositorio_verificaciones.dart';
 /// "12" si min==max (fijo), "24–30" si es rango.
 String _rangoDientesTxt(int min, int max) => min == max ? '$min' : '$min–$max';
 
+/// Copas del campeonato (de su copas_json) unidas por '|', para el respaldo
+/// del filtro de coches cuando la copa del equipo no cuadra con ninguno.
 String _copasDeCampeonato(String? copasJson) {
   if (copasJson == null || copasJson.isEmpty) return '';
   try {
@@ -47,6 +49,15 @@ String _copasDeCampeonato(String? copasJson) {
     }
   } catch (_) {}
   return '';
+}
+
+/// Marcas de engranaje homologadas para la copa. Si el catálogo de engranajes
+/// no aporta ninguna, se devuelven [todas] las marcas del componente.
+Set<String> _marcasEngranaje(
+    AsyncValue<List<CatalogoEngranaje>> async, Set<String> todas) {
+  final lista = async.asData?.value ?? const [];
+  final marcas = lista.map((e) => e.marca).where((m) => m.isNotEmpty).toSet();
+  return marcas.isEmpty ? todas : marcas;
 }
 
 class EditorVerificacion extends ConsumerStatefulWidget {
@@ -81,6 +92,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   String? _chasis;
   String _motorTipo = 'ORGANIZACION';
   int? _pruebaId;
+  /// Copa que corre el equipo EN esta prueba (snapshot); cae a la copa actual.
+  String? _copaPrueba;
 
   int? _cocheId;
   String? _pinonMarca;
@@ -269,6 +282,15 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     _equipo = await (db.select(db.equipos)
           ..where((t) => t.id.equals(widget.equipoId)))
         .getSingle();
+    // Copa que corre el equipo en ESTA prueba (snapshot de inscripción).
+    if (_pruebaId != null) {
+      final ins = await (db.select(db.inscripcionesPrueba)
+            ..where((t) =>
+                t.pruebaId.equals(_pruebaId!) &
+                t.equipoId.equals(widget.equipoId)))
+          .getSingleOrNull();
+      _copaPrueba = ins?.copa;
+    }
     // Cargar pilotos del equipo y sus créditos en el campeonato activo
     final activo = ref.read(campeonatoActivoProvider);
     _piloto1 = await (db.select(db.pilotos)
@@ -493,12 +515,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     final llantasTraAsync = ref.watch(llantasTraProvider);
     // ignore: unused_local_variable
     final bancadasAsync = ref.watch(bancadasProvider);
-    final neumaticosAsync = ref.watch(neumaticosProvider);
     // Filtramos coches, bancadas y motores por la copa del equipo
-    final copaEquipo = _equipo?.copa;
-    // Categorías del campeonato (p. ej. CLASSICOS), para que si la copa del
-    // equipo (P1/P2…) no cuadra con ningún coche, se filtre por la categoría
-    // del campeonato en vez de mostrar todos.
+    // Copa que corre el equipo EN esta prueba (snapshot); cae a la copa actual.
+    final copaEquipo = _copaPrueba ?? _equipo?.copa;
+    final neumaticosAsync = ref.watch(neumaticosFiltradosProvider(copaEquipo));
     final campActivo = ref.watch(campeonatoActivoProvider);
     final champCopas = _copasDeCampeonato(campActivo?.copasJson);
     final reglaPinon = _rangoDientesTxt(
@@ -509,6 +529,12 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
         cochesFiltradosProvider((copa: copaEquipo, camp: champCopas)));
     final bancadasFiltAsync = ref.watch(bancadasFiltradasProvider(copaEquipo));
     final motoresAsync = ref.watch(motoresFiltradosProvider(copaEquipo));
+    // Marcas de piñón/corona homologadas para la copa (si hay catálogo de
+    // engranajes con copa; si no, se usan todas las marcas del componente).
+    final pinonesAsync = ref
+        .watch(engranajesFiltradosProvider((copa: copaEquipo, tipo: 'PINON')));
+    final coronasAsync = ref
+        .watch(engranajesFiltradosProvider((copa: copaEquipo, tipo: 'CORONA')));
     final motores =
         motoresAsync.maybeWhen(data: (d) => d, orElse: () => <CatalogoMotore>[]);
     // Motor del catálogo seleccionado (se guarda su nombre en `motor`).
@@ -531,7 +557,21 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
       },
       child: Scaffold(
       appBar: AppBar(
-        title: Text(_equipo?.nombre ?? 'Verificación'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_equipo?.nombre ?? 'Verificación'),
+            if (_equipo != null)
+              Text(
+                'Copa ${_copaPrueba ?? _equipo!.copa}',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+          ],
+        ),
         actions: [
           _IndicadorGuardado(estado: _estado),
           if (_verifId != null)
@@ -662,9 +702,12 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                     '${c.pesoMin.toStringAsFixed(2)}g · ${c.creditosCoche >= 0 ? "+" : ""}${c.creditosCoche} créd',
                 onCambio: (c) => _cambiar(() => _cocheId = c?.id),
               ),
-              if (cocheSel.id >= 0 && cocheSel.fotoPath != null) ...[
+              if (cocheSel.id >= 0) ...[
                 const SizedBox(height: 8),
-                _FotoCocheReferencia(fotoPath: cocheSel.fotoPath!),
+                if (cocheSel.fotoPath != null)
+                  _FotoCocheReferencia(fotoPath: cocheSel.fotoPath!)
+                else
+                  const _SinFotoCoche(),
               ],
               const SizedBox(height: 16),
 
@@ -915,7 +958,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                 data: (marcas) => _MarcaSelector(
                                   label: 'Marca',
                                   valor: _pinonMarca,
-                                  marcas: marcas,
+                                  marcas: _marcasEngranaje(pinonesAsync, marcas),
                                   onChange: (v) =>
                                       _cambiar(() => _pinonMarca = v),
                                 ),
@@ -955,7 +998,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                 data: (marcas) => _MarcaSelector(
                                   label: 'Marca',
                                   valor: _coronaMarca,
-                                  marcas: marcas,
+                                  marcas:
+                                      _marcasEngranaje(coronasAsync, marcas),
                                   onChange: (v) =>
                                       _cambiar(() => _coronaMarca = v),
                                 ),
@@ -1210,6 +1254,36 @@ class _FotoCocheReferencia extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Aviso cuando el coche seleccionado no tiene foto de referencia en el catálogo.
+class _SinFotoCoche extends StatelessWidget {
+  const _SinFotoCoche();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      color: cs.surfaceContainerHighest,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Icon(Icons.image_not_supported_outlined,
+                size: 18, color: cs.outline),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Este coche no tiene foto en el catálogo. Añádela en '
+                'Catálogos → Coches para poder comparar el modelo entregado.',
+                style: TextStyle(color: cs.outline, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

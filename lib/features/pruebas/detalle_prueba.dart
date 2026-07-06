@@ -15,23 +15,27 @@
 //
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../services/exportar_pdf.dart';
 import '../../services/generador_pdf_mangas.dart';
+import '../../services/generador_tanda_json.dart';
 import '../../services/generador_pdf_verificaciones.dart';
 import '../resultados/pantalla_resultados_prueba.dart';
 import '../tesoreria/pantalla_tesoreria_prueba.dart';
 import '../verificaciones/pantalla_sorteo_motores.dart';
 import 'detalle_manga.dart';
 import 'editor_manga.dart';
+import 'enviar_tanda_dialog.dart';
 import 'editor_prueba.dart';
 import 'pantalla_editar_mangas.dart';
 import 'pantalla_inscritos.dart';
@@ -49,6 +53,10 @@ class DetallePrueba extends ConsumerWidget {
 
   Future<void> _exportarPdf(
       BuildContext context, WidgetRef ref, String op) async {
+    if (op == 'tanda') {
+      await _exportarTanda(context, ref);
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     final idi = await elegirIdiomaExport(context, ref);
     if (idi == null) return;
@@ -87,6 +95,51 @@ class DetallePrueba extends ConsumerWidget {
     }
   }
 
+  // Exporta la tanda como JSON `pitwall.tanda/v1` para importar en PitWall
+  // Manager. En escritorio abre "guardar como…"; en móvil escribe en la carpeta
+  // de documentos de la app y avisa de la ruta (el envío directo por LAN va en
+  // "Enviar a PitWall").
+  Future<void> _exportarTanda(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final data =
+          await ref.read(generadorTandaJsonProvider).generar(pruebaId: pruebaId);
+      final tandas = (data['tandas'] as List?) ?? const [];
+      if (tandas.isEmpty) {
+        messenger.showSnackBar(const SnackBar(
+            content: Text('No hay mangas con carriles asignados que exportar.')));
+        return;
+      }
+      final jsonStr = const JsonEncoder.withIndent('  ').convert(data);
+      final bytes = utf8.encode(jsonStr);
+      final nombre =
+          ((data['prueba'] as Map?)?['nombre'] ?? 'tanda').toString();
+      final sugerido = 'tanda-${slugArchivo(nombre)}.json';
+
+      if (Platform.isAndroid || Platform.isIOS) {
+        final dir = await getApplicationDocumentsDirectory();
+        final ruta = '${dir.path}/$sugerido';
+        await File(ruta).writeAsBytes(bytes);
+        messenger.showSnackBar(SnackBar(content: Text('JSON guardado en $ruta')));
+        return;
+      }
+
+      final destino = await getSaveLocation(
+        acceptedTypeGroups: [
+          const XTypeGroup(label: 'JSON', extensions: ['json']),
+        ],
+        suggestedName: sugerido,
+      );
+      if (destino == null) return;
+      var ruta = destino.path;
+      if (!ruta.toLowerCase().endsWith('.json')) ruta = '$ruta.json';
+      await File(ruta).writeAsBytes(bytes);
+      messenger.showSnackBar(SnackBar(content: Text('Tanda exportada en $ruta')));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
   void _irAlInicio(BuildContext context, WidgetRef ref) {
     Navigator.of(context).popUntil((r) => r.isFirst);
     ref.read(shellIndiceProvider.notifier).ir(0);
@@ -112,6 +165,7 @@ class DetallePrueba extends ConsumerWidget {
             onInicio: () => _irAlInicio(context, ref),
             onAbrir: (d) => _abrir(context, d),
             onExportar: (op) => _exportarPdf(context, ref, op),
+            onEnviar: () => mostrarEnviarTanda(context, ref, pruebaId),
           ),
           const VerticalDivider(width: 1, thickness: 1),
           Expanded(
@@ -227,12 +281,14 @@ class _PanelPrueba extends StatelessWidget {
     required this.onInicio,
     required this.onAbrir,
     required this.onExportar,
+    required this.onEnviar,
   });
 
   final int pruebaId;
   final VoidCallback onInicio;
   final void Function(Widget destino) onAbrir;
   final Future<void> Function(String op) onExportar;
+  final VoidCallback onEnviar;
 
   @override
   Widget build(BuildContext context) {
@@ -302,6 +358,18 @@ class _PanelPrueba extends StatelessWidget {
               leading: const Icon(Icons.fact_check_outlined),
               title: const Text('PDF de verificaciones'),
               onTap: () => exportar('verifs'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.download_outlined),
+              title: const Text('Exportar tanda (JSON)'),
+              subtitle: const Text('Para importar en PitWall'),
+              onTap: () => exportar('tanda'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.wifi_tethering),
+              title: const Text('Enviar a PitWall'),
+              subtitle: const Text('Por WiFi/LAN, sin fichero'),
+              onTap: onEnviar,
             ),
             const Divider(),
             ListTile(

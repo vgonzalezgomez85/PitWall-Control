@@ -32,7 +32,7 @@ import 'pdf_util.dart';
 /// Genera el PDF de la clasificación general (o de una copa concreta),
 /// siempre en una sola hoja (A4 -> A3 si no cabe).
 ///
-/// Diseño: cabecera con gradiente rojo y "RESISBARNA" en la fuente Base 02,
+/// Diseño: cabecera con gradiente rojo y el título en la fuente Base 02,
 /// medallas oro/plata/bronce por prueba y en la general, y pie con los
 /// logos de los patrocinadores.
 class GeneradorPdfClasificacion {
@@ -59,7 +59,6 @@ class GeneradorPdfClasificacion {
     String? copa,
     IdiomaExport idioma = IdiomaExport.es,
   }) async {
-    final cfg = ref.read(marcaConfigProvider);
     String t(String k) => tr(idioma, k);
     final pruebas = datos.pruebas;
     // Copa = clasificación independiente (puntos recalculados dentro de la copa).
@@ -74,10 +73,10 @@ class GeneradorPdfClasificacion {
     final marca = await MarcaPdf.cargar();
     final tituloMarca = (campeonato.marcaTitulo?.trim().isNotEmpty ?? false)
         ? campeonato.marcaTitulo!.trim()
-        : cfg.titulo;
+        : marcaTituloPorDefecto;
     final lemaMarca = (campeonato.marcaLema?.trim().isNotEmpty ?? false)
         ? campeonato.marcaLema!.trim()
-        : cfg.lema;
+        : marcaLemaPorDefecto;
 
     // Umbrales de medalla por prueba: oro/plata/bronce según los puntos de
     // ESA prueba dentro de la vista exportada (empates comparten medalla).

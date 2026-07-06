@@ -42,7 +42,8 @@ final _copasDisponiblesProvider = FutureProvider<List<String>>((ref) async {
   return lista.map((c) => c.nombre).toList()..sort();
 });
 
-List<String> _decodeCopas(String s) {
+List<String> _decodeCopas(String? s) {
+  if (s == null || s.isEmpty) return const [];
   try {
     final r = json.decode(s);
     if (r is List) return r.map((e) => e.toString()).toList();
@@ -53,6 +54,118 @@ List<String> _decodeCopas(String s) {
 String _resumenCopas(List<String> copas) {
   if (copas.isEmpty) return 'Todas';
   return copas.join(', ');
+}
+
+/// Lista de catálogo con buscador y (opcional) filtro por copa. Reutilizable
+/// por todas las pestañas.
+class _ListaCatalogo<T> extends StatefulWidget {
+  const _ListaCatalogo({
+    super.key,
+    required this.datos,
+    required this.textoBuscable,
+    required this.item,
+    required this.fab,
+    required this.vacio,
+    this.copasJsonDe,
+    this.copas = const [],
+  });
+
+  final AsyncValue<List<T>> datos;
+  final String Function(T) textoBuscable;
+  final Widget Function(T) item;
+  final Widget fab;
+  final String vacio;
+
+  /// Si no es null y hay copas, muestra un filtro por copa.
+  final String? Function(T)? copasJsonDe;
+  final List<String> copas;
+
+  @override
+  State<_ListaCatalogo<T>> createState() => _ListaCatalogoState<T>();
+}
+
+class _ListaCatalogoState<T> extends State<_ListaCatalogo<T>> {
+  String _busqueda = '';
+  String? _copaFiltro;
+
+  @override
+  Widget build(BuildContext context) {
+    final conCopa = widget.copasJsonDe != null && widget.copas.isNotEmpty;
+    return Scaffold(
+      floatingActionButton: widget.fab,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.search),
+                      hintText: 'Buscar…',
+                      isDense: true,
+                    ),
+                    onChanged: (v) =>
+                        setState(() => _busqueda = v.trim().toLowerCase()),
+                  ),
+                ),
+                if (conCopa) ...[
+                  const SizedBox(width: 8),
+                  DropdownButton<String?>(
+                    value: _copaFiltro,
+                    hint: const Text('Copa'),
+                    borderRadius: BorderRadius.circular(12),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                          value: null, child: Text('Todas')),
+                      for (final c in widget.copas)
+                        DropdownMenuItem<String?>(value: c, child: Text(c)),
+                    ],
+                    onChanged: (v) => setState(() => _copaFiltro = v),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Expanded(
+            child: widget.datos.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Error: $e')),
+              data: (xs) {
+                if (xs.isEmpty) return _Vacio(texto: widget.vacio);
+                final filtradas = xs.where((x) {
+                  if (_busqueda.isNotEmpty &&
+                      !widget
+                          .textoBuscable(x)
+                          .toLowerCase()
+                          .contains(_busqueda)) {
+                    return false;
+                  }
+                  if (conCopa && _copaFiltro != null) {
+                    final cps = _decodeCopas(widget.copasJsonDe!(x) ?? '');
+                    if (cps.isNotEmpty && !cps.contains(_copaFiltro)) {
+                      return false;
+                    }
+                  }
+                  return true;
+                }).toList();
+                if (filtradas.isEmpty) {
+                  return const _Vacio(texto: 'Sin coincidencias');
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
+                  itemCount: filtradas.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 4),
+                  itemBuilder: (_, i) => widget.item(filtradas[i]),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class PantallaCatalogos extends ConsumerStatefulWidget {
@@ -207,30 +320,92 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
 // =====================================================
 // COCHES
 // =====================================================
-class _TabCoches extends ConsumerWidget {
+class _TabCoches extends ConsumerStatefulWidget {
   const _TabCoches();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_TabCoches> createState() => _TabCochesState();
+}
+
+class _TabCochesState extends ConsumerState<_TabCoches> {
+  String _busqueda = '';
+  String? _copaFiltro;
+
+  @override
+  Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final lista = ref.watch(cochesCatalogoProvider);
+    final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _editarCoche(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Coche'),
       ),
-      body: lista.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (xs) {
-          if (xs.isEmpty) return const _Vacio(texto: 'Sin coches');
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            itemCount: xs.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 4),
-            itemBuilder: (_, i) {
-              final c = xs[i];
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.search),
+                      hintText: 'Buscar coche…',
+                      isDense: true,
+                    ),
+                    onChanged: (v) =>
+                        setState(() => _busqueda = v.trim().toLowerCase()),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                DropdownButton<String?>(
+                  value: _copaFiltro,
+                  hint: const Text('Copa'),
+                  borderRadius: BorderRadius.circular(12),
+                  items: [
+                    const DropdownMenuItem<String?>(
+                        value: null, child: Text('Todas las copas')),
+                    for (final c in copas)
+                      DropdownMenuItem<String?>(value: c, child: Text(c)),
+                  ],
+                  onChanged: (v) => setState(() => _copaFiltro = v),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: lista.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Error: $e')),
+              data: (xs) {
+                if (xs.isEmpty) return const _Vacio(texto: 'Sin coches');
+                final filtradas = xs.where((c) {
+                  if (_busqueda.isNotEmpty &&
+                      !'${c.nombre} ${c.marca} ${c.modelo}'
+                          .toLowerCase()
+                          .contains(_busqueda)) {
+                    return false;
+                  }
+                  if (_copaFiltro != null) {
+                    final cps = _decodeCopas(c.copasJson);
+                    // Los coches "todos" (sin copa) aplican a todas las copas.
+                    if (cps.isNotEmpty && !cps.contains(_copaFiltro)) {
+                      return false;
+                    }
+                  }
+                  return true;
+                }).toList();
+                if (filtradas.isEmpty) {
+                  return const _Vacio(texto: 'Sin coincidencias');
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
+                  itemCount: filtradas.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 4),
+                  itemBuilder: (_, i) {
+                    final c = filtradas[i];
               return Card(
                 child: ListTile(
                   leading: c.fotoPath == null
@@ -281,10 +456,13 @@ class _TabCoches extends ConsumerWidget {
                     ],
                   ),
                 ),
-              );
-            },
-          );
-        },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -571,51 +749,36 @@ class _TabMarcas extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final lista = ref.watch(marcasCatalogoProvider);
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
+    return _ListaCatalogo<CatalogoMarca>(
+      datos: ref.watch(marcasCatalogoProvider),
+      vacio: 'Sin marcas',
+      textoBuscable: (m) => '${m.codigo} ${m.nombre}',
+      fab: FloatingActionButton.extended(
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Marca'),
       ),
-      body: lista.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (xs) {
-          if (xs.isEmpty) return const _Vacio(texto: 'Sin marcas');
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            itemCount: xs.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 4),
-            itemBuilder: (_, i) {
-              final m = xs[i];
-              return Card(
-                child: ListTile(
-                  leading: CircleAvatar(child: Text(m.codigo)),
-                  title: Text(m.nombre),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (op) async {
-                      if (op == 'editar') {
-                        _editar(context, ref, m);
-                      } else if (op == 'borrar') {
-                        final ok = await _confirmarBorrar(context, m.nombre);
-                        if (ok) {
-                          await ref
-                              .read(repoCatalogosProvider)
-                              .borrarMarca(m.id);
-                        }
-                      }
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'editar', child: Text('Editar')),
-                      PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
-                    ],
-                  ),
-                ),
-              );
+      item: (m) => Card(
+        child: ListTile(
+          leading: CircleAvatar(child: Text(m.codigo)),
+          title: Text(m.nombre),
+          trailing: PopupMenuButton<String>(
+            onSelected: (op) async {
+              if (op == 'editar') {
+                _editar(context, ref, m);
+              } else if (op == 'borrar') {
+                final ok = await _confirmarBorrar(context, m.nombre);
+                if (ok) {
+                  await ref.read(repoCatalogosProvider).borrarMarca(m.id);
+                }
+              }
             },
-          );
-        },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'editar', child: Text('Editar')),
+              PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -672,59 +835,44 @@ class _TabLlantas extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final lista = ref.watch(llantasCatalogoProvider);
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
+    return _ListaCatalogo<CatalogoLlanta>(
+      datos: ref.watch(llantasCatalogoProvider),
+      vacio: 'Sin llantas',
+      textoBuscable: (l) => '${l.dimension} ${l.tipo}',
+      fab: FloatingActionButton.extended(
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Llanta'),
       ),
-      body: lista.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (xs) {
-          if (xs.isEmpty) return const _Vacio(texto: 'Sin llantas');
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            itemCount: xs.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 4),
-            itemBuilder: (_, i) {
-              final l = xs[i];
-              return Card(
-                child: ListTile(
-                  leading: Icon(
-                    l.tipo == 'DELANTERA'
-                        ? Icons.arrow_upward
-                        : l.tipo == 'TRASERA'
-                            ? Icons.arrow_downward
-                            : Icons.swap_vert,
-                    color: cs.primary,
-                  ),
-                  title: Text(l.dimension),
-                  subtitle: Text(l.tipo),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (op) async {
-                      if (op == 'editar') {
-                        _editar(context, ref, l);
-                      } else if (op == 'borrar') {
-                        final ok = await _confirmarBorrar(context, l.dimension);
-                        if (ok) {
-                          await ref
-                              .read(repoCatalogosProvider)
-                              .borrarLlanta(l.id);
-                        }
-                      }
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'editar', child: Text('Editar')),
-                      PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
-                    ],
-                  ),
-                ),
-              );
+      item: (l) => Card(
+        child: ListTile(
+          leading: Icon(
+            l.tipo == 'DELANTERA'
+                ? Icons.arrow_upward
+                : l.tipo == 'TRASERA'
+                    ? Icons.arrow_downward
+                    : Icons.swap_vert,
+            color: cs.primary,
+          ),
+          title: Text(l.dimension),
+          subtitle: Text(l.tipo),
+          trailing: PopupMenuButton<String>(
+            onSelected: (op) async {
+              if (op == 'editar') {
+                _editar(context, ref, l);
+              } else if (op == 'borrar') {
+                final ok = await _confirmarBorrar(context, l.dimension);
+                if (ok) {
+                  await ref.read(repoCatalogosProvider).borrarLlanta(l.id);
+                }
+              }
             },
-          );
-        },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'editar', child: Text('Editar')),
+              PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -791,59 +939,51 @@ class _TabEngranajes extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final lista = ref.watch(engranajesCatalogoProvider);
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
+    final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
+    return _ListaCatalogo<CatalogoEngranaje>(
+      datos: ref.watch(engranajesCatalogoProvider),
+      vacio: 'Sin engranajes',
+      textoBuscable: (g) => '${g.marca} ${g.dientes} ${g.tipo}',
+      copasJsonDe: (g) => g.copasJson,
+      copas: copas,
+      fab: FloatingActionButton.extended(
         heroTag: 'fab_engranajes',
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Engranaje'),
       ),
-      body: lista.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (xs) {
-          if (xs.isEmpty) return const _Vacio(texto: 'Sin engranajes');
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            itemCount: xs.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 4),
-            itemBuilder: (_, i) {
-              final g = xs[i];
-              return Card(
-                child: ListTile(
-                  leading: Icon(
-                    g.tipo == 'PINON'
-                        ? Icons.settings_outlined
-                        : Icons.album_outlined,
-                    color: cs.primary,
-                  ),
-                  title: Text('${g.marca} · ${g.dientes} dientes'),
-                  subtitle: Text(g.tipo == 'PINON' ? 'Piñón' : 'Corona'),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (op) async {
-                      if (op == 'editar') {
-                        _editar(context, ref, g);
-                      } else if (op == 'borrar') {
-                        final ok = await _confirmarBorrar(
-                            context, '${g.marca} ${g.dientes}d');
-                        if (ok) {
-                          await ref
-                              .read(repoCatalogosProvider)
-                              .borrarEngranaje(g.id);
-                        }
-                      }
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'editar', child: Text('Editar')),
-                      PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
-                    ],
-                  ),
-                ),
-              );
+      item: (g) => Card(
+        child: ListTile(
+          leading: Icon(
+            g.tipo == 'PINON'
+                ? Icons.settings_outlined
+                : Icons.album_outlined,
+            color: cs.primary,
+          ),
+          title: Text('${g.marca} · ${g.dientes} dientes'),
+          subtitle: Text(
+            '${g.tipo == 'PINON' ? 'Piñón' : 'Corona'}'
+            '\nCopas: ${_resumenCopas(_decodeCopas(g.copasJson))}',
+          ),
+          isThreeLine: true,
+          trailing: PopupMenuButton<String>(
+            onSelected: (op) async {
+              if (op == 'editar') {
+                _editar(context, ref, g);
+              } else if (op == 'borrar') {
+                final ok = await _confirmarBorrar(
+                    context, '${g.marca} ${g.dientes}d');
+                if (ok) {
+                  await ref.read(repoCatalogosProvider).borrarEngranaje(g.id);
+                }
+              }
             },
-          );
-        },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'editar', child: Text('Editar')),
+              PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -853,12 +993,14 @@ class _TabEngranajes extends ConsumerWidget {
     final marca = TextEditingController(text: g?.marca ?? '');
     final dientes = TextEditingController(text: g?.dientes.toString() ?? '');
     String tipo = g?.tipo ?? 'PINON';
-    final ok = await showDialog<bool>(
+    final copasIni = g == null ? <String>{} : _decodeCopas(g.copasJson).toSet();
+    final res = await showDialog<({bool ok, Set<String> copas})>(
       context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setSt) => AlertDialog(
-          title: Text(g == null ? 'Nuevo engranaje' : 'Editar engranaje'),
-          content: Column(
+      builder: (_) => _DialogoCocheBancada(
+        titulo: g == null ? 'Nuevo engranaje' : 'Editar engranaje',
+        copasIniciales: copasIni,
+        contenidoExtra: StatefulBuilder(
+          builder: (ctx, setSt) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
@@ -880,31 +1022,26 @@ class _TabEngranajes extends ConsumerWidget {
               TextField(
                 controller: dientes,
                 decoration: const InputDecoration(
-                    labelText: 'Dientes *', helperText: 'Ej: 12 piñón, 28 corona'),
+                    labelText: 'Dientes *',
+                    helperText: 'Ej: 12 piñón, 28 corona'),
                 keyboardType: TextInputType.number,
               ),
             ],
           ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancelar')),
-            FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Guardar')),
-          ],
         ),
       ),
     );
-    if (ok != true) return;
+    if (res == null || !res.ok) return;
     final m = marca.text.trim();
     final d = int.tryParse(dientes.text.trim());
     if (m.isEmpty || d == null) return;
+    final copasJson = json.encode(res.copas.toList());
     final repo = ref.read(repoCatalogosProvider);
     if (g == null) {
-      await repo.crearEngranaje(tipo: tipo, marca: m, dientes: d);
+      await repo.crearEngranaje(
+          tipo: tipo, marca: m, dientes: d, copasJson: copasJson);
     } else {
-      await repo.actualizarEngranaje(g.id, tipo, m, d);
+      await repo.actualizarEngranaje(g.id, tipo, m, d, copasJson: copasJson);
     }
   }
 }
@@ -919,63 +1056,53 @@ class _TabMotores extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final lista = ref.watch(motoresCatalogoProvider);
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
+    final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
+    return _ListaCatalogo<CatalogoMotore>(
+      datos: ref.watch(motoresCatalogoProvider),
+      vacio: 'Sin motores',
+      textoBuscable: (mo) => mo.nombre,
+      copasJsonDe: (mo) => mo.copasJson,
+      copas: copas,
+      fab: FloatingActionButton.extended(
         heroTag: 'fab_motores',
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Motor'),
       ),
-      body: lista.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (xs) {
-          if (xs.isEmpty) return const _Vacio(texto: 'Sin motores');
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            itemCount: xs.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 4),
-            itemBuilder: (_, i) {
-              final mo = xs[i];
-              final medidas = [
-                if (mo.rpm != null) '${mo.rpm} RPM',
-                if (mo.gauss != null) '${mo.gauss} gauss',
-              ].join(' · ');
-              return Card(
-                child: ListTile(
-                  leading: Icon(Icons.bolt_outlined, color: cs.primary),
-                  title: Text(mo.nombre,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text(
-                    '${medidas.isEmpty ? 'Sin medidas' : medidas}'
-                    '\nCopas: ${_resumenCopas(_decodeCopas(mo.copasJson))}',
-                  ),
-                  isThreeLine: true,
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (op) async {
-                      if (op == 'editar') {
-                        _editar(context, ref, mo);
-                      } else if (op == 'borrar') {
-                        final ok = await _confirmarBorrar(context, mo.nombre);
-                        if (ok) {
-                          await ref
-                              .read(repoCatalogosProvider)
-                              .borrarMotor(mo.id);
-                        }
-                      }
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'editar', child: Text('Editar')),
-                      PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
+      item: (mo) {
+        final medidas = [
+          if (mo.rpm != null) '${mo.rpm} RPM',
+          if (mo.gauss != null) '${mo.gauss} gauss',
+        ].join(' · ');
+        return Card(
+          child: ListTile(
+            leading: Icon(Icons.bolt_outlined, color: cs.primary),
+            title: Text(mo.nombre,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: Text(
+              '${medidas.isEmpty ? 'Sin medidas' : medidas}'
+              '\nCopas: ${_resumenCopas(_decodeCopas(mo.copasJson))}',
+            ),
+            isThreeLine: true,
+            trailing: PopupMenuButton<String>(
+              onSelected: (op) async {
+                if (op == 'editar') {
+                  _editar(context, ref, mo);
+                } else if (op == 'borrar') {
+                  final ok = await _confirmarBorrar(context, mo.nombre);
+                  if (ok) {
+                    await ref.read(repoCatalogosProvider).borrarMotor(mo.id);
+                  }
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'editar', child: Text('Editar')),
+                PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1047,52 +1174,40 @@ class _TabChasis extends ConsumerWidget {
   const _TabChasis();
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final lista = ref.watch(chasisCatalogoProvider);
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
+    final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
+    return _ListaCatalogo<CatalogoChasi>(
+      datos: ref.watch(chasisCatalogoProvider),
+      vacio: 'Sin chasis',
+      textoBuscable: (c) => c.nombre,
+      copasJsonDe: (c) => c.copasJson,
+      copas: copas,
+      fab: FloatingActionButton.extended(
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Chasis'),
       ),
-      body: lista.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (xs) {
-          if (xs.isEmpty) return const _Vacio(texto: 'Sin chasis');
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            itemCount: xs.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 4),
-            itemBuilder: (_, i) {
-              final c = xs[i];
-              return Card(
-                child: ListTile(
-                  title: Text(c.nombre),
-                  subtitle: Text(
-                      'Copas: ${_resumenCopas(_decodeCopas(c.copasJson))}'),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (op) async {
-                      if (op == 'editar') {
-                        _editar(context, ref, c);
-                      } else if (op == 'borrar') {
-                        final ok = await _confirmarBorrar(context, c.nombre);
-                        if (ok) {
-                          await ref
-                              .read(repoCatalogosProvider)
-                              .borrarChasis(c.id);
-                        }
-                      }
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'editar', child: Text('Editar')),
-                      PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
-                    ],
-                  ),
-                ),
-              );
+      item: (c) => Card(
+        child: ListTile(
+          title: Text(c.nombre),
+          subtitle:
+              Text('Copas: ${_resumenCopas(_decodeCopas(c.copasJson))}'),
+          trailing: PopupMenuButton<String>(
+            onSelected: (op) async {
+              if (op == 'editar') {
+                _editar(context, ref, c);
+              } else if (op == 'borrar') {
+                final ok = await _confirmarBorrar(context, c.nombre);
+                if (ok) {
+                  await ref.read(repoCatalogosProvider).borrarChasis(c.id);
+                }
+              }
             },
-          );
-        },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'editar', child: Text('Editar')),
+              PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1141,52 +1256,40 @@ class _TabBancadas extends ConsumerWidget {
   const _TabBancadas();
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final lista = ref.watch(bancadasCatalogoProvider);
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
+    final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
+    return _ListaCatalogo<CatalogoBancada>(
+      datos: ref.watch(bancadasCatalogoProvider),
+      vacio: 'Sin bancadas',
+      textoBuscable: (b) => b.nombre,
+      copasJsonDe: (b) => b.copasJson,
+      copas: copas,
+      fab: FloatingActionButton.extended(
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Bancada'),
       ),
-      body: lista.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (xs) {
-          if (xs.isEmpty) return const _Vacio(texto: 'Sin bancadas');
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            itemCount: xs.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 4),
-            itemBuilder: (_, i) {
-              final b = xs[i];
-              return Card(
-                child: ListTile(
-                  title: Text(b.nombre),
-                  subtitle: Text(
-                      'Copas: ${_resumenCopas(_decodeCopas(b.copasJson))}'),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (op) async {
-                      if (op == 'editar') {
-                        _editar(context, ref, b);
-                      } else if (op == 'borrar') {
-                        final ok = await _confirmarBorrar(context, b.nombre);
-                        if (ok) {
-                          await ref
-                              .read(repoCatalogosProvider)
-                              .borrarBancada(b.id);
-                        }
-                      }
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'editar', child: Text('Editar')),
-                      PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
-                    ],
-                  ),
-                ),
-              );
+      item: (b) => Card(
+        child: ListTile(
+          title: Text(b.nombre),
+          subtitle:
+              Text('Copas: ${_resumenCopas(_decodeCopas(b.copasJson))}'),
+          trailing: PopupMenuButton<String>(
+            onSelected: (op) async {
+              if (op == 'editar') {
+                _editar(context, ref, b);
+              } else if (op == 'borrar') {
+                final ok = await _confirmarBorrar(context, b.nombre);
+                if (ok) {
+                  await ref.read(repoCatalogosProvider).borrarBancada(b.id);
+                }
+              }
             },
-          );
-        },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'editar', child: Text('Editar')),
+              PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1232,52 +1335,44 @@ class _TabNeumaticos extends ConsumerWidget {
   const _TabNeumaticos();
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final lista = ref.watch(neumaticosCatalogoProvider);
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
+    final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
+    return _ListaCatalogo<CatalogoNeumatico>(
+      datos: ref.watch(neumaticosCatalogoProvider),
+      vacio: 'Sin neumáticos',
+      textoBuscable: (n) => '${n.nombre} ${n.referencia ?? ''}',
+      copasJsonDe: (n) => n.copasJson,
+      copas: copas,
+      fab: FloatingActionButton.extended(
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Neumático'),
       ),
-      body: lista.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (xs) {
-          if (xs.isEmpty) return const _Vacio(texto: 'Sin neumáticos');
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            itemCount: xs.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 4),
-            itemBuilder: (_, i) {
-              final n = xs[i];
-              return Card(
-                child: ListTile(
-                  leading: const Icon(Icons.circle_outlined),
-                  title: Text(n.nombre),
-                  subtitle: n.referencia != null ? Text(n.referencia!) : null,
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (op) async {
-                      if (op == 'editar') {
-                        _editar(context, ref, n);
-                      } else if (op == 'borrar') {
-                        final ok = await _confirmarBorrar(context, n.nombre);
-                        if (ok) {
-                          await ref
-                              .read(repoCatalogosProvider)
-                              .borrarNeumatico(n.id);
-                        }
-                      }
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'editar', child: Text('Editar')),
-                      PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
-                    ],
-                  ),
-                ),
-              );
+      item: (n) => Card(
+        child: ListTile(
+          leading: const Icon(Icons.circle_outlined),
+          title: Text(n.nombre),
+          subtitle: Text(
+            '${n.referencia ?? 'Sin referencia'}'
+            '\nCopas: ${_resumenCopas(_decodeCopas(n.copasJson))}',
+          ),
+          isThreeLine: true,
+          trailing: PopupMenuButton<String>(
+            onSelected: (op) async {
+              if (op == 'editar') {
+                _editar(context, ref, n);
+              } else if (op == 'borrar') {
+                final ok = await _confirmarBorrar(context, n.nombre);
+                if (ok) {
+                  await ref.read(repoCatalogosProvider).borrarNeumatico(n.id);
+                }
+              }
             },
-          );
-        },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'editar', child: Text('Editar')),
+              PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1286,11 +1381,13 @@ class _TabNeumaticos extends ConsumerWidget {
       BuildContext context, WidgetRef ref, CatalogoNeumatico? n) async {
     final nombre = TextEditingController(text: n?.nombre ?? '');
     final ref_ = TextEditingController(text: n?.referencia ?? '');
-    final ok = await showDialog<bool>(
+    final copasIni = n == null ? <String>{} : _decodeCopas(n.copasJson).toSet();
+    final res = await showDialog<({bool ok, Set<String> copas})>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(n == null ? 'Nuevo neumático' : 'Editar neumático'),
-        content: Column(
+      builder: (_) => _DialogoCocheBancada(
+        titulo: n == null ? 'Nuevo neumático' : 'Editar neumático',
+        copasIniciales: copasIni,
+        contenidoExtra: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
@@ -1304,23 +1401,17 @@ class _TabNeumaticos extends ConsumerWidget {
                     const InputDecoration(labelText: 'Referencia (opcional)')),
           ],
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Guardar')),
-        ],
       ),
     );
-    if (ok != true) return;
+    if (res == null || !res.ok) return;
     final repo = ref.read(repoCatalogosProvider);
     final r = ref_.text.trim().isEmpty ? null : ref_.text.trim();
+    final copasJson = json.encode(res.copas.toList());
     if (n == null) {
-      await repo.crearNeumatico(nombre.text.trim(), r);
+      await repo.crearNeumatico(nombre.text.trim(), r, copasJson: copasJson);
     } else {
-      await repo.actualizarNeumatico(n.id, nombre.text.trim(), r);
+      await repo.actualizarNeumatico(n.id, nombre.text.trim(), r,
+          copasJson: copasJson);
     }
   }
 }
@@ -1366,7 +1457,7 @@ class _TabClubs extends ConsumerWidget {
 // =====================================================
 // HELPERS
 // =====================================================
-class _SimpleTab<T> extends ConsumerWidget {
+class _SimpleTab<T> extends ConsumerStatefulWidget {
   const _SimpleTab({
     required this.vacio,
     required this.botonLabel,
@@ -1388,45 +1479,81 @@ class _SimpleTab<T> extends ConsumerWidget {
   final String hint;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final lista = observar(ref);
+  ConsumerState<_SimpleTab<T>> createState() => _SimpleTabState<T>();
+}
+
+class _SimpleTabState<T> extends ConsumerState<_SimpleTab<T>> {
+  String _busqueda = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final lista = widget.observar(ref);
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _editar(context, null),
         icon: const Icon(Icons.add),
-        label: Text(botonLabel),
+        label: Text(widget.botonLabel),
       ),
       body: lista.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (xs) {
-          if (xs.isEmpty) return _Vacio(texto: vacio);
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            itemCount: xs.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 4),
-            itemBuilder: (_, i) {
-              final x = xs[i];
-              return Card(
-                child: ListTile(
-                  title: Text(titulo(x)),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (op) async {
-                      if (op == 'editar') {
-                        _editar(context, x);
-                      } else if (op == 'borrar') {
-                        final ok = await _confirmarBorrar(context, titulo(x));
-                        if (ok) await onBorrar(x);
-                      }
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'editar', child: Text('Editar')),
-                      PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
-                    ],
+          final filtrados = _busqueda.isEmpty
+              ? xs
+              : xs
+                  .where((x) =>
+                      widget.titulo(x).toLowerCase().contains(_busqueda))
+                  .toList();
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.search),
+                    hintText: 'Buscar…',
+                    isDense: true,
                   ),
+                  onChanged: (v) =>
+                      setState(() => _busqueda = v.trim().toLowerCase()),
                 ),
-              );
-            },
+              ),
+              Expanded(
+                child: filtrados.isEmpty
+                    ? _Vacio(
+                        texto: xs.isEmpty ? widget.vacio : 'Sin coincidencias')
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
+                        itemCount: filtrados.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 4),
+                        itemBuilder: (_, i) {
+                          final x = filtrados[i];
+                          return Card(
+                            child: ListTile(
+                              title: Text(widget.titulo(x)),
+                              trailing: PopupMenuButton<String>(
+                                onSelected: (op) async {
+                                  if (op == 'editar') {
+                                    _editar(context, x);
+                                  } else if (op == 'borrar') {
+                                    final ok = await _confirmarBorrar(
+                                        context, widget.titulo(x));
+                                    if (ok) await widget.onBorrar(x);
+                                  }
+                                },
+                                itemBuilder: (_) => const [
+                                  PopupMenuItem(
+                                      value: 'editar', child: Text('Editar')),
+                                  PopupMenuItem(
+                                      value: 'borrar', child: Text('Eliminar')),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           );
         },
       ),
@@ -1434,16 +1561,17 @@ class _SimpleTab<T> extends ConsumerWidget {
   }
 
   Future<void> _editar(BuildContext context, T? item) async {
-    final t = TextEditingController(text: item == null ? '' : titulo(item));
+    final t =
+        TextEditingController(text: item == null ? '' : widget.titulo(item));
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(item == null ? 'Nuevo $botonLabel' : 'Editar'),
+        title: Text(item == null ? 'Nuevo ${widget.botonLabel}' : 'Editar'),
         content: TextField(
           controller: t,
           autofocus: true,
           decoration:
-              InputDecoration(labelText: 'Nombre *', helperText: hint),
+              InputDecoration(labelText: 'Nombre *', helperText: widget.hint),
         ),
         actions: [
           TextButton(
@@ -1457,9 +1585,9 @@ class _SimpleTab<T> extends ConsumerWidget {
     );
     if (ok != true || t.text.trim().isEmpty) return;
     if (item == null) {
-      await onCrear(t.text.trim());
+      await widget.onCrear(t.text.trim());
     } else {
-      await onEditar(item, t.text.trim());
+      await widget.onEditar(item, t.text.trim());
     }
   }
 }

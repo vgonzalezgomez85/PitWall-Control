@@ -29,6 +29,7 @@ import '../../data/database/app_database.dart';
 import '../../services/exportar_pdf.dart';
 import '../../services/generador_pdf_creditos.dart';
 import 'pantalla_revision_categorias.dart';
+import '../equipos/repositorio_equipos.dart';
 import 'repositorio_creditos.dart';
 
 /// Pilotos del campeonato activo con saldo de créditos.
@@ -64,15 +65,7 @@ final _pilotosCampeonatoProvider =
             ..where((t) => t.pruebaId.isIn(pruebaIds)))
           .get();
       final equipoIds = inscripciones.map((i) => i.equipoId).toSet();
-      if (equipoIds.isNotEmpty) {
-        final equipos = await (db.select(db.equipos)
-              ..where((t) => t.id.isIn(equipoIds.toList())))
-            .get();
-        for (final e in equipos) {
-          participantes.add(e.piloto1Id);
-          if (e.piloto2Id != null) participantes.add(e.piloto2Id!);
-        }
-      }
+      participantes.addAll(await pilotosDeEquipos(db, equipoIds));
     }
     final out = <_ResumenPiloto>[];
     for (final pc in pcs) {

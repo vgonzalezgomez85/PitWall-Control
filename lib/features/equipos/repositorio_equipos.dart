@@ -23,22 +23,58 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 
-/// Equipo enriquecido con datos de pilotos.
+/// IDs de todos los pilotos (miembros) de los equipos dados, usando la unión
+/// equipo_pilotos y cayendo a piloto1/2 para equipos sin filas de unión.
+Future<Set<int>> pilotosDeEquipos(
+    AppDatabase db, Iterable<int> equipoIds) async {
+  final ids = equipoIds.toList();
+  if (ids.isEmpty) return {};
+  final out = <int>{};
+  final union = await (db.select(db.equipoPilotos)
+        ..where((t) => t.equipoId.isIn(ids)))
+      .get();
+  final conUnion = <int>{};
+  for (final m in union) {
+    out.add(m.pilotoId);
+    conUnion.add(m.equipoId);
+  }
+  final sinUnion = ids.where((e) => !conUnion.contains(e)).toList();
+  if (sinUnion.isNotEmpty) {
+    final eqs =
+        await (db.select(db.equipos)..where((t) => t.id.isIn(sinUnion))).get();
+    for (final e in eqs) {
+      out.add(e.piloto1Id);
+      if (e.piloto2Id != null) out.add(e.piloto2Id!);
+    }
+  }
+  return out;
+}
+
+/// Nº máximo de pilotos por equipo según el formato del campeonato.
+int maxPilotosEquipo(String formato) {
+  switch (formato) {
+    case 'INDIVIDUAL':
+      return 1;
+    case '24H':
+    case '12H':
+      return 6; // resistencia: 4-5 habitual, hasta 6
+    default: // PAREJAS
+      return 2;
+  }
+}
+
+/// Equipo enriquecido con datos de pilotos (lista completa de miembros).
 class EquipoConPilotos {
   final Equipo equipo;
-  final Piloto piloto1;
-  final Piloto? piloto2;
+  final List<Piloto> pilotos;
 
-  EquipoConPilotos({
-    required this.equipo,
-    required this.piloto1,
-    this.piloto2,
-  });
+  EquipoConPilotos({required this.equipo, required this.pilotos});
 
-  /// Resumen mostrable: "Piloto1 + Piloto2" o solo "Piloto1".
-  String get pilotosTexto => piloto2 == null
-      ? piloto1.nombre
-      : '${piloto1.nombre} + ${piloto2!.nombre}';
+  Piloto get piloto1 => pilotos.first;
+  Piloto? get piloto2 => pilotos.length > 1 ? pilotos[1] : null;
+
+  /// Resumen mostrable: todos los miembros unidos por " + ".
+  String get pilotosTexto => pilotos.map((p) => p.nombre).join(' + ');
 }
 
 /// Stream de equipos del campeonato activo, con datos de pilotos resueltos.
@@ -55,20 +91,33 @@ final equiposCampeonatoProvider =
       .asyncMap((lista) async {
     final out = <EquipoConPilotos>[];
     for (final e in lista) {
-      final p1 = await (db.select(db.pilotos)
-            ..where((t) => t.id.equals(e.piloto1Id)))
-          .getSingle();
-      Piloto? p2;
-      if (e.piloto2Id != null) {
-        p2 = await (db.select(db.pilotos)
-              ..where((t) => t.id.equals(e.piloto2Id!)))
-            .getSingleOrNull();
-      }
-      out.add(EquipoConPilotos(equipo: e, piloto1: p1, piloto2: p2));
+      final pilotos = await _miembrosDeEquipo(db, e);
+      if (pilotos.isEmpty) continue;
+      out.add(EquipoConPilotos(equipo: e, pilotos: pilotos));
     }
     return out;
   });
 });
+
+/// Pilotos de un equipo, ordenados: primero la unión (por orden); si estuviera
+/// vacía, cae a piloto1/piloto2 (compatibilidad).
+Future<List<Piloto>> _miembrosDeEquipo(AppDatabase db, Equipo e) async {
+  final miembros = await (db.select(db.equipoPilotos)
+        ..where((t) => t.equipoId.equals(e.id))
+        ..orderBy([(t) => OrderingTerm.asc(t.orden)]))
+      .get();
+  var ids = miembros.map((m) => m.pilotoId).toList();
+  if (ids.isEmpty) {
+    ids = [e.piloto1Id, ?e.piloto2Id];
+  }
+  final out = <Piloto>[];
+  for (final id in ids) {
+    final p = await (db.select(db.pilotos)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    if (p != null) out.add(p);
+  }
+  return out;
+}
 
 /// Lista de pilotos del campeonato activo (para asignar a equipos).
 final pilotosDelCampeonatoProvider =
@@ -113,23 +162,60 @@ class RepositorioEquipos {
   RepositorioEquipos(this.db);
   final AppDatabase db;
 
+  /// Crea un equipo con una lista ordenada de pilotos (1 o más). Sincroniza
+  /// piloto1Id/piloto2Id con los dos primeros y guarda todos en la unión.
+  Future<int> crearN({
+    required int campeonatoId,
+    required String nombre,
+    required String copa,
+    required List<int> pilotoIds,
+  }) async {
+    final id = await db.into(db.equipos).insert(
+          EquiposCompanion.insert(
+            campeonatoId: campeonatoId,
+            nombre: nombre,
+            copa: copa,
+            piloto1Id: pilotoIds.first,
+            piloto2Id:
+                Value(pilotoIds.length > 1 ? pilotoIds[1] : null),
+          ),
+        );
+    await _sincronizarMiembros(id, pilotoIds);
+    return id;
+  }
+
+  /// Actualiza nombre/copa y la lista completa de pilotos.
+  Future<void> actualizarN({
+    required int id,
+    required String nombre,
+    required String copa,
+    required List<int> pilotoIds,
+  }) async {
+    await (db.update(db.equipos)..where((t) => t.id.equals(id))).write(
+      EquiposCompanion(
+        nombre: Value(nombre),
+        copa: Value(copa),
+        piloto1Id: Value(pilotoIds.first),
+        piloto2Id: Value(pilotoIds.length > 1 ? pilotoIds[1] : null),
+      ),
+    );
+    await _sincronizarMiembros(id, pilotoIds);
+  }
+
+  // --- Compatibilidad con las llamadas antiguas (1-2 pilotos) ---
   Future<int> crear({
     required int campeonatoId,
     required String nombre,
     required String copa,
     required int piloto1Id,
     int? piloto2Id,
-  }) async {
-    return db.into(db.equipos).insert(
-          EquiposCompanion.insert(
-            campeonatoId: campeonatoId,
-            nombre: nombre,
-            copa: copa,
-            piloto1Id: piloto1Id,
-            piloto2Id: Value(piloto2Id),
-          ),
-        );
-  }
+  }) =>
+      crearN(
+        campeonatoId: campeonatoId,
+        nombre: nombre,
+        copa: copa,
+        pilotoIds: [piloto1Id, ?piloto2Id],
+      );
 
   Future<void> actualizar({
     required int id,
@@ -137,18 +223,46 @@ class RepositorioEquipos {
     required String copa,
     required int piloto1Id,
     int? piloto2Id,
-  }) async {
-    await (db.update(db.equipos)..where((t) => t.id.equals(id))).write(
-      EquiposCompanion(
-        nombre: Value(nombre),
-        copa: Value(copa),
-        piloto1Id: Value(piloto1Id),
-        piloto2Id: Value(piloto2Id),
-      ),
-    );
+  }) =>
+      actualizarN(
+        id: id,
+        nombre: nombre,
+        copa: copa,
+        pilotoIds: [piloto1Id, ?piloto2Id],
+      );
+
+  Future<void> _sincronizarMiembros(int equipoId, List<int> pilotoIds) async {
+    await (db.delete(db.equipoPilotos)
+          ..where((t) => t.equipoId.equals(equipoId)))
+        .go();
+    for (var i = 0; i < pilotoIds.length; i++) {
+      await db.into(db.equipoPilotos).insert(
+            EquipoPilotosCompanion.insert(
+              equipoId: equipoId,
+              pilotoId: pilotoIds[i],
+              orden: Value(i),
+            ),
+            mode: InsertMode.insertOrReplace,
+          );
+    }
+  }
+
+  /// IDs de los pilotos de un equipo (unión; cae a piloto1/2 si vacía).
+  Future<List<int>> miembros(int equipoId) async {
+    final ms = await (db.select(db.equipoPilotos)
+          ..where((t) => t.equipoId.equals(equipoId))
+          ..orderBy([(t) => OrderingTerm.asc(t.orden)]))
+        .get();
+    if (ms.isNotEmpty) return ms.map((m) => m.pilotoId).toList();
+    final e = await (db.select(db.equipos)..where((t) => t.id.equals(equipoId)))
+        .getSingleOrNull();
+    if (e == null) return [];
+    return [e.piloto1Id, ?e.piloto2Id];
   }
 
   Future<void> borrar(int id) async {
+    await (db.delete(db.equipoPilotos)..where((t) => t.equipoId.equals(id)))
+        .go();
     await (db.delete(db.equipos)..where((t) => t.id.equals(id))).go();
   }
 }

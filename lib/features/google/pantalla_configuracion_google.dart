@@ -272,7 +272,7 @@ class _PantallaConfiguracionGoogleState
                     '• Leer tus hojas de cálculo (Google Sheets — solo lectura)\n'
                     '• Listar archivos de Drive (Google Drive — solo lectura)\n'
                     '• Crear y modificar el archivo de copia de la app (Drive — solo el archivo de la app)\n\n'
-                    'Resisbarna no toca ningún archivo tuyo, solo el que crea ella.',
+                    'PitWall Control no toca ningún archivo tuyo, solo el que crea él.',
                   ),
                 ],
               ),
@@ -407,7 +407,7 @@ class _GuiaGoogleCloud extends StatelessWidget {
             cuerpo:
                 'Entra en console.cloud.google.com con tu cuenta de Google '
                 '(la misma que tendrá las hojas). Crea un proyecto nuevo, '
-                'por ejemplo "Resisbarna".',
+                'por ejemplo "PitWall Control".',
             urlAccion: 'https://console.cloud.google.com/projectcreate',
             textoAccion: 'Abrir Cloud Console',
           ),
@@ -426,7 +426,7 @@ class _GuiaGoogleCloud extends StatelessWidget {
             titulo: 'Pantalla de consentimiento',
             cuerpo:
                 'Ve a "APIs y servicios → Pantalla de consentimiento OAuth". '
-                'Elige tipo "Externo", pon nombre "Resisbarna", tu email de soporte '
+                'Elige tipo "Externo", pon nombre "PitWall Control", tu email de soporte '
                 'y guarda. En "Audiencia" añade tu propio email como usuario de prueba.',
             urlAccion:
                 'https://console.cloud.google.com/apis/credentials/consent',
@@ -438,7 +438,7 @@ class _GuiaGoogleCloud extends StatelessWidget {
             cuerpo:
                 'Ve a "APIs y servicios → Credenciales → Crear credenciales → '
                 'ID de cliente de OAuth". Tipo: "Aplicación de escritorio". '
-                'Nombre: "Resisbarna Desktop". Acepta.',
+                'Nombre: "PitWall Control Desktop". Acepta.',
             urlAccion: 'https://console.cloud.google.com/apis/credentials',
             textoAccion: 'Credenciales',
           ),

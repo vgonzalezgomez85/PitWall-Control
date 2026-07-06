@@ -39,10 +39,15 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
 
   String? _copa;
   String? _copaOriginal;
-  int? _piloto1Id;
-  int? _piloto2Id;
+  /// Miembros del equipo en orden (null = casilla sin elegir).
+  List<int?> _pilotos = [];
   bool _cargando = true;
   bool _guardando = false;
+
+  int get _minSlots =>
+      ref.read(campeonatoActivoProvider)?.formato == 'PAREJAS' ? 2 : 1;
+  int get _maxSlots =>
+      maxPilotosEquipo(ref.read(campeonatoActivoProvider)?.formato ?? 'PAREJAS');
 
   @override
   void initState() {
@@ -52,6 +57,7 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
 
   Future<void> _cargar() async {
     if (widget.equipoId == null) {
+      _pilotos = List<int?>.filled(_minSlots, null);
       setState(() => _cargando = false);
       return;
     }
@@ -62,8 +68,8 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
     _nombre.text = e.nombre;
     _copa = e.copa;
     _copaOriginal = e.copa;
-    _piloto1Id = e.piloto1Id;
-    _piloto2Id = e.piloto2Id;
+    final ids = await ref.read(repoEquiposProvider).miembros(widget.equipoId!);
+    _pilotos = ids.isEmpty ? List<int?>.filled(_minSlots, null) : List.of(ids);
     if (mounted) setState(() => _cargando = false);
   }
 
@@ -75,21 +81,22 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
 
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_piloto1Id == null) {
-      _aviso('Selecciona al menos un piloto.');
-      return;
-    }
     if (_copa == null) {
       _aviso('Selecciona la copa.');
       return;
     }
     final activo = ref.read(campeonatoActivoProvider)!;
-    if (activo.formato == 'PAREJAS' && _piloto2Id == null) {
+    final ids = _pilotos.whereType<int>().toList();
+    if (ids.isEmpty) {
+      _aviso('Selecciona al menos un piloto.');
+      return;
+    }
+    if (activo.formato == 'PAREJAS' && ids.length < 2) {
       _aviso('En este campeonato (parejas) el equipo necesita dos pilotos.');
       return;
     }
-    if (_piloto2Id != null && _piloto1Id == _piloto2Id) {
-      _aviso('Los dos pilotos del equipo no pueden ser la misma persona.');
+    if (ids.toSet().length != ids.length) {
+      _aviso('Hay pilotos repetidos en el equipo.');
       return;
     }
 
@@ -97,12 +104,11 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
     final repo = ref.read(repoEquiposProvider);
     try {
       if (widget.equipoId == null) {
-        await repo.crear(
+        await repo.crearN(
           campeonatoId: activo.id,
           nombre: _nombre.text.trim(),
           copa: _copa!,
-          piloto1Id: _piloto1Id!,
-          piloto2Id: _piloto2Id,
+          pilotoIds: ids,
         );
       } else {
         // Si cambia la copa a mitad de campeonato, congelar la copa anterior
@@ -111,12 +117,11 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
         if (_copaOriginal != null && _copa != _copaOriginal) {
           await _congelarCopaAnterior(widget.equipoId!, _copaOriginal!);
         }
-        await repo.actualizar(
+        await repo.actualizarN(
           id: widget.equipoId!,
           nombre: _nombre.text.trim(),
           copa: _copa!,
-          piloto1Id: _piloto1Id!,
-          piloto2Id: _piloto2Id,
+          pilotoIds: ids,
         );
       }
       if (mounted) Navigator.of(context).pop();
@@ -200,8 +205,6 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
     }
 
     final esNuevo = widget.equipoId == null;
-    final activo = ref.watch(campeonatoActivoProvider);
-    final esPareja = activo?.formato == 'PAREJAS';
     final pilotosAsync = ref.watch(pilotosDelCampeonatoProvider);
     final copas = ref.watch(copasProvider);
 
@@ -263,24 +266,52 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
                   onChanged: (v) => setState(() => _copa = v),
                 ),
                 const SizedBox(height: 24),
-                Text(esPareja ? 'Pilotos del equipo' : 'Piloto',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                        )),
-                const SizedBox(height: 12),
-                _SelectorPiloto(
-                  label: esPareja ? 'Piloto 1 *' : 'Piloto *',
-                  pilotos: pilotos,
-                  valor: _piloto1Id,
-                  onChange: (v) => setState(() => _piloto1Id = v),
+                Row(
+                  children: [
+                    Text(_maxSlots == 1 ? 'Piloto' : 'Pilotos del equipo',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                            )),
+                    const Spacer(),
+                    if (_maxSlots > 2)
+                      Text('${_pilotos.whereType<int>().length}/$_maxSlots',
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.outline)),
+                  ],
                 ),
-                if (esPareja) ...[
-                  const SizedBox(height: 12),
-                  _SelectorPiloto(
-                    label: 'Piloto 2 *',
-                    pilotos: pilotos,
-                    valor: _piloto2Id,
-                    onChange: (v) => setState(() => _piloto2Id = v),
+                const SizedBox(height: 12),
+                for (var i = 0; i < _pilotos.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SelectorPiloto(
+                          label: _maxSlots == 1 ? 'Piloto *' : 'Piloto ${i + 1}',
+                          pilotos: pilotos,
+                          valor: _pilotos[i],
+                          onChange: (v) => setState(() => _pilotos[i] = v),
+                        ),
+                      ),
+                      // Quitar casilla (solo por encima del mínimo).
+                      if (_pilotos.length > _minSlots)
+                        IconButton(
+                          tooltip: 'Quitar',
+                          icon: const Icon(Icons.remove_circle_outline),
+                          onPressed: () =>
+                              setState(() => _pilotos.removeAt(i)),
+                        ),
+                    ],
+                  ),
+                ],
+                if (_pilotos.length < _maxSlots) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => setState(() => _pilotos.add(null)),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Añadir piloto'),
+                    ),
                   ),
                 ],
                 const SizedBox(height: 16),

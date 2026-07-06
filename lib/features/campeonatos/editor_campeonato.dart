@@ -232,7 +232,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       final pinMax = _pinonFijo ? pinMin : (int.tryParse(_pinonMax.text.trim()) ?? pinMin);
       final corMin = int.tryParse(_coronaMin.text.trim()) ?? 24;
       final corMax = _coronaFijo ? corMin : (int.tryParse(_coronaMax.text.trim()) ?? corMin);
-      // Marca propia del campeonato en los PDF (vacío = usar marca global).
+      // Marca propia del campeonato en los PDF (vacío = valor por defecto).
       final mTitulo = _marcaTitulo.text.trim();
       final mLema = _marcaLema.text.trim();
 
@@ -425,7 +425,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               controller: _nombre,
               decoration: const InputDecoration(
                 labelText: 'Nombre del campeonato *',
-                helperText: 'Ej: Resisbarna 2026, Individual LMP-HYP-GT3 Otoño',
+                helperText: 'Ej: Liga 2026, Individual LMP-HYP-GT3 Otoño',
                 prefixIcon: Icon(Icons.emoji_events_outlined),
               ),
               textCapitalization: TextCapitalization.words,
@@ -539,7 +539,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               onChanged: (v) => setState(() => _usaCreditos = v),
               title: const Text('Usa sistema de créditos (handicap)'),
               subtitle: const Text(
-                  'Activo en Resisbarna. Apágalo si el campeonato no usa créditos.'),
+                  'Sistema de handicap por créditos. Apágalo si el campeonato no lo usa.'),
             ),
             SwitchListTile(
               value: _usaTesoreria,
@@ -715,8 +715,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                     )),
             const SizedBox(height: 4),
             Text(
-              'Título de cabecera y lema del pie en las exportaciones de ESTE '
-              'campeonato. Si lo dejas vacío, se usa la marca global de la app.',
+              'Título de cabecera y lema del pie en las exportaciones (PDF) de '
+              'ESTE campeonato. Si lo dejas vacío, se usa un valor por defecto.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
@@ -724,7 +724,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               controller: _marcaTitulo,
               decoration: const InputDecoration(
                 labelText: 'Título de cabecera',
-                hintText: 'Ej: RESISBARNA',
+                hintText: 'Ej: PITWALL o el nombre de tu club',
                 prefixIcon: Icon(Icons.title),
               ),
               textCapitalization: TextCapitalization.characters,
@@ -734,7 +734,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               controller: _marcaLema,
               decoration: const InputDecoration(
                 labelText: 'Lema del pie',
-                hintText: 'Ej: RESISBARNA · resistencias de slot en Barcelona',
+                hintText: 'Ej: tu club · localidad',
                 prefixIcon: Icon(Icons.notes),
               ),
               maxLines: 2,

@@ -284,7 +284,7 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
               controller: _palmares,
               decoration: const InputDecoration(
                 labelText: 'Palmarés histórico',
-                helperText: 'Ej: "Top 3 Resisbarna 2025", "WES 2023-2024"',
+                helperText: 'Ej: "Top 3 liga 2025", "WES 2023-2024"',
                 prefixIcon: Icon(Icons.emoji_events_outlined),
               ),
             ),

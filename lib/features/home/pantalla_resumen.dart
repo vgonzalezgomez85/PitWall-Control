@@ -211,7 +211,6 @@ class PantallaResumen extends ConsumerWidget {
                 (Icons.leaderboard_outlined, 'Clasificación', 'Clasificación'),
                 (Icons.payments_outlined, 'Tesorería', 'Tesorería'),
                 (Icons.savings_outlined, 'Créditos', 'Créditos'),
-                (Icons.cloud_upload_outlined, 'Publicar en web', 'Publicar'),
               ])
                 if (indiceDestinoVisible(a.$3, activo) >= 0)
                   _TarjetaAcceso(

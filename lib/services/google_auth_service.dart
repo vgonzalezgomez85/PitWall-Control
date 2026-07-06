@@ -216,7 +216,7 @@ class _HttpClientWrapper extends http.BaseClient {
   final _inner = http.Client();
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
-    request.headers['User-Agent'] = 'Resisbarna/1.0';
+    request.headers['User-Agent'] = 'PitWallControl/1.0';
     return _inner.send(request);
   }
 
