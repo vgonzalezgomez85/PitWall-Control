@@ -103,12 +103,38 @@ class DetallePrueba extends ConsumerWidget {
   Future<void> _exportarTanda(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final data =
-          await ref.read(generadorTandaJsonProvider).generar(pruebaId: pruebaId);
+      // Con pole no se exporta el orden de carril: la parrilla se asigna en
+      // PitWall después de correr la pole.
+      final pole = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('¿La carrera tiene pole?'),
+          content: const Text(
+              'Con pole no se exporta el orden de carril: PitWall crea la '
+              'sesión de pole y la parrilla se asigna tras correrla.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Sin pole'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Con pole'),
+            ),
+          ],
+        ),
+      );
+      if (pole == null || !context.mounted) return;
+
+      final data = await ref
+          .read(generadorTandaJsonProvider)
+          .generar(pruebaId: pruebaId, pole: pole);
       final tandas = (data['tandas'] as List?) ?? const [];
       if (tandas.isEmpty) {
-        messenger.showSnackBar(const SnackBar(
-            content: Text('No hay mangas con carriles asignados que exportar.')));
+        messenger.showSnackBar(SnackBar(
+            content: Text(pole
+                ? 'No hay inscritos que exportar.'
+                : 'No hay mangas con carriles asignados que exportar.')));
         return;
       }
       final jsonStr = const JsonEncoder.withIndent('  ').convert(data);

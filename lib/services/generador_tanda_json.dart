@@ -51,7 +51,12 @@ class GeneradorTandaJson {
   }
 
   /// Construye el mapa JSON `pitwall.tanda/v1` de la prueba.
-  Future<Map<String, dynamic>> generar({required int pruebaId}) async {
+  ///
+  /// Con [pole] la carrera decidirá el orden de carril DESPUÉS de correr la
+  /// pole en PitWall, así que NO se envía el carril de salida: entran TODOS los
+  /// inscritos (tengan o no carril asignado) solo con nombre/copa/pilotos.
+  Future<Map<String, dynamic>> generar(
+      {required int pruebaId, bool pole = false}) async {
     final db = ref.read(dbProvider);
     final prueba = await (db.select(db.pruebas)
           ..where((t) => t.id.equals(pruebaId)))
@@ -66,10 +71,12 @@ class GeneradorTandaJson {
         .get();
 
     var maxCarril = 0;
+    var maxNumCarriles = 0;
     final tandas = <Map<String, dynamic>>[];
 
     for (var mi = 0; mi < mangas.length; mi++) {
       final m = mangas[mi];
+      if (m.numCarriles > maxNumCarriles) maxNumCarriles = m.numCarriles;
 
       final inscritos = await (db.select(db.inscripciones)
             ..where((t) => t.mangaId.equals(m.id)))
@@ -79,7 +86,8 @@ class GeneradorTandaJson {
       for (final ins in inscritos) {
         final carril = _carrilCarrera(ins.carrilSalida);
         final descanso = _numeroDescanso(ins.carrilSalida);
-        if (carril == null && descanso == null) continue; // sin asignar → fuera
+        // Sin pole, un inscrito sin carril ni descanso no se puede colocar.
+        if (!pole && carril == null && descanso == null) continue;
         if (carril != null && carril > maxCarril) maxCarril = carril;
 
         final eq = await (db.select(db.equipos)
@@ -90,22 +98,24 @@ class GeneradorTandaJson {
         equipos.add({
           'nombre': eq.nombre,
           'copa': eq.copa,
-          'carril_salida': carril ?? 0, // 0 = descanso
-          'descanso': ?descanso,
+          if (!pole) 'carril_salida': carril ?? 0, // 0 = descanso
+          if (!pole) 'descanso': ?descanso,
           'pilotos': pilotos,
         });
       }
-      // Primero los que corren (por carril), luego los descansos (por su nº).
-      equipos.sort((a, b) {
-        final ca = a['carril_salida'] as int, cb = b['carril_salida'] as int;
-        if (ca == 0 && cb == 0) {
-          return ((a['descanso'] ?? 0) as int)
-              .compareTo((b['descanso'] ?? 0) as int);
-        }
-        if (ca == 0) return 1;
-        if (cb == 0) return -1;
-        return ca.compareTo(cb);
-      });
+      if (!pole) {
+        // Primero los que corren (por carril), luego los descansos (por su nº).
+        equipos.sort((a, b) {
+          final ca = a['carril_salida'] as int, cb = b['carril_salida'] as int;
+          if (ca == 0 && cb == 0) {
+            return ((a['descanso'] ?? 0) as int)
+                .compareTo((b['descanso'] ?? 0) as int);
+          }
+          if (ca == 0) return 1;
+          if (cb == 0) return -1;
+          return ca.compareTo(cb);
+        });
+      }
 
       if (equipos.isNotEmpty) {
         tandas.add({'numero': mi + 1, 'equipos': equipos});
@@ -119,7 +129,10 @@ class GeneradorTandaJson {
         'sede': prueba.sede,
         'formato': camp.formato, // 'INDIVIDUAL' | 'PAREJAS'
       },
-      'carriles': maxCarril > 0 ? maxCarril : 8,
+      'carriles': maxCarril > 0
+          ? maxCarril
+          : (maxNumCarriles > 0 ? maxNumCarriles : 8),
+      if (pole) 'pole': true,
       'tandas': tandas,
     };
   }

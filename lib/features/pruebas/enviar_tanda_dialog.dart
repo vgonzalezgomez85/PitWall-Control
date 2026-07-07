@@ -130,14 +130,17 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
       await almacen.write(key: _kHostKey, value: host);
       await almacen.write(key: _kPinKey, value: _pinCtrl.text.trim());
 
+      // Con pole, el generador no envía el orden de carril (la parrilla se
+      // decide en PitWall tras correr la pole) y entran todos los inscritos.
       final payload = await widget.ref
           .read(generadorTandaJsonProvider)
-          .generar(pruebaId: widget.pruebaId);
-      if (_pole) payload['pole'] = true;
+          .generar(pruebaId: widget.pruebaId, pole: _pole);
       final tandas = (payload['tandas'] as List?) ?? const [];
       if (tandas.isEmpty) {
-        messenger.showSnackBar(const SnackBar(
-            content: Text('No hay mangas con carriles asignados que enviar.')));
+        messenger.showSnackBar(SnackBar(
+            content: Text(_pole
+                ? 'No hay inscritos que enviar.'
+                : 'No hay mangas con carriles asignados que enviar.')));
         setState(() => _enviando = false);
         return;
       }
@@ -231,7 +234,7 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
                   : (v) => setState(() => _pole = v),
               title: const Text('La carrera tiene pole'),
               subtitle: const Text(
-                  'PitWall crea la sesión de pole con todos los equipos'),
+                  'No se envía el orden de carril: la parrilla se asigna en PitWall tras la pole'),
             ),
           ],
         ),
