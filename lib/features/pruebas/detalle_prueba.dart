@@ -36,6 +36,7 @@ import '../verificaciones/pantalla_sorteo_motores.dart';
 import 'detalle_manga.dart';
 import 'editor_manga.dart';
 import 'enviar_tanda_dialog.dart';
+import 'traer_resultados_dialog.dart';
 import 'editor_prueba.dart';
 import 'pantalla_editar_mangas.dart';
 import 'pantalla_inscritos.dart';
@@ -166,6 +167,8 @@ class DetallePrueba extends ConsumerWidget {
             onAbrir: (d) => _abrir(context, d),
             onExportar: (op) => _exportarPdf(context, ref, op),
             onEnviar: () => mostrarEnviarTanda(context, ref, pruebaId),
+            onTraerResultados: () =>
+                mostrarTraerResultados(context, ref, pruebaId),
           ),
           const VerticalDivider(width: 1, thickness: 1),
           Expanded(
@@ -282,6 +285,7 @@ class _PanelPrueba extends StatelessWidget {
     required this.onAbrir,
     required this.onExportar,
     required this.onEnviar,
+    required this.onTraerResultados,
   });
 
   final int pruebaId;
@@ -289,6 +293,7 @@ class _PanelPrueba extends StatelessWidget {
   final void Function(Widget destino) onAbrir;
   final Future<void> Function(String op) onExportar;
   final VoidCallback onEnviar;
+  final VoidCallback onTraerResultados;
 
   @override
   Widget build(BuildContext context) {
@@ -370,6 +375,12 @@ class _PanelPrueba extends StatelessWidget {
               title: const Text('Enviar a PitWall'),
               subtitle: const Text('Por WiFi/LAN, sin fichero'),
               onTap: onEnviar,
+            ),
+            ListTile(
+              leading: const Icon(Icons.cloud_download_outlined),
+              title: const Text('Traer resultados de PitWall'),
+              subtitle: const Text('Posiciones → puntos del campeonato'),
+              onTap: onTraerResultados,
             ),
             const Divider(),
             ListTile(
