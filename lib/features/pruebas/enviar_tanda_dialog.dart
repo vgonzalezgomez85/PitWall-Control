@@ -58,6 +58,7 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
   Discovery? _disc;
   bool _buscando = true;
   bool _enviando = false;
+  bool _pole = false; // ¿la carrera tiene pole? → PitWall crea la sesión
 
   @override
   void initState() {
@@ -132,6 +133,7 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
       final payload = await widget.ref
           .read(generadorTandaJsonProvider)
           .generar(pruebaId: widget.pruebaId);
+      if (_pole) payload['pole'] = true;
       final tandas = (payload['tandas'] as List?) ?? const [];
       if (tandas.isEmpty) {
         messenger.showSnackBar(const SnackBar(
@@ -218,6 +220,18 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
                 labelText: 'PIN de importación',
                 helperText: 'El PIN que muestra PitWall en «Importar tanda».',
               ),
+            ),
+            const SizedBox(height: 4),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              value: _pole,
+              onChanged: _enviando
+                  ? null
+                  : (v) => setState(() => _pole = v),
+              title: const Text('La carrera tiene pole'),
+              subtitle: const Text(
+                  'PitWall crea la sesión de pole con todos los equipos'),
             ),
           ],
         ),
