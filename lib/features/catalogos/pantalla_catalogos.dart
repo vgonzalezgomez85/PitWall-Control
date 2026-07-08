@@ -37,13 +37,17 @@ import 'importar_catalogo.dart';
 import 'pantalla_subir_sheet.dart';
 import 'repositorio_catalogos.dart';
 
-/// Carga las copas disponibles del catálogo para mostrarlas como opciones.
-/// No autoDispose para que sobreviva al ciclo de vida del diálogo.
-final _copasDisponiblesProvider = FutureProvider<List<String>>((ref) async {
-  // Leer del repo directamente, sin depender del stream autoDispose.
-  final db = ref.read(repoCatalogosProvider).db;
-  final lista = await db.select(db.catalogoCopas).get();
-  return lista.map((c) => c.nombre).toList()..sort();
+/// Copas disponibles del catálogo, para ofrecerlas como opciones.
+/// OBSERVA la tabla (no es un FutureProvider de una sola lectura): si no, al
+/// crear una copa nueva el selector seguiría con la lista cacheada hasta
+/// reiniciar la app. No es autoDispose, para que sobreviva al ciclo de vida
+/// del diálogo que la consume.
+final _copasDisponiblesProvider = StreamProvider<List<String>>((ref) {
+  final db = ref.watch(repoCatalogosProvider).db;
+  return db
+      .select(db.catalogoCopas)
+      .watch()
+      .map((lista) => lista.map((c) => c.nombre).toList()..sort());
 });
 
 List<String> _decodeCopas(String? s) {
