@@ -54,6 +54,37 @@ void main() {
 
     expect(res.totalCreados, 1);
     expect(res.errores, isEmpty);
+    expect(res.hojasIgnoradas, isEmpty);
+
+    await db.close();
+  });
+
+  test('la pestaña se reconoce con tilde/mayúsculas y avisa si la renombran',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    await db.into(db.catalogoNeumaticos).insert(
+        CatalogoNeumaticosCompanion.insert(nombre: 'AS25 19,0 NEGRO'));
+
+    final libro = Excel.decodeBytes(await exportarCatalogosExcel(db));
+    // La pestaña se exporta como "Neumaticos" (sin tilde).
+    expect(libro.tables.keys, contains('Neumaticos'));
+
+    // El usuario la renombra con tilde y mayúsculas → debe seguir importándose.
+    libro.rename('Neumaticos', 'NEUMÁTICOS');
+    libro.updateCell('NEUMÁTICOS', CellIndex.indexByString('B2'),
+        TextCellValue('AS25 19,0 ROJO'));
+    // Y añade una pestaña suya que no es ningún catálogo → debe avisarse.
+    libro.appendRow('Mis notas', [TextCellValue('lo que sea')]);
+
+    final res =
+        await importarCatalogosExcel(db, Uint8List.fromList(libro.save()!));
+
+    final n = await db.select(db.catalogoNeumaticos).getSingle();
+    expect(n.nombre, 'AS25 19,0 ROJO',
+        reason: 'la hoja con tilde/mayúsculas se reconoce igual');
+    expect(res.hojasIgnoradas, contains('Mis notas'),
+        reason: 'una pestaña desconocida se avisa, no se traga en silencio');
+    expect(res.errores, isEmpty);
 
     await db.close();
   });
