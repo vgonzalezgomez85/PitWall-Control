@@ -38,6 +38,10 @@ class ResultadoImportCatalogos {
   final Map<String, int> actualizados = {};
   final List<String> errores = [];
 
+  /// Pestañas del libro que no corresponden a ningún catálogo: se ignoran, pero
+  /// hay que DECÍRSELO al usuario (si renombró una hoja, sus cambios no entran).
+  final List<String> hojasIgnoradas = [];
+
   int get totalCreados => creados.values.fold(0, (a, b) => a + b);
   int get totalActualizados => actualizados.values.fold(0, (a, b) => a + b);
 
@@ -48,9 +52,23 @@ class ResultadoImportCatalogos {
 
   String get resumen {
     final b = StringBuffer('✓ Creados: $totalCreados · Actualizados: $totalActualizados');
+    if (hojasIgnoradas.isNotEmpty) {
+      b.write('\n⚠ Pestañas ignoradas (nombre no reconocido): '
+          '${hojasIgnoradas.join(', ')}');
+    }
     if (errores.isNotEmpty) b.write('\n✗ ${errores.length} fila(s) con error');
     return b.toString();
   }
+}
+
+/// Nombre de pestaña normalizado: sin tildes, sin espacios y en minúsculas.
+/// Así «Neumáticos», «NEUMATICOS» y «neumaticos» son la misma hoja y renombrar
+/// una pestaña con una tilde no hace que se pierdan sus cambios en silencio.
+String _normHoja(String s) {
+  const acentos = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n'};
+  var r = s.toLowerCase().trim();
+  acentos.forEach((k, v) => r = r.replaceAll(k, v));
+  return r.replaceAll(' ', '');
 }
 
 // ── Helpers de celdas ───────────────────────────────────────────────────────
@@ -194,11 +212,21 @@ Future<ResultadoImportCatalogos> importarCatalogosExcel(
   final libro = Excel.decodeBytes(bytes);
   final res = ResultadoImportCatalogos();
 
+  // Índice de las pestañas del libro por nombre normalizado, para que la
+  // búsqueda no dependa de tildes ni mayúsculas.
+  final porNombre = {
+    for (final e in libro.tables.entries) _normHoja(e.key): e.value,
+  };
+  final reconocidas = <String>{};
+
   /// Recorre una hoja: cabecera → índices, y una acción por fila de datos.
   Future<void> hoja(String nombre,
       Future<void> Function(List<Data?> fila, Map<String, int> cols, int? id) fn) async {
-    final tabla = libro.tables[nombre];
-    if (tabla == null || tabla.rows.length < 2) return;
+    final clave = _normHoja(nombre);
+    final tabla = porNombre[clave];
+    if (tabla == null) return;
+    reconocidas.add(clave);
+    if (tabla.rows.length < 2) return; // solo cabecera: nada que importar
 
     final cabecera = tabla.rows.first;
     final cols = <String, int>{};
@@ -388,6 +416,12 @@ Future<ResultadoImportCatalogos> importarCatalogosExcel(
       }
     });
   });
+
+  // Pestañas del libro que no son ningún catálogo: avisamos en vez de tragarlas
+  // en silencio (si el usuario renombró una hoja, sus cambios NO han entrado).
+  for (final e in libro.tables.entries) {
+    if (!reconocidas.contains(_normHoja(e.key))) res.hojasIgnoradas.add(e.key);
+  }
 
   return res;
 }

@@ -341,6 +341,7 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
                 for (final e in {...res.creados.keys, ...res.actualizados.keys})
                   '• $e: ${res.creados[e] ?? 0} nuevos, ${res.actualizados[e] ?? 0} actualizados'
               ].join('\n')}'
+              '${res.hojasIgnoradas.isEmpty ? '' : '\n\n⚠ Estas pestañas no se han importado porque su nombre no coincide con ningún catálogo:\n${res.hojasIgnoradas.map((h) => '• $h').join('\n')}\nNo renombres las pestañas del fichero exportado.'}'
               '${res.errores.isEmpty ? '' : '\n\nErrores:\n${res.errores.take(10).join('\n')}'}',
             ),
           ),
