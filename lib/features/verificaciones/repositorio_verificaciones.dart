@@ -134,30 +134,35 @@ final marcasCodigosProvider =
       .map((lista) => lista.map((m) => m.codigo).toSet());
 });
 
-/// Llantas para el eje delantero: tipo DELANTERA o AMBAS. Si ninguna llanta
-/// del catálogo encaja (p. ej. todas importadas con otro tipo), se muestran
-/// todas antes que dejar el desplegable vacío.
-final llantasDelProvider =
-    StreamProvider.autoDispose<List<CatalogoLlanta>>((ref) {
-  final db = ref.watch(dbProvider);
+/// Llantas de un eje, filtradas por tipo y por la copa del equipo.
+/// - Tipo: DELANTERA/TRASERA según el eje, más las AMBAS.
+/// - Copa: si la llanta tiene copas marcadas, solo aplica a esas; sin marcar
+///   vale para todas (misma semántica que el resto de catálogos).
+/// Si el filtro deja el desplegable vacío se devuelven todas, antes que dejar
+/// al verificador sin opciones.
+Stream<List<CatalogoLlanta>> _llantasEje(
+    AppDatabase db, String tipoEje, String? copa) {
   return db.select(db.catalogoLlantas).watch().map((todas) {
-    final filtradas = todas
-        .where((l) => l.tipo == 'DELANTERA' || l.tipo == 'AMBAS')
-        .toList();
-    return filtradas.isEmpty ? todas : filtradas;
+    var filtradas =
+        todas.where((l) => l.tipo == tipoEje || l.tipo == 'AMBAS').toList();
+    if (filtradas.isEmpty) filtradas = todas;
+    if (copa == null || copa.isEmpty) return filtradas;
+    final porCopa =
+        filtradas.where((l) => _aplicaA(l.copasJson ?? '', copa)).toList();
+    return porCopa.isEmpty ? filtradas : porCopa;
   });
+}
+
+/// Llantas del eje delantero filtradas por la copa del equipo.
+final llantasDelFiltradasProvider = StreamProvider.autoDispose
+    .family<List<CatalogoLlanta>, String?>((ref, copa) {
+  return _llantasEje(ref.watch(dbProvider), 'DELANTERA', copa);
 });
 
-/// Llantas para el eje trasero: tipo TRASERA o AMBAS (mismo fallback).
-final llantasTraProvider =
-    StreamProvider.autoDispose<List<CatalogoLlanta>>((ref) {
-  final db = ref.watch(dbProvider);
-  return db.select(db.catalogoLlantas).watch().map((todas) {
-    final filtradas = todas
-        .where((l) => l.tipo == 'TRASERA' || l.tipo == 'AMBAS')
-        .toList();
-    return filtradas.isEmpty ? todas : filtradas;
-  });
+/// Llantas del eje trasero filtradas por la copa del equipo.
+final llantasTraFiltradasProvider = StreamProvider.autoDispose
+    .family<List<CatalogoLlanta>, String?>((ref, copa) {
+  return _llantasEje(ref.watch(dbProvider), 'TRASERA', copa);
 });
 /// Bancadas filtradas por la copa del equipo (parámetro `copa`).
 /// Si el catálogo tiene copas marcadas, solo se devuelven las que aplican

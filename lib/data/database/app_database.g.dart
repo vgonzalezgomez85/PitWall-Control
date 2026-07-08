@@ -10906,8 +10906,19 @@ class $CatalogoLlantasTable extends CatalogoLlantas
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _copasJsonMeta = const VerificationMeta(
+    'copasJson',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, dimension, tipo];
+  late final GeneratedColumn<String> copasJson = GeneratedColumn<String>(
+    'copas_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, dimension, tipo, copasJson];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -10939,6 +10950,12 @@ class $CatalogoLlantasTable extends CatalogoLlantas
     } else if (isInserting) {
       context.missing(_tipoMeta);
     }
+    if (data.containsKey('copas_json')) {
+      context.handle(
+        _copasJsonMeta,
+        copasJson.isAcceptableOrUnknown(data['copas_json']!, _copasJsonMeta),
+      );
+    }
     return context;
   }
 
@@ -10960,6 +10977,10 @@ class $CatalogoLlantasTable extends CatalogoLlantas
         DriftSqlType.string,
         data['${effectivePrefix}tipo'],
       )!,
+      copasJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}copas_json'],
+      ),
     );
   }
 
@@ -10973,10 +10994,12 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
   final int id;
   final String dimension;
   final String tipo;
+  final String? copasJson;
   const CatalogoLlanta({
     required this.id,
     required this.dimension,
     required this.tipo,
+    this.copasJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -10984,6 +11007,9 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
     map['id'] = Variable<int>(id);
     map['dimension'] = Variable<String>(dimension);
     map['tipo'] = Variable<String>(tipo);
+    if (!nullToAbsent || copasJson != null) {
+      map['copas_json'] = Variable<String>(copasJson);
+    }
     return map;
   }
 
@@ -10992,6 +11018,9 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
       id: Value(id),
       dimension: Value(dimension),
       tipo: Value(tipo),
+      copasJson: copasJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(copasJson),
     );
   }
 
@@ -11004,6 +11033,7 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
       id: serializer.fromJson<int>(json['id']),
       dimension: serializer.fromJson<String>(json['dimension']),
       tipo: serializer.fromJson<String>(json['tipo']),
+      copasJson: serializer.fromJson<String?>(json['copasJson']),
     );
   }
   @override
@@ -11013,20 +11043,27 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
       'id': serializer.toJson<int>(id),
       'dimension': serializer.toJson<String>(dimension),
       'tipo': serializer.toJson<String>(tipo),
+      'copasJson': serializer.toJson<String?>(copasJson),
     };
   }
 
-  CatalogoLlanta copyWith({int? id, String? dimension, String? tipo}) =>
-      CatalogoLlanta(
-        id: id ?? this.id,
-        dimension: dimension ?? this.dimension,
-        tipo: tipo ?? this.tipo,
-      );
+  CatalogoLlanta copyWith({
+    int? id,
+    String? dimension,
+    String? tipo,
+    Value<String?> copasJson = const Value.absent(),
+  }) => CatalogoLlanta(
+    id: id ?? this.id,
+    dimension: dimension ?? this.dimension,
+    tipo: tipo ?? this.tipo,
+    copasJson: copasJson.present ? copasJson.value : this.copasJson,
+  );
   CatalogoLlanta copyWithCompanion(CatalogoLlantasCompanion data) {
     return CatalogoLlanta(
       id: data.id.present ? data.id.value : this.id,
       dimension: data.dimension.present ? data.dimension.value : this.dimension,
       tipo: data.tipo.present ? data.tipo.value : this.tipo,
+      copasJson: data.copasJson.present ? data.copasJson.value : this.copasJson,
     );
   }
 
@@ -11035,46 +11072,53 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
     return (StringBuffer('CatalogoLlanta(')
           ..write('id: $id, ')
           ..write('dimension: $dimension, ')
-          ..write('tipo: $tipo')
+          ..write('tipo: $tipo, ')
+          ..write('copasJson: $copasJson')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, dimension, tipo);
+  int get hashCode => Object.hash(id, dimension, tipo, copasJson);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CatalogoLlanta &&
           other.id == this.id &&
           other.dimension == this.dimension &&
-          other.tipo == this.tipo);
+          other.tipo == this.tipo &&
+          other.copasJson == this.copasJson);
 }
 
 class CatalogoLlantasCompanion extends UpdateCompanion<CatalogoLlanta> {
   final Value<int> id;
   final Value<String> dimension;
   final Value<String> tipo;
+  final Value<String?> copasJson;
   const CatalogoLlantasCompanion({
     this.id = const Value.absent(),
     this.dimension = const Value.absent(),
     this.tipo = const Value.absent(),
+    this.copasJson = const Value.absent(),
   });
   CatalogoLlantasCompanion.insert({
     this.id = const Value.absent(),
     required String dimension,
     required String tipo,
+    this.copasJson = const Value.absent(),
   }) : dimension = Value(dimension),
        tipo = Value(tipo);
   static Insertable<CatalogoLlanta> custom({
     Expression<int>? id,
     Expression<String>? dimension,
     Expression<String>? tipo,
+    Expression<String>? copasJson,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (dimension != null) 'dimension': dimension,
       if (tipo != null) 'tipo': tipo,
+      if (copasJson != null) 'copas_json': copasJson,
     });
   }
 
@@ -11082,11 +11126,13 @@ class CatalogoLlantasCompanion extends UpdateCompanion<CatalogoLlanta> {
     Value<int>? id,
     Value<String>? dimension,
     Value<String>? tipo,
+    Value<String?>? copasJson,
   }) {
     return CatalogoLlantasCompanion(
       id: id ?? this.id,
       dimension: dimension ?? this.dimension,
       tipo: tipo ?? this.tipo,
+      copasJson: copasJson ?? this.copasJson,
     );
   }
 
@@ -11102,6 +11148,9 @@ class CatalogoLlantasCompanion extends UpdateCompanion<CatalogoLlanta> {
     if (tipo.present) {
       map['tipo'] = Variable<String>(tipo.value);
     }
+    if (copasJson.present) {
+      map['copas_json'] = Variable<String>(copasJson.value);
+    }
     return map;
   }
 
@@ -11110,7 +11159,8 @@ class CatalogoLlantasCompanion extends UpdateCompanion<CatalogoLlanta> {
     return (StringBuffer('CatalogoLlantasCompanion(')
           ..write('id: $id, ')
           ..write('dimension: $dimension, ')
-          ..write('tipo: $tipo')
+          ..write('tipo: $tipo, ')
+          ..write('copasJson: $copasJson')
           ..write(')'))
         .toString();
   }
@@ -26597,12 +26647,14 @@ typedef $$CatalogoLlantasTableCreateCompanionBuilder =
       Value<int> id,
       required String dimension,
       required String tipo,
+      Value<String?> copasJson,
     });
 typedef $$CatalogoLlantasTableUpdateCompanionBuilder =
     CatalogoLlantasCompanion Function({
       Value<int> id,
       Value<String> dimension,
       Value<String> tipo,
+      Value<String?> copasJson,
     });
 
 class $$CatalogoLlantasTableFilterComposer
@@ -26626,6 +26678,11 @@ class $$CatalogoLlantasTableFilterComposer
 
   ColumnFilters<String> get tipo => $composableBuilder(
     column: $table.tipo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get copasJson => $composableBuilder(
+    column: $table.copasJson,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -26653,6 +26710,11 @@ class $$CatalogoLlantasTableOrderingComposer
     column: $table.tipo,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get copasJson => $composableBuilder(
+    column: $table.copasJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CatalogoLlantasTableAnnotationComposer
@@ -26672,6 +26734,9 @@ class $$CatalogoLlantasTableAnnotationComposer
 
   GeneratedColumn<String> get tipo =>
       $composableBuilder(column: $table.tipo, builder: (column) => column);
+
+  GeneratedColumn<String> get copasJson =>
+      $composableBuilder(column: $table.copasJson, builder: (column) => column);
 }
 
 class $$CatalogoLlantasTableTableManager
@@ -26714,20 +26779,24 @@ class $$CatalogoLlantasTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> dimension = const Value.absent(),
                 Value<String> tipo = const Value.absent(),
+                Value<String?> copasJson = const Value.absent(),
               }) => CatalogoLlantasCompanion(
                 id: id,
                 dimension: dimension,
                 tipo: tipo,
+                copasJson: copasJson,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String dimension,
                 required String tipo,
+                Value<String?> copasJson = const Value.absent(),
               }) => CatalogoLlantasCompanion.insert(
                 id: id,
                 dimension: dimension,
                 tipo: tipo,
+                copasJson: copasJson,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

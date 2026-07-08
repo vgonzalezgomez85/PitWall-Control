@@ -511,13 +511,13 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     }
 
     final marcasAsync = ref.watch(marcasCodigosProvider);
-    final llantasDelAsync = ref.watch(llantasDelProvider);
-    final llantasTraAsync = ref.watch(llantasTraProvider);
     // ignore: unused_local_variable
     final bancadasAsync = ref.watch(bancadasProvider);
-    // Filtramos coches, bancadas y motores por la copa del equipo
+    // Filtramos coches, bancadas, motores, neumáticos y llantas por la copa del equipo
     // Copa que corre el equipo EN esta prueba (snapshot); cae a la copa actual.
     final copaEquipo = _copaPrueba ?? _equipo?.copa;
+    final llantasDelAsync = ref.watch(llantasDelFiltradasProvider(copaEquipo));
+    final llantasTraAsync = ref.watch(llantasTraFiltradasProvider(copaEquipo));
     final neumaticosAsync = ref.watch(neumaticosFiltradosProvider(copaEquipo));
     final campActivo = ref.watch(campeonatoActivoProvider);
     final champCopas = _copasDeCampeonato(campActivo?.copasJson);
