@@ -19,12 +19,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' show Value;
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
+import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../services/excel_catalogos.dart';
 import '../../services/fotos_verificacion.dart';
 import '../google/actualizador_drive.dart';
 import '../google/repositorio_hojas_vinculadas.dart';
@@ -252,12 +256,135 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
     }
   }
 
+  /// Exporta los 10 catálogos a un .xlsx (una pestaña por catálogo) para
+  /// editarlo cómodamente en Excel y devolverlo con «Importar Excel».
+  Future<void> _exportarExcel() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      messenger.showSnackBar(const SnackBar(
+          content: Text('Generando Excel…'), duration: Duration(seconds: 2)));
+      final bytes = await exportarCatalogosExcel(ref.read(dbProvider));
+      final sugerido =
+          'catalogos-pitwall-${DateTime.now().toIso8601String().substring(0, 10)}.xlsx';
+
+      if (Platform.isAndroid || Platform.isIOS) {
+        final dir = await getApplicationDocumentsDirectory();
+        final ruta = p.join(dir.path, sugerido);
+        await File(ruta).writeAsBytes(bytes);
+        messenger.showSnackBar(SnackBar(content: Text('Excel guardado en $ruta')));
+        return;
+      }
+
+      final destino = await getSaveLocation(
+        acceptedTypeGroups: [
+          const XTypeGroup(label: 'Excel', extensions: ['xlsx']),
+        ],
+        suggestedName: sugerido,
+      );
+      if (destino == null) return;
+      var ruta = destino.path;
+      if (!ruta.toLowerCase().endsWith('.xlsx')) ruta = '$ruta.xlsx';
+      await File(ruta).writeAsBytes(bytes);
+      messenger.showSnackBar(SnackBar(content: Text('Catálogos exportados en $ruta')));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Error al exportar: $e')));
+    }
+  }
+
+  /// Reimporta el .xlsx editado: actualiza las filas con ID y crea las que no
+  /// lo tienen. Nunca borra: lo que quites de la hoja se queda en la app.
+  Future<void> _importarExcel() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final xfile = await openFile(acceptedTypeGroups: [
+      const XTypeGroup(label: 'Excel', extensions: ['xlsx']),
+    ]);
+    if (xfile == null || !mounted) return;
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Importar catálogos desde Excel'),
+        content: const Text(
+            'Se actualizarán las filas que tengan ID y se crearán las que no lo '
+            'tengan.\n\nNo se borra nada: las fichas que quites de la hoja '
+            'seguirán en la app.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Importar')),
+        ],
+      ),
+    );
+    if (confirmar != true) return;
+
+    try {
+      messenger.showSnackBar(const SnackBar(
+          content: Text('Importando…'), duration: Duration(seconds: 2)));
+      final bytes = await File(xfile.path).readAsBytes();
+      final res = await importarCatalogosExcel(ref.read(dbProvider), bytes);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Importación completada'),
+          content: SingleChildScrollView(
+            child: Text(
+              '${res.resumen}\n\n'
+              '${[
+                for (final e in {...res.creados.keys, ...res.actualizados.keys})
+                  '• $e: ${res.creados[e] ?? 0} nuevos, ${res.actualizados[e] ?? 0} actualizados'
+              ].join('\n')}'
+              '${res.errores.isEmpty ? '' : '\n\nErrores:\n${res.errores.take(10).join('\n')}'}',
+            ),
+          ),
+          actions: [
+            FilledButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK')),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('Error al importar: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Catálogos'),
         actions: [
+          PopupMenuButton<String>(
+            tooltip: 'Todo el catálogo en Excel',
+            icon: const Icon(Icons.table_view_outlined),
+            onSelected: (op) =>
+                op == 'exportar' ? _exportarExcel() : _importarExcel(),
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'exportar',
+                child: ListTile(
+                  leading: Icon(Icons.download_outlined),
+                  title: Text('Exportar todo a Excel'),
+                  subtitle: Text('Una pestaña por catálogo'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'importar',
+                child: ListTile(
+                  leading: Icon(Icons.upload_file_outlined),
+                  title: Text('Importar Excel editado'),
+                  subtitle: Text('Actualiza por ID y crea los nuevos'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
           Consumer(builder: (context, ref, _) {
             final tipo = _tipoActual();
             final vinculoAsync =
