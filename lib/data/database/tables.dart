@@ -355,6 +355,7 @@ class CatalogoLlantas extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get dimension => text()(); // "15,8 x 8 PL"
   TextColumn get tipo => text()(); // DELANTERA | TRASERA | AMBAS
+  TextColumn get copasJson => text().nullable()(); // JSON con las copas
 }
 
 class CatalogoBancadas extends Table {

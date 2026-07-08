@@ -170,15 +170,24 @@ class RepositorioCatalogos {
   }
 
   // ---- Llantas ----
-  Future<int> crearLlanta(String dimension, String tipo) {
+  Future<int> crearLlanta(String dimension, String tipo,
+      {String? copasJson}) {
     return db.into(db.catalogoLlantas).insert(
-        CatalogoLlantasCompanion.insert(dimension: dimension, tipo: tipo));
+        CatalogoLlantasCompanion.insert(
+            dimension: dimension,
+            tipo: tipo,
+            copasJson:
+                copasJson == null ? const Value.absent() : Value(copasJson)));
   }
 
-  Future<void> actualizarLlanta(int id, String dimension, String tipo) async {
+  Future<void> actualizarLlanta(int id, String dimension, String tipo,
+      {String? copasJson}) async {
     await (db.update(db.catalogoLlantas)..where((t) => t.id.equals(id)))
         .write(CatalogoLlantasCompanion(
-            dimension: Value(dimension), tipo: Value(tipo)));
+            dimension: Value(dimension),
+            tipo: Value(tipo),
+            copasJson:
+                copasJson == null ? const Value.absent() : Value(copasJson)));
   }
 
   Future<void> borrarLlanta(int id) async {

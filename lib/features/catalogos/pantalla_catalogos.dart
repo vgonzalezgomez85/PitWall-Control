@@ -835,11 +835,15 @@ class _TabLlantas extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
+    final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
     return _ListaCatalogo<CatalogoLlanta>(
       datos: ref.watch(llantasCatalogoProvider),
       vacio: 'Sin llantas',
       textoBuscable: (l) => '${l.dimension} ${l.tipo}',
+      copasJsonDe: (l) => l.copasJson,
+      copas: copas,
       fab: FloatingActionButton.extended(
+        heroTag: 'fab_llantas',
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Llanta'),
@@ -855,7 +859,11 @@ class _TabLlantas extends ConsumerWidget {
             color: cs.primary,
           ),
           title: Text(l.dimension),
-          subtitle: Text(l.tipo),
+          subtitle: Text(
+            '${l.tipo}'
+            '\nCopas: ${_resumenCopas(_decodeCopas(l.copasJson))}',
+          ),
+          isThreeLine: true,
           trailing: PopupMenuButton<String>(
             onSelected: (op) async {
               if (op == 'editar') {
@@ -881,12 +889,14 @@ class _TabLlantas extends ConsumerWidget {
       BuildContext context, WidgetRef ref, CatalogoLlanta? l) async {
     final dim = TextEditingController(text: l?.dimension ?? '');
     String tipo = l?.tipo ?? 'DELANTERA';
-    final ok = await showDialog<bool>(
+    final copasIni = l == null ? <String>{} : _decodeCopas(l.copasJson).toSet();
+    final res = await showDialog<({bool ok, Set<String> copas})>(
       context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setSt) => AlertDialog(
-          title: Text(l == null ? 'Nueva llanta' : 'Editar llanta'),
-          content: Column(
+      builder: (_) => _DialogoCocheBancada(
+        titulo: l == null ? 'Nueva llanta' : 'Editar llanta',
+        copasIniciales: copasIni,
+        contenidoExtra: StatefulBuilder(
+          builder: (ctx, setSt) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
@@ -908,23 +918,18 @@ class _TabLlantas extends ConsumerWidget {
               ),
             ],
           ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancelar')),
-            FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Guardar')),
-          ],
         ),
       ),
     );
-    if (ok != true) return;
+    if (res == null || !res.ok) return;
+    final d = dim.text.trim();
+    if (d.isEmpty) return;
+    final copasJson = json.encode(res.copas.toList());
     final repo = ref.read(repoCatalogosProvider);
     if (l == null) {
-      await repo.crearLlanta(dim.text.trim(), tipo);
+      await repo.crearLlanta(d, tipo, copasJson: copasJson);
     } else {
-      await repo.actualizarLlanta(l.id, dim.text.trim(), tipo);
+      await repo.actualizarLlanta(l.id, d, tipo, copasJson: copasJson);
     }
   }
 }
