@@ -172,16 +172,23 @@ class _BarraLateral extends ConsumerWidget {
                 selectedIndex: indice,
                 onDestinationSelected: (i) =>
                     ref.read(shellIndiceProvider.notifier).ir(i),
-                leading: Column(
-                  children: [
-                    const SizedBox(height: 14),
-                    _EncabezadoLogo(extendida: extendida),
-                    const SizedBox(height: 6),
-                    _SelectorCampeonatoRail(
-                      campeonatos: campeonatos,
-                      extendida: extendida,
-                    ),
-                  ],
+                // El rail cuelga de un Row, así que su ancho llega SIN acotar:
+                // hay que fijarlo aquí o el encabezado extendido (Row + Expanded)
+                // no puede hacer layout y logo/selector no llegan a pintarse.
+                // Mismo criterio que el `trailing` de abajo.
+                leading: SizedBox(
+                  width: extendida ? 220 : 72,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 14),
+                      _EncabezadoLogo(extendida: extendida),
+                      const SizedBox(height: 6),
+                      _SelectorCampeonatoRail(
+                        campeonatos: campeonatos,
+                        extendida: extendida,
+                      ),
+                    ],
+                  ),
                 ),
                 trailing: Expanded(
                   child: Align(
