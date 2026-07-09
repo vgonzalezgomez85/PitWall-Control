@@ -63,7 +63,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 28;
+  int get schemaVersion => 29;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -234,6 +234,16 @@ class AppDatabase extends _$AppDatabase {
           if (from < 28) {
             await _aplicar(() => customStatement(
                 'ALTER TABLE catalogo_llantas ADD COLUMN copas_json TEXT'));
+          }
+          if (from < 29) {
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN pinon_diametro TEXT'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN pinon_material TEXT'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN corona_diametro TEXT'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN corona_material TEXT'));
           }
         },
       );

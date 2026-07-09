@@ -252,9 +252,17 @@ class Verificaciones extends Table {
 
   TextColumn get pinonMarca => text().nullable()();
   IntColumn get pinonDientes => integer().nullable()();
+  /// Diámetro del piñón, tal cual lo anota el verificador (texto libre).
+  TextColumn get pinonDiametro => text().nullable()();
+  /// Material del piñón: PL | ERG | LAT | ACR | ALU.
+  TextColumn get pinonMaterial => text().nullable()();
 
   TextColumn get coronaMarca => text().nullable()();
   IntColumn get coronaDientes => integer().nullable()();
+  /// Diámetro de la corona, tal cual lo anota el verificador (texto libre).
+  TextColumn get coronaDiametro => text().nullable()();
+  /// Material de la corona: PL | MET.
+  TextColumn get coronaMaterial => text().nullable()();
 
   TextColumn get llantaDelMarca => text().nullable()();
   TextColumn get llantaDelDimension => text().nullable()();

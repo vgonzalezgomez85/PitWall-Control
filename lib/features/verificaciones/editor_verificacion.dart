@@ -51,14 +51,15 @@ String _copasDeCampeonato(String? copasJson) {
   return '';
 }
 
-/// Marcas de engranaje homologadas para la copa. Si el catálogo de engranajes
-/// no aporta ninguna, se devuelven [todas] las marcas del componente.
-Set<String> _marcasEngranaje(
-    AsyncValue<List<CatalogoEngranaje>> async, Set<String> todas) {
+/// Dientes distintos del catálogo de engranajes ya filtrado (tipo + copa).
+List<int> _dientesDe(AsyncValue<List<CatalogoEngranaje>> async) {
   final lista = async.asData?.value ?? const [];
-  final marcas = lista.map((e) => e.marca).where((m) => m.isNotEmpty).toSet();
-  return marcas.isEmpty ? todas : marcas;
+  return lista.map((e) => e.dientes).toSet().toList()..sort();
 }
+
+/// Materiales homologados (listas fijas del reglamento).
+const _materialesPinon = ['PL', 'ERG', 'LAT', 'ACR', 'ALU'];
+const _materialesCorona = ['PL', 'MET'];
 
 class EditorVerificacion extends ConsumerStatefulWidget {
   const EditorVerificacion({
@@ -84,10 +85,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   final _motor = TextEditingController();
   final _motorRpm = TextEditingController();
   final _motorUms = TextEditingController();
-  final _pinonDientes = TextEditingController(text: '12');
-  final _coronaDientes = TextEditingController();
+  final _pinonDiametro = TextEditingController();
+  final _coronaDiametro = TextEditingController();
   final _suspension = TextEditingController();
-  final _trencilla = TextEditingController();
   final _observaciones = TextEditingController();
   String? _chasis;
   String _motorTipo = 'ORGANIZACION';
@@ -97,13 +97,20 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
 
   int? _cocheId;
   String? _pinonMarca;
+  /// Dientes del piñón: se eligen del catálogo de engranajes (tipo + copa).
+  int? _pinonDientes;
+  String? _pinonMaterial;
   String? _coronaMarca;
+  int? _coronaDientes;
+  String? _coronaMaterial;
   String? _llantaDelMarca;
   String? _llantaDelDim;
   String? _llantaTraMarca;
   String? _llantaTraDim;
   String? _bancada;
   String? _neumatico;
+  /// Trencilla: marca del catálogo de marcas.
+  String? _trencilla;
 
   bool _validada = false;
   bool _cargando = true;
@@ -136,8 +143,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
 
   List<TextEditingController> get _controllers => [
         _pesoIni, _pesoFin, _pesoIniCoche, _pesoFinCoche,
-        _motor, _motorRpm, _motorUms, _pinonDientes, _coronaDientes,
-        _suspension, _trencilla, _observaciones,
+        _motor, _motorRpm, _motorUms, _pinonDiametro, _coronaDiametro,
+        _suspension, _observaciones,
       ];
 
   /// Programa un autoguardado de borrador tras una breve pausa sin cambios.
@@ -331,14 +338,18 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
       _motorRpm.text = v.motorRpm?.toString() ?? '';
       _motorUms.text = v.motorUms?.toString() ?? '';
       _pinonMarca = v.pinonMarca;
-      _pinonDientes.text = v.pinonDientes?.toString() ?? '12';
+      _pinonDientes = v.pinonDientes;
+      _pinonDiametro.text = v.pinonDiametro ?? '';
+      _pinonMaterial = v.pinonMaterial;
       _coronaMarca = v.coronaMarca;
-      _coronaDientes.text = v.coronaDientes?.toString() ?? '';
+      _coronaDientes = v.coronaDientes;
+      _coronaDiametro.text = v.coronaDiametro ?? '';
+      _coronaMaterial = v.coronaMaterial;
       _llantaDelMarca = v.llantaDelMarca;
       _llantaDelDim = v.llantaDelDimension;
       _llantaTraMarca = v.llantaTraMarca;
       _llantaTraDim = v.llantaTraDimension;
-      _trencilla.text = v.trencilla ?? '';
+      _trencilla = v.trencilla;
       _suspension.text = v.suspension ?? '';
       _bancada = v.bancada;
       _chasis = v.chasis;
@@ -414,10 +425,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     _motor.dispose();
     _motorRpm.dispose();
     _motorUms.dispose();
-    _pinonDientes.dispose();
-    _coronaDientes.dispose();
+    _pinonDiametro.dispose();
+    _coronaDiametro.dispose();
     _suspension.dispose();
-    _trencilla.dispose();
     _observaciones.dispose();
     super.dispose();
   }
@@ -462,14 +472,18 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           motorRpm: _parseInt(_motorRpm.text),
           motorUms: _parseDouble(_motorUms.text),
           pinonMarca: _pinonMarca,
-          pinonDientes: _parseInt(_pinonDientes.text),
+          pinonDientes: _pinonDientes,
+          pinonDiametro: _vacio(_pinonDiametro),
+          pinonMaterial: _pinonMaterial,
           coronaMarca: _coronaMarca,
-          coronaDientes: _parseInt(_coronaDientes.text),
+          coronaDientes: _coronaDientes,
+          coronaDiametro: _vacio(_coronaDiametro),
+          coronaMaterial: _coronaMaterial,
           llantaDelMarca: _llantaDelMarca,
           llantaDelDimension: _llantaDelDim,
           llantaTraMarca: _llantaTraMarca,
           llantaTraDimension: _llantaTraDim,
-          trencilla: _vacio(_trencilla),
+          trencilla: _trencilla,
           suspension: _vacio(_suspension),
           bancada: _bancada,
           chasis: _chasis,
@@ -635,9 +649,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             motorRefRpm: motorSel?.rpm,
             motorRefGauss: motorSel?.gauss,
             pinonMarca: _pinonMarca,
-            pinonDientes: _parseInt(_pinonDientes.text),
+            pinonDientes: _pinonDientes,
             coronaMarca: _coronaMarca,
-            coronaDientes: _parseInt(_coronaDientes.text),
+            coronaDientes: _coronaDientes,
             pinonDientesMin: campActivo?.pinonDientesMin ?? 12,
             pinonDientesMax: campActivo?.pinonDientesMax ?? 12,
             coronaDientesMin: campActivo?.coronaDientesMin ?? 24,
@@ -646,7 +660,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             llantaDelDimension: _llantaDelDim,
             llantaTraMarca: _llantaTraMarca,
             llantaTraDimension: _llantaTraDim,
-            trencilla: _vacio(_trencilla),
+            trencilla: _trencilla,
             suspension: _vacio(_suspension),
             bancada: _bancada,
             chasis: _chasis,
@@ -958,7 +972,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                 data: (marcas) => _MarcaSelector(
                                   label: 'Marca',
                                   valor: _pinonMarca,
-                                  marcas: _marcasEngranaje(pinonesAsync, marcas),
+                                  marcas: marcas,
                                   onChange: (v) =>
                                       _cambiar(() => _pinonMarca = v),
                                 ),
@@ -967,14 +981,35 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             const SizedBox(width: 8),
                             Expanded(
                               flex: 2,
+                              child: _DientesSelector(
+                                label: 'Dientes',
+                                helper: 'Regla: $reglaPinon',
+                                valor: _pinonDientes,
+                                opciones: _dientesDe(pinonesAsync),
+                                onChange: (v) =>
+                                    _cambiar(() => _pinonDientes = v),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
                               child: TextField(
-                                controller: _pinonDientes,
-                                decoration: InputDecoration(
-                                  labelText: 'Dientes',
-                                  helperText: 'Regla: $reglaPinon',
-                                ),
-                                keyboardType: TextInputType.number,
-                                onChanged: (_) => setState(() {}),
+                                controller: _pinonDiametro,
+                                decoration: const InputDecoration(
+                                    labelText: 'Diámetro'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _DimensionSelector(
+                                label: 'Material',
+                                valor: _pinonMaterial,
+                                opciones: _materialesPinon,
+                                onChange: (v) =>
+                                    _cambiar(() => _pinonMaterial = v),
                               ),
                             ),
                           ],
@@ -998,8 +1033,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                 data: (marcas) => _MarcaSelector(
                                   label: 'Marca',
                                   valor: _coronaMarca,
-                                  marcas:
-                                      _marcasEngranaje(coronasAsync, marcas),
+                                  marcas: marcas,
                                   onChange: (v) =>
                                       _cambiar(() => _coronaMarca = v),
                                 ),
@@ -1008,14 +1042,35 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             const SizedBox(width: 8),
                             Expanded(
                               flex: 2,
+                              child: _DientesSelector(
+                                label: 'Dientes',
+                                helper: reglaCorona,
+                                valor: _coronaDientes,
+                                opciones: _dientesDe(coronasAsync),
+                                onChange: (v) =>
+                                    _cambiar(() => _coronaDientes = v),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
                               child: TextField(
-                                controller: _coronaDientes,
-                                decoration: InputDecoration(
-                                  labelText: 'Dientes',
-                                  helperText: reglaCorona,
-                                ),
-                                keyboardType: TextInputType.number,
-                                onChanged: (_) => setState(() {}),
+                                controller: _coronaDiametro,
+                                decoration: const InputDecoration(
+                                    labelText: 'Diámetro'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _DimensionSelector(
+                                label: 'Material',
+                                valor: _coronaMaterial,
+                                opciones: _materialesCorona,
+                                onChange: (v) =>
+                                    _cambiar(() => _coronaMaterial = v),
                               ),
                             ),
                           ],
@@ -1122,9 +1177,15 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: TextField(
-                      controller: _trencilla,
-                      decoration: const InputDecoration(labelText: 'Trencilla'),
+                    child: marcasAsync.when(
+                      loading: () => const SizedBox.shrink(),
+                      error: (e, _) => Text('Error: $e'),
+                      data: (marcas) => _DimensionSelector(
+                        label: 'Trencilla',
+                        valor: _trencilla,
+                        opciones: marcas.toList()..sort(),
+                        onChange: (v) => _cambiar(() => _trencilla = v),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1458,6 +1519,42 @@ class _MarcaSelector extends StatelessWidget {
           DropdownMenuItem(
               value: valor, child: Text('$valor (no catalogado)')),
         ...lista.map((m) => DropdownMenuItem(value: m, child: Text(m))),
+      ],
+      onChanged: onChange,
+    );
+  }
+}
+
+/// Desplegable de dientes: las opciones vienen del catálogo de engranajes ya
+/// filtrado por tipo (piñón/corona) y por la copa del equipo. Un valor guardado
+/// que no esté en el catálogo se muestra igualmente, para no perder datos.
+class _DientesSelector extends StatelessWidget {
+  const _DientesSelector({
+    required this.label,
+    required this.valor,
+    required this.opciones,
+    required this.onChange,
+    this.helper,
+  });
+
+  final String label;
+  final int? valor;
+  final List<int> opciones;
+  final ValueChanged<int?> onChange;
+  final String? helper;
+
+  @override
+  Widget build(BuildContext context) {
+    final desconocido = valor != null && !opciones.contains(valor);
+    return DropdownButtonFormField<int?>(
+      initialValue: valor,
+      isExpanded: true,
+      decoration: InputDecoration(labelText: label, helperText: helper),
+      items: [
+        const DropdownMenuItem(value: null, child: Text('—')),
+        if (desconocido)
+          DropdownMenuItem(value: valor, child: Text('$valor (no catalogado)')),
+        ...opciones.map((d) => DropdownMenuItem(value: d, child: Text('$d'))),
       ],
       onChanged: onChange,
     );

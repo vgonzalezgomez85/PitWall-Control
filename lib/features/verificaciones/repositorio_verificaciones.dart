@@ -136,10 +136,12 @@ final marcasCodigosProvider =
 
 /// Llantas de un eje, filtradas por tipo y por la copa del equipo.
 /// - Tipo: DELANTERA/TRASERA según el eje, más las AMBAS.
-/// - Copa: si la llanta tiene copas marcadas, solo aplica a esas; sin marcar
-///   vale para todas (misma semántica que el resto de catálogos).
-/// Si el filtro deja el desplegable vacío se devuelven todas, antes que dejar
-/// al verificador sin opciones.
+/// - Copa: si alguna llanta del eje está marcada **explícitamente** con la copa
+///   del equipo, se muestran SOLO esas. Las llantas sin copa marcada no diluyen
+///   el filtro (a diferencia del resto de catálogos), porque el verificador
+///   quiere ver exactamente las homologadas para su copa.
+/// Si ninguna llanta lleva esa copa, se devuelven todas las del eje antes que
+/// dejar al verificador sin opciones.
 Stream<List<CatalogoLlanta>> _llantasEje(
     AppDatabase db, String tipoEje, String? copa) {
   return db.select(db.catalogoLlantas).watch().map((todas) {
@@ -147,9 +149,9 @@ Stream<List<CatalogoLlanta>> _llantasEje(
         todas.where((l) => l.tipo == tipoEje || l.tipo == 'AMBAS').toList();
     if (filtradas.isEmpty) filtradas = todas;
     if (copa == null || copa.isEmpty) return filtradas;
-    final porCopa =
-        filtradas.where((l) => _aplicaA(l.copasJson ?? '', copa)).toList();
-    return porCopa.isEmpty ? filtradas : porCopa;
+    final conCopa =
+        filtradas.where((l) => _tieneCopa(l.copasJson ?? '', copa)).toList();
+    return conCopa.isEmpty ? filtradas : conCopa;
   });
 }
 
@@ -564,8 +566,12 @@ class RepositorioVerificaciones {
     double? motorUms,
     String? pinonMarca,
     int? pinonDientes,
+    String? pinonDiametro,
+    String? pinonMaterial,
     String? coronaMarca,
     int? coronaDientes,
+    String? coronaDiametro,
+    String? coronaMaterial,
     String? llantaDelMarca,
     String? llantaDelDimension,
     String? llantaTraMarca,
@@ -609,8 +615,12 @@ class RepositorioVerificaciones {
               motorUms: Value(motorUms),
               pinonMarca: Value(pinonMarca),
               pinonDientes: Value(pinonDientes),
+              pinonDiametro: Value(pinonDiametro),
+              pinonMaterial: Value(pinonMaterial),
               coronaMarca: Value(coronaMarca),
               coronaDientes: Value(coronaDientes),
+              coronaDiametro: Value(coronaDiametro),
+              coronaMaterial: Value(coronaMaterial),
               llantaDelMarca: Value(llantaDelMarca),
               llantaDelDimension: Value(llantaDelDimension),
               llantaTraMarca: Value(llantaTraMarca),
@@ -645,8 +655,12 @@ class RepositorioVerificaciones {
         motorUms: Value(motorUms),
         pinonMarca: Value(pinonMarca),
         pinonDientes: Value(pinonDientes),
+        pinonDiametro: Value(pinonDiametro),
+        pinonMaterial: Value(pinonMaterial),
         coronaMarca: Value(coronaMarca),
         coronaDientes: Value(coronaDientes),
+        coronaDiametro: Value(coronaDiametro),
+        coronaMaterial: Value(coronaMaterial),
         llantaDelMarca: Value(llantaDelMarca),
         llantaDelDimension: Value(llantaDelDimension),
         llantaTraMarca: Value(llantaTraMarca),

@@ -7418,6 +7418,28 @@ class $VerificacionesTable extends Verificaciones
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _pinonDiametroMeta = const VerificationMeta(
+    'pinonDiametro',
+  );
+  @override
+  late final GeneratedColumn<String> pinonDiametro = GeneratedColumn<String>(
+    'pinon_diametro',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pinonMaterialMeta = const VerificationMeta(
+    'pinonMaterial',
+  );
+  @override
+  late final GeneratedColumn<String> pinonMaterial = GeneratedColumn<String>(
+    'pinon_material',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _coronaMarcaMeta = const VerificationMeta(
     'coronaMarca',
   );
@@ -7438,6 +7460,28 @@ class $VerificacionesTable extends Verificaciones
     aliasedName,
     true,
     type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _coronaDiametroMeta = const VerificationMeta(
+    'coronaDiametro',
+  );
+  @override
+  late final GeneratedColumn<String> coronaDiametro = GeneratedColumn<String>(
+    'corona_diametro',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _coronaMaterialMeta = const VerificationMeta(
+    'coronaMaterial',
+  );
+  @override
+  late final GeneratedColumn<String> coronaMaterial = GeneratedColumn<String>(
+    'corona_material',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
   static const VerificationMeta _llantaDelMarcaMeta = const VerificationMeta(
@@ -7626,8 +7670,12 @@ class $VerificacionesTable extends Verificaciones
     motorUms,
     pinonMarca,
     pinonDientes,
+    pinonDiametro,
+    pinonMaterial,
     coronaMarca,
     coronaDientes,
+    coronaDiametro,
+    coronaMaterial,
     llantaDelMarca,
     llantaDelDimension,
     llantaTraMarca,
@@ -7762,6 +7810,24 @@ class $VerificacionesTable extends Verificaciones
         ),
       );
     }
+    if (data.containsKey('pinon_diametro')) {
+      context.handle(
+        _pinonDiametroMeta,
+        pinonDiametro.isAcceptableOrUnknown(
+          data['pinon_diametro']!,
+          _pinonDiametroMeta,
+        ),
+      );
+    }
+    if (data.containsKey('pinon_material')) {
+      context.handle(
+        _pinonMaterialMeta,
+        pinonMaterial.isAcceptableOrUnknown(
+          data['pinon_material']!,
+          _pinonMaterialMeta,
+        ),
+      );
+    }
     if (data.containsKey('corona_marca')) {
       context.handle(
         _coronaMarcaMeta,
@@ -7777,6 +7843,24 @@ class $VerificacionesTable extends Verificaciones
         coronaDientes.isAcceptableOrUnknown(
           data['corona_dientes']!,
           _coronaDientesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('corona_diametro')) {
+      context.handle(
+        _coronaDiametroMeta,
+        coronaDiametro.isAcceptableOrUnknown(
+          data['corona_diametro']!,
+          _coronaDiametroMeta,
+        ),
+      );
+    }
+    if (data.containsKey('corona_material')) {
+      context.handle(
+        _coronaMaterialMeta,
+        coronaMaterial.isAcceptableOrUnknown(
+          data['corona_material']!,
+          _coronaMaterialMeta,
         ),
       );
     }
@@ -7960,6 +8044,14 @@ class $VerificacionesTable extends Verificaciones
         DriftSqlType.int,
         data['${effectivePrefix}pinon_dientes'],
       ),
+      pinonDiametro: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pinon_diametro'],
+      ),
+      pinonMaterial: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pinon_material'],
+      ),
       coronaMarca: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}corona_marca'],
@@ -7967,6 +8059,14 @@ class $VerificacionesTable extends Verificaciones
       coronaDientes: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}corona_dientes'],
+      ),
+      coronaDiametro: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}corona_diametro'],
+      ),
+      coronaMaterial: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}corona_material'],
       ),
       llantaDelMarca: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -8066,8 +8166,20 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
   final double? motorUms;
   final String? pinonMarca;
   final int? pinonDientes;
+
+  /// Diámetro del piñón, tal cual lo anota el verificador (texto libre).
+  final String? pinonDiametro;
+
+  /// Material del piñón: PL | ERG | LAT | ACR | ALU.
+  final String? pinonMaterial;
   final String? coronaMarca;
   final int? coronaDientes;
+
+  /// Diámetro de la corona, tal cual lo anota el verificador (texto libre).
+  final String? coronaDiametro;
+
+  /// Material de la corona: PL | MET.
+  final String? coronaMaterial;
   final String? llantaDelMarca;
   final String? llantaDelDimension;
   final String? llantaTraMarca;
@@ -8105,8 +8217,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     this.motorUms,
     this.pinonMarca,
     this.pinonDientes,
+    this.pinonDiametro,
+    this.pinonMaterial,
     this.coronaMarca,
     this.coronaDientes,
+    this.coronaDiametro,
+    this.coronaMaterial,
     this.llantaDelMarca,
     this.llantaDelDimension,
     this.llantaTraMarca,
@@ -8163,11 +8279,23 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     if (!nullToAbsent || pinonDientes != null) {
       map['pinon_dientes'] = Variable<int>(pinonDientes);
     }
+    if (!nullToAbsent || pinonDiametro != null) {
+      map['pinon_diametro'] = Variable<String>(pinonDiametro);
+    }
+    if (!nullToAbsent || pinonMaterial != null) {
+      map['pinon_material'] = Variable<String>(pinonMaterial);
+    }
     if (!nullToAbsent || coronaMarca != null) {
       map['corona_marca'] = Variable<String>(coronaMarca);
     }
     if (!nullToAbsent || coronaDientes != null) {
       map['corona_dientes'] = Variable<int>(coronaDientes);
+    }
+    if (!nullToAbsent || coronaDiametro != null) {
+      map['corona_diametro'] = Variable<String>(coronaDiametro);
+    }
+    if (!nullToAbsent || coronaMaterial != null) {
+      map['corona_material'] = Variable<String>(coronaMaterial);
     }
     if (!nullToAbsent || llantaDelMarca != null) {
       map['llanta_del_marca'] = Variable<String>(llantaDelMarca);
@@ -8246,12 +8374,24 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       pinonDientes: pinonDientes == null && nullToAbsent
           ? const Value.absent()
           : Value(pinonDientes),
+      pinonDiametro: pinonDiametro == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pinonDiametro),
+      pinonMaterial: pinonMaterial == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pinonMaterial),
       coronaMarca: coronaMarca == null && nullToAbsent
           ? const Value.absent()
           : Value(coronaMarca),
       coronaDientes: coronaDientes == null && nullToAbsent
           ? const Value.absent()
           : Value(coronaDientes),
+      coronaDiametro: coronaDiametro == null && nullToAbsent
+          ? const Value.absent()
+          : Value(coronaDiametro),
+      coronaMaterial: coronaMaterial == null && nullToAbsent
+          ? const Value.absent()
+          : Value(coronaMaterial),
       llantaDelMarca: llantaDelMarca == null && nullToAbsent
           ? const Value.absent()
           : Value(llantaDelMarca),
@@ -8311,8 +8451,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       motorUms: serializer.fromJson<double?>(json['motorUms']),
       pinonMarca: serializer.fromJson<String?>(json['pinonMarca']),
       pinonDientes: serializer.fromJson<int?>(json['pinonDientes']),
+      pinonDiametro: serializer.fromJson<String?>(json['pinonDiametro']),
+      pinonMaterial: serializer.fromJson<String?>(json['pinonMaterial']),
       coronaMarca: serializer.fromJson<String?>(json['coronaMarca']),
       coronaDientes: serializer.fromJson<int?>(json['coronaDientes']),
+      coronaDiametro: serializer.fromJson<String?>(json['coronaDiametro']),
+      coronaMaterial: serializer.fromJson<String?>(json['coronaMaterial']),
       llantaDelMarca: serializer.fromJson<String?>(json['llantaDelMarca']),
       llantaDelDimension: serializer.fromJson<String?>(
         json['llantaDelDimension'],
@@ -8353,8 +8497,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       'motorUms': serializer.toJson<double?>(motorUms),
       'pinonMarca': serializer.toJson<String?>(pinonMarca),
       'pinonDientes': serializer.toJson<int?>(pinonDientes),
+      'pinonDiametro': serializer.toJson<String?>(pinonDiametro),
+      'pinonMaterial': serializer.toJson<String?>(pinonMaterial),
       'coronaMarca': serializer.toJson<String?>(coronaMarca),
       'coronaDientes': serializer.toJson<int?>(coronaDientes),
+      'coronaDiametro': serializer.toJson<String?>(coronaDiametro),
+      'coronaMaterial': serializer.toJson<String?>(coronaMaterial),
       'llantaDelMarca': serializer.toJson<String?>(llantaDelMarca),
       'llantaDelDimension': serializer.toJson<String?>(llantaDelDimension),
       'llantaTraMarca': serializer.toJson<String?>(llantaTraMarca),
@@ -8389,8 +8537,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     Value<double?> motorUms = const Value.absent(),
     Value<String?> pinonMarca = const Value.absent(),
     Value<int?> pinonDientes = const Value.absent(),
+    Value<String?> pinonDiametro = const Value.absent(),
+    Value<String?> pinonMaterial = const Value.absent(),
     Value<String?> coronaMarca = const Value.absent(),
     Value<int?> coronaDientes = const Value.absent(),
+    Value<String?> coronaDiametro = const Value.absent(),
+    Value<String?> coronaMaterial = const Value.absent(),
     Value<String?> llantaDelMarca = const Value.absent(),
     Value<String?> llantaDelDimension = const Value.absent(),
     Value<String?> llantaTraMarca = const Value.absent(),
@@ -8428,10 +8580,22 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     motorUms: motorUms.present ? motorUms.value : this.motorUms,
     pinonMarca: pinonMarca.present ? pinonMarca.value : this.pinonMarca,
     pinonDientes: pinonDientes.present ? pinonDientes.value : this.pinonDientes,
+    pinonDiametro: pinonDiametro.present
+        ? pinonDiametro.value
+        : this.pinonDiametro,
+    pinonMaterial: pinonMaterial.present
+        ? pinonMaterial.value
+        : this.pinonMaterial,
     coronaMarca: coronaMarca.present ? coronaMarca.value : this.coronaMarca,
     coronaDientes: coronaDientes.present
         ? coronaDientes.value
         : this.coronaDientes,
+    coronaDiametro: coronaDiametro.present
+        ? coronaDiametro.value
+        : this.coronaDiametro,
+    coronaMaterial: coronaMaterial.present
+        ? coronaMaterial.value
+        : this.coronaMaterial,
     llantaDelMarca: llantaDelMarca.present
         ? llantaDelMarca.value
         : this.llantaDelMarca,
@@ -8487,12 +8651,24 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       pinonDientes: data.pinonDientes.present
           ? data.pinonDientes.value
           : this.pinonDientes,
+      pinonDiametro: data.pinonDiametro.present
+          ? data.pinonDiametro.value
+          : this.pinonDiametro,
+      pinonMaterial: data.pinonMaterial.present
+          ? data.pinonMaterial.value
+          : this.pinonMaterial,
       coronaMarca: data.coronaMarca.present
           ? data.coronaMarca.value
           : this.coronaMarca,
       coronaDientes: data.coronaDientes.present
           ? data.coronaDientes.value
           : this.coronaDientes,
+      coronaDiametro: data.coronaDiametro.present
+          ? data.coronaDiametro.value
+          : this.coronaDiametro,
+      coronaMaterial: data.coronaMaterial.present
+          ? data.coronaMaterial.value
+          : this.coronaMaterial,
       llantaDelMarca: data.llantaDelMarca.present
           ? data.llantaDelMarca.value
           : this.llantaDelMarca,
@@ -8545,8 +8721,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
           ..write('motorUms: $motorUms, ')
           ..write('pinonMarca: $pinonMarca, ')
           ..write('pinonDientes: $pinonDientes, ')
+          ..write('pinonDiametro: $pinonDiametro, ')
+          ..write('pinonMaterial: $pinonMaterial, ')
           ..write('coronaMarca: $coronaMarca, ')
           ..write('coronaDientes: $coronaDientes, ')
+          ..write('coronaDiametro: $coronaDiametro, ')
+          ..write('coronaMaterial: $coronaMaterial, ')
           ..write('llantaDelMarca: $llantaDelMarca, ')
           ..write('llantaDelDimension: $llantaDelDimension, ')
           ..write('llantaTraMarca: $llantaTraMarca, ')
@@ -8583,8 +8763,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     motorUms,
     pinonMarca,
     pinonDientes,
+    pinonDiametro,
+    pinonMaterial,
     coronaMarca,
     coronaDientes,
+    coronaDiametro,
+    coronaMaterial,
     llantaDelMarca,
     llantaDelDimension,
     llantaTraMarca,
@@ -8620,8 +8804,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
           other.motorUms == this.motorUms &&
           other.pinonMarca == this.pinonMarca &&
           other.pinonDientes == this.pinonDientes &&
+          other.pinonDiametro == this.pinonDiametro &&
+          other.pinonMaterial == this.pinonMaterial &&
           other.coronaMarca == this.coronaMarca &&
           other.coronaDientes == this.coronaDientes &&
+          other.coronaDiametro == this.coronaDiametro &&
+          other.coronaMaterial == this.coronaMaterial &&
           other.llantaDelMarca == this.llantaDelMarca &&
           other.llantaDelDimension == this.llantaDelDimension &&
           other.llantaTraMarca == this.llantaTraMarca &&
@@ -8655,8 +8843,12 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
   final Value<double?> motorUms;
   final Value<String?> pinonMarca;
   final Value<int?> pinonDientes;
+  final Value<String?> pinonDiametro;
+  final Value<String?> pinonMaterial;
   final Value<String?> coronaMarca;
   final Value<int?> coronaDientes;
+  final Value<String?> coronaDiametro;
+  final Value<String?> coronaMaterial;
   final Value<String?> llantaDelMarca;
   final Value<String?> llantaDelDimension;
   final Value<String?> llantaTraMarca;
@@ -8688,8 +8880,12 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     this.motorUms = const Value.absent(),
     this.pinonMarca = const Value.absent(),
     this.pinonDientes = const Value.absent(),
+    this.pinonDiametro = const Value.absent(),
+    this.pinonMaterial = const Value.absent(),
     this.coronaMarca = const Value.absent(),
     this.coronaDientes = const Value.absent(),
+    this.coronaDiametro = const Value.absent(),
+    this.coronaMaterial = const Value.absent(),
     this.llantaDelMarca = const Value.absent(),
     this.llantaDelDimension = const Value.absent(),
     this.llantaTraMarca = const Value.absent(),
@@ -8722,8 +8918,12 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     this.motorUms = const Value.absent(),
     this.pinonMarca = const Value.absent(),
     this.pinonDientes = const Value.absent(),
+    this.pinonDiametro = const Value.absent(),
+    this.pinonMaterial = const Value.absent(),
     this.coronaMarca = const Value.absent(),
     this.coronaDientes = const Value.absent(),
+    this.coronaDiametro = const Value.absent(),
+    this.coronaMaterial = const Value.absent(),
     this.llantaDelMarca = const Value.absent(),
     this.llantaDelDimension = const Value.absent(),
     this.llantaTraMarca = const Value.absent(),
@@ -8757,8 +8957,12 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     Expression<double>? motorUms,
     Expression<String>? pinonMarca,
     Expression<int>? pinonDientes,
+    Expression<String>? pinonDiametro,
+    Expression<String>? pinonMaterial,
     Expression<String>? coronaMarca,
     Expression<int>? coronaDientes,
+    Expression<String>? coronaDiametro,
+    Expression<String>? coronaMaterial,
     Expression<String>? llantaDelMarca,
     Expression<String>? llantaDelDimension,
     Expression<String>? llantaTraMarca,
@@ -8791,8 +8995,12 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
       if (motorUms != null) 'motor_ums': motorUms,
       if (pinonMarca != null) 'pinon_marca': pinonMarca,
       if (pinonDientes != null) 'pinon_dientes': pinonDientes,
+      if (pinonDiametro != null) 'pinon_diametro': pinonDiametro,
+      if (pinonMaterial != null) 'pinon_material': pinonMaterial,
       if (coronaMarca != null) 'corona_marca': coronaMarca,
       if (coronaDientes != null) 'corona_dientes': coronaDientes,
+      if (coronaDiametro != null) 'corona_diametro': coronaDiametro,
+      if (coronaMaterial != null) 'corona_material': coronaMaterial,
       if (llantaDelMarca != null) 'llanta_del_marca': llantaDelMarca,
       if (llantaDelDimension != null)
         'llanta_del_dimension': llantaDelDimension,
@@ -8829,8 +9037,12 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     Value<double?>? motorUms,
     Value<String?>? pinonMarca,
     Value<int?>? pinonDientes,
+    Value<String?>? pinonDiametro,
+    Value<String?>? pinonMaterial,
     Value<String?>? coronaMarca,
     Value<int?>? coronaDientes,
+    Value<String?>? coronaDiametro,
+    Value<String?>? coronaMaterial,
     Value<String?>? llantaDelMarca,
     Value<String?>? llantaDelDimension,
     Value<String?>? llantaTraMarca,
@@ -8863,8 +9075,12 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
       motorUms: motorUms ?? this.motorUms,
       pinonMarca: pinonMarca ?? this.pinonMarca,
       pinonDientes: pinonDientes ?? this.pinonDientes,
+      pinonDiametro: pinonDiametro ?? this.pinonDiametro,
+      pinonMaterial: pinonMaterial ?? this.pinonMaterial,
       coronaMarca: coronaMarca ?? this.coronaMarca,
       coronaDientes: coronaDientes ?? this.coronaDientes,
+      coronaDiametro: coronaDiametro ?? this.coronaDiametro,
+      coronaMaterial: coronaMaterial ?? this.coronaMaterial,
       llantaDelMarca: llantaDelMarca ?? this.llantaDelMarca,
       llantaDelDimension: llantaDelDimension ?? this.llantaDelDimension,
       llantaTraMarca: llantaTraMarca ?? this.llantaTraMarca,
@@ -8931,11 +9147,23 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     if (pinonDientes.present) {
       map['pinon_dientes'] = Variable<int>(pinonDientes.value);
     }
+    if (pinonDiametro.present) {
+      map['pinon_diametro'] = Variable<String>(pinonDiametro.value);
+    }
+    if (pinonMaterial.present) {
+      map['pinon_material'] = Variable<String>(pinonMaterial.value);
+    }
     if (coronaMarca.present) {
       map['corona_marca'] = Variable<String>(coronaMarca.value);
     }
     if (coronaDientes.present) {
       map['corona_dientes'] = Variable<int>(coronaDientes.value);
+    }
+    if (coronaDiametro.present) {
+      map['corona_diametro'] = Variable<String>(coronaDiametro.value);
+    }
+    if (coronaMaterial.present) {
+      map['corona_material'] = Variable<String>(coronaMaterial.value);
     }
     if (llantaDelMarca.present) {
       map['llanta_del_marca'] = Variable<String>(llantaDelMarca.value);
@@ -9003,8 +9231,12 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
           ..write('motorUms: $motorUms, ')
           ..write('pinonMarca: $pinonMarca, ')
           ..write('pinonDientes: $pinonDientes, ')
+          ..write('pinonDiametro: $pinonDiametro, ')
+          ..write('pinonMaterial: $pinonMaterial, ')
           ..write('coronaMarca: $coronaMarca, ')
           ..write('coronaDientes: $coronaDientes, ')
+          ..write('coronaDiametro: $coronaDiametro, ')
+          ..write('coronaMaterial: $coronaMaterial, ')
           ..write('llantaDelMarca: $llantaDelMarca, ')
           ..write('llantaDelDimension: $llantaDelDimension, ')
           ..write('llantaTraMarca: $llantaTraMarca, ')
@@ -23605,8 +23837,12 @@ typedef $$VerificacionesTableCreateCompanionBuilder =
       Value<double?> motorUms,
       Value<String?> pinonMarca,
       Value<int?> pinonDientes,
+      Value<String?> pinonDiametro,
+      Value<String?> pinonMaterial,
       Value<String?> coronaMarca,
       Value<int?> coronaDientes,
+      Value<String?> coronaDiametro,
+      Value<String?> coronaMaterial,
       Value<String?> llantaDelMarca,
       Value<String?> llantaDelDimension,
       Value<String?> llantaTraMarca,
@@ -23640,8 +23876,12 @@ typedef $$VerificacionesTableUpdateCompanionBuilder =
       Value<double?> motorUms,
       Value<String?> pinonMarca,
       Value<int?> pinonDientes,
+      Value<String?> pinonDiametro,
+      Value<String?> pinonMaterial,
       Value<String?> coronaMarca,
       Value<int?> coronaDientes,
+      Value<String?> coronaDiametro,
+      Value<String?> coronaMaterial,
       Value<String?> llantaDelMarca,
       Value<String?> llantaDelDimension,
       Value<String?> llantaTraMarca,
@@ -23823,6 +24063,16 @@ class $$VerificacionesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get pinonDiametro => $composableBuilder(
+    column: $table.pinonDiametro,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pinonMaterial => $composableBuilder(
+    column: $table.pinonMaterial,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get coronaMarca => $composableBuilder(
     column: $table.coronaMarca,
     builder: (column) => ColumnFilters(column),
@@ -23830,6 +24080,16 @@ class $$VerificacionesTableFilterComposer
 
   ColumnFilters<int> get coronaDientes => $composableBuilder(
     column: $table.coronaDientes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get coronaDiametro => $composableBuilder(
+    column: $table.coronaDiametro,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get coronaMaterial => $composableBuilder(
+    column: $table.coronaMaterial,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -24072,6 +24332,16 @@ class $$VerificacionesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get pinonDiametro => $composableBuilder(
+    column: $table.pinonDiametro,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pinonMaterial => $composableBuilder(
+    column: $table.pinonMaterial,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get coronaMarca => $composableBuilder(
     column: $table.coronaMarca,
     builder: (column) => ColumnOrderings(column),
@@ -24079,6 +24349,16 @@ class $$VerificacionesTableOrderingComposer
 
   ColumnOrderings<int> get coronaDientes => $composableBuilder(
     column: $table.coronaDientes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get coronaDiametro => $composableBuilder(
+    column: $table.coronaDiametro,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get coronaMaterial => $composableBuilder(
+    column: $table.coronaMaterial,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -24282,6 +24562,16 @@ class $$VerificacionesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get pinonDiametro => $composableBuilder(
+    column: $table.pinonDiametro,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get pinonMaterial => $composableBuilder(
+    column: $table.pinonMaterial,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get coronaMarca => $composableBuilder(
     column: $table.coronaMarca,
     builder: (column) => column,
@@ -24289,6 +24579,16 @@ class $$VerificacionesTableAnnotationComposer
 
   GeneratedColumn<int> get coronaDientes => $composableBuilder(
     column: $table.coronaDientes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get coronaDiametro => $composableBuilder(
+    column: $table.coronaDiametro,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get coronaMaterial => $composableBuilder(
+    column: $table.coronaMaterial,
     builder: (column) => column,
   );
 
@@ -24499,8 +24799,12 @@ class $$VerificacionesTableTableManager
                 Value<double?> motorUms = const Value.absent(),
                 Value<String?> pinonMarca = const Value.absent(),
                 Value<int?> pinonDientes = const Value.absent(),
+                Value<String?> pinonDiametro = const Value.absent(),
+                Value<String?> pinonMaterial = const Value.absent(),
                 Value<String?> coronaMarca = const Value.absent(),
                 Value<int?> coronaDientes = const Value.absent(),
+                Value<String?> coronaDiametro = const Value.absent(),
+                Value<String?> coronaMaterial = const Value.absent(),
                 Value<String?> llantaDelMarca = const Value.absent(),
                 Value<String?> llantaDelDimension = const Value.absent(),
                 Value<String?> llantaTraMarca = const Value.absent(),
@@ -24532,8 +24836,12 @@ class $$VerificacionesTableTableManager
                 motorUms: motorUms,
                 pinonMarca: pinonMarca,
                 pinonDientes: pinonDientes,
+                pinonDiametro: pinonDiametro,
+                pinonMaterial: pinonMaterial,
                 coronaMarca: coronaMarca,
                 coronaDientes: coronaDientes,
+                coronaDiametro: coronaDiametro,
+                coronaMaterial: coronaMaterial,
                 llantaDelMarca: llantaDelMarca,
                 llantaDelDimension: llantaDelDimension,
                 llantaTraMarca: llantaTraMarca,
@@ -24567,8 +24875,12 @@ class $$VerificacionesTableTableManager
                 Value<double?> motorUms = const Value.absent(),
                 Value<String?> pinonMarca = const Value.absent(),
                 Value<int?> pinonDientes = const Value.absent(),
+                Value<String?> pinonDiametro = const Value.absent(),
+                Value<String?> pinonMaterial = const Value.absent(),
                 Value<String?> coronaMarca = const Value.absent(),
                 Value<int?> coronaDientes = const Value.absent(),
+                Value<String?> coronaDiametro = const Value.absent(),
+                Value<String?> coronaMaterial = const Value.absent(),
                 Value<String?> llantaDelMarca = const Value.absent(),
                 Value<String?> llantaDelDimension = const Value.absent(),
                 Value<String?> llantaTraMarca = const Value.absent(),
@@ -24600,8 +24912,12 @@ class $$VerificacionesTableTableManager
                 motorUms: motorUms,
                 pinonMarca: pinonMarca,
                 pinonDientes: pinonDientes,
+                pinonDiametro: pinonDiametro,
+                pinonMaterial: pinonMaterial,
                 coronaMarca: coronaMarca,
                 coronaDientes: coronaDientes,
+                coronaDiametro: coronaDiametro,
+                coronaMaterial: coronaMaterial,
                 llantaDelMarca: llantaDelMarca,
                 llantaDelDimension: llantaDelDimension,
                 llantaTraMarca: llantaTraMarca,
