@@ -3915,6 +3915,17 @@ class $PruebasTable extends Pruebas with TableInfo<$PruebasTable, Prueba> {
     requiredDuringInsert: false,
     defaultValue: const Constant('PROGRAMADA'),
   );
+  static const VerificationMeta _managerRaceIdMeta = const VerificationMeta(
+    'managerRaceId',
+  );
+  @override
+  late final GeneratedColumn<int> managerRaceId = GeneratedColumn<int>(
+    'manager_race_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3924,6 +3935,7 @@ class $PruebasTable extends Pruebas with TableInfo<$PruebasTable, Prueba> {
     fecha,
     orden,
     estado,
+    managerRaceId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3985,6 +3997,15 @@ class $PruebasTable extends Pruebas with TableInfo<$PruebasTable, Prueba> {
         estado.isAcceptableOrUnknown(data['estado']!, _estadoMeta),
       );
     }
+    if (data.containsKey('manager_race_id')) {
+      context.handle(
+        _managerRaceIdMeta,
+        managerRaceId.isAcceptableOrUnknown(
+          data['manager_race_id']!,
+          _managerRaceIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -4022,6 +4043,10 @@ class $PruebasTable extends Pruebas with TableInfo<$PruebasTable, Prueba> {
         DriftSqlType.string,
         data['${effectivePrefix}estado'],
       )!,
+      managerRaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}manager_race_id'],
+      ),
     );
   }
 
@@ -4039,6 +4064,11 @@ class Prueba extends DataClass implements Insertable<Prueba> {
   final DateTime? fecha;
   final int orden;
   final String estado;
+
+  /// id de la carrera en PitWall Manager, si esta prueba ya se le envió
+  /// (tanda o verificaciones). Permite reenviar verificaciones ligadas a la
+  /// misma carrera en vez de que Manager tenga que adivinarla por nombre.
+  final int? managerRaceId;
   const Prueba({
     required this.id,
     required this.campeonatoId,
@@ -4047,6 +4077,7 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     this.fecha,
     required this.orden,
     required this.estado,
+    this.managerRaceId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4062,6 +4093,9 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     }
     map['orden'] = Variable<int>(orden);
     map['estado'] = Variable<String>(estado);
+    if (!nullToAbsent || managerRaceId != null) {
+      map['manager_race_id'] = Variable<int>(managerRaceId);
+    }
     return map;
   }
 
@@ -4076,6 +4110,9 @@ class Prueba extends DataClass implements Insertable<Prueba> {
           : Value(fecha),
       orden: Value(orden),
       estado: Value(estado),
+      managerRaceId: managerRaceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(managerRaceId),
     );
   }
 
@@ -4092,6 +4129,7 @@ class Prueba extends DataClass implements Insertable<Prueba> {
       fecha: serializer.fromJson<DateTime?>(json['fecha']),
       orden: serializer.fromJson<int>(json['orden']),
       estado: serializer.fromJson<String>(json['estado']),
+      managerRaceId: serializer.fromJson<int?>(json['managerRaceId']),
     );
   }
   @override
@@ -4105,6 +4143,7 @@ class Prueba extends DataClass implements Insertable<Prueba> {
       'fecha': serializer.toJson<DateTime?>(fecha),
       'orden': serializer.toJson<int>(orden),
       'estado': serializer.toJson<String>(estado),
+      'managerRaceId': serializer.toJson<int?>(managerRaceId),
     };
   }
 
@@ -4116,6 +4155,7 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     Value<DateTime?> fecha = const Value.absent(),
     int? orden,
     String? estado,
+    Value<int?> managerRaceId = const Value.absent(),
   }) => Prueba(
     id: id ?? this.id,
     campeonatoId: campeonatoId ?? this.campeonatoId,
@@ -4124,6 +4164,9 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     fecha: fecha.present ? fecha.value : this.fecha,
     orden: orden ?? this.orden,
     estado: estado ?? this.estado,
+    managerRaceId: managerRaceId.present
+        ? managerRaceId.value
+        : this.managerRaceId,
   );
   Prueba copyWithCompanion(PruebasCompanion data) {
     return Prueba(
@@ -4136,6 +4179,9 @@ class Prueba extends DataClass implements Insertable<Prueba> {
       fecha: data.fecha.present ? data.fecha.value : this.fecha,
       orden: data.orden.present ? data.orden.value : this.orden,
       estado: data.estado.present ? data.estado.value : this.estado,
+      managerRaceId: data.managerRaceId.present
+          ? data.managerRaceId.value
+          : this.managerRaceId,
     );
   }
 
@@ -4148,14 +4194,23 @@ class Prueba extends DataClass implements Insertable<Prueba> {
           ..write('sede: $sede, ')
           ..write('fecha: $fecha, ')
           ..write('orden: $orden, ')
-          ..write('estado: $estado')
+          ..write('estado: $estado, ')
+          ..write('managerRaceId: $managerRaceId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, campeonatoId, nombre, sede, fecha, orden, estado);
+  int get hashCode => Object.hash(
+    id,
+    campeonatoId,
+    nombre,
+    sede,
+    fecha,
+    orden,
+    estado,
+    managerRaceId,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4166,7 +4221,8 @@ class Prueba extends DataClass implements Insertable<Prueba> {
           other.sede == this.sede &&
           other.fecha == this.fecha &&
           other.orden == this.orden &&
-          other.estado == this.estado);
+          other.estado == this.estado &&
+          other.managerRaceId == this.managerRaceId);
 }
 
 class PruebasCompanion extends UpdateCompanion<Prueba> {
@@ -4177,6 +4233,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
   final Value<DateTime?> fecha;
   final Value<int> orden;
   final Value<String> estado;
+  final Value<int?> managerRaceId;
   const PruebasCompanion({
     this.id = const Value.absent(),
     this.campeonatoId = const Value.absent(),
@@ -4185,6 +4242,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     this.fecha = const Value.absent(),
     this.orden = const Value.absent(),
     this.estado = const Value.absent(),
+    this.managerRaceId = const Value.absent(),
   });
   PruebasCompanion.insert({
     this.id = const Value.absent(),
@@ -4194,6 +4252,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     this.fecha = const Value.absent(),
     required int orden,
     this.estado = const Value.absent(),
+    this.managerRaceId = const Value.absent(),
   }) : campeonatoId = Value(campeonatoId),
        nombre = Value(nombre),
        orden = Value(orden);
@@ -4205,6 +4264,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     Expression<DateTime>? fecha,
     Expression<int>? orden,
     Expression<String>? estado,
+    Expression<int>? managerRaceId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4214,6 +4274,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
       if (fecha != null) 'fecha': fecha,
       if (orden != null) 'orden': orden,
       if (estado != null) 'estado': estado,
+      if (managerRaceId != null) 'manager_race_id': managerRaceId,
     });
   }
 
@@ -4225,6 +4286,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     Value<DateTime?>? fecha,
     Value<int>? orden,
     Value<String>? estado,
+    Value<int?>? managerRaceId,
   }) {
     return PruebasCompanion(
       id: id ?? this.id,
@@ -4234,6 +4296,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
       fecha: fecha ?? this.fecha,
       orden: orden ?? this.orden,
       estado: estado ?? this.estado,
+      managerRaceId: managerRaceId ?? this.managerRaceId,
     );
   }
 
@@ -4261,6 +4324,9 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     if (estado.present) {
       map['estado'] = Variable<String>(estado.value);
     }
+    if (managerRaceId.present) {
+      map['manager_race_id'] = Variable<int>(managerRaceId.value);
+    }
     return map;
   }
 
@@ -4273,7 +4339,8 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
           ..write('sede: $sede, ')
           ..write('fecha: $fecha, ')
           ..write('orden: $orden, ')
-          ..write('estado: $estado')
+          ..write('estado: $estado, ')
+          ..write('managerRaceId: $managerRaceId')
           ..write(')'))
         .toString();
   }
@@ -19479,6 +19546,7 @@ typedef $$PruebasTableCreateCompanionBuilder =
       Value<DateTime?> fecha,
       required int orden,
       Value<String> estado,
+      Value<int?> managerRaceId,
     });
 typedef $$PruebasTableUpdateCompanionBuilder =
     PruebasCompanion Function({
@@ -19489,6 +19557,7 @@ typedef $$PruebasTableUpdateCompanionBuilder =
       Value<DateTime?> fecha,
       Value<int> orden,
       Value<String> estado,
+      Value<int?> managerRaceId,
     });
 
 final class $$PruebasTableReferences
@@ -19709,6 +19778,11 @@ class $$PruebasTableFilterComposer
 
   ColumnFilters<String> get estado => $composableBuilder(
     column: $table.estado,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get managerRaceId => $composableBuilder(
+    column: $table.managerRaceId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -19950,6 +20024,11 @@ class $$PruebasTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get managerRaceId => $composableBuilder(
+    column: $table.managerRaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CampeonatosTableOrderingComposer get campeonatoId {
     final $$CampeonatosTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -20000,6 +20079,11 @@ class $$PruebasTableAnnotationComposer
 
   GeneratedColumn<String> get estado =>
       $composableBuilder(column: $table.estado, builder: (column) => column);
+
+  GeneratedColumn<int> get managerRaceId => $composableBuilder(
+    column: $table.managerRaceId,
+    builder: (column) => column,
+  );
 
   $$CampeonatosTableAnnotationComposer get campeonatoId {
     final $$CampeonatosTableAnnotationComposer composer = $composerBuilder(
@@ -20247,6 +20331,7 @@ class $$PruebasTableTableManager
                 Value<DateTime?> fecha = const Value.absent(),
                 Value<int> orden = const Value.absent(),
                 Value<String> estado = const Value.absent(),
+                Value<int?> managerRaceId = const Value.absent(),
               }) => PruebasCompanion(
                 id: id,
                 campeonatoId: campeonatoId,
@@ -20255,6 +20340,7 @@ class $$PruebasTableTableManager
                 fecha: fecha,
                 orden: orden,
                 estado: estado,
+                managerRaceId: managerRaceId,
               ),
           createCompanionCallback:
               ({
@@ -20265,6 +20351,7 @@ class $$PruebasTableTableManager
                 Value<DateTime?> fecha = const Value.absent(),
                 required int orden,
                 Value<String> estado = const Value.absent(),
+                Value<int?> managerRaceId = const Value.absent(),
               }) => PruebasCompanion.insert(
                 id: id,
                 campeonatoId: campeonatoId,
@@ -20273,6 +20360,7 @@ class $$PruebasTableTableManager
                 fecha: fecha,
                 orden: orden,
                 estado: estado,
+                managerRaceId: managerRaceId,
               ),
           withReferenceMapper: (p0) => p0
               .map(

@@ -16,50 +16,47 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 //
-// Envía una tanda (JSON `pitwall.tanda/v1`) por HTTP a PitWall Manager en la LAN.
-// Manager crea la carrera y devuelve { ok, raceId, url, tandas, teams, name }.
+// Envía las verificaciones (JSON `pitwall.verificaciones/v1`) por HTTP a
+// PitWall Manager en la LAN. Manager las guarda a modo de solo consulta (no
+// editables desde allí) y las liga a `race_id` si se envió, o casa/crea la
+// carrera por los datos de `prueba` en su defecto. Devuelve { ok, raceId,
+// url, count }.
 
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-class EnvioTandaResultado {
+import 'enviar_tanda_service.dart' show baseUrl;
+
+class EnvioVerificacionesResultado {
   final bool ok;
   final String mensaje;
-  final String? url; // ruta relativa de la carrera en Manager (p. ej. /races/57)
+  final String? url;
   final int? raceId;
-  EnvioTandaResultado(this.ok, this.mensaje, {this.url, this.raceId});
+  EnvioVerificacionesResultado(this.ok, this.mensaje, {this.url, this.raceId});
 }
 
-/// Normaliza "192.168.1.50:3000" / "http://host:3000" / "host" en una base URL.
-String baseUrl(String host, {int puertoDefecto = 3000}) {
-  var h = host.trim();
-  if (h.isEmpty) return '';
-  if (!h.startsWith('http://') && !h.startsWith('https://')) h = 'http://$h';
-  final u = Uri.parse(h);
-  final port = u.hasPort ? u.port : puertoDefecto;
-  return '${u.scheme}://${u.host}:$port';
-}
-
-Future<EnvioTandaResultado> enviarTanda({
-  required String host, // ip/hostname (+ puerto opcional)
+Future<EnvioVerificacionesResultado> enviarVerificaciones({
+  required String host,
   required String pin,
   required Map<String, dynamic> payload,
   int puertoDefecto = 3000,
 }) async {
   final base = baseUrl(host, puertoDefecto: puertoDefecto);
-  if (base.isEmpty) return EnvioTandaResultado(false, 'Indica la dirección de PitWall.');
+  if (base.isEmpty) {
+    return EnvioVerificacionesResultado(false, 'Indica la dirección de PitWall.');
+  }
   try {
     final r = await http
         .post(
-          Uri.parse('$base/import/tanda'),
+          Uri.parse('$base/import/verificaciones'),
           headers: {
             'Content-Type': 'application/json',
             if (pin.trim().isNotEmpty) 'x-import-pin': pin.trim(),
           },
           body: jsonEncode(payload),
         )
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 30));
 
     Map<String, dynamic> j = {};
     try {
@@ -68,9 +65,9 @@ Future<EnvioTandaResultado> enviarTanda({
     } catch (_) {/* respuesta no-JSON (p. ej. página de error) */}
 
     if (r.statusCode == 200 && j['ok'] == true) {
-      return EnvioTandaResultado(
+      return EnvioVerificacionesResultado(
         true,
-        'Carrera creada: ${j['name'] ?? ''} — ${j['tandas'] ?? '?'} tanda(s), ${j['teams'] ?? '?'} equipo(s).',
+        '${j['count'] ?? '?'} verificación(es) enviada(s) a ${j['name'] ?? 'PitWall'}.',
         url: j['url']?.toString(),
         raceId: (j['raceId'] as num?)?.toInt(),
       );
@@ -78,11 +75,12 @@ Future<EnvioTandaResultado> enviarTanda({
     if (r.statusCode == 403) {
       // Manager manda el mismo 403 para PIN incorrecto y para "Conexión
       // ecosistema" desactivada (indistinguibles); usamos su texto si lo trae.
-      return EnvioTandaResultado(false,
+      return EnvioVerificacionesResultado(false,
           (j['error'] ?? 'PIN incorrecto o dispositivo no autorizado.').toString());
     }
-    return EnvioTandaResultado(false, (j['error'] ?? 'Error ${r.statusCode}.').toString());
+    return EnvioVerificacionesResultado(
+        false, (j['error'] ?? 'Error ${r.statusCode}.').toString());
   } catch (e) {
-    return EnvioTandaResultado(false, 'No se pudo conectar con PitWall: $e');
+    return EnvioVerificacionesResultado(false, 'No se pudo conectar con PitWall: $e');
   }
 }

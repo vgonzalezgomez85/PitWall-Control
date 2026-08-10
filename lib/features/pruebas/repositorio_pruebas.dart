@@ -93,6 +93,15 @@ class RepositorioPruebas {
     await (db.delete(db.pruebas)..where((t) => t.id.equals(id))).go();
   }
 
+  /// Guarda el id de carrera que PitWall Manager asignó a esta prueba (al
+  /// enviar la tanda o las verificaciones), para poder ligar envíos futuros
+  /// a la misma carrera en vez de que Manager tenga que adivinarla por nombre.
+  Future<void> guardarManagerRaceId(int id, int managerRaceId) async {
+    await (db.update(db.pruebas)..where((t) => t.id.equals(id))).write(
+      PruebasCompanion(managerRaceId: Value(managerRaceId)),
+    );
+  }
+
   Future<int> siguienteOrden(int campeonatoId) async {
     final filas = await (db.selectOnly(db.pruebas)
           ..addColumns([db.pruebas.orden.max()])

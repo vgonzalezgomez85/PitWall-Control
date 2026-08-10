@@ -62,13 +62,28 @@ class ResultadosRemotos {
   ResultadosRemotos({required this.raceName, required this.filas});
 }
 
+// Manager explica algunos rechazos en el cuerpo (p. ej. la Conexión ecosistema
+// desactivada en la LAN): `{error: '...'}` o `{ok:false, error:'...'}`. Si no
+// hay body JSON reconocible (proxy, página de error…), cae al genérico.
+String _errorDe(http.Response r, String generico) {
+  try {
+    final j = jsonDecode(r.body);
+    if (j is Map && j['error'] is String && (j['error'] as String).isNotEmpty) {
+      return j['error'] as String;
+    }
+  } catch (_) {/* respuesta no-JSON */}
+  return generico;
+}
+
 Future<List<CarreraManager>> listarCarreras(String host) async {
   final base = baseUrl(host);
   if (base.isEmpty) throw 'Indica la dirección de PitWall.';
   final r = await http
       .get(Uri.parse('$base/link/races'))
       .timeout(const Duration(seconds: 10));
-  if (r.statusCode != 200) throw 'Error ${r.statusCode} al pedir las carreras.';
+  if (r.statusCode != 200) {
+    throw _errorDe(r, 'Error ${r.statusCode} al pedir las carreras.');
+  }
   final j = jsonDecode(r.body) as Map<String, dynamic>;
   final races = (j['races'] as List?) ?? const [];
   return races
@@ -87,7 +102,9 @@ Future<ResultadosRemotos> traerResultados(String host, int raceId) async {
   final r = await http
       .get(Uri.parse('$base/link/races/$raceId/results.json'))
       .timeout(const Duration(seconds: 15));
-  if (r.statusCode != 200) throw 'Error ${r.statusCode} al pedir los resultados.';
+  if (r.statusCode != 200) {
+    throw _errorDe(r, 'Error ${r.statusCode} al pedir los resultados.');
+  }
   final j = jsonDecode(r.body) as Map<String, dynamic>;
   if (j['schema'] != 'pitwall.resultados/v1') {
     throw 'Respuesta no reconocida (${j['schema']}).';

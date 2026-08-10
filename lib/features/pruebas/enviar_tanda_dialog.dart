@@ -30,6 +30,7 @@ import 'package:nsd/nsd.dart';
 import '../../services/almacen_local.dart';
 import '../../services/enviar_tanda_service.dart';
 import '../../services/generador_tanda_json.dart';
+import 'repositorio_pruebas.dart';
 
 const _kHostKey = 'pitwall_host';
 const _kPinKey = 'pitwall_pin';
@@ -147,6 +148,11 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
 
       final res = await enviarTanda(
           host: host, pin: _pinCtrl.text, payload: payload);
+      if (res.ok && res.raceId != null) {
+        await widget.ref
+            .read(repoPruebasProvider)
+            .guardarManagerRaceId(widget.pruebaId, res.raceId!);
+      }
       if (!mounted) return;
       if (res.ok) {
         Navigator.of(context).pop();

@@ -155,6 +155,10 @@ class Pruebas extends Table {
   IntColumn get orden => integer()();
   TextColumn get estado =>
       text().withDefault(const Constant('PROGRAMADA'))(); // PROGRAMADA | EN_CURSO | TERMINADA | CANCELADA
+  /// id de la carrera en PitWall Manager, si esta prueba ya se le envió
+  /// (tanda o verificaciones). Permite reenviar verificaciones ligadas a la
+  /// misma carrera en vez de que Manager tenga que adivinarla por nombre.
+  IntColumn get managerRaceId => integer().nullable()();
 }
 
 class Mangas extends Table {

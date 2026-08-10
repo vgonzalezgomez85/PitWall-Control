@@ -36,6 +36,7 @@ import '../verificaciones/pantalla_sorteo_motores.dart';
 import 'detalle_manga.dart';
 import 'editor_manga.dart';
 import 'enviar_tanda_dialog.dart';
+import 'enviar_verificaciones_dialog.dart';
 import 'traer_resultados_dialog.dart';
 import 'editor_prueba.dart';
 import 'pantalla_editar_mangas.dart';
@@ -193,6 +194,8 @@ class DetallePrueba extends ConsumerWidget {
             onAbrir: (d) => _abrir(context, d),
             onExportar: (op) => _exportarPdf(context, ref, op),
             onEnviar: () => mostrarEnviarTanda(context, ref, pruebaId),
+            onEnviarVerificaciones: () =>
+                mostrarEnviarVerificaciones(context, ref, pruebaId),
             onTraerResultados: () =>
                 mostrarTraerResultados(context, ref, pruebaId),
           ),
@@ -311,6 +314,7 @@ class _PanelPrueba extends StatelessWidget {
     required this.onAbrir,
     required this.onExportar,
     required this.onEnviar,
+    required this.onEnviarVerificaciones,
     required this.onTraerResultados,
   });
 
@@ -319,6 +323,7 @@ class _PanelPrueba extends StatelessWidget {
   final void Function(Widget destino) onAbrir;
   final Future<void> Function(String op) onExportar;
   final VoidCallback onEnviar;
+  final VoidCallback onEnviarVerificaciones;
   final VoidCallback onTraerResultados;
 
   @override
@@ -401,6 +406,12 @@ class _PanelPrueba extends StatelessWidget {
               title: const Text('Enviar a PitWall'),
               subtitle: const Text('Por WiFi/LAN, sin fichero'),
               onTap: onEnviar,
+            ),
+            ListTile(
+              leading: const Icon(Icons.fact_check_outlined),
+              title: const Text('Enviar verificaciones a PitWall'),
+              subtitle: const Text('Solo consulta: no editables en Manager'),
+              onTap: onEnviarVerificaciones,
             ),
             ListTile(
               leading: const Icon(Icons.cloud_download_outlined),
