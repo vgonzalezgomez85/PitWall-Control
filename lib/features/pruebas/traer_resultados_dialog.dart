@@ -36,7 +36,7 @@ import '../resultados/pantalla_resultados_prueba.dart'
 import '../resultados/repositorio_resultados.dart';
 
 const _kHostKey = 'pitwall_host';
-const _serviceType = '_voltrace-manager._tcp';
+const _serviceType = '_pitwall-manager._tcp';
 
 Future<void> mostrarTraerResultados(
     BuildContext context, WidgetRef ref, int pruebaId) async {

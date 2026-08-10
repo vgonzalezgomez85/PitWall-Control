@@ -17,7 +17,7 @@
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 //
 // Diálogo "Enviar a PitWall": descubre managers en la LAN por mDNS
-// (_voltrace-manager._tcp, que ya anuncia PitWall Manager por Bonjour), permite
+// (_pitwall-manager._tcp, que ya anuncia PitWall Manager por Bonjour), permite
 // elegir uno o teclear la IP a mano, pide el PIN de emparejamiento y POSTea la
 // tanda. Manager autocrea la carrera.
 
@@ -34,7 +34,7 @@ import 'repositorio_pruebas.dart';
 
 const _kHostKey = 'pitwall_host';
 const _kPinKey = 'pitwall_pin';
-const _serviceType = '_voltrace-manager._tcp';
+const _serviceType = '_pitwall-manager._tcp';
 
 Future<void> mostrarEnviarTanda(
     BuildContext context, WidgetRef ref, int pruebaId) async {

@@ -36,7 +36,7 @@ import 'repositorio_pruebas.dart';
 
 const _kHostKey = 'pitwall_host';
 const _kPinKey = 'pitwall_pin';
-const _serviceType = '_voltrace-manager._tcp';
+const _serviceType = '_pitwall-manager._tcp';
 
 Future<void> mostrarEnviarVerificaciones(
     BuildContext context, WidgetRef ref, int pruebaId) async {

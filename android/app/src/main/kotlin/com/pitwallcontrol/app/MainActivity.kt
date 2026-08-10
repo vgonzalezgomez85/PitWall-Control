@@ -15,7 +15,7 @@
 //
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
-package com.resisbarna.resisbarna
+package com.pitwallcontrol.app
 
 import io.flutter.embedding.android.FlutterActivity
 
