@@ -63,7 +63,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 30;
+  int get schemaVersion => 31;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -249,8 +249,83 @@ class AppDatabase extends _$AppDatabase {
             await _aplicar(() => customStatement(
                 'ALTER TABLE pruebas ADD COLUMN manager_race_id INTEGER'));
           }
+          if (from < 31) {
+            // Nombres duplicados en catálogos (por import/alta manual sin
+            // deduplicar) rompen los desplegables de verificaciones, que no
+            // toleran dos opciones con el mismo valor. Las verificaciones
+            // guardan el nombre (no el id), así que borrar el sobrante es
+            // seguro: no deja ninguna referencia rota.
+            await _dedupCatalogo<CatalogoBancada>(
+              filas: await select(catalogoBancadas).get(),
+              clave: (b) => b.nombre,
+              id: (b) => b.id,
+              copasJson: (b) => b.copasJson,
+              borrar: (id) =>
+                  (delete(catalogoBancadas)..where((t) => t.id.equals(id)))
+                      .go(),
+            );
+            await _dedupCatalogo<CatalogoChasi>(
+              filas: await select(catalogoChasis).get(),
+              clave: (c) => c.nombre,
+              id: (c) => c.id,
+              copasJson: (c) => c.copasJson,
+              borrar: (id) =>
+                  (delete(catalogoChasis)..where((t) => t.id.equals(id)))
+                      .go(),
+            );
+            await _dedupCatalogo<CatalogoNeumatico>(
+              filas: await select(catalogoNeumaticos).get(),
+              clave: (n) => n.nombre,
+              id: (n) => n.id,
+              copasJson: (n) => n.copasJson,
+              borrar: (id) =>
+                  (delete(catalogoNeumaticos)..where((t) => t.id.equals(id)))
+                      .go(),
+            );
+            await _dedupCatalogo<CatalogoLlanta>(
+              filas: await select(catalogoLlantas).get(),
+              clave: (l) => '${l.dimension}|${l.tipo}',
+              id: (l) => l.id,
+              copasJson: (l) => l.copasJson,
+              borrar: (id) =>
+                  (delete(catalogoLlantas)..where((t) => t.id.equals(id)))
+                      .go(),
+            );
+          }
         },
       );
+
+  /// Borra las filas de catálogo repetidas (mismo [clave]) dejando solo una
+  /// por grupo: se prefiere la que aplica a todas las copas
+  /// (`copasJson` vacío o nulo) y, si empatan, la de id más bajo.
+  Future<void> _dedupCatalogo<T>({
+    required List<T> filas,
+    required String Function(T) clave,
+    required int Function(T) id,
+    required String? Function(T) copasJson,
+    required Future<void> Function(int id) borrar,
+  }) async {
+    final porClave = <String, List<T>>{};
+    for (final f in filas) {
+      porClave.putIfAbsent(clave(f), () => []).add(f);
+    }
+    for (final grupo in porClave.values) {
+      if (grupo.length < 2) continue;
+      grupo.sort((a, b) {
+        bool aplicaTodas(T f) {
+          final j = copasJson(f);
+          return j == null || j == '[]';
+        }
+
+        final at = aplicaTodas(a), bt = aplicaTodas(b);
+        if (at != bt) return at ? -1 : 1;
+        return id(a).compareTo(id(b));
+      });
+      for (final sobrante in grupo.skip(1)) {
+        await borrar(id(sobrante));
+      }
+    }
+  }
 
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'pitwall');

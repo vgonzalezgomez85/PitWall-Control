@@ -20,6 +20,7 @@ import 'dart:typed_data';
 
 import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -30,6 +31,41 @@ import 'exportar_config.dart';
 import 'fotos_verificacion.dart';
 import 'pdf_marca.dart';
 import 'pdf_util.dart';
+
+/// Dimensión máxima (en px) de las fotos incrustadas en el PDF. Las fotos
+/// solo se muestran como miniaturas de 110x110pt, así que no hace falta
+/// conservar la resolución completa capturada por la cámara.
+const _maxDimFotoPdf = 500;
+
+/// Redimensiona y recomprime una foto antes de incrustarla en el PDF. Sin
+/// esto, las fotos se embeben con sus bytes originales (hasta 1600px/JPEG
+/// q75 desde la cámara) aunque solo se vean como miniaturas, lo que puede
+/// hacer que el PDF supere el tamaño que el share sheet nativo admite en
+/// una sola llamada de canal de plataforma.
+Uint8List _comprimirFotoParaPdf(Uint8List bytes) {
+  try {
+    final decodificada = img.decodeImage(bytes);
+    if (decodificada == null) return bytes;
+    final redimensionada = decodificada.width > _maxDimFotoPdf ||
+            decodificada.height > _maxDimFotoPdf
+        ? img.copyResize(
+            decodificada,
+            width: decodificada.width >= decodificada.height
+                ? _maxDimFotoPdf
+                : null,
+            height: decodificada.height > decodificada.width
+                ? _maxDimFotoPdf
+                : null,
+          )
+        : decodificada;
+    final comprimida = img.encodeJpg(redimensionada, quality: 80);
+    return comprimida.length < bytes.length
+        ? Uint8List.fromList(comprimida)
+        : bytes;
+  } catch (_) {
+    return bytes;
+  }
+}
 
 class _Vrow {
   final String etiqueta;
@@ -45,7 +81,7 @@ class _VerifData {
   final List<_Vrow> filas;
   final String? observaciones;
   final bool validada;
-  final List<Uint8List> fotos;
+  final List<pw.MemoryImage> fotos;
   _VerifData({
     required this.equipo,
     required this.copa,
@@ -126,8 +162,10 @@ class GeneradorPdfVerificaciones {
               ..where((t) => t.id.equals(v.cocheCatalogoId!)))
             .getSingleOrNull();
       }
-      // Fotos (max 4)
-      final fotos = <Uint8List>[];
+      // Fotos (max 4). Una foto que la librería de PDF no sepa decodificar
+      // (p. ej. HEIC en bruto de una versión antigua, antes de forzar JPEG
+      // al capturar) se descarta en vez de tumbar la exportación entera.
+      final fotos = <pw.MemoryImage>[];
       try {
         final decoded = jsonDecode(
             v.fotosJson.isEmpty ? '[]' : v.fotosJson);
@@ -135,7 +173,10 @@ class GeneradorPdfVerificaciones {
           for (final e in decoded.take(4)) {
             final f = await FotosVerificacion.resolver(e.toString());
             if (await f.exists()) {
-              fotos.add(await f.readAsBytes());
+              final bytes = _comprimirFotoParaPdf(await f.readAsBytes());
+              try {
+                fotos.add(pw.MemoryImage(bytes));
+              } catch (_) {}
             }
           }
         }
@@ -434,13 +475,13 @@ class GeneradorPdfVerificaciones {
                 if (v.fotos.isNotEmpty) ...[
                   pw.SizedBox(height: 10),
                   pw.Row(
-                    children: v.fotos.map((bytes) {
+                    children: v.fotos.map((imagen) {
                       return pw.Padding(
                         padding: const pw.EdgeInsets.only(right: 8),
                         child: pw.ClipRRect(
                           horizontalRadius: 6,
                           verticalRadius: 6,
-                          child: pw.Image(pw.MemoryImage(bytes),
+                          child: pw.Image(imagen,
                               width: 110, height: 110, fit: pw.BoxFit.cover),
                         ),
                       );

@@ -1545,7 +1545,11 @@ class _DientesSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final desconocido = valor != null && !opciones.contains(valor);
+    // El catálogo puede tener nombres duplicados (import/alta manual sin
+    // deduplicar); un valor repetido en items también rompe el desplegable,
+    // igual que uno ausente, así que hay que quitar duplicados aquí.
+    final lista = opciones.toSet().toList();
+    final desconocido = valor != null && !lista.contains(valor);
     return DropdownButtonFormField<int?>(
       initialValue: valor,
       isExpanded: true,
@@ -1554,7 +1558,7 @@ class _DientesSelector extends StatelessWidget {
         const DropdownMenuItem(value: null, child: Text('—')),
         if (desconocido)
           DropdownMenuItem(value: valor, child: Text('$valor (no catalogado)')),
-        ...opciones.map((d) => DropdownMenuItem(value: d, child: Text('$d'))),
+        ...lista.map((d) => DropdownMenuItem(value: d, child: Text('$d'))),
       ],
       onChanged: onChange,
     );
@@ -1578,7 +1582,11 @@ class _DimensionSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     // Tolerar valores guardados que no están en el catálogo (datos
     // importados/antiguos): se muestran como opción extra en vez de fallar.
-    final desconocido = valor != null && !opciones.contains(valor);
+    // El catálogo puede tener nombres duplicados (import/alta manual sin
+    // deduplicar); un valor repetido en items también rompe el desplegable,
+    // igual que uno ausente, así que hay que quitar duplicados aquí.
+    final lista = opciones.toSet().toList();
+    final desconocido = valor != null && !lista.contains(valor);
     return DropdownButtonFormField<String?>(
       initialValue: valor,
       isExpanded: true,
@@ -1588,7 +1596,7 @@ class _DimensionSelector extends StatelessWidget {
         if (desconocido)
           DropdownMenuItem(
               value: valor, child: Text('$valor (no catalogado)')),
-        ...opciones.map((o) => DropdownMenuItem(value: o, child: Text(o))),
+        ...lista.map((o) => DropdownMenuItem(value: o, child: Text(o))),
       ],
       onChanged: onChange,
     );
