@@ -63,7 +63,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 31;
+  int get schemaVersion => 35;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -291,6 +291,46 @@ class AppDatabase extends _$AppDatabase {
                   (delete(catalogoLlantas)..where((t) => t.id.equals(id)))
                       .go(),
             );
+          }
+          if (from < 32) {
+            // Altura de motor respecto a la pista: mínimo configurable por
+            // campeonato y medida por verificación.
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN altura_motor_min REAL'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN altura_motor REAL'));
+          }
+          if (from < 33) {
+            // La altura de motor pasa de medida en mm (con mínimo por
+            // campeonato) a un check de sí/no con la plancha: conforme o no
+            // conforme, sin umbral que configurar.
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos DROP COLUMN altura_motor_min'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones DROP COLUMN altura_motor'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN altura_motor_conforme INTEGER'));
+          }
+          if (from < 34) {
+            // Anchura de eje: máximo por copa (JSON en el campeonato) y
+            // medida por verificación.
+            await _aplicar(() => customStatement(
+                "ALTER TABLE campeonatos ADD COLUMN anchura_eje_json TEXT NOT NULL DEFAULT '{}'"));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN anchura_eje REAL'));
+          }
+          if (from < 35) {
+            // Anchura de eje: separada en delantero/trasero (antes un único
+            // valor). Como es una función recién añadida y sin datos reales
+            // guardados, se reinicia en vez de migrar el formato antiguo.
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones DROP COLUMN anchura_eje'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN anchura_eje_del REAL'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN anchura_eje_tra REAL'));
+            await _aplicar(() => customStatement(
+                "UPDATE campeonatos SET anchura_eje_json = '{}'"));
           }
         },
       );

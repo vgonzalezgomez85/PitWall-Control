@@ -263,6 +263,18 @@ class $CampeonatosTable extends Campeonatos
     requiredDuringInsert: false,
     defaultValue: const Constant(30),
   );
+  static const VerificationMeta _anchuraEjeJsonMeta = const VerificationMeta(
+    'anchuraEjeJson',
+  );
+  @override
+  late final GeneratedColumn<String> anchuraEjeJson = GeneratedColumn<String>(
+    'anchura_eje_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
   static const VerificationMeta _marcaTituloMeta = const VerificationMeta(
     'marcaTitulo',
   );
@@ -320,6 +332,7 @@ class $CampeonatosTable extends Campeonatos
     pinonDientesMax,
     coronaDientesMin,
     coronaDientesMax,
+    anchuraEjeJson,
     marcaTitulo,
     marcaLema,
     creadoEn,
@@ -501,6 +514,15 @@ class $CampeonatosTable extends Campeonatos
         ),
       );
     }
+    if (data.containsKey('anchura_eje_json')) {
+      context.handle(
+        _anchuraEjeJsonMeta,
+        anchuraEjeJson.isAcceptableOrUnknown(
+          data['anchura_eje_json']!,
+          _anchuraEjeJsonMeta,
+        ),
+      );
+    }
     if (data.containsKey('marca_titulo')) {
       context.handle(
         _marcaTituloMeta,
@@ -615,6 +637,10 @@ class $CampeonatosTable extends Campeonatos
         DriftSqlType.int,
         data['${effectivePrefix}corona_dientes_max'],
       )!,
+      anchuraEjeJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}anchura_eje_json'],
+      )!,
       marcaTitulo: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}marca_titulo'],
@@ -681,6 +707,12 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   final int coronaDientesMin;
   final int coronaDientesMax;
 
+  /// Anchura máxima de eje (mm) permitida en verificación, por copa y por
+  /// delantero/trasero. JSON objeto
+  /// {"GT": {"del": 65.0, "tra": 63.0}, "F1": {...}}. Una copa ausente del
+  /// mapa, o un lado sin valor, no se comprueba.
+  final String anchuraEjeJson;
+
   /// Marca propia del campeonato en los PDF (título de cabecera y lema del
   /// pie). Si están vacíos se usa la marca global de la app.
   final String? marcaTitulo;
@@ -708,6 +740,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     required this.pinonDientesMax,
     required this.coronaDientesMin,
     required this.coronaDientesMax,
+    required this.anchuraEjeJson,
     this.marcaTitulo,
     this.marcaLema,
     required this.creadoEn,
@@ -740,6 +773,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     map['pinon_dientes_max'] = Variable<int>(pinonDientesMax);
     map['corona_dientes_min'] = Variable<int>(coronaDientesMin);
     map['corona_dientes_max'] = Variable<int>(coronaDientesMax);
+    map['anchura_eje_json'] = Variable<String>(anchuraEjeJson);
     if (!nullToAbsent || marcaTitulo != null) {
       map['marca_titulo'] = Variable<String>(marcaTitulo);
     }
@@ -777,6 +811,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       pinonDientesMax: Value(pinonDientesMax),
       coronaDientesMin: Value(coronaDientesMin),
       coronaDientesMax: Value(coronaDientesMax),
+      anchuraEjeJson: Value(anchuraEjeJson),
       marcaTitulo: marcaTitulo == null && nullToAbsent
           ? const Value.absent()
           : Value(marcaTitulo),
@@ -814,6 +849,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       pinonDientesMax: serializer.fromJson<int>(json['pinonDientesMax']),
       coronaDientesMin: serializer.fromJson<int>(json['coronaDientesMin']),
       coronaDientesMax: serializer.fromJson<int>(json['coronaDientesMax']),
+      anchuraEjeJson: serializer.fromJson<String>(json['anchuraEjeJson']),
       marcaTitulo: serializer.fromJson<String?>(json['marcaTitulo']),
       marcaLema: serializer.fromJson<String?>(json['marcaLema']),
       creadoEn: serializer.fromJson<DateTime>(json['creadoEn']),
@@ -844,6 +880,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       'pinonDientesMax': serializer.toJson<int>(pinonDientesMax),
       'coronaDientesMin': serializer.toJson<int>(coronaDientesMin),
       'coronaDientesMax': serializer.toJson<int>(coronaDientesMax),
+      'anchuraEjeJson': serializer.toJson<String>(anchuraEjeJson),
       'marcaTitulo': serializer.toJson<String?>(marcaTitulo),
       'marcaLema': serializer.toJson<String?>(marcaLema),
       'creadoEn': serializer.toJson<DateTime>(creadoEn),
@@ -872,6 +909,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     int? pinonDientesMax,
     int? coronaDientesMin,
     int? coronaDientesMax,
+    String? anchuraEjeJson,
     Value<String?> marcaTitulo = const Value.absent(),
     Value<String?> marcaLema = const Value.absent(),
     DateTime? creadoEn,
@@ -901,6 +939,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     pinonDientesMax: pinonDientesMax ?? this.pinonDientesMax,
     coronaDientesMin: coronaDientesMin ?? this.coronaDientesMin,
     coronaDientesMax: coronaDientesMax ?? this.coronaDientesMax,
+    anchuraEjeJson: anchuraEjeJson ?? this.anchuraEjeJson,
     marcaTitulo: marcaTitulo.present ? marcaTitulo.value : this.marcaTitulo,
     marcaLema: marcaLema.present ? marcaLema.value : this.marcaLema,
     creadoEn: creadoEn ?? this.creadoEn,
@@ -956,6 +995,9 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       coronaDientesMax: data.coronaDientesMax.present
           ? data.coronaDientesMax.value
           : this.coronaDientesMax,
+      anchuraEjeJson: data.anchuraEjeJson.present
+          ? data.anchuraEjeJson.value
+          : this.anchuraEjeJson,
       marcaTitulo: data.marcaTitulo.present
           ? data.marcaTitulo.value
           : this.marcaTitulo,
@@ -988,6 +1030,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           ..write('pinonDientesMax: $pinonDientesMax, ')
           ..write('coronaDientesMin: $coronaDientesMin, ')
           ..write('coronaDientesMax: $coronaDientesMax, ')
+          ..write('anchuraEjeJson: $anchuraEjeJson, ')
           ..write('marcaTitulo: $marcaTitulo, ')
           ..write('marcaLema: $marcaLema, ')
           ..write('creadoEn: $creadoEn')
@@ -1018,6 +1061,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     pinonDientesMax,
     coronaDientesMin,
     coronaDientesMax,
+    anchuraEjeJson,
     marcaTitulo,
     marcaLema,
     creadoEn,
@@ -1047,6 +1091,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           other.pinonDientesMax == this.pinonDientesMax &&
           other.coronaDientesMin == this.coronaDientesMin &&
           other.coronaDientesMax == this.coronaDientesMax &&
+          other.anchuraEjeJson == this.anchuraEjeJson &&
           other.marcaTitulo == this.marcaTitulo &&
           other.marcaLema == this.marcaLema &&
           other.creadoEn == this.creadoEn);
@@ -1074,6 +1119,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   final Value<int> pinonDientesMax;
   final Value<int> coronaDientesMin;
   final Value<int> coronaDientesMax;
+  final Value<String> anchuraEjeJson;
   final Value<String?> marcaTitulo;
   final Value<String?> marcaLema;
   final Value<DateTime> creadoEn;
@@ -1099,6 +1145,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.pinonDientesMax = const Value.absent(),
     this.coronaDientesMin = const Value.absent(),
     this.coronaDientesMax = const Value.absent(),
+    this.anchuraEjeJson = const Value.absent(),
     this.marcaTitulo = const Value.absent(),
     this.marcaLema = const Value.absent(),
     this.creadoEn = const Value.absent(),
@@ -1125,6 +1172,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.pinonDientesMax = const Value.absent(),
     this.coronaDientesMin = const Value.absent(),
     this.coronaDientesMax = const Value.absent(),
+    this.anchuraEjeJson = const Value.absent(),
     this.marcaTitulo = const Value.absent(),
     this.marcaLema = const Value.absent(),
     this.creadoEn = const Value.absent(),
@@ -1153,6 +1201,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Expression<int>? pinonDientesMax,
     Expression<int>? coronaDientesMin,
     Expression<int>? coronaDientesMax,
+    Expression<String>? anchuraEjeJson,
     Expression<String>? marcaTitulo,
     Expression<String>? marcaLema,
     Expression<DateTime>? creadoEn,
@@ -1179,6 +1228,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       if (pinonDientesMax != null) 'pinon_dientes_max': pinonDientesMax,
       if (coronaDientesMin != null) 'corona_dientes_min': coronaDientesMin,
       if (coronaDientesMax != null) 'corona_dientes_max': coronaDientesMax,
+      if (anchuraEjeJson != null) 'anchura_eje_json': anchuraEjeJson,
       if (marcaTitulo != null) 'marca_titulo': marcaTitulo,
       if (marcaLema != null) 'marca_lema': marcaLema,
       if (creadoEn != null) 'creado_en': creadoEn,
@@ -1207,6 +1257,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Value<int>? pinonDientesMax,
     Value<int>? coronaDientesMin,
     Value<int>? coronaDientesMax,
+    Value<String>? anchuraEjeJson,
     Value<String?>? marcaTitulo,
     Value<String?>? marcaLema,
     Value<DateTime>? creadoEn,
@@ -1233,6 +1284,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       pinonDientesMax: pinonDientesMax ?? this.pinonDientesMax,
       coronaDientesMin: coronaDientesMin ?? this.coronaDientesMin,
       coronaDientesMax: coronaDientesMax ?? this.coronaDientesMax,
+      anchuraEjeJson: anchuraEjeJson ?? this.anchuraEjeJson,
       marcaTitulo: marcaTitulo ?? this.marcaTitulo,
       marcaLema: marcaLema ?? this.marcaLema,
       creadoEn: creadoEn ?? this.creadoEn,
@@ -1305,6 +1357,9 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     if (coronaDientesMax.present) {
       map['corona_dientes_max'] = Variable<int>(coronaDientesMax.value);
     }
+    if (anchuraEjeJson.present) {
+      map['anchura_eje_json'] = Variable<String>(anchuraEjeJson.value);
+    }
     if (marcaTitulo.present) {
       map['marca_titulo'] = Variable<String>(marcaTitulo.value);
     }
@@ -1341,6 +1396,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
           ..write('pinonDientesMax: $pinonDientesMax, ')
           ..write('coronaDientesMin: $coronaDientesMin, ')
           ..write('coronaDientesMax: $coronaDientesMax, ')
+          ..write('anchuraEjeJson: $anchuraEjeJson, ')
           ..write('marcaTitulo: $marcaTitulo, ')
           ..write('marcaLema: $marcaLema, ')
           ..write('creadoEn: $creadoEn')
@@ -7463,6 +7519,41 @@ class $VerificacionesTable extends Verificaciones
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _alturaMotorConformeMeta =
+      const VerificationMeta('alturaMotorConforme');
+  @override
+  late final GeneratedColumn<bool> alturaMotorConforme = GeneratedColumn<bool>(
+    'altura_motor_conforme',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("altura_motor_conforme" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _anchuraEjeDelMeta = const VerificationMeta(
+    'anchuraEjeDel',
+  );
+  @override
+  late final GeneratedColumn<double> anchuraEjeDel = GeneratedColumn<double>(
+    'anchura_eje_del',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _anchuraEjeTraMeta = const VerificationMeta(
+    'anchuraEjeTra',
+  );
+  @override
+  late final GeneratedColumn<double> anchuraEjeTra = GeneratedColumn<double>(
+    'anchura_eje_tra',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _pinonMarcaMeta = const VerificationMeta(
     'pinonMarca',
   );
@@ -7735,6 +7826,9 @@ class $VerificacionesTable extends Verificaciones
     motorTipo,
     motorRpm,
     motorUms,
+    alturaMotorConforme,
+    anchuraEjeDel,
+    anchuraEjeTra,
     pinonMarca,
     pinonDientes,
     pinonDiametro,
@@ -7860,6 +7954,33 @@ class $VerificacionesTable extends Verificaciones
       context.handle(
         _motorUmsMeta,
         motorUms.isAcceptableOrUnknown(data['motor_ums']!, _motorUmsMeta),
+      );
+    }
+    if (data.containsKey('altura_motor_conforme')) {
+      context.handle(
+        _alturaMotorConformeMeta,
+        alturaMotorConforme.isAcceptableOrUnknown(
+          data['altura_motor_conforme']!,
+          _alturaMotorConformeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('anchura_eje_del')) {
+      context.handle(
+        _anchuraEjeDelMeta,
+        anchuraEjeDel.isAcceptableOrUnknown(
+          data['anchura_eje_del']!,
+          _anchuraEjeDelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('anchura_eje_tra')) {
+      context.handle(
+        _anchuraEjeTraMeta,
+        anchuraEjeTra.isAcceptableOrUnknown(
+          data['anchura_eje_tra']!,
+          _anchuraEjeTraMeta,
+        ),
       );
     }
     if (data.containsKey('pinon_marca')) {
@@ -8103,6 +8224,18 @@ class $VerificacionesTable extends Verificaciones
         DriftSqlType.double,
         data['${effectivePrefix}motor_ums'],
       ),
+      alturaMotorConforme: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}altura_motor_conforme'],
+      ),
+      anchuraEjeDel: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}anchura_eje_del'],
+      ),
+      anchuraEjeTra: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}anchura_eje_tra'],
+      ),
       pinonMarca: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}pinon_marca'],
@@ -8231,6 +8364,16 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
 
   /// Si motor propio: uMs (medida específica).
   final double? motorUms;
+
+  /// Comprobación de altura del motor respecto a la pista con la plancha:
+  /// true = conforme (no toca), false = no conforme (toca), null = no
+  /// comprobado. Es un check de sí/no, no una medida en mm.
+  final bool? alturaMotorConforme;
+
+  /// Anchura de eje medida (mm), delantero y trasero. Se comprueba contra
+  /// el máximo de `campeonatos.anchura_eje_json` para la copa del equipo.
+  final double? anchuraEjeDel;
+  final double? anchuraEjeTra;
   final String? pinonMarca;
   final int? pinonDientes;
 
@@ -8282,6 +8425,9 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     required this.motorTipo,
     this.motorRpm,
     this.motorUms,
+    this.alturaMotorConforme,
+    this.anchuraEjeDel,
+    this.anchuraEjeTra,
     this.pinonMarca,
     this.pinonDientes,
     this.pinonDiametro,
@@ -8339,6 +8485,15 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     }
     if (!nullToAbsent || motorUms != null) {
       map['motor_ums'] = Variable<double>(motorUms);
+    }
+    if (!nullToAbsent || alturaMotorConforme != null) {
+      map['altura_motor_conforme'] = Variable<bool>(alturaMotorConforme);
+    }
+    if (!nullToAbsent || anchuraEjeDel != null) {
+      map['anchura_eje_del'] = Variable<double>(anchuraEjeDel);
+    }
+    if (!nullToAbsent || anchuraEjeTra != null) {
+      map['anchura_eje_tra'] = Variable<double>(anchuraEjeTra);
     }
     if (!nullToAbsent || pinonMarca != null) {
       map['pinon_marca'] = Variable<String>(pinonMarca);
@@ -8435,6 +8590,15 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       motorUms: motorUms == null && nullToAbsent
           ? const Value.absent()
           : Value(motorUms),
+      alturaMotorConforme: alturaMotorConforme == null && nullToAbsent
+          ? const Value.absent()
+          : Value(alturaMotorConforme),
+      anchuraEjeDel: anchuraEjeDel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(anchuraEjeDel),
+      anchuraEjeTra: anchuraEjeTra == null && nullToAbsent
+          ? const Value.absent()
+          : Value(anchuraEjeTra),
       pinonMarca: pinonMarca == null && nullToAbsent
           ? const Value.absent()
           : Value(pinonMarca),
@@ -8516,6 +8680,11 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       motorTipo: serializer.fromJson<String>(json['motorTipo']),
       motorRpm: serializer.fromJson<int?>(json['motorRpm']),
       motorUms: serializer.fromJson<double?>(json['motorUms']),
+      alturaMotorConforme: serializer.fromJson<bool?>(
+        json['alturaMotorConforme'],
+      ),
+      anchuraEjeDel: serializer.fromJson<double?>(json['anchuraEjeDel']),
+      anchuraEjeTra: serializer.fromJson<double?>(json['anchuraEjeTra']),
       pinonMarca: serializer.fromJson<String?>(json['pinonMarca']),
       pinonDientes: serializer.fromJson<int?>(json['pinonDientes']),
       pinonDiametro: serializer.fromJson<String?>(json['pinonDiametro']),
@@ -8562,6 +8731,9 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       'motorTipo': serializer.toJson<String>(motorTipo),
       'motorRpm': serializer.toJson<int?>(motorRpm),
       'motorUms': serializer.toJson<double?>(motorUms),
+      'alturaMotorConforme': serializer.toJson<bool?>(alturaMotorConforme),
+      'anchuraEjeDel': serializer.toJson<double?>(anchuraEjeDel),
+      'anchuraEjeTra': serializer.toJson<double?>(anchuraEjeTra),
       'pinonMarca': serializer.toJson<String?>(pinonMarca),
       'pinonDientes': serializer.toJson<int?>(pinonDientes),
       'pinonDiametro': serializer.toJson<String?>(pinonDiametro),
@@ -8602,6 +8774,9 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     String? motorTipo,
     Value<int?> motorRpm = const Value.absent(),
     Value<double?> motorUms = const Value.absent(),
+    Value<bool?> alturaMotorConforme = const Value.absent(),
+    Value<double?> anchuraEjeDel = const Value.absent(),
+    Value<double?> anchuraEjeTra = const Value.absent(),
     Value<String?> pinonMarca = const Value.absent(),
     Value<int?> pinonDientes = const Value.absent(),
     Value<String?> pinonDiametro = const Value.absent(),
@@ -8645,6 +8820,15 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     motorTipo: motorTipo ?? this.motorTipo,
     motorRpm: motorRpm.present ? motorRpm.value : this.motorRpm,
     motorUms: motorUms.present ? motorUms.value : this.motorUms,
+    alturaMotorConforme: alturaMotorConforme.present
+        ? alturaMotorConforme.value
+        : this.alturaMotorConforme,
+    anchuraEjeDel: anchuraEjeDel.present
+        ? anchuraEjeDel.value
+        : this.anchuraEjeDel,
+    anchuraEjeTra: anchuraEjeTra.present
+        ? anchuraEjeTra.value
+        : this.anchuraEjeTra,
     pinonMarca: pinonMarca.present ? pinonMarca.value : this.pinonMarca,
     pinonDientes: pinonDientes.present ? pinonDientes.value : this.pinonDientes,
     pinonDiametro: pinonDiametro.present
@@ -8712,6 +8896,15 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       motorTipo: data.motorTipo.present ? data.motorTipo.value : this.motorTipo,
       motorRpm: data.motorRpm.present ? data.motorRpm.value : this.motorRpm,
       motorUms: data.motorUms.present ? data.motorUms.value : this.motorUms,
+      alturaMotorConforme: data.alturaMotorConforme.present
+          ? data.alturaMotorConforme.value
+          : this.alturaMotorConforme,
+      anchuraEjeDel: data.anchuraEjeDel.present
+          ? data.anchuraEjeDel.value
+          : this.anchuraEjeDel,
+      anchuraEjeTra: data.anchuraEjeTra.present
+          ? data.anchuraEjeTra.value
+          : this.anchuraEjeTra,
       pinonMarca: data.pinonMarca.present
           ? data.pinonMarca.value
           : this.pinonMarca,
@@ -8786,6 +8979,9 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
           ..write('motorTipo: $motorTipo, ')
           ..write('motorRpm: $motorRpm, ')
           ..write('motorUms: $motorUms, ')
+          ..write('alturaMotorConforme: $alturaMotorConforme, ')
+          ..write('anchuraEjeDel: $anchuraEjeDel, ')
+          ..write('anchuraEjeTra: $anchuraEjeTra, ')
           ..write('pinonMarca: $pinonMarca, ')
           ..write('pinonDientes: $pinonDientes, ')
           ..write('pinonDiametro: $pinonDiametro, ')
@@ -8828,6 +9024,9 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     motorTipo,
     motorRpm,
     motorUms,
+    alturaMotorConforme,
+    anchuraEjeDel,
+    anchuraEjeTra,
     pinonMarca,
     pinonDientes,
     pinonDiametro,
@@ -8869,6 +9068,9 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
           other.motorTipo == this.motorTipo &&
           other.motorRpm == this.motorRpm &&
           other.motorUms == this.motorUms &&
+          other.alturaMotorConforme == this.alturaMotorConforme &&
+          other.anchuraEjeDel == this.anchuraEjeDel &&
+          other.anchuraEjeTra == this.anchuraEjeTra &&
           other.pinonMarca == this.pinonMarca &&
           other.pinonDientes == this.pinonDientes &&
           other.pinonDiametro == this.pinonDiametro &&
@@ -8908,6 +9110,9 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
   final Value<String> motorTipo;
   final Value<int?> motorRpm;
   final Value<double?> motorUms;
+  final Value<bool?> alturaMotorConforme;
+  final Value<double?> anchuraEjeDel;
+  final Value<double?> anchuraEjeTra;
   final Value<String?> pinonMarca;
   final Value<int?> pinonDientes;
   final Value<String?> pinonDiametro;
@@ -8945,6 +9150,9 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     this.motorTipo = const Value.absent(),
     this.motorRpm = const Value.absent(),
     this.motorUms = const Value.absent(),
+    this.alturaMotorConforme = const Value.absent(),
+    this.anchuraEjeDel = const Value.absent(),
+    this.anchuraEjeTra = const Value.absent(),
     this.pinonMarca = const Value.absent(),
     this.pinonDientes = const Value.absent(),
     this.pinonDiametro = const Value.absent(),
@@ -8983,6 +9191,9 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     this.motorTipo = const Value.absent(),
     this.motorRpm = const Value.absent(),
     this.motorUms = const Value.absent(),
+    this.alturaMotorConforme = const Value.absent(),
+    this.anchuraEjeDel = const Value.absent(),
+    this.anchuraEjeTra = const Value.absent(),
     this.pinonMarca = const Value.absent(),
     this.pinonDientes = const Value.absent(),
     this.pinonDiametro = const Value.absent(),
@@ -9022,6 +9233,9 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     Expression<String>? motorTipo,
     Expression<int>? motorRpm,
     Expression<double>? motorUms,
+    Expression<bool>? alturaMotorConforme,
+    Expression<double>? anchuraEjeDel,
+    Expression<double>? anchuraEjeTra,
     Expression<String>? pinonMarca,
     Expression<int>? pinonDientes,
     Expression<String>? pinonDiametro,
@@ -9060,6 +9274,10 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
       if (motorTipo != null) 'motor_tipo': motorTipo,
       if (motorRpm != null) 'motor_rpm': motorRpm,
       if (motorUms != null) 'motor_ums': motorUms,
+      if (alturaMotorConforme != null)
+        'altura_motor_conforme': alturaMotorConforme,
+      if (anchuraEjeDel != null) 'anchura_eje_del': anchuraEjeDel,
+      if (anchuraEjeTra != null) 'anchura_eje_tra': anchuraEjeTra,
       if (pinonMarca != null) 'pinon_marca': pinonMarca,
       if (pinonDientes != null) 'pinon_dientes': pinonDientes,
       if (pinonDiametro != null) 'pinon_diametro': pinonDiametro,
@@ -9102,6 +9320,9 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     Value<String>? motorTipo,
     Value<int?>? motorRpm,
     Value<double?>? motorUms,
+    Value<bool?>? alturaMotorConforme,
+    Value<double?>? anchuraEjeDel,
+    Value<double?>? anchuraEjeTra,
     Value<String?>? pinonMarca,
     Value<int?>? pinonDientes,
     Value<String?>? pinonDiametro,
@@ -9140,6 +9361,9 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
       motorTipo: motorTipo ?? this.motorTipo,
       motorRpm: motorRpm ?? this.motorRpm,
       motorUms: motorUms ?? this.motorUms,
+      alturaMotorConforme: alturaMotorConforme ?? this.alturaMotorConforme,
+      anchuraEjeDel: anchuraEjeDel ?? this.anchuraEjeDel,
+      anchuraEjeTra: anchuraEjeTra ?? this.anchuraEjeTra,
       pinonMarca: pinonMarca ?? this.pinonMarca,
       pinonDientes: pinonDientes ?? this.pinonDientes,
       pinonDiametro: pinonDiametro ?? this.pinonDiametro,
@@ -9207,6 +9431,15 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     }
     if (motorUms.present) {
       map['motor_ums'] = Variable<double>(motorUms.value);
+    }
+    if (alturaMotorConforme.present) {
+      map['altura_motor_conforme'] = Variable<bool>(alturaMotorConforme.value);
+    }
+    if (anchuraEjeDel.present) {
+      map['anchura_eje_del'] = Variable<double>(anchuraEjeDel.value);
+    }
+    if (anchuraEjeTra.present) {
+      map['anchura_eje_tra'] = Variable<double>(anchuraEjeTra.value);
     }
     if (pinonMarca.present) {
       map['pinon_marca'] = Variable<String>(pinonMarca.value);
@@ -9296,6 +9529,9 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
           ..write('motorTipo: $motorTipo, ')
           ..write('motorRpm: $motorRpm, ')
           ..write('motorUms: $motorUms, ')
+          ..write('alturaMotorConforme: $alturaMotorConforme, ')
+          ..write('anchuraEjeDel: $anchuraEjeDel, ')
+          ..write('anchuraEjeTra: $anchuraEjeTra, ')
           ..write('pinonMarca: $pinonMarca, ')
           ..write('pinonDientes: $pinonDientes, ')
           ..write('pinonDiametro: $pinonDiametro, ')
@@ -14625,6 +14861,7 @@ typedef $$CampeonatosTableCreateCompanionBuilder =
       Value<int> pinonDientesMax,
       Value<int> coronaDientesMin,
       Value<int> coronaDientesMax,
+      Value<String> anchuraEjeJson,
       Value<String?> marcaTitulo,
       Value<String?> marcaLema,
       Value<DateTime> creadoEn,
@@ -14652,6 +14889,7 @@ typedef $$CampeonatosTableUpdateCompanionBuilder =
       Value<int> pinonDientesMax,
       Value<int> coronaDientesMin,
       Value<int> coronaDientesMax,
+      Value<String> anchuraEjeJson,
       Value<String?> marcaTitulo,
       Value<String?> marcaLema,
       Value<DateTime> creadoEn,
@@ -14958,6 +15196,11 @@ class $$CampeonatosTableFilterComposer
 
   ColumnFilters<int> get coronaDientesMax => $composableBuilder(
     column: $table.coronaDientesMax,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get anchuraEjeJson => $composableBuilder(
+    column: $table.anchuraEjeJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15291,6 +15534,11 @@ class $$CampeonatosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get anchuraEjeJson => $composableBuilder(
+    column: $table.anchuraEjeJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get marcaTitulo => $composableBuilder(
     column: $table.marcaTitulo,
     builder: (column) => ColumnOrderings(column),
@@ -15404,6 +15652,11 @@ class $$CampeonatosTableAnnotationComposer
 
   GeneratedColumn<int> get coronaDientesMax => $composableBuilder(
     column: $table.coronaDientesMax,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get anchuraEjeJson => $composableBuilder(
+    column: $table.anchuraEjeJson,
     builder: (column) => column,
   );
 
@@ -15680,6 +15933,7 @@ class $$CampeonatosTableTableManager
                 Value<int> pinonDientesMax = const Value.absent(),
                 Value<int> coronaDientesMin = const Value.absent(),
                 Value<int> coronaDientesMax = const Value.absent(),
+                Value<String> anchuraEjeJson = const Value.absent(),
                 Value<String?> marcaTitulo = const Value.absent(),
                 Value<String?> marcaLema = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
@@ -15705,6 +15959,7 @@ class $$CampeonatosTableTableManager
                 pinonDientesMax: pinonDientesMax,
                 coronaDientesMin: coronaDientesMin,
                 coronaDientesMax: coronaDientesMax,
+                anchuraEjeJson: anchuraEjeJson,
                 marcaTitulo: marcaTitulo,
                 marcaLema: marcaLema,
                 creadoEn: creadoEn,
@@ -15732,6 +15987,7 @@ class $$CampeonatosTableTableManager
                 Value<int> pinonDientesMax = const Value.absent(),
                 Value<int> coronaDientesMin = const Value.absent(),
                 Value<int> coronaDientesMax = const Value.absent(),
+                Value<String> anchuraEjeJson = const Value.absent(),
                 Value<String?> marcaTitulo = const Value.absent(),
                 Value<String?> marcaLema = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
@@ -15757,6 +16013,7 @@ class $$CampeonatosTableTableManager
                 pinonDientesMax: pinonDientesMax,
                 coronaDientesMin: coronaDientesMin,
                 coronaDientesMax: coronaDientesMax,
+                anchuraEjeJson: anchuraEjeJson,
                 marcaTitulo: marcaTitulo,
                 marcaLema: marcaLema,
                 creadoEn: creadoEn,
@@ -23923,6 +24180,9 @@ typedef $$VerificacionesTableCreateCompanionBuilder =
       Value<String> motorTipo,
       Value<int?> motorRpm,
       Value<double?> motorUms,
+      Value<bool?> alturaMotorConforme,
+      Value<double?> anchuraEjeDel,
+      Value<double?> anchuraEjeTra,
       Value<String?> pinonMarca,
       Value<int?> pinonDientes,
       Value<String?> pinonDiametro,
@@ -23962,6 +24222,9 @@ typedef $$VerificacionesTableUpdateCompanionBuilder =
       Value<String> motorTipo,
       Value<int?> motorRpm,
       Value<double?> motorUms,
+      Value<bool?> alturaMotorConforme,
+      Value<double?> anchuraEjeDel,
+      Value<double?> anchuraEjeTra,
       Value<String?> pinonMarca,
       Value<int?> pinonDientes,
       Value<String?> pinonDiametro,
@@ -24138,6 +24401,21 @@ class $$VerificacionesTableFilterComposer
 
   ColumnFilters<double> get motorUms => $composableBuilder(
     column: $table.motorUms,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get alturaMotorConforme => $composableBuilder(
+    column: $table.alturaMotorConforme,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get anchuraEjeDel => $composableBuilder(
+    column: $table.anchuraEjeDel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get anchuraEjeTra => $composableBuilder(
+    column: $table.anchuraEjeTra,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -24410,6 +24688,21 @@ class $$VerificacionesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get alturaMotorConforme => $composableBuilder(
+    column: $table.alturaMotorConforme,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get anchuraEjeDel => $composableBuilder(
+    column: $table.anchuraEjeDel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get anchuraEjeTra => $composableBuilder(
+    column: $table.anchuraEjeTra,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get pinonMarca => $composableBuilder(
     column: $table.pinonMarca,
     builder: (column) => ColumnOrderings(column),
@@ -24639,6 +24932,21 @@ class $$VerificacionesTableAnnotationComposer
 
   GeneratedColumn<double> get motorUms =>
       $composableBuilder(column: $table.motorUms, builder: (column) => column);
+
+  GeneratedColumn<bool> get alturaMotorConforme => $composableBuilder(
+    column: $table.alturaMotorConforme,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get anchuraEjeDel => $composableBuilder(
+    column: $table.anchuraEjeDel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get anchuraEjeTra => $composableBuilder(
+    column: $table.anchuraEjeTra,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get pinonMarca => $composableBuilder(
     column: $table.pinonMarca,
@@ -24885,6 +25193,9 @@ class $$VerificacionesTableTableManager
                 Value<String> motorTipo = const Value.absent(),
                 Value<int?> motorRpm = const Value.absent(),
                 Value<double?> motorUms = const Value.absent(),
+                Value<bool?> alturaMotorConforme = const Value.absent(),
+                Value<double?> anchuraEjeDel = const Value.absent(),
+                Value<double?> anchuraEjeTra = const Value.absent(),
                 Value<String?> pinonMarca = const Value.absent(),
                 Value<int?> pinonDientes = const Value.absent(),
                 Value<String?> pinonDiametro = const Value.absent(),
@@ -24922,6 +25233,9 @@ class $$VerificacionesTableTableManager
                 motorTipo: motorTipo,
                 motorRpm: motorRpm,
                 motorUms: motorUms,
+                alturaMotorConforme: alturaMotorConforme,
+                anchuraEjeDel: anchuraEjeDel,
+                anchuraEjeTra: anchuraEjeTra,
                 pinonMarca: pinonMarca,
                 pinonDientes: pinonDientes,
                 pinonDiametro: pinonDiametro,
@@ -24961,6 +25275,9 @@ class $$VerificacionesTableTableManager
                 Value<String> motorTipo = const Value.absent(),
                 Value<int?> motorRpm = const Value.absent(),
                 Value<double?> motorUms = const Value.absent(),
+                Value<bool?> alturaMotorConforme = const Value.absent(),
+                Value<double?> anchuraEjeDel = const Value.absent(),
+                Value<double?> anchuraEjeTra = const Value.absent(),
                 Value<String?> pinonMarca = const Value.absent(),
                 Value<int?> pinonDientes = const Value.absent(),
                 Value<String?> pinonDiametro = const Value.absent(),
@@ -24998,6 +25315,9 @@ class $$VerificacionesTableTableManager
                 motorTipo: motorTipo,
                 motorRpm: motorRpm,
                 motorUms: motorUms,
+                alturaMotorConforme: alturaMotorConforme,
+                anchuraEjeDel: anchuraEjeDel,
+                anchuraEjeTra: anchuraEjeTra,
                 pinonMarca: pinonMarca,
                 pinonDientes: pinonDientes,
                 pinonDiametro: pinonDiametro,

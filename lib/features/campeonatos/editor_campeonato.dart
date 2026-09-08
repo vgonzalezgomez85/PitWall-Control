@@ -80,6 +80,12 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   bool _finalizadoOriginal = false;
   int? _importarDesdeId;
   Set<String> _copasSel = {};
+  /// Un controlador de "anchura máxima de eje (mm)" por copa y lado
+  /// (delantero/trasero), creado bajo demanda (las copas son dinámicas: se
+  /// pueden añadir/quitar). Clave: "copa|del" o "copa|tra".
+  final Map<String, TextEditingController> _anchuraEjeCtrl = {};
+  TextEditingController _anchuraCtrl(String copa, String lado) =>
+      _anchuraEjeCtrl.putIfAbsent('$copa|$lado', () => TextEditingController());
   bool _cargando = true;
   bool _guardando = false;
 
@@ -130,6 +136,21 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
         _copasSel = raw.map((e) => e.toString()).toSet();
       }
     } catch (_) {}
+    try {
+      final raw = json.decode(c.anchuraEjeJson);
+      if (raw is Map) {
+        raw.forEach((copa, lados) {
+          if (lados is Map) {
+            if (lados['del'] != null) {
+              _anchuraCtrl(copa, 'del').text = '${lados['del']}';
+            }
+            if (lados['tra'] != null) {
+              _anchuraCtrl(copa, 'tra').text = '${lados['tra']}';
+            }
+          }
+        });
+      }
+    } catch (_) {}
     if (mounted) setState(() => _cargando = false);
   }
 
@@ -149,6 +170,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
     _pinonMax.dispose();
     _coronaMin.dispose();
     _coronaMax.dispose();
+    for (final c in _anchuraEjeCtrl.values) {
+      c.dispose();
+    }
     _marcaTitulo.dispose();
     _marcaLema.dispose();
     super.dispose();
@@ -222,6 +246,22 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       double parseD(TextEditingController c, double def) {
         return double.tryParse(c.text.trim().replaceAll(',', '.')) ?? def;
       }
+      // Anchura máxima de eje por copa y lado: solo se guardan los valores
+      // indicados (vacío = no se comprueba ese lado en esa copa).
+      final anchuraEjeMap = <String, Map<String, double>>{};
+      for (final copa in _copasSel) {
+        final del = double.tryParse(
+            _anchuraCtrl(copa, 'del').text.trim().replaceAll(',', '.'));
+        final tra = double.tryParse(
+            _anchuraCtrl(copa, 'tra').text.trim().replaceAll(',', '.'));
+        if (del != null || tra != null) {
+          anchuraEjeMap[copa] = {
+            'del': ?del,
+            'tra': ?tra,
+          };
+        }
+      }
+      final anchuraEjeJson = json.encode(anchuraEjeMap);
       final cuotaP = parseD(_cuotaPagat, 25);
       final cuotaC = parseD(_cuotaCoord, 11);
       final cuotaCl = parseD(_cuotaClub, 14);
@@ -251,6 +291,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
             usaTesoreria: Value(_usaTesoreria),
             finalizado: Value(_finalizado),
             copasJson: Value(copasJson),
+            anchuraEjeJson: Value(anchuraEjeJson),
             cuotaPagat: Value(cuotaP),
             cuotaCoordinadora: Value(cuotaC),
             cuotaClub: Value(cuotaCl),
@@ -290,6 +331,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
           usaTesoreria: Value(_usaTesoreria),
           finalizado: Value(_finalizado),
           copasJson: Value(copasJson),
+          anchuraEjeJson: Value(anchuraEjeJson),
           cuotaPagat: Value(cuotaP),
           cuotaCoordinadora: Value(cuotaC),
           cuotaClub: Value(cuotaCl),
@@ -526,6 +568,60 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 ),
               ],
             ),
+            if (_copasSel.isNotEmpty) ...[
+              const SizedBox(height: 28),
+              Text('Anchura de eje (verificación)',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.w700,
+                      )),
+              const SizedBox(height: 4),
+              Text(
+                'Anchura máxima de eje (mm) por categoría. Deja vacío si en '
+                'esa copa no se comprueba.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              for (final copa in _copasSel.toList()..sort()) ...[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text('Copa $copa',
+                      style: Theme.of(context).textTheme.labelMedium),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _anchuraCtrl(copa, 'del'),
+                          decoration: const InputDecoration(
+                            labelText: 'Máx delantero (mm)',
+                            prefixIcon: Icon(Icons.straighten_outlined),
+                            isDense: true,
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _anchuraCtrl(copa, 'tra'),
+                          decoration: const InputDecoration(
+                            labelText: 'Máx trasero (mm)',
+                            prefixIcon: Icon(Icons.straighten_outlined),
+                            isDense: true,
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
 
             const SizedBox(height: 28),
             Text('Reglas',

@@ -56,6 +56,11 @@ class Campeonatos extends Table {
   IntColumn get pinonDientesMax => integer().withDefault(const Constant(12))();
   IntColumn get coronaDientesMin => integer().withDefault(const Constant(24))();
   IntColumn get coronaDientesMax => integer().withDefault(const Constant(30))();
+  /// Anchura máxima de eje (mm) permitida en verificación, por copa y por
+  /// delantero/trasero. JSON objeto
+  /// {"GT": {"del": 65.0, "tra": 63.0}, "F1": {...}}. Una copa ausente del
+  /// mapa, o un lado sin valor, no se comprueba.
+  TextColumn get anchuraEjeJson => text().withDefault(const Constant('{}'))();
   /// Marca propia del campeonato en los PDF (título de cabecera y lema del
   /// pie). Si están vacíos se usa la marca global de la app.
   TextColumn get marcaTitulo => text().nullable()();
@@ -253,6 +258,14 @@ class Verificaciones extends Table {
   IntColumn get motorRpm => integer().nullable()();
   /// Si motor propio: uMs (medida específica).
   RealColumn get motorUms => real().nullable()();
+  /// Comprobación de altura del motor respecto a la pista con la plancha:
+  /// true = conforme (no toca), false = no conforme (toca), null = no
+  /// comprobado. Es un check de sí/no, no una medida en mm.
+  BoolColumn get alturaMotorConforme => boolean().nullable()();
+  /// Anchura de eje medida (mm), delantero y trasero. Se comprueba contra
+  /// el máximo de `campeonatos.anchura_eje_json` para la copa del equipo.
+  RealColumn get anchuraEjeDel => real().nullable()();
+  RealColumn get anchuraEjeTra => real().nullable()();
 
   TextColumn get pinonMarca => text().nullable()();
   IntColumn get pinonDientes => integer().nullable()();

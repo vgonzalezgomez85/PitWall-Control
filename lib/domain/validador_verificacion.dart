@@ -59,6 +59,19 @@ class DatosVerificacion {
   final int? motorRefRpm;
   final double? motorRefGauss;
 
+  /// Check de altura de motor respecto a la pista (con la plancha): true =
+  /// conforme, false = no conforme (toca), null = no comprobado. Se aplica
+  /// sea cual sea el tipo de motor.
+  final bool? alturaMotorConforme;
+
+  /// Anchura de eje medida (mm), delantero y trasero, y su máximo permitido
+  /// para la copa del equipo en este campeonato (null = no configurado, no
+  /// se comprueba).
+  final double? anchuraEjeDel;
+  final double? anchuraEjeDelMax;
+  final double? anchuraEjeTra;
+  final double? anchuraEjeTraMax;
+
   final String? pinonMarca;
   final int? pinonDientes;
   final String? coronaMarca;
@@ -99,6 +112,11 @@ class DatosVerificacion {
     this.motorRefNombre,
     this.motorRefRpm,
     this.motorRefGauss,
+    this.alturaMotorConforme,
+    this.anchuraEjeDel,
+    this.anchuraEjeDelMax,
+    this.anchuraEjeTra,
+    this.anchuraEjeTraMax,
     this.pinonMarca,
     this.pinonDientes,
     this.coronaMarca,
@@ -180,6 +198,34 @@ class ValidadorVerificacion {
           ));
         }
       }
+    }
+
+    // ALTURA DE MOTOR — check con la plancha, independiente del tipo de
+    // motor (propio u organización).
+    if (d.alturaMotorConforme == false) {
+      hallazgos.add(HallazgoValidacion(
+        'alturaMotorConforme',
+        NivelValidacion.infraccion,
+        'Altura de motor no conforme: toca la pista.',
+      ));
+    }
+
+    // ANCHURA DE EJE (delantero/trasero) — máximo por copa del campeonato.
+    if (d.anchuraEjeDel != null && d.anchuraEjeDelMax != null &&
+        d.anchuraEjeDel! > d.anchuraEjeDelMax!) {
+      hallazgos.add(HallazgoValidacion(
+        'anchuraEjeDel',
+        NivelValidacion.infraccion,
+        'Anchura de eje delantero ${d.anchuraEjeDel} mm por encima del máximo ${d.anchuraEjeDelMax} mm.',
+      ));
+    }
+    if (d.anchuraEjeTra != null && d.anchuraEjeTraMax != null &&
+        d.anchuraEjeTra! > d.anchuraEjeTraMax!) {
+      hallazgos.add(HallazgoValidacion(
+        'anchuraEjeTra',
+        NivelValidacion.infraccion,
+        'Anchura de eje trasero ${d.anchuraEjeTra} mm por encima del máximo ${d.anchuraEjeTraMax} mm.',
+      ));
     }
 
     // PIÑÓN — rango (o tamaño fijo) configurado en el campeonato.

@@ -193,7 +193,7 @@ class Seeds {
   }
 
   /// Tabla de puntos por posición (1 → 70 ... 64 → 1).
-  static const _puntosPorPosicion = [
+  static const puntosPorPosicionPorDefecto = [
     70, 64, 59, 55, 52, 50, 48, 46, 44, 43,
     42, 41, 40, 39, 38, 37, 36, 35, 34, 33,
     32, 31, 30, 29, 28, 27, 26, 25, 24, 23,
@@ -236,12 +236,12 @@ class Seeds {
   }
 
   static Future<void> _sembrarTablasCampeonato(AppDatabase db, int campeonatoId) async {
-    for (var i = 0; i < _puntosPorPosicion.length; i++) {
+    for (var i = 0; i < puntosPorPosicionPorDefecto.length; i++) {
       await db.into(db.tablaPuntos).insert(
             TablaPuntosCompanion.insert(
               campeonatoId: campeonatoId,
               posicion: i + 1,
-              puntos: _puntosPorPosicion[i],
+              puntos: puntosPorPosicionPorDefecto[i],
             ),
           );
     }

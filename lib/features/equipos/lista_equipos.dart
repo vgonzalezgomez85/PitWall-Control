@@ -39,12 +39,13 @@ class _PantallaEquiposState extends ConsumerState<PantallaEquipos> {
   @override
   Widget build(BuildContext context) {
     final activo = ref.watch(campeonatoActivoProvider);
+    final esIndividual = maxPilotosEquipo(activo?.formato ?? 'PAREJAS') == 1;
     final equiposAsync = ref.watch(equiposCampeonatoProvider);
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Equipos'),
+        title: Text(esIndividual ? 'Inscripciones' : 'Equipos'),
         actions: [
           Consumer(builder: (context, ref, _) {
             final vinculoAsync = ref.watch(vinculoEquiposProvider);
@@ -126,8 +127,8 @@ class _PantallaEquiposState extends ConsumerState<PantallaEquipos> {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab_equipos',
         onPressed: () => _abrirEditor(),
-        icon: const Icon(Icons.group_add),
-        label: const Text('Nuevo equipo'),
+        icon: Icon(esIndividual ? Icons.person_add_outlined : Icons.group_add),
+        label: Text(esIndividual ? 'Nueva inscripción' : 'Nuevo equipo'),
       ),
       body: activo == null
           ? const Center(child: Text('Selecciona primero un campeonato'))

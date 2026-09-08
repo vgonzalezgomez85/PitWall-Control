@@ -100,6 +100,17 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
       return;
     }
 
+    // En campeonatos individuales no se pide nombre de equipo: se usa
+    // directamente el nombre del piloto, para no obligar a inventar un
+    // "equipo" cuando en realidad es una sola persona.
+    if (_maxSlots == 1) {
+      final db = ref.read(dbProvider);
+      final piloto = await (db.select(db.pilotos)
+            ..where((t) => t.id.equals(ids.first)))
+          .getSingle();
+      _nombre.text = piloto.nombre;
+    }
+
     setState(() => _guardando = true);
     final repo = ref.read(repoEquiposProvider);
     try {
@@ -177,12 +188,14 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
   }
 
   Future<void> _borrar() async {
+    final esIndividual = _maxSlots == 1;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Eliminar equipo'),
-        content: Text(
-            '¿Eliminar el equipo "${_nombre.text}"? Esta acción no se puede deshacer.'),
+        title: Text(esIndividual ? 'Eliminar inscripción' : 'Eliminar equipo'),
+        content: Text(esIndividual
+            ? '¿Eliminar la inscripción de "${_nombre.text}"? Esta acción no se puede deshacer.'
+            : '¿Eliminar el equipo "${_nombre.text}"? Esta acción no se puede deshacer.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -205,12 +218,15 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
     }
 
     final esNuevo = widget.equipoId == null;
+    final esIndividual = _maxSlots == 1;
     final pilotosAsync = ref.watch(pilotosDelCampeonatoProvider);
     final copas = ref.watch(copasProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(esNuevo ? 'Nuevo equipo' : 'Editar equipo'),
+        title: Text(esNuevo
+            ? (esIndividual ? 'Nueva inscripción' : 'Nuevo equipo')
+            : (esIndividual ? 'Editar inscripción' : 'Editar equipo')),
         actions: [
           if (!esNuevo)
             IconButton(
@@ -241,18 +257,22 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                TextFormField(
-                  controller: _nombre,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre del equipo *',
-                    prefixIcon: Icon(Icons.label_outline),
+                // En individual no se pide nombre de equipo: se autocompleta
+                // con el del piloto al guardar (ver _guardar).
+                if (_maxSlots > 1) ...[
+                  TextFormField(
+                    controller: _nombre,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre del equipo *',
+                      prefixIcon: Icon(Icons.label_outline),
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Indica un nombre'
+                        : null,
                   ),
-                  textCapitalization: TextCapitalization.characters,
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Indica un nombre'
-                      : null,
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
+                ],
                 DropdownButtonFormField<String>(
                   initialValue: _copa,
                   decoration: const InputDecoration(
@@ -343,7 +363,9 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.check),
-                  label: Text(esNuevo ? 'Crear equipo' : 'Guardar cambios'),
+                  label: Text(esNuevo
+                      ? (esIndividual ? 'Inscribir' : 'Crear equipo')
+                      : 'Guardar cambios'),
                 ),
               ],
             ),

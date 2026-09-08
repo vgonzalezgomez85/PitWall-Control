@@ -38,6 +38,24 @@ import 'repositorio_verificaciones.dart';
 /// "12" si min==max (fijo), "24–30" si es rango.
 String _rangoDientesTxt(int min, int max) => min == max ? '$min' : '$min–$max';
 
+/// Anchura máxima de eje (mm) configurada para [copa] en el JSON
+/// `{"GT": {"del": 65.0, "tra": 63.0}, ...}` del campeonato: (delantero,
+/// trasero). Cada valor es null si no hay copa o no está configurado ese
+/// lado (no se comprueba).
+(double?, double?) _anchuraEjeMax(String? anchuraEjeJson, String? copa) {
+  if (anchuraEjeJson == null || copa == null) return (null, null);
+  try {
+    final raw = jsonDecode(anchuraEjeJson);
+    if (raw is Map && raw[copa] is Map) {
+      final lados = raw[copa] as Map;
+      final del = lados['del'] == null ? null : (lados['del'] as num).toDouble();
+      final tra = lados['tra'] == null ? null : (lados['tra'] as num).toDouble();
+      return (del, tra);
+    }
+  } catch (_) {}
+  return (null, null);
+}
+
 /// Copas del campeonato (de su copas_json) unidas por '|', para el respaldo
 /// del filtro de coches cuando la copa del equipo no cuadra con ninguno.
 String _copasDeCampeonato(String? copasJson) {
@@ -85,6 +103,11 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   final _motor = TextEditingController();
   final _motorRpm = TextEditingController();
   final _motorUms = TextEditingController();
+  /// Check de altura de motor con la plancha: true = conforme, false = no
+  /// conforme, null = no comprobado. No es una medida, es un sí/no.
+  bool? _alturaMotorConforme;
+  final _anchuraEjeDel = TextEditingController();
+  final _anchuraEjeTra = TextEditingController();
   final _pinonDiametro = TextEditingController();
   final _coronaDiametro = TextEditingController();
   final _suspension = TextEditingController();
@@ -143,8 +166,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
 
   List<TextEditingController> get _controllers => [
         _pesoIni, _pesoFin, _pesoIniCoche, _pesoFinCoche,
-        _motor, _motorRpm, _motorUms, _pinonDiametro, _coronaDiametro,
-        _suspension, _observaciones,
+        _motor, _motorRpm, _motorUms, _anchuraEjeDel, _anchuraEjeTra,
+        _pinonDiametro, _coronaDiametro, _suspension, _observaciones,
       ];
 
   /// Programa un autoguardado de borrador tras una breve pausa sin cambios.
@@ -337,6 +360,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
       _motorTipo = v.motorTipo;
       _motorRpm.text = v.motorRpm?.toString() ?? '';
       _motorUms.text = v.motorUms?.toString() ?? '';
+      _alturaMotorConforme = v.alturaMotorConforme;
+      _anchuraEjeDel.text = v.anchuraEjeDel?.toString() ?? '';
+      _anchuraEjeTra.text = v.anchuraEjeTra?.toString() ?? '';
       _pinonMarca = v.pinonMarca;
       _pinonDientes = v.pinonDientes;
       _pinonDiametro.text = v.pinonDiametro ?? '';
@@ -425,6 +451,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     _motor.dispose();
     _motorRpm.dispose();
     _motorUms.dispose();
+    _anchuraEjeDel.dispose();
+    _anchuraEjeTra.dispose();
     _pinonDiametro.dispose();
     _coronaDiametro.dispose();
     _suspension.dispose();
@@ -471,6 +499,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           motorTipo: _motorTipo,
           motorRpm: _parseInt(_motorRpm.text),
           motorUms: _parseDouble(_motorUms.text),
+          alturaMotorConforme: _alturaMotorConforme,
+          anchuraEjeDel: _parseDouble(_anchuraEjeDel.text),
+          anchuraEjeTra: _parseDouble(_anchuraEjeTra.text),
           pinonMarca: _pinonMarca,
           pinonDientes: _pinonDientes,
           pinonDiametro: _vacio(_pinonDiametro),
@@ -534,6 +565,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     final llantasTraAsync = ref.watch(llantasTraFiltradasProvider(copaEquipo));
     final neumaticosAsync = ref.watch(neumaticosFiltradosProvider(copaEquipo));
     final campActivo = ref.watch(campeonatoActivoProvider);
+    final (anchuraEjeDelMax, anchuraEjeTraMax) =
+        _anchuraEjeMax(campActivo?.anchuraEjeJson, copaEquipo);
     final champCopas = _copasDeCampeonato(campActivo?.copasJson);
     final reglaPinon = _rangoDientesTxt(
         campActivo?.pinonDientesMin ?? 12, campActivo?.pinonDientesMax ?? 12);
@@ -648,6 +681,11 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             motorRefNombre: motorSel?.nombre,
             motorRefRpm: motorSel?.rpm,
             motorRefGauss: motorSel?.gauss,
+            alturaMotorConforme: _alturaMotorConforme,
+            anchuraEjeDel: _parseDouble(_anchuraEjeDel.text),
+            anchuraEjeDelMax: anchuraEjeDelMax,
+            anchuraEjeTra: _parseDouble(_anchuraEjeTra.text),
+            anchuraEjeTraMax: anchuraEjeTraMax,
             pinonMarca: _pinonMarca,
             pinonDientes: _pinonDientes,
             coronaMarca: _coronaMarca,
@@ -809,6 +847,15 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                     helperText: motorSel?.rpm == null
                                         ? null
                                         : 'Máx ${motorSel!.rpm}',
+                                    // ✓/✗ en vivo contra la referencia del
+                                    // catálogo (la infracción real, si la
+                                    // hay, también sale en el resumen de
+                                    // arriba, pero aquí se ve al momento).
+                                    suffixIcon: _iconoCumpleMotor(
+                                        cs,
+                                        _parseInt(_motorRpm.text),
+                                        motorSel?.rpm,
+                                        maximo: true),
                                   ),
                                   keyboardType: TextInputType.number,
                                   onChanged: (_) => setState(() {}),
@@ -823,6 +870,11 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                     helperText: motorSel?.gauss == null
                                         ? null
                                         : 'Mín ${motorSel!.gauss}',
+                                    suffixIcon: _iconoCumpleMotor(
+                                        cs,
+                                        _parseDouble(_motorUms.text),
+                                        motorSel?.gauss,
+                                        maximo: false),
                                   ),
                                   keyboardType:
                                       const TextInputType.numberWithOptions(
@@ -833,6 +885,37 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             ],
                           ),
                         ],
+                        const SizedBox(height: 12),
+                        Text('Altura de motor a pista',
+                            style: Theme.of(context).textTheme.labelLarge),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Comprobación con la plancha: si toca la pista, no '
+                          'conforme.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 8),
+                        SegmentedButton<bool?>(
+                          segments: const [
+                            ButtonSegment(
+                              value: null,
+                              label: Text('Sin comprobar'),
+                            ),
+                            ButtonSegment(
+                              value: true,
+                              label: Text('Conforme'),
+                              icon: Icon(Icons.check_circle_outline),
+                            ),
+                            ButtonSegment(
+                              value: false,
+                              label: Text('No conforme'),
+                              icon: Icon(Icons.cancel_outlined),
+                            ),
+                          ],
+                          selected: {_alturaMotorConforme},
+                          onSelectionChanged: (s) =>
+                              _cambiar(() => _alturaMotorConforme = s.first),
+                        ),
                       ],
                     ),
                   ),
@@ -854,6 +937,55 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               const TextInputType.numberWithOptions(
                                   decimal: true),
                           onChanged: (_) => setState(() {}),
+                        ),
+                        const SizedBox(height: 16),
+                        _SecHead('Anchura de eje (mm)'),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _anchuraEjeDel,
+                                decoration: InputDecoration(
+                                  labelText: 'Delantero',
+                                  prefixIcon:
+                                      const Icon(Icons.straighten_outlined),
+                                  helperText: anchuraEjeDelMax == null
+                                      ? null
+                                      : 'Máx $anchuraEjeDelMax',
+                                  suffixIcon: _iconoCumpleMotor(
+                                      cs,
+                                      _parseDouble(_anchuraEjeDel.text),
+                                      anchuraEjeDelMax,
+                                      maximo: true),
+                                ),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                onChanged: (_) => setState(() {}),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _anchuraEjeTra,
+                                decoration: InputDecoration(
+                                  labelText: 'Trasero',
+                                  helperText: anchuraEjeTraMax == null
+                                      ? null
+                                      : 'Máx $anchuraEjeTraMax',
+                                  suffixIcon: _iconoCumpleMotor(
+                                      cs,
+                                      _parseDouble(_anchuraEjeTra.text),
+                                      anchuraEjeTraMax,
+                                      maximo: true),
+                                ),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                onChanged: (_) => setState(() {}),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -1471,6 +1603,21 @@ class _Resumen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Icono ✓/✗ para los campos de RPM/uMs del motor propio, comparando en
+/// vivo el valor medido contra la referencia del catálogo. [maximo] = true
+/// para RPM (no puede superar la referencia); false para uMs/gauss (no
+/// puede ser menor). null si no hay valor o no hay motor de catálogo
+/// elegido, para no mostrar nada.
+Widget? _iconoCumpleMotor(ColorScheme cs, num? medido, num? referencia,
+    {required bool maximo}) {
+  if (medido == null || referencia == null) return null;
+  final cumple = maximo ? medido <= referencia : medido >= referencia;
+  return Icon(
+    cumple ? Icons.check_circle : Icons.cancel,
+    color: cumple ? Colors.green.shade700 : cs.error,
+  );
 }
 
 // ----- Mini-componentes reutilizables -----

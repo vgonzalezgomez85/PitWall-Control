@@ -32,6 +32,23 @@ import 'fotos_verificacion.dart';
 import 'pdf_marca.dart';
 import 'pdf_util.dart';
 
+/// Anchura máxima de eje (mm) configurada para [copa] en el JSON
+/// `{"GT": {"del": 65.0, "tra": 63.0}, ...}` del campeonato: (delantero,
+/// trasero). Null en el que no esté configurado (no se comprueba).
+(double?, double?) _anchuraEjeMax(String? anchuraEjeJson, String? copa) {
+  if (anchuraEjeJson == null || copa == null) return (null, null);
+  try {
+    final raw = jsonDecode(anchuraEjeJson);
+    if (raw is Map && raw[copa] is Map) {
+      final lados = raw[copa] as Map;
+      final del = lados['del'] == null ? null : (lados['del'] as num).toDouble();
+      final tra = lados['tra'] == null ? null : (lados['tra'] as num).toDouble();
+      return (del, tra);
+    }
+  } catch (_) {}
+  return (null, null);
+}
+
 /// Dimensión máxima (en px) de las fotos incrustadas en el PDF. Las fotos
 /// solo se muestran como miniaturas de 110x110pt, así que no hace falta
 /// conservar la resolución completa capturada por la cámara.
@@ -182,6 +199,9 @@ class GeneradorPdfVerificaciones {
         }
       } catch (_) {}
 
+      final (anchuraEjeDelMax, anchuraEjeTraMax) =
+          _anchuraEjeMax(campeonato?.anchuraEjeJson, eq.copa);
+
       String motor = '-';
       if (v.motorTipo == 'PROPIO') {
         final rpm = v.motorRpm == null ? '-' : '${v.motorRpm} RPM';
@@ -218,10 +238,19 @@ class GeneradorPdfVerificaciones {
         pilotos: nombresMiembros.join(' + '),
         coche: coche?.nombre,
         filas: [
-          _Vrow(t('Peso carrocería'), _peso(v.pesoInicial, v.pesoMin)),
+          _Vrow(t('Peso carrocería'), _medidaConMinimo(v.pesoInicial, v.pesoMin)),
           _Vrow(t('Peso coche entero'),
               _pesoEntero(v.pesoInicialCoche, v.pesoFinalCoche, t)),
           _Vrow(t('Motor'), motor),
+          if (v.alturaMotorConforme != null)
+            _Vrow(t('Altura motor'),
+                v.alturaMotorConforme! ? t('Conforme') : t('No conforme')),
+          if (v.anchuraEjeDel != null || anchuraEjeDelMax != null)
+            _Vrow(t('Anchura eje delantero'),
+                _medidaMaxima(v.anchuraEjeDel, anchuraEjeDelMax, unidad: 'mm')),
+          if (v.anchuraEjeTra != null || anchuraEjeTraMax != null)
+            _Vrow(t('Anchura eje trasero'),
+                _medidaMaxima(v.anchuraEjeTra, anchuraEjeTraMax, unidad: 'mm')),
           _Vrow(t('Piñón'), pinon),
           _Vrow(t('Corona'), corona),
           _Vrow(t('Llanta delantera'), llanD),
@@ -292,10 +321,23 @@ class GeneradorPdfVerificaciones {
     return pdf.save();
   }
 
-  String _peso(double? ini, double? min) {
-    if (ini == null) return '-';
-    final cumple = (min == null) ? '' : (ini >= min ? '  OK' : '  ¡NO!');
-    return '${ini.toStringAsFixed(2)} g${min == null ? '' : ' (min ${min.toStringAsFixed(2)})'}$cumple';
+  /// Formatea una medida con su mínimo exigido y si cumple o no. Usado para
+  /// peso de carrocería (g) y altura de motor a pista (mm): en ambos casos
+  /// la medida no puede quedar por debajo del mínimo.
+  String _medidaConMinimo(double? medida, double? min, {String unidad = 'g'}) {
+    if (medida == null) return '-';
+    final cumple = (min == null) ? '' : (medida >= min ? '  OK' : '  ¡NO!');
+    return '${medida.toStringAsFixed(2)} $unidad'
+        '${min == null ? '' : ' (min ${min.toStringAsFixed(2)})'}$cumple';
+  }
+
+  /// Igual que [_medidaConMinimo] pero con un máximo (la medida no puede
+  /// superarlo). Usado para la anchura de eje.
+  String _medidaMaxima(double? medida, double? max, {String unidad = 'g'}) {
+    if (medida == null) return '-';
+    final cumple = (max == null) ? '' : (medida <= max ? '  OK' : '  ¡NO!');
+    return '${medida.toStringAsFixed(2)} $unidad'
+        '${max == null ? '' : ' (máx ${max.toStringAsFixed(2)})'}$cumple';
   }
 
   String _pesoEntero(double? ini, double? fin, String Function(String) t) {

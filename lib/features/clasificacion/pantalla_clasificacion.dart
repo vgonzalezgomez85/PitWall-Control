@@ -26,6 +26,7 @@ import '../../domain/calculo_clasificacion.dart';
 import '../../services/exportar_pdf.dart';
 import '../../services/generador_pdf_clasificacion.dart';
 import 'pantalla_editor_clasificacion_manual.dart';
+import 'pantalla_editor_tabla_puntos.dart';
 import 'pantalla_importar_clasificacion.dart';
 import 'repositorio_clasificacion.dart';
 
@@ -62,6 +63,13 @@ class PantallaClasificacion extends ConsumerWidget {
                     ));
                     ref.invalidate(clasificacionProvider);
                   },
+                ),
+                IconButton(
+                  tooltip: 'Tabla de puntos',
+                  icon: const Icon(Icons.format_list_numbered_outlined),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const PantallaEditorTablaPuntos(),
+                  )),
                 ),
                 IconButton(
                   tooltip: 'Importar clasificación',
@@ -199,6 +207,16 @@ class PantallaClasificacion extends ConsumerWidget {
                         ),
                       ),
                   ],
+                ),
+                IconButton(
+                  tooltip: 'Tabla de puntos',
+                  icon: const Icon(Icons.format_list_numbered_outlined),
+                  onPressed: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const PantallaEditorTablaPuntos(),
+                    ));
+                    ref.invalidate(clasificacionProvider);
+                  },
                 ),
                 IconButton(
                   tooltip: 'Importar clasificación',
