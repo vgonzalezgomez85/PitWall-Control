@@ -21,6 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/proveedores.dart';
 import '../../services/google_auth_service.dart';
 import '../../services/google_sheets_service.dart';
+import '../equipos/repositorio_equipos.dart';
 import '../pruebas/importador_inscripciones.dart';
 import '../pruebas/repositorio_inscripciones_prueba.dart';
 import 'pantalla_configuracion_google.dart';
@@ -259,6 +260,8 @@ class _ImportarInscripcionesSheetsState
   Widget _contenido(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final n = _previo.where((f) => f.importar).length;
+    final activo = ref.watch(campeonatoActivoProvider);
+    final esIndividual = maxPilotosEquipo(activo?.formato ?? 'PAREJAS') == 1;
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -370,7 +373,8 @@ class _ImportarInscripcionesSheetsState
                   Text('3. Asigna columnas',
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 12),
-                  _sel('Nombre del equipo *', _mapeo.colEquipo,
+                  _sel(esIndividual ? 'Nombre del piloto *' : 'Nombre del equipo *',
+                      _mapeo.colEquipo,
                       (v) { _mapeo.colEquipo = v; _recalcular(); }),
                   _sel('Día preferido', _mapeo.colDia,
                       (v) { _mapeo.colDia = v; _recalcular(); }),
@@ -399,7 +403,10 @@ class _ImportarInscripcionesSheetsState
                   if (_cargandoFilas)
                     const Center(child: CircularProgressIndicator())
                   else if (!_mapeo.esValido)
-                    Text('Asigna al menos la columna del nombre del equipo.',
+                    Text(
+                        esIndividual
+                            ? 'Asigna al menos la columna del nombre del piloto.'
+                            : 'Asigna al menos la columna del nombre del equipo.',
                         style: TextStyle(color: cs.error))
                   else
                     ..._previo.map((f) => _FilaPrevia(fila: f)),
@@ -415,7 +422,7 @@ class _ImportarInscripcionesSheetsState
                     width: 18, height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.cloud_download_outlined),
-            label: Text('Inscribir $n equipos'),
+            label: Text(esIndividual ? 'Inscribir $n pilotos' : 'Inscribir $n equipos'),
           ),
         ],
         if (_error != null) ...[

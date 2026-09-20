@@ -43,8 +43,10 @@ class MangaResumen {
   });
 }
 
+/// [pruebaId] null = todas las pruebas del campeonato activo; con valor,
+/// solo las mangas de esa prueba.
 final _resumenProvider =
-    StreamProvider.autoDispose<List<MangaResumen>>((ref) {
+    StreamProvider.autoDispose.family<List<MangaResumen>, int?>((ref, pruebaId) {
   final db = ref.watch(dbProvider);
   final activo = ref.watch(campeonatoActivoProvider);
   if (activo == null) return Stream.value([]);
@@ -53,7 +55,9 @@ final _resumenProvider =
   final query = (db.select(db.mangas).join([
     d.innerJoin(db.pruebas, db.pruebas.id.equalsExp(db.mangas.pruebaId)),
   ])
-    ..where(db.pruebas.campeonatoId.equals(activo.id))
+    ..where(pruebaId == null
+        ? db.pruebas.campeonatoId.equals(activo.id)
+        : db.pruebas.id.equals(pruebaId))
     ..orderBy([
       d.OrderingTerm.asc(db.pruebas.orden),
       d.OrderingTerm.asc(db.mangas.fechaHora),
@@ -83,12 +87,15 @@ final _resumenProvider =
 });
 
 class PantallaResumenVerificaciones extends ConsumerWidget {
-  const PantallaResumenVerificaciones({super.key});
+  const PantallaResumenVerificaciones({super.key, this.pruebaId});
+
+  /// Si se indica, solo se muestran las mangas de esa prueba.
+  final int? pruebaId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final dataAsync = ref.watch(_resumenProvider);
+    final dataAsync = ref.watch(_resumenProvider(pruebaId));
     final fmt = DateFormat("d MMM, HH:mm", 'es_ES');
 
     // Pruebas con al menos una verificación (para el menú de exportar PDF).

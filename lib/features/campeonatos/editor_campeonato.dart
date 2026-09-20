@@ -97,7 +97,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
 
   Future<void> _cargar() async {
     if (widget.campeonatoId == null) {
-      _copasSel = {'GT', 'GT2', 'SLOT.IT'};
+      _copasSel = {'GT', 'GT2', 'Copa Slot.it'};
       setState(() => _cargando = false);
       return;
     }
@@ -630,6 +630,10 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                       fontWeight: FontWeight.w700,
                     )),
             const SizedBox(height: 12),
+
+            // --- Créditos (handicap) ---
+            Text('Créditos', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 4),
             SwitchListTile(
               value: _usaCreditos,
               onChanged: (v) => setState(() => _usaCreditos = v),
@@ -637,31 +641,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               subtitle: const Text(
                   'Sistema de handicap por créditos. Apágalo si el campeonato no lo usa.'),
             ),
-            SwitchListTile(
-              value: _usaTesoreria,
-              onChanged: (v) => setState(() => _usaTesoreria = v),
-              title: const Text('Gestiona tesorería (cuotas/pagos)'),
-              subtitle: const Text(
-                  'Apágalo si este campeonato no controla el dinero.'),
-            ),
             if (esNuevo && _usaCreditos) _selectorImportarPilotos(),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _descartes,
-              decoration: const InputDecoration(
-                labelText: 'Número de descartes',
-                helperText: 'Cuántas peores pruebas se descartan al piloto',
-                prefixIcon: Icon(Icons.delete_outline),
-              ),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                final n = int.tryParse(v ?? '');
-                if (n == null || n < 0 || n > 5) return 'Entre 0 y 5';
-                return null;
-              },
-            ),
             if (_usaCreditos) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _tope,
                 decoration: const InputDecoration(
@@ -678,11 +660,21 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 },
               ),
             ],
+
+            const SizedBox(height: 24),
+
+            // --- Tesorería (cuotas/pagos) ---
+            Text('Tesorería', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 4),
+            SwitchListTile(
+              value: _usaTesoreria,
+              onChanged: (v) => setState(() => _usaTesoreria = v),
+              title: const Text('Gestiona tesorería (cuotas/pagos)'),
+              subtitle: const Text(
+                  'Apágalo si este campeonato no controla el dinero.'),
+            ),
             if (_usaTesoreria) ...[
-              const SizedBox(height: 20),
-              Text('Cuotas por prueba (tesorería)',
-                  style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 4),
+              const SizedBox(height: 12),
               Text(
                 'PAGAT es la cuota total. APORTACIÓN COORDINADORA + APORTACIÓN CLUB '
                 'deben sumar el PAGAT (es el desglose de a dónde va el dinero).',
@@ -727,6 +719,26 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 ],
               ),
             ],
+
+            const SizedBox(height: 24),
+
+            // --- Puntuación ---
+            Text('Puntuación', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 4),
+            TextFormField(
+              controller: _descartes,
+              decoration: const InputDecoration(
+                labelText: 'Número de descartes',
+                helperText: 'Cuántas peores pruebas se descartan al piloto',
+                prefixIcon: Icon(Icons.delete_outline),
+              ),
+              keyboardType: TextInputType.number,
+              validator: (v) {
+                final n = int.tryParse(v ?? '');
+                if (n == null || n < 0 || n > 5) return 'Entre 0 y 5';
+                return null;
+              },
+            ),
             const SizedBox(height: 28),
             Text('Sorteo de motores (organización)',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(

@@ -32,6 +32,7 @@ import '../../services/generador_tanda_json.dart';
 import '../../services/generador_pdf_verificaciones.dart';
 import '../resultados/pantalla_resultados_prueba.dart';
 import '../tesoreria/pantalla_tesoreria_prueba.dart';
+import '../verificaciones/pantalla_resumen_verificaciones.dart';
 import '../verificaciones/pantalla_sorteo_motores.dart';
 import 'detalle_manga.dart';
 import 'editor_manga.dart';
@@ -368,6 +369,12 @@ class _PanelPrueba extends StatelessWidget {
               title: const Text('Resultados'),
               onTap: () =>
                   abrir(PantallaResultadosPrueba(pruebaId: pruebaId)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.fact_check_outlined),
+              title: const Text('Verificaciones'),
+              onTap: () =>
+                  abrir(PantallaResumenVerificaciones(pruebaId: pruebaId)),
             ),
             ListTile(
               leading: const Icon(Icons.swap_horiz),

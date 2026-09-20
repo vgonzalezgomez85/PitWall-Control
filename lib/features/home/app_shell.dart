@@ -17,10 +17,12 @@
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/proveedores.dart';
 import '../../core/widgets/logo_pitwall.dart';
 import '../../data/database/app_database.dart';
+import '../ajustes/pantalla_changelog.dart';
 import '../campeonatos/editor_campeonato.dart';
 import '../campeonatos/pantalla_campeonatos.dart';
 import '../catalogos/pantalla_catalogos.dart';
@@ -32,8 +34,6 @@ import '../pilotos/lista_pilotos.dart';
 import '../plantillas/pantalla_plantillas_csv.dart';
 import '../pruebas/lista_pruebas.dart';
 import '../tesoreria/pantalla_tesoreria.dart';
-import '../verificaciones/pantalla_elegir_prueba_sorteo.dart';
-import '../verificaciones/pantalla_resumen_verificaciones.dart';
 import 'pantalla_resumen.dart';
 
 /// Destino principal del shell (un icono + título en la barra lateral).
@@ -51,8 +51,6 @@ const _destinos = <_Destino>[
       PantallaPilotos()),
   _Destino(Icons.groups_outlined, Icons.groups, 'Equipos', PantallaEquipos()),
   _Destino(Icons.event_outlined, Icons.event, 'Pruebas', PantallaPruebas()),
-  _Destino(Icons.fact_check_outlined, Icons.fact_check, 'Verificaciones',
-      PantallaResumenVerificaciones()),
   _Destino(Icons.leaderboard_outlined, Icons.leaderboard, 'Clasificación',
       PantallaClasificacion()),
   _Destino(Icons.payments_outlined, Icons.payments, 'Tesorería',
@@ -202,12 +200,6 @@ class _BarraLateral extends ConsumerWidget {
                         children: [
                           const Divider(indent: 12, endIndent: 12),
                           _AccionSecundaria(
-                            icono: Icons.casino_outlined,
-                            etiqueta: 'Sorteo de motor',
-                            extendida: extendida,
-                            destino: const PantallaElegirPruebaSorteo(),
-                          ),
-                          _AccionSecundaria(
                             icono: Icons.emoji_events_outlined,
                             etiqueta: 'Campeonatos',
                             extendida: extendida,
@@ -231,7 +223,14 @@ class _BarraLateral extends ConsumerWidget {
                             extendida: extendida,
                             destino: const PantallaPlantillasCsv(),
                           ),
+                          _AccionSecundaria(
+                            icono: Icons.new_releases_outlined,
+                            etiqueta: 'Novedades',
+                            extendida: extendida,
+                            destino: const PantallaChangelog(),
+                          ),
                           _BotonTema(extendida: extendida),
+                          if (extendida) const _VersionPie(),
                         ],
                       ),
                     ),
@@ -437,6 +436,41 @@ class _BotonTema extends ConsumerWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: alternar,
       ),
+    );
+  }
+}
+
+/// Número de versión al pie de la barra lateral, como en PitWall Manager:
+/// enlaza al historial de "Novedades". Solo en el rail extendido — en el
+/// colapsado (72px) no cabe con margen para ser legible.
+class _VersionPie extends StatelessWidget {
+  const _VersionPie();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PackageInfo>(
+      future: PackageInfo.fromPlatform(),
+      builder: (context, snap) {
+        final v = snap.data?.version;
+        if (v == null) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const PantallaChangelog(),
+            )),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text('v$v',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      )),
+            ),
+          ),
+        );
+      },
     );
   }
 }

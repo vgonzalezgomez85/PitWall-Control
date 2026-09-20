@@ -63,7 +63,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 35;
+  int get schemaVersion => 36;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -331,6 +331,69 @@ class AppDatabase extends _$AppDatabase {
                 'ALTER TABLE verificaciones ADD COLUMN anchura_eje_tra REAL'));
             await _aplicar(() => customStatement(
                 "UPDATE campeonatos SET anchura_eje_json = '{}'"));
+          }
+          if (from < 36) {
+            // Catálogo de copas/categorías: "SLOT.IT" pasa a llamarse "Copa
+            // Slot.it" y las copas sueltas "P1"/"P2" (dadas de alta a mano)
+            // se unifican bajo "Clásicos P1"/"Clásicos P2". Se propaga el
+            // renombrado a todo dato ya guardado que referencie el nombre
+            // antiguo, tanto en columnas de texto como en los JSON de copas.
+            const renombres = {
+              'SLOT.IT': 'Copa Slot.it',
+              'P1': 'Clásicos P1',
+              'P2': 'Clásicos P2',
+            };
+            const tablasConCopasJson = [
+              'campeonatos',
+              'catalogo_coches',
+              'catalogo_bancadas',
+              'catalogo_neumaticos',
+              'catalogo_engranajes',
+              'catalogo_llantas',
+            ];
+            for (final e in renombres.entries) {
+              final viejo = e.key;
+              final nuevo = e.value;
+              await _aplicar(() => customStatement(
+                  "UPDATE catalogo_copas SET nombre = '$nuevo' "
+                  "WHERE UPPER(TRIM(nombre)) = UPPER('$viejo')"));
+              await _aplicar(() => customStatement(
+                  "UPDATE equipos SET copa = '$nuevo' "
+                  "WHERE UPPER(TRIM(copa)) = UPPER('$viejo')"));
+              await _aplicar(() => customStatement(
+                  "UPDATE inscripciones_prueba SET copa = '$nuevo' "
+                  "WHERE UPPER(TRIM(copa)) = UPPER('$viejo')"));
+              await _aplicar(() => customStatement(
+                  "UPDATE overrides_copa SET copa = '$nuevo' "
+                  "WHERE UPPER(TRIM(copa)) = UPPER('$viejo')"));
+              for (final tabla in tablasConCopasJson) {
+                await _aplicar(() => customStatement(
+                    "UPDATE $tabla SET copas_json = REPLACE(copas_json, "
+                    "'\"$viejo\"', '\"$nuevo\"') "
+                    "WHERE copas_json LIKE '%\"$viejo\"%'"));
+              }
+              await _aplicar(() => customStatement(
+                  "UPDATE campeonatos SET anchura_eje_json = REPLACE("
+                  "anchura_eje_json, '\"$viejo\":', '\"$nuevo\":') "
+                  "WHERE anchura_eje_json LIKE '%\"$viejo\":%'"));
+            }
+
+            // El renombrado puede haber dejado nombres duplicados en el
+            // catálogo (p. ej. si ya existían "SLOT.IT" y "Copa Slot.it").
+            await _aplicar(() => customStatement(
+                'DELETE FROM catalogo_copas WHERE id NOT IN '
+                '(SELECT MIN(id) FROM catalogo_copas GROUP BY nombre)'));
+
+            // Nuevas categorías del catálogo (se añaden si no existían ya).
+            for (final n in [
+              'Copa Slot.it', 'Clásicos P1', 'Clásicos P2',
+              'Grupo 5', 'Porsche', 'F1', 'F1 Clásicos',
+            ]) {
+              await _aplicar(() => customStatement(
+                  "INSERT INTO catalogo_copas (nombre) SELECT '$n' "
+                  "WHERE NOT EXISTS "
+                  "(SELECT 1 FROM catalogo_copas WHERE nombre = '$n')"));
+            }
           }
         },
       );

@@ -39,9 +39,11 @@ class Seeds {
   static Future<void> _copas(AppDatabase db) async {
     for (final n in [
       'GT', 'GT2', 'GT3', 'GTE',
-      'SLOT.IT',
+      'Copa Slot.it',
       'LMP', 'LMP2', 'HYP', 'Hypercar',
-      'Grupo C', 'Clásicos', 'Rally',
+      'Grupo C', 'Grupo 5', 'Porsche',
+      'Clásicos', 'Clásicos P1', 'Clásicos P2',
+      'F1', 'F1 Clásicos', 'Rally',
     ]) {
       await db.into(db.catalogoCopas).insert(CatalogoCopasCompanion.insert(nombre: n));
     }
@@ -227,7 +229,7 @@ class Seeds {
             nombre: 'Resisbarna $anioActual',
             formato: 'PAREJAS',
             anio: anioActual,
-            copasJson: const Value('["GT","GT2","SLOT.IT"]'),
+            copasJson: const Value('["GT","GT2","Copa Slot.it"]'),
             usaCreditos: const Value(true),
           ),
         );

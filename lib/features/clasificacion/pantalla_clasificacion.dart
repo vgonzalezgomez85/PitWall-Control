@@ -43,10 +43,42 @@ class PantallaClasificacion extends ConsumerWidget {
       // Al recalcular (tras editar), mantener la vista actual en vez de
       // parpadear a "cargando" y perder la pestaña de copa seleccionada.
       skipLoadingOnReload: true,
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      // La tabla de puntos es configuración del campeonato: tiene que poder
+      // editarse siempre, aunque la clasificación esté cargando, dé error o
+      // aún no exista (campeonato recién creado sin pruebas).
+      loading: () => Scaffold(
+        appBar: AppBar(
+          title: const Text('Clasificación'),
+          actions: [
+            IconButton(
+              tooltip: 'Tabla de puntos',
+              icon: const Icon(Icons.format_list_numbered_outlined),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const PantallaEditorTablaPuntos(),
+              )),
+            ),
+          ],
+        ),
+        body: const Center(child: CircularProgressIndicator()),
       ),
-      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
+      error: (e, _) => Scaffold(
+        appBar: AppBar(
+          title: const Text('Clasificación'),
+          actions: [
+            IconButton(
+              tooltip: 'Tabla de puntos',
+              icon: const Icon(Icons.format_list_numbered_outlined),
+              onPressed: () async {
+                await Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const PantallaEditorTablaPuntos(),
+                ));
+                ref.invalidate(clasificacionProvider);
+              },
+            ),
+          ],
+        ),
+        body: Center(child: Text('Error: $e')),
+      ),
       data: (datos) {
         if (datos.filas.isEmpty) {
           return Scaffold(

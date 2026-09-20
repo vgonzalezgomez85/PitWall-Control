@@ -23,7 +23,6 @@ import 'package:intl/intl.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../clasificacion/repositorio_clasificacion.dart';
-import '../verificaciones/pantalla_elegir_prueba_sorteo.dart';
 import 'app_shell.dart';
 
 /// Datos agregados del campeonato activo para el dashboard de inicio.
@@ -207,7 +206,6 @@ class PantallaResumen extends ConsumerWidget {
                 (Icons.people_alt_outlined, 'Pilotos', 'Pilotos'),
                 (Icons.groups_outlined, 'Equipos', 'Equipos'),
                 (Icons.event_outlined, 'Pruebas y mangas', 'Pruebas'),
-                (Icons.fact_check_outlined, 'Verificaciones', 'Verificaciones'),
                 (Icons.leaderboard_outlined, 'Clasificación', 'Clasificación'),
                 (Icons.payments_outlined, 'Tesorería', 'Tesorería'),
                 (Icons.savings_outlined, 'Créditos', 'Créditos'),
@@ -215,9 +213,6 @@ class PantallaResumen extends ConsumerWidget {
                 if (indiceDestinoVisible(a.$3, activo) >= 0)
                   _TarjetaAcceso(
                       a.$1, a.$2, indiceDestinoVisible(a.$3, activo)),
-              const _TarjetaRuta(
-                  Icons.casino_outlined, 'Sorteo de motor',
-                  PantallaElegirPruebaSorteo()),
             ],
           ),
         ],
@@ -386,43 +381,6 @@ class _TarjetaLider extends ConsumerWidget {
               ),
               Icon(Icons.chevron_right, color: cs.outline),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Acceso rápido que empuja una pantalla nueva (no un módulo del shell).
-class _TarjetaRuta extends StatelessWidget {
-  const _TarjetaRuta(this.icono, this.titulo, this.destino);
-
-  final IconData icono;
-  final String titulo;
-  final Widget destino;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme;
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => destino)),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icono, size: 44, color: color.primary),
-                const SizedBox(height: 12),
-                Text(titulo,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-            ),
           ),
         ),
       ),
