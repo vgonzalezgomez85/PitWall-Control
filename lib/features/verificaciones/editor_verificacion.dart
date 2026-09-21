@@ -31,6 +31,8 @@ import '../../core/widgets/selector_buscable.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/validador_verificacion.dart';
 import '../../services/fotos_verificacion.dart';
+import '../equipos/repositorio_equipos.dart';
+import '../pruebas/repositorio_inscripciones_prueba.dart';
 import 'repositorio_verificaciones.dart';
 
 /// Copas/categorías de un campeonato (de su copas_json) unidas por '|', para
@@ -561,6 +563,90 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     return t.isEmpty ? null : t;
   }
 
+  /// Edita la copa del equipo/piloto SOLO para esta prueba (no toca la copa
+  /// del equipo ni otras pruebas): es la que se usa para filtrar catálogos
+  /// y comprobaciones aquí. Actualiza `_copaPrueba` al guardar, lo que
+  /// recalcula en vivo los desplegables y validaciones de la ficha.
+  Future<void> _editarCopa() async {
+    final pruebaId = _pruebaId;
+    final equipo = _equipo;
+    if (pruebaId == null || equipo == null) return;
+    final copas = ref.read(copasProvider);
+    String? seleccion = _copaPrueba ?? equipo.copa;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSt) => AlertDialog(
+          title: const Text('Copa en esta prueba'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Cambia la copa solo para esta prueba, sin afectar al '
+                'equipo ni a otras pruebas.',
+                style: Theme.of(ctx).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: seleccion,
+                decoration: const InputDecoration(
+                  labelText: 'Copa / categoría',
+                  prefixIcon: Icon(Icons.flag_outlined),
+                ),
+                items: copas
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .toList(),
+                onChanged: (v) => setSt(() => seleccion = v),
+              ),
+              if (_copaPrueba != null) ...[
+                const SizedBox(height: 8),
+                Text('Copa del equipo: ${equipo.copa}',
+                    style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(ctx).colorScheme.outline)),
+              ],
+            ],
+          ),
+          actions: [
+            if (_copaPrueba != null)
+              TextButton(
+                onPressed: () async {
+                  await ref
+                      .read(repoInscripcionesPruebaProvider)
+                      .fijarCopaPrueba(
+                          pruebaId: pruebaId,
+                          equipoId: widget.equipoId,
+                          copa: null);
+                  if (mounted) setState(() => _copaPrueba = null);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                child: const Text('Usar la del equipo'),
+              ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: seleccion == null
+                  ? null
+                  : () async {
+                      await ref
+                          .read(repoInscripcionesPruebaProvider)
+                          .fijarCopaPrueba(
+                              pruebaId: pruebaId,
+                              equipoId: widget.equipoId,
+                              copa: seleccion);
+                      if (mounted) setState(() => _copaPrueba = seleccion);
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    },
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_cargando) {
@@ -622,12 +708,27 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           children: [
             Text(_equipo?.nombre ?? 'Verificación'),
             if (_equipo != null)
-              Text(
-                'Copa ${_copaPrueba ?? _equipo!.copa}',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w600,
+              InkWell(
+                onTap: _pruebaId == null ? null : _editarCopa,
+                borderRadius: BorderRadius.circular(4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Copa ${_copaPrueba ?? _equipo!.copa}',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
+                    if (_pruebaId != null) ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.edit_outlined,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.primary),
+                    ],
+                  ],
+                ),
               ),
           ],
         ),

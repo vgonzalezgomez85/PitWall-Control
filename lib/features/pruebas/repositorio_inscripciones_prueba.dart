@@ -108,6 +108,33 @@ class RepositorioInscripcionesPrueba {
         .write(InscripcionesPruebaCompanion(asignada: Value(asignada)));
   }
 
+  /// Fija (o quita, con `copa: null`) la copa del equipo SOLO para esta
+  /// prueba, sin tocar la copa del equipo ni otras pruebas. Si aún no hay
+  /// inscripción para (pruebaId, equipoId), la crea.
+  Future<void> fijarCopaPrueba({
+    required int pruebaId,
+    required int equipoId,
+    required String? copa,
+  }) async {
+    final existente = await (db.select(db.inscripcionesPrueba)
+          ..where((t) =>
+              t.pruebaId.equals(pruebaId) & t.equipoId.equals(equipoId)))
+        .getSingleOrNull();
+    if (existente == null) {
+      await db.into(db.inscripcionesPrueba).insert(
+            InscripcionesPruebaCompanion.insert(
+              pruebaId: pruebaId,
+              equipoId: equipoId,
+              copa: Value(copa),
+            ),
+          );
+      return;
+    }
+    await (db.update(db.inscripcionesPrueba)
+          ..where((t) => t.id.equals(existente.id)))
+        .write(InscripcionesPruebaCompanion(copa: Value(copa)));
+  }
+
   /// Crea las mangas + inscripciones a partir del resultado del generador.
   Future<void> aplicarGeneracion({
     required int pruebaId,
