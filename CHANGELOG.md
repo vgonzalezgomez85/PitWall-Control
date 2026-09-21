@@ -14,6 +14,11 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.3.1] — 2026-09-21
+
+### Mejorado
+- **El apartado "Carrocería" de la ficha de verificación se mueve justo después de elegir el modelo de coche** (antes salía al final, tras piñón/corona/bancada/peso del coche entero).
+
 ## [1.3.0] — 2026-09-21
 
 ### Añadido

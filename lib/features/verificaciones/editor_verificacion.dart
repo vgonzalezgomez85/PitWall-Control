@@ -775,6 +775,75 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               ],
               const SizedBox(height: 16),
 
+              _SecHead('Carrocería'),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _SecHead('Peso (gramos)'),
+                        TextField(
+                          controller: _pesoIni,
+                          decoration: InputDecoration(
+                            labelText: 'Peso carrocería',
+                            helperText: cocheSel.id < 0
+                                ? null
+                                : 'Mínimo: ${cocheSel.pesoMin.toStringAsFixed(2)}g',
+                          ),
+                          keyboardType:
+                              const TextInputType.numberWithOptions(
+                                  decimal: true),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _SecHead('Estética'),
+                        SegmentedButton<bool?>(
+                          segments: const [
+                            ButtonSegment(
+                              value: null,
+                              label: Text('Sin comprobar'),
+                            ),
+                            ButtonSegment(
+                              value: true,
+                              label: Text('Bien'),
+                              icon: Icon(Icons.check_circle_outline),
+                            ),
+                            ButtonSegment(
+                              value: false,
+                              label: Text('Faltan piezas'),
+                              icon: Icon(Icons.report_problem_outlined),
+                            ),
+                          ],
+                          selected: {_carroceriaConforme},
+                          onSelectionChanged: (s) =>
+                              _cambiar(() => _carroceriaConforme = s.first),
+                        ),
+                        if (_carroceriaConforme == false) ...[
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _carroceriaPiezasFaltantes,
+                            decoration: const InputDecoration(
+                              labelText: 'Qué piezas le faltan',
+                            ),
+                            maxLines: 2,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
               // Orden de verificación según flujo solicitado:
               // motor | peso carrocería · llantas D|T · piñón|corona ·
               // bancada|chasis · peso coche entero · otros (neumático,
@@ -1282,75 +1351,6 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                       decoration: const InputDecoration(labelText: 'Final'),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              _SecHead('Carrocería'),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _SecHead('Peso (gramos)'),
-                        TextField(
-                          controller: _pesoIni,
-                          decoration: InputDecoration(
-                            labelText: 'Peso carrocería',
-                            helperText: cocheSel.id < 0
-                                ? null
-                                : 'Mínimo: ${cocheSel.pesoMin.toStringAsFixed(2)}g',
-                          ),
-                          keyboardType:
-                              const TextInputType.numberWithOptions(
-                                  decimal: true),
-                          onChanged: (_) => setState(() {}),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _SecHead('Estética'),
-                        SegmentedButton<bool?>(
-                          segments: const [
-                            ButtonSegment(
-                              value: null,
-                              label: Text('Sin comprobar'),
-                            ),
-                            ButtonSegment(
-                              value: true,
-                              label: Text('Bien'),
-                              icon: Icon(Icons.check_circle_outline),
-                            ),
-                            ButtonSegment(
-                              value: false,
-                              label: Text('Faltan piezas'),
-                              icon: Icon(Icons.report_problem_outlined),
-                            ),
-                          ],
-                          selected: {_carroceriaConforme},
-                          onSelectionChanged: (s) =>
-                              _cambiar(() => _carroceriaConforme = s.first),
-                        ),
-                        if (_carroceriaConforme == false) ...[
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _carroceriaPiezasFaltantes,
-                            decoration: const InputDecoration(
-                              labelText: 'Qué piezas le faltan',
-                            ),
-                            maxLines: 2,
-                          ),
-                        ],
-                      ],
                     ),
                   ),
                 ],
