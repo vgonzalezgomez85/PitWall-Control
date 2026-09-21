@@ -108,6 +108,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   bool? _alturaMotorConforme;
   final _anchuraEjeDel = TextEditingController();
   final _anchuraEjeTra = TextEditingController();
+  /// Estado estético de la carrocería: true = bien, false = le faltan
+  /// piezas, null = no comprobado.
+  bool? _carroceriaConforme;
+  final _carroceriaPiezasFaltantes = TextEditingController();
   final _pinonDiametro = TextEditingController();
   final _coronaDiametro = TextEditingController();
   final _suspension = TextEditingController();
@@ -167,6 +171,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   List<TextEditingController> get _controllers => [
         _pesoIni, _pesoFin, _pesoIniCoche, _pesoFinCoche,
         _motor, _motorRpm, _motorUms, _anchuraEjeDel, _anchuraEjeTra,
+        _carroceriaPiezasFaltantes,
         _pinonDiametro, _coronaDiametro, _suspension, _observaciones,
       ];
 
@@ -363,6 +368,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
       _alturaMotorConforme = v.alturaMotorConforme;
       _anchuraEjeDel.text = v.anchuraEjeDel?.toString() ?? '';
       _anchuraEjeTra.text = v.anchuraEjeTra?.toString() ?? '';
+      _carroceriaConforme = v.carroceriaConforme;
+      _carroceriaPiezasFaltantes.text = v.carroceriaPiezasFaltantes ?? '';
       _pinonMarca = v.pinonMarca;
       _pinonDientes = v.pinonDientes;
       _pinonDiametro.text = v.pinonDiametro ?? '';
@@ -453,6 +460,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     _motorUms.dispose();
     _anchuraEjeDel.dispose();
     _anchuraEjeTra.dispose();
+    _carroceriaPiezasFaltantes.dispose();
     _pinonDiametro.dispose();
     _coronaDiametro.dispose();
     _suspension.dispose();
@@ -502,6 +510,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           alturaMotorConforme: _alturaMotorConforme,
           anchuraEjeDel: _parseDouble(_anchuraEjeDel.text),
           anchuraEjeTra: _parseDouble(_anchuraEjeTra.text),
+          carroceriaConforme: _carroceriaConforme,
+          carroceriaPiezasFaltantes: _carroceriaConforme == false
+              ? _vacio(_carroceriaPiezasFaltantes)
+              : null,
           pinonMarca: _pinonMarca,
           pinonDientes: _pinonDientes,
           pinonDiametro: _vacio(_pinonDiametro),
@@ -924,21 +936,6 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _SecHead('Peso carrocería (gramos)'),
-                        TextField(
-                          controller: _pesoIni,
-                          decoration: InputDecoration(
-                            labelText: 'Peso carrocería',
-                            helperText: cocheSel.id < 0
-                                ? null
-                                : 'Mínimo: ${cocheSel.pesoMin.toStringAsFixed(2)}g',
-                          ),
-                          keyboardType:
-                              const TextInputType.numberWithOptions(
-                                  decimal: true),
-                          onChanged: (_) => setState(() {}),
-                        ),
-                        const SizedBox(height: 16),
                         _SecHead('Anchura de eje (mm)'),
                         Row(
                           children: [
@@ -1285,6 +1282,75 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                       decoration: const InputDecoration(labelText: 'Final'),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              _SecHead('Carrocería'),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _SecHead('Peso (gramos)'),
+                        TextField(
+                          controller: _pesoIni,
+                          decoration: InputDecoration(
+                            labelText: 'Peso carrocería',
+                            helperText: cocheSel.id < 0
+                                ? null
+                                : 'Mínimo: ${cocheSel.pesoMin.toStringAsFixed(2)}g',
+                          ),
+                          keyboardType:
+                              const TextInputType.numberWithOptions(
+                                  decimal: true),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _SecHead('Estética'),
+                        SegmentedButton<bool?>(
+                          segments: const [
+                            ButtonSegment(
+                              value: null,
+                              label: Text('Sin comprobar'),
+                            ),
+                            ButtonSegment(
+                              value: true,
+                              label: Text('Bien'),
+                              icon: Icon(Icons.check_circle_outline),
+                            ),
+                            ButtonSegment(
+                              value: false,
+                              label: Text('Faltan piezas'),
+                              icon: Icon(Icons.report_problem_outlined),
+                            ),
+                          ],
+                          selected: {_carroceriaConforme},
+                          onSelectionChanged: (s) =>
+                              _cambiar(() => _carroceriaConforme = s.first),
+                        ),
+                        if (_carroceriaConforme == false) ...[
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _carroceriaPiezasFaltantes,
+                            decoration: const InputDecoration(
+                              labelText: 'Qué piezas le faltan',
+                            ),
+                            maxLines: 2,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],

@@ -245,6 +245,14 @@ class GeneradorPdfVerificaciones {
           if (v.alturaMotorConforme != null)
             _Vrow(t('Altura motor'),
                 v.alturaMotorConforme! ? t('Conforme') : t('No conforme')),
+          if (v.carroceriaConforme != null)
+            _Vrow(
+              t('Carrocería'),
+              v.carroceriaConforme!
+                  ? t('Bien')
+                  : '${t('Faltan piezas')}'
+                      '${(v.carroceriaPiezasFaltantes?.trim().isNotEmpty ?? false) ? ": ${v.carroceriaPiezasFaltantes}" : ""}',
+            ),
           if (v.anchuraEjeDel != null || anchuraEjeDelMax != null)
             _Vrow(t('Anchura eje delantero'),
                 _medidaMaxima(v.anchuraEjeDel, anchuraEjeDelMax, unidad: 'mm')),

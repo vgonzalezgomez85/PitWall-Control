@@ -266,6 +266,11 @@ class Verificaciones extends Table {
   /// el máximo de `campeonatos.anchura_eje_json` para la copa del equipo.
   RealColumn get anchuraEjeDel => real().nullable()();
   RealColumn get anchuraEjeTra => real().nullable()();
+  /// Estado estético de la carrocería: true = bien, false = le faltan
+  /// piezas, null = no comprobado.
+  BoolColumn get carroceriaConforme => boolean().nullable()();
+  /// Qué piezas le faltan, solo si `carroceriaConforme` es false.
+  TextColumn get carroceriaPiezasFaltantes => text().nullable()();
 
   TextColumn get pinonMarca => text().nullable()();
   IntColumn get pinonDientes => integer().nullable()();

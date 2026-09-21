@@ -15,7 +15,7 @@ The whole codebase is **Spanish**: identifiers, comments, UI strings, commit mes
 ## Database (drift / SQLite)
 
 - Schema lives in `lib/data/database/tables.dart` + `app_database.dart`; `app_database.g.dart` is generated. Never hand-edit the `.g.dart`.
-- `schemaVersion` is currently `36`. Every schema change must bump it **and** add a step in the `onUpgrade` block using the `_aplicar()` helper — the helper swallows `duplicate column` / `already exists` errors because dev DBs can lag behind the declared `user_version`. Use `customStatement('ALTER TABLE ... ADD COLUMN ...')` for new columns, `_aplicar(() => m.createTable(...))` for new tables.
+- `schemaVersion` is currently `37`. Every schema change must bump it **and** add a step in the `onUpgrade` block using the `_aplicar()` helper — the helper swallows `duplicate column` / `already exists` errors because dev DBs can lag behind the declared `user_version`. Use `customStatement('ALTER TABLE ... ADD COLUMN ...')` for new columns, `_aplicar(() => m.createTable(...))` for new tables.
 - Changes that are purely additive are safe; destructive migrations must be justified (see schema 31 dedup and 33/35 drop+re-add patterns).
 - `Seeds.sembrar(db)` + `limpiarDuplicados()` run on every app start in `main.dart`; both must stay idempotent.
 - Local DB files and `fotos_verificaciones/` (verification photos) are gitignored.

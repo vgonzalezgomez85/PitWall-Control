@@ -7554,6 +7554,30 @@ class $VerificacionesTable extends Verificaciones
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _carroceriaConformeMeta =
+      const VerificationMeta('carroceriaConforme');
+  @override
+  late final GeneratedColumn<bool> carroceriaConforme = GeneratedColumn<bool>(
+    'carroceria_conforme',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("carroceria_conforme" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _carroceriaPiezasFaltantesMeta =
+      const VerificationMeta('carroceriaPiezasFaltantes');
+  @override
+  late final GeneratedColumn<String> carroceriaPiezasFaltantes =
+      GeneratedColumn<String>(
+        'carroceria_piezas_faltantes',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _pinonMarcaMeta = const VerificationMeta(
     'pinonMarca',
   );
@@ -7829,6 +7853,8 @@ class $VerificacionesTable extends Verificaciones
     alturaMotorConforme,
     anchuraEjeDel,
     anchuraEjeTra,
+    carroceriaConforme,
+    carroceriaPiezasFaltantes,
     pinonMarca,
     pinonDientes,
     pinonDiametro,
@@ -7980,6 +8006,24 @@ class $VerificacionesTable extends Verificaciones
         anchuraEjeTra.isAcceptableOrUnknown(
           data['anchura_eje_tra']!,
           _anchuraEjeTraMeta,
+        ),
+      );
+    }
+    if (data.containsKey('carroceria_conforme')) {
+      context.handle(
+        _carroceriaConformeMeta,
+        carroceriaConforme.isAcceptableOrUnknown(
+          data['carroceria_conforme']!,
+          _carroceriaConformeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('carroceria_piezas_faltantes')) {
+      context.handle(
+        _carroceriaPiezasFaltantesMeta,
+        carroceriaPiezasFaltantes.isAcceptableOrUnknown(
+          data['carroceria_piezas_faltantes']!,
+          _carroceriaPiezasFaltantesMeta,
         ),
       );
     }
@@ -8236,6 +8280,14 @@ class $VerificacionesTable extends Verificaciones
         DriftSqlType.double,
         data['${effectivePrefix}anchura_eje_tra'],
       ),
+      carroceriaConforme: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}carroceria_conforme'],
+      ),
+      carroceriaPiezasFaltantes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}carroceria_piezas_faltantes'],
+      ),
       pinonMarca: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}pinon_marca'],
@@ -8374,6 +8426,13 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
   /// el máximo de `campeonatos.anchura_eje_json` para la copa del equipo.
   final double? anchuraEjeDel;
   final double? anchuraEjeTra;
+
+  /// Estado estético de la carrocería: true = bien, false = le faltan
+  /// piezas, null = no comprobado.
+  final bool? carroceriaConforme;
+
+  /// Qué piezas le faltan, solo si `carroceriaConforme` es false.
+  final String? carroceriaPiezasFaltantes;
   final String? pinonMarca;
   final int? pinonDientes;
 
@@ -8428,6 +8487,8 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     this.alturaMotorConforme,
     this.anchuraEjeDel,
     this.anchuraEjeTra,
+    this.carroceriaConforme,
+    this.carroceriaPiezasFaltantes,
     this.pinonMarca,
     this.pinonDientes,
     this.pinonDiametro,
@@ -8494,6 +8555,14 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     }
     if (!nullToAbsent || anchuraEjeTra != null) {
       map['anchura_eje_tra'] = Variable<double>(anchuraEjeTra);
+    }
+    if (!nullToAbsent || carroceriaConforme != null) {
+      map['carroceria_conforme'] = Variable<bool>(carroceriaConforme);
+    }
+    if (!nullToAbsent || carroceriaPiezasFaltantes != null) {
+      map['carroceria_piezas_faltantes'] = Variable<String>(
+        carroceriaPiezasFaltantes,
+      );
     }
     if (!nullToAbsent || pinonMarca != null) {
       map['pinon_marca'] = Variable<String>(pinonMarca);
@@ -8599,6 +8668,13 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       anchuraEjeTra: anchuraEjeTra == null && nullToAbsent
           ? const Value.absent()
           : Value(anchuraEjeTra),
+      carroceriaConforme: carroceriaConforme == null && nullToAbsent
+          ? const Value.absent()
+          : Value(carroceriaConforme),
+      carroceriaPiezasFaltantes:
+          carroceriaPiezasFaltantes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(carroceriaPiezasFaltantes),
       pinonMarca: pinonMarca == null && nullToAbsent
           ? const Value.absent()
           : Value(pinonMarca),
@@ -8685,6 +8761,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       ),
       anchuraEjeDel: serializer.fromJson<double?>(json['anchuraEjeDel']),
       anchuraEjeTra: serializer.fromJson<double?>(json['anchuraEjeTra']),
+      carroceriaConforme: serializer.fromJson<bool?>(
+        json['carroceriaConforme'],
+      ),
+      carroceriaPiezasFaltantes: serializer.fromJson<String?>(
+        json['carroceriaPiezasFaltantes'],
+      ),
       pinonMarca: serializer.fromJson<String?>(json['pinonMarca']),
       pinonDientes: serializer.fromJson<int?>(json['pinonDientes']),
       pinonDiametro: serializer.fromJson<String?>(json['pinonDiametro']),
@@ -8734,6 +8816,10 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       'alturaMotorConforme': serializer.toJson<bool?>(alturaMotorConforme),
       'anchuraEjeDel': serializer.toJson<double?>(anchuraEjeDel),
       'anchuraEjeTra': serializer.toJson<double?>(anchuraEjeTra),
+      'carroceriaConforme': serializer.toJson<bool?>(carroceriaConforme),
+      'carroceriaPiezasFaltantes': serializer.toJson<String?>(
+        carroceriaPiezasFaltantes,
+      ),
       'pinonMarca': serializer.toJson<String?>(pinonMarca),
       'pinonDientes': serializer.toJson<int?>(pinonDientes),
       'pinonDiametro': serializer.toJson<String?>(pinonDiametro),
@@ -8777,6 +8863,8 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     Value<bool?> alturaMotorConforme = const Value.absent(),
     Value<double?> anchuraEjeDel = const Value.absent(),
     Value<double?> anchuraEjeTra = const Value.absent(),
+    Value<bool?> carroceriaConforme = const Value.absent(),
+    Value<String?> carroceriaPiezasFaltantes = const Value.absent(),
     Value<String?> pinonMarca = const Value.absent(),
     Value<int?> pinonDientes = const Value.absent(),
     Value<String?> pinonDiametro = const Value.absent(),
@@ -8829,6 +8917,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     anchuraEjeTra: anchuraEjeTra.present
         ? anchuraEjeTra.value
         : this.anchuraEjeTra,
+    carroceriaConforme: carroceriaConforme.present
+        ? carroceriaConforme.value
+        : this.carroceriaConforme,
+    carroceriaPiezasFaltantes: carroceriaPiezasFaltantes.present
+        ? carroceriaPiezasFaltantes.value
+        : this.carroceriaPiezasFaltantes,
     pinonMarca: pinonMarca.present ? pinonMarca.value : this.pinonMarca,
     pinonDientes: pinonDientes.present ? pinonDientes.value : this.pinonDientes,
     pinonDiametro: pinonDiametro.present
@@ -8905,6 +8999,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       anchuraEjeTra: data.anchuraEjeTra.present
           ? data.anchuraEjeTra.value
           : this.anchuraEjeTra,
+      carroceriaConforme: data.carroceriaConforme.present
+          ? data.carroceriaConforme.value
+          : this.carroceriaConforme,
+      carroceriaPiezasFaltantes: data.carroceriaPiezasFaltantes.present
+          ? data.carroceriaPiezasFaltantes.value
+          : this.carroceriaPiezasFaltantes,
       pinonMarca: data.pinonMarca.present
           ? data.pinonMarca.value
           : this.pinonMarca,
@@ -8982,6 +9082,8 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
           ..write('alturaMotorConforme: $alturaMotorConforme, ')
           ..write('anchuraEjeDel: $anchuraEjeDel, ')
           ..write('anchuraEjeTra: $anchuraEjeTra, ')
+          ..write('carroceriaConforme: $carroceriaConforme, ')
+          ..write('carroceriaPiezasFaltantes: $carroceriaPiezasFaltantes, ')
           ..write('pinonMarca: $pinonMarca, ')
           ..write('pinonDientes: $pinonDientes, ')
           ..write('pinonDiametro: $pinonDiametro, ')
@@ -9027,6 +9129,8 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     alturaMotorConforme,
     anchuraEjeDel,
     anchuraEjeTra,
+    carroceriaConforme,
+    carroceriaPiezasFaltantes,
     pinonMarca,
     pinonDientes,
     pinonDiametro,
@@ -9071,6 +9175,8 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
           other.alturaMotorConforme == this.alturaMotorConforme &&
           other.anchuraEjeDel == this.anchuraEjeDel &&
           other.anchuraEjeTra == this.anchuraEjeTra &&
+          other.carroceriaConforme == this.carroceriaConforme &&
+          other.carroceriaPiezasFaltantes == this.carroceriaPiezasFaltantes &&
           other.pinonMarca == this.pinonMarca &&
           other.pinonDientes == this.pinonDientes &&
           other.pinonDiametro == this.pinonDiametro &&
@@ -9113,6 +9219,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
   final Value<bool?> alturaMotorConforme;
   final Value<double?> anchuraEjeDel;
   final Value<double?> anchuraEjeTra;
+  final Value<bool?> carroceriaConforme;
+  final Value<String?> carroceriaPiezasFaltantes;
   final Value<String?> pinonMarca;
   final Value<int?> pinonDientes;
   final Value<String?> pinonDiametro;
@@ -9153,6 +9261,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     this.alturaMotorConforme = const Value.absent(),
     this.anchuraEjeDel = const Value.absent(),
     this.anchuraEjeTra = const Value.absent(),
+    this.carroceriaConforme = const Value.absent(),
+    this.carroceriaPiezasFaltantes = const Value.absent(),
     this.pinonMarca = const Value.absent(),
     this.pinonDientes = const Value.absent(),
     this.pinonDiametro = const Value.absent(),
@@ -9194,6 +9304,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     this.alturaMotorConforme = const Value.absent(),
     this.anchuraEjeDel = const Value.absent(),
     this.anchuraEjeTra = const Value.absent(),
+    this.carroceriaConforme = const Value.absent(),
+    this.carroceriaPiezasFaltantes = const Value.absent(),
     this.pinonMarca = const Value.absent(),
     this.pinonDientes = const Value.absent(),
     this.pinonDiametro = const Value.absent(),
@@ -9236,6 +9348,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     Expression<bool>? alturaMotorConforme,
     Expression<double>? anchuraEjeDel,
     Expression<double>? anchuraEjeTra,
+    Expression<bool>? carroceriaConforme,
+    Expression<String>? carroceriaPiezasFaltantes,
     Expression<String>? pinonMarca,
     Expression<int>? pinonDientes,
     Expression<String>? pinonDiametro,
@@ -9278,6 +9392,9 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
         'altura_motor_conforme': alturaMotorConforme,
       if (anchuraEjeDel != null) 'anchura_eje_del': anchuraEjeDel,
       if (anchuraEjeTra != null) 'anchura_eje_tra': anchuraEjeTra,
+      if (carroceriaConforme != null) 'carroceria_conforme': carroceriaConforme,
+      if (carroceriaPiezasFaltantes != null)
+        'carroceria_piezas_faltantes': carroceriaPiezasFaltantes,
       if (pinonMarca != null) 'pinon_marca': pinonMarca,
       if (pinonDientes != null) 'pinon_dientes': pinonDientes,
       if (pinonDiametro != null) 'pinon_diametro': pinonDiametro,
@@ -9323,6 +9440,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     Value<bool?>? alturaMotorConforme,
     Value<double?>? anchuraEjeDel,
     Value<double?>? anchuraEjeTra,
+    Value<bool?>? carroceriaConforme,
+    Value<String?>? carroceriaPiezasFaltantes,
     Value<String?>? pinonMarca,
     Value<int?>? pinonDientes,
     Value<String?>? pinonDiametro,
@@ -9364,6 +9483,9 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
       alturaMotorConforme: alturaMotorConforme ?? this.alturaMotorConforme,
       anchuraEjeDel: anchuraEjeDel ?? this.anchuraEjeDel,
       anchuraEjeTra: anchuraEjeTra ?? this.anchuraEjeTra,
+      carroceriaConforme: carroceriaConforme ?? this.carroceriaConforme,
+      carroceriaPiezasFaltantes:
+          carroceriaPiezasFaltantes ?? this.carroceriaPiezasFaltantes,
       pinonMarca: pinonMarca ?? this.pinonMarca,
       pinonDientes: pinonDientes ?? this.pinonDientes,
       pinonDiametro: pinonDiametro ?? this.pinonDiametro,
@@ -9440,6 +9562,14 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     }
     if (anchuraEjeTra.present) {
       map['anchura_eje_tra'] = Variable<double>(anchuraEjeTra.value);
+    }
+    if (carroceriaConforme.present) {
+      map['carroceria_conforme'] = Variable<bool>(carroceriaConforme.value);
+    }
+    if (carroceriaPiezasFaltantes.present) {
+      map['carroceria_piezas_faltantes'] = Variable<String>(
+        carroceriaPiezasFaltantes.value,
+      );
     }
     if (pinonMarca.present) {
       map['pinon_marca'] = Variable<String>(pinonMarca.value);
@@ -9532,6 +9662,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
           ..write('alturaMotorConforme: $alturaMotorConforme, ')
           ..write('anchuraEjeDel: $anchuraEjeDel, ')
           ..write('anchuraEjeTra: $anchuraEjeTra, ')
+          ..write('carroceriaConforme: $carroceriaConforme, ')
+          ..write('carroceriaPiezasFaltantes: $carroceriaPiezasFaltantes, ')
           ..write('pinonMarca: $pinonMarca, ')
           ..write('pinonDientes: $pinonDientes, ')
           ..write('pinonDiametro: $pinonDiametro, ')
@@ -24183,6 +24315,8 @@ typedef $$VerificacionesTableCreateCompanionBuilder =
       Value<bool?> alturaMotorConforme,
       Value<double?> anchuraEjeDel,
       Value<double?> anchuraEjeTra,
+      Value<bool?> carroceriaConforme,
+      Value<String?> carroceriaPiezasFaltantes,
       Value<String?> pinonMarca,
       Value<int?> pinonDientes,
       Value<String?> pinonDiametro,
@@ -24225,6 +24359,8 @@ typedef $$VerificacionesTableUpdateCompanionBuilder =
       Value<bool?> alturaMotorConforme,
       Value<double?> anchuraEjeDel,
       Value<double?> anchuraEjeTra,
+      Value<bool?> carroceriaConforme,
+      Value<String?> carroceriaPiezasFaltantes,
       Value<String?> pinonMarca,
       Value<int?> pinonDientes,
       Value<String?> pinonDiametro,
@@ -24416,6 +24552,16 @@ class $$VerificacionesTableFilterComposer
 
   ColumnFilters<double> get anchuraEjeTra => $composableBuilder(
     column: $table.anchuraEjeTra,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get carroceriaConforme => $composableBuilder(
+    column: $table.carroceriaConforme,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get carroceriaPiezasFaltantes => $composableBuilder(
+    column: $table.carroceriaPiezasFaltantes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -24703,6 +24849,16 @@ class $$VerificacionesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get carroceriaConforme => $composableBuilder(
+    column: $table.carroceriaConforme,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get carroceriaPiezasFaltantes => $composableBuilder(
+    column: $table.carroceriaPiezasFaltantes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get pinonMarca => $composableBuilder(
     column: $table.pinonMarca,
     builder: (column) => ColumnOrderings(column),
@@ -24945,6 +25101,16 @@ class $$VerificacionesTableAnnotationComposer
 
   GeneratedColumn<double> get anchuraEjeTra => $composableBuilder(
     column: $table.anchuraEjeTra,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get carroceriaConforme => $composableBuilder(
+    column: $table.carroceriaConforme,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get carroceriaPiezasFaltantes => $composableBuilder(
+    column: $table.carroceriaPiezasFaltantes,
     builder: (column) => column,
   );
 
@@ -25196,6 +25362,8 @@ class $$VerificacionesTableTableManager
                 Value<bool?> alturaMotorConforme = const Value.absent(),
                 Value<double?> anchuraEjeDel = const Value.absent(),
                 Value<double?> anchuraEjeTra = const Value.absent(),
+                Value<bool?> carroceriaConforme = const Value.absent(),
+                Value<String?> carroceriaPiezasFaltantes = const Value.absent(),
                 Value<String?> pinonMarca = const Value.absent(),
                 Value<int?> pinonDientes = const Value.absent(),
                 Value<String?> pinonDiametro = const Value.absent(),
@@ -25236,6 +25404,8 @@ class $$VerificacionesTableTableManager
                 alturaMotorConforme: alturaMotorConforme,
                 anchuraEjeDel: anchuraEjeDel,
                 anchuraEjeTra: anchuraEjeTra,
+                carroceriaConforme: carroceriaConforme,
+                carroceriaPiezasFaltantes: carroceriaPiezasFaltantes,
                 pinonMarca: pinonMarca,
                 pinonDientes: pinonDientes,
                 pinonDiametro: pinonDiametro,
@@ -25278,6 +25448,8 @@ class $$VerificacionesTableTableManager
                 Value<bool?> alturaMotorConforme = const Value.absent(),
                 Value<double?> anchuraEjeDel = const Value.absent(),
                 Value<double?> anchuraEjeTra = const Value.absent(),
+                Value<bool?> carroceriaConforme = const Value.absent(),
+                Value<String?> carroceriaPiezasFaltantes = const Value.absent(),
                 Value<String?> pinonMarca = const Value.absent(),
                 Value<int?> pinonDientes = const Value.absent(),
                 Value<String?> pinonDiametro = const Value.absent(),
@@ -25318,6 +25490,8 @@ class $$VerificacionesTableTableManager
                 alturaMotorConforme: alturaMotorConforme,
                 anchuraEjeDel: anchuraEjeDel,
                 anchuraEjeTra: anchuraEjeTra,
+                carroceriaConforme: carroceriaConforme,
+                carroceriaPiezasFaltantes: carroceriaPiezasFaltantes,
                 pinonMarca: pinonMarca,
                 pinonDientes: pinonDientes,
                 pinonDiametro: pinonDiametro,

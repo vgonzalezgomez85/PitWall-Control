@@ -63,7 +63,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 36;
+  int get schemaVersion => 37;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -394,6 +394,14 @@ class AppDatabase extends _$AppDatabase {
                   "WHERE NOT EXISTS "
                   "(SELECT 1 FROM catalogo_copas WHERE nombre = '$n')"));
             }
+          }
+          if (from < 37) {
+            // Estado estético de la carrocería en la verificación: bien / le
+            // faltan piezas (con detalle de qué piezas).
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN carroceria_conforme INTEGER'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN carroceria_piezas_faltantes TEXT'));
           }
         },
       );
