@@ -14,6 +14,12 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.8.1] — 2026-09-22
+
+### Corregido
+- **El generador de mangas repetía el mismo horario sugerido a partir de la tercera manga del mismo día** (p. ej. dos mangas seguidas a "Jueves 23:00"). Ahora cada manga adicional del día suma 2 horas (21:00, 23:00, 01:00...).
+- **El número de mangas sugerido redondeaba siempre hacia arriba**, dejando a veces una manga casi vacía (13 equipos con máximo 6 → 6+6+1). Ahora solo se añade una manga extra si el resto por repartir supera la mitad del máximo por manga; si no, se reparte entre las mangas existentes aunque acaben un poco por encima del máximo (13 → 7+6; 15 y 15 → 2 mangas de 8+7 cada día, no 3).
+
 ## [1.8.0] — 2026-09-22
 
 ### Mejorado

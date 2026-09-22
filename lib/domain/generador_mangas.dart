@@ -250,11 +250,21 @@ class GeneradorMangas {
   }
 
   /// Calcula automáticamente el número de mangas necesario según el total
-  /// de equipos y el tamaño máximo por manga.
+  /// de equipos y el tamaño máximo por manga (carriles).
+  ///
+  /// No es un simple "hacia arriba": solo se añade una manga extra si el
+  /// resto de repartir a `tamMax` supera la MITAD de `tamMax`; en empate se
+  /// queda con menos mangas (más grandes) en vez de crear una casi vacía.
+  /// P.ej. con máximo 6: 13 equipos → 2 mangas (7+6, resto 1 ≤ 3). 15 y 15
+  /// (uno por día) → 2 mangas cada día (resto 3, empate, no sube a 3).
+  /// 16 equipos → si sube a 3 (resto 4 > 3) → reparto 6+5+5.
   static int numMangasSugerido({required int totalEquipos, int tamMax = 10}) {
     if (totalEquipos <= 0) return 1;
     if (totalEquipos <= tamMax) return 1;
-    return (totalEquipos / tamMax).ceil();
+    final base = totalEquipos ~/ tamMax;
+    final resto = totalEquipos % tamMax;
+    final num = resto > tamMax / 2 ? base + 1 : base;
+    return num.clamp(1, totalEquipos);
   }
 
   /// Sugiere nombres de mangas según el número.
@@ -300,9 +310,14 @@ class GeneradorMangas {
           orden.indexOf(a.key).compareTo(orden.indexOf(b.key)));
     for (final e in entradas) {
       final total = e.value; // equipos exclusivos de ese día
-      final num = (total / tamMax).ceil().clamp(1, 10);
+      final num = numMangasSugerido(totalEquipos: total, tamMax: tamMax)
+          .clamp(1, 10);
       for (var i = 0; i < num; i++) {
-        final hora = i == 0 ? '21:00' : '23:00';
+        // Slots de 2h empezando a las 21:00 (21:00, 23:00, 01:00...) para
+        // que cada manga del mismo día tenga un horario distinto, en vez
+        // de repetir "23:00" a partir de la tercera.
+        final horaNum = (21 + i * 2) % 24;
+        final hora = '${horaNum.toString().padLeft(2, '0')}:00';
         out.add('${_capitalizar(e.key)} $hora');
       }
     }
