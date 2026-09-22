@@ -283,9 +283,14 @@ class GeneradorMangas {
   ///
   /// Equipos sin preferencia se incluyen como capacidad extra en las mangas
   /// existentes — no se crean mangas adicionales solo para ellos.
+  ///
+  /// [duracionMangaMinutos] espacia el horario sugerido de cada manga del
+  /// mismo día esa cantidad exacta de minutos (duración real de una manga:
+  /// carriles × minutos por carril), en vez de un salto fijo de 2 horas.
   static List<String> sugerirMangasPorPreferencia({
     required List<EquipoSemilla> equipos,
     int tamMax = 10,
+    int duracionMangaMinutos = 120,
   }) {
     final porDia = <String, int>{};
     int sinPref = 0;
@@ -313,11 +318,15 @@ class GeneradorMangas {
       final num = numMangasSugerido(totalEquipos: total, tamMax: tamMax)
           .clamp(1, 10);
       for (var i = 0; i < num; i++) {
-        // Slots de 2h empezando a las 21:00 (21:00, 23:00, 01:00...) para
-        // que cada manga del mismo día tenga un horario distinto, en vez
-        // de repetir "23:00" a partir de la tercera.
-        final horaNum = (21 + i * 2) % 24;
-        final hora = '${horaNum.toString().padLeft(2, '0')}:00';
+        // Slots empezando a las 21:00, separados por la duración real de
+        // una manga (carriles × minutos por carril) para que cada manga
+        // del mismo día tenga un horario distinto y realista.
+        final minutosDesde21 = i * duracionMangaMinutos;
+        final totalMin = (21 * 60 + minutosDesde21) % (24 * 60);
+        final horaNum = totalMin ~/ 60;
+        final minNum = totalMin % 60;
+        final hora =
+            '${horaNum.toString().padLeft(2, '0')}:${minNum.toString().padLeft(2, '0')}';
         out.add('${_capitalizar(e.key)} $hora');
       }
     }

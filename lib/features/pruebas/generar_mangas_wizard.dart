@@ -41,6 +41,10 @@ class GenerarMangasWizard extends ConsumerStatefulWidget {
 class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
   /// Carriles de la pista = máximo de equipos por manga (corren a la vez).
   int _carriles = 6;
+  /// Minutos que dura el turno de cada equipo en un carril. Junto a
+  /// [_carriles] determina la duración real de una manga, usada para
+  /// espaciar los horarios sugeridos.
+  int _minutosPorCarril = 6;
   int _numMangas = 1;
   List<TextEditingController> _nombresControllers = [];
   bool _sustituir = true;
@@ -114,7 +118,9 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
       );
     }).toList();
     var nombres = GeneradorMangas.sugerirMangasPorPreferencia(
-        equipos: semillasTmp, tamMax: _carriles);
+        equipos: semillasTmp,
+        tamMax: _carriles,
+        duracionMangaMinutos: _duracionMangaMinutos);
     if (nombres.isEmpty) {
       // fallback: número sugerido sobre el total
       final n = GeneradorMangas.numMangasSugerido(
@@ -130,14 +136,54 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
     _recalcular();
   }
 
+  /// Duración real de una manga: cada equipo pasa por todos los carriles,
+  /// [_minutosPorCarril] minutos en cada uno.
+  int get _duracionMangaMinutos => _carriles * _minutosPorCarril;
+
   void _ajustarCarriles(int n) {
     final clamped = n.clamp(2, 32);
-    // Al cambiar los carriles, re-sugiere el número de mangas para que quepan
-    // todos los equipos respetando el nuevo máximo por manga.
-    final sugerido = GeneradorMangas.numMangasSugerido(
-        totalEquipos: widget.inscritos.length, tamMax: clamped);
     setState(() => _carriles = clamped);
-    _ajustarNumMangas(sugerido);
+    _regenerarSugerencias();
+  }
+
+  void _ajustarMinutosPorCarril(int n) {
+    final clamped = n.clamp(1, 60);
+    setState(() => _minutosPorCarril = clamped);
+    _regenerarSugerencias();
+  }
+
+  /// Recalcula el número de mangas sugerido y sus nombres/horarios a partir
+  /// de los carriles y minutos por carril actuales, sustituyendo lo que
+  /// hubiera en los campos de nombre (se llama solo desde los pasos 1, antes
+  /// de que el usuario personalice nombres en el paso 3).
+  void _regenerarSugerencias() {
+    final semillasTmp = widget.inscritos.map((i) {
+      final puntos = (_puntosPorPiloto[i.piloto1.id] ?? 0) +
+          (i.piloto2 != null ? (_puntosPorPiloto[i.piloto2!.id] ?? 0) : 0);
+      return EquipoSemilla(
+        equipoId: i.equipo.id,
+        nombre: i.equipo.nombre,
+        copa: i.equipo.copa,
+        puntuacion: puntos,
+        preferenciaDia: i.inscripcion.preferenciaDia,
+      );
+    }).toList();
+    var nombres = GeneradorMangas.sugerirMangasPorPreferencia(
+        equipos: semillasTmp,
+        tamMax: _carriles,
+        duracionMangaMinutos: _duracionMangaMinutos);
+    if (nombres.isEmpty) {
+      final n = GeneradorMangas.numMangasSugerido(
+          totalEquipos: widget.inscritos.length, tamMax: _carriles);
+      nombres = GeneradorMangas.sugerirNombresMangas(n);
+    }
+    for (final c in _nombresControllers) {
+      c.dispose();
+    }
+    _nombresControllers =
+        nombres.map((n) => TextEditingController(text: n)).toList();
+    _numMangas = _nombresControllers.length;
+    _recalcular();
   }
 
   void _ajustarNumMangas(int n) {
@@ -303,6 +349,46 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
               const SizedBox(width: 8),
               Text('carriles', style: Theme.of(context).textTheme.bodyMedium),
             ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Minutos por carril (cuánto dura el turno de un equipo en '
+            'cada carril, para calcular la duración de la manga).',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              IconButton.filledTonal(
+                onPressed: _minutosPorCarril > 1
+                    ? () => _ajustarMinutosPorCarril(_minutosPorCarril - 1)
+                    : null,
+                icon: const Icon(Icons.remove),
+              ),
+              const SizedBox(width: 16),
+              Text('$_minutosPorCarril',
+                  style: const TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.w700)),
+              const SizedBox(width: 16),
+              IconButton.filledTonal(
+                onPressed: _minutosPorCarril < 60
+                    ? () => _ajustarMinutosPorCarril(_minutosPorCarril + 1)
+                    : null,
+                icon: const Icon(Icons.add),
+              ),
+              const SizedBox(width: 8),
+              Text('min/carril',
+                  style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Cada manga durará ~$_duracionMangaMinutos min '
+            '($_carriles carriles × $_minutosPorCarril min).',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(fontWeight: FontWeight.w600, color: cs.primary),
           ),
           const SizedBox(height: 20),
           Text('2. Número de mangas',

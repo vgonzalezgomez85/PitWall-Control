@@ -24,6 +24,7 @@ import '../google/importar_pilotos_sheets.dart';
 import '../google/repositorio_hojas_vinculadas.dart';
 import 'editor_piloto.dart';
 import 'pantalla_importar.dart';
+import 'pantalla_importar_puntuacion.dart';
 import 'repositorio_pilotos.dart';
 
 class PantallaPilotos extends ConsumerStatefulWidget {
@@ -70,6 +71,10 @@ class _PantallaPilotosState extends ConsumerState<PantallaPilotos> {
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const ImportarPilotosSheets(),
                 ));
+              } else if (op == 'puntuacion') {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const PantallaImportarPuntuacion(),
+                ));
               }
             },
             itemBuilder: (_) => const [
@@ -86,6 +91,14 @@ class _PantallaPilotosState extends ConsumerState<PantallaPilotos> {
                 child: ListTile(
                   leading: Icon(Icons.upload_file_outlined),
                   title: Text('Desde archivo CSV / Excel'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'puntuacion',
+                child: ListTile(
+                  leading: Icon(Icons.leaderboard_outlined),
+                  title: Text('Puntuación previa (1ª prueba)'),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),

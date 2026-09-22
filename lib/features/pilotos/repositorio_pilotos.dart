@@ -184,6 +184,22 @@ class RepositorioPilotos {
               t.campeonatoId.equals(campeonatoId)))
         .go();
   }
+
+  /// Actualiza el saldo de temporada anterior de un piloto ya inscrito en
+  /// el campeonato (semilla de orden para la primera prueba, hasta que el
+  /// campeonato tenga resultados propios).
+  Future<void> actualizarSaldoAnterior({
+    required int pilotoId,
+    required int campeonatoId,
+    required int saldo,
+  }) async {
+    await (db.update(db.pilotoCampeonato)
+          ..where((t) =>
+              t.pilotoId.equals(pilotoId) &
+              t.campeonatoId.equals(campeonatoId)))
+        .write(PilotoCampeonatoCompanion(
+            saldoTemporadaAnterior: Value(saldo)));
+  }
 }
 
 final repoPilotosProvider = Provider<RepositorioPilotos>((ref) {

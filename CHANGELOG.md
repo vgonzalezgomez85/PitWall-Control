@@ -14,6 +14,12 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.9.0] — 2026-09-22
+
+### Añadido
+- **Campo "minutos por carril" en Generar mangas.** Junto a los carriles, calcula la duración real de una manga (carriles × minutos por carril) y espacia los horarios sugeridos por esa duración exacta en vez de un salto fijo de 2 horas.
+- **Nueva pantalla "Puntuación previa" en Pilotos**, para importar desde Excel/CSV la puntuación de temporada anterior de los pilotos ya inscritos en el campeonato activo (cruzando por nombre). Sirve como semilla de orden solo para "Generar mangas" en la primera prueba de un campeonato nuevo; en cuanto hay resultados propios, la clasificación real toma el relevo sola. Si una celda trae una fórmula sin calcular (p. ej. VLOOKUP sin valor en caché), la vista previa lo avisa en vez de guardar un 0 en silencio.
+
 ## [1.8.1] — 2026-09-22
 
 ### Corregido
