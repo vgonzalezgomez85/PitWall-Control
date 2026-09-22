@@ -14,6 +14,11 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.8.0] — 2026-09-22
+
+### Mejorado
+- **Cambia el criterio de "sin copa/categoría" en el catálogo (coches, motores, llantas, neumáticos, engranajes, bancadas, chasis): antes valía para todas las copas, ahora no se puede usar en ninguna.** Un componente sin copa asignada deja de aparecer en las verificaciones hasta que se le marque explícitamente una; si para una copa concreta no hay ningún componente marcado, ese desplegable sale vacío en vez de mostrar el catálogo entero sin filtrar. Afecta directamente a los catálogos que se acaban de sincronizar con Sheets: hay que revisar y asignar copa a los componentes que la tengan sin rellenar en la hoja para que vuelvan a estar disponibles.
+
 ## [1.7.0] — 2026-09-22
 
 ### Añadido

@@ -60,7 +60,7 @@ List<String> _decodeCopas(String? s) {
 }
 
 String _resumenCopas(List<String> copas) {
-  if (copas.isEmpty) return 'Todas';
+  if (copas.isEmpty) return 'Sin copa/categoría (no se puede usar)';
   return copas.join(', ');
 }
 
@@ -826,7 +826,7 @@ class _DialogoCocheBancadaState extends ConsumerState<_DialogoCocheBancada> {
               const SizedBox(height: 4),
               Text(
                 _copas.isEmpty
-                    ? 'Sin marcar = aplica a todas las copas.'
+                    ? 'Sin marcar = no se podrá usar en ninguna copa.'
                     : 'Marca solo las copas donde es válido.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),

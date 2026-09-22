@@ -368,7 +368,7 @@ class CatalogoCoches extends Table {
   RealColumn get pesoMin => real()();
   IntColumn get creditosCoche => integer().withDefault(const Constant(0))();
   BoolColumn get activo => boolean().withDefault(const Constant(true))();
-  /// JSON array de copas donde aplica este coche. Vacío "[]" = aplica a todas.
+  /// JSON array de copas donde aplica este coche. Vacío "[]" = no aplica a ninguna (no se puede usar hasta asignarle copa).
   TextColumn get copasJson => text().withDefault(const Constant('[]'))();
   /// Nombre de archivo de la foto del coche (en la carpeta de fotos local).
   /// Sirve para comprobar en la verificación que el coche entregado coincide.
@@ -396,7 +396,7 @@ class CatalogoLlantas extends Table {
 class CatalogoBancadas extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get nombre => text()(); // "Scaleauto RT3 1,0"
-  /// JSON array de copas donde aplica. Vacío "[]" = aplica a todas.
+  /// JSON array de copas donde aplica. Vacío "[]" = no aplica a ninguna (no se puede usar hasta asignarle copa).
   TextColumn get copasJson => text().withDefault(const Constant('[]'))();
   TextColumn get idExterno => text().nullable()();
 }
@@ -404,7 +404,7 @@ class CatalogoBancadas extends Table {
 class CatalogoChasis extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get nombre => text()();
-  /// JSON array de copas donde aplica. Vacío "[]" = aplica a todas.
+  /// JSON array de copas donde aplica. Vacío "[]" = no aplica a ninguna (no se puede usar hasta asignarle copa).
   TextColumn get copasJson => text().withDefault(const Constant('[]'))();
 }
 
@@ -432,7 +432,7 @@ class CatalogoMotores extends Table {
   TextColumn get nombre => text()(); // identificador / modelo del motor
   IntColumn get rpm => integer().nullable()();
   RealColumn get gauss => real().nullable()();
-  /// JSON array de copas donde aplica. Vacío "[]" = aplica a todas.
+  /// JSON array de copas donde aplica. Vacío "[]" = no aplica a ninguna (no se puede usar hasta asignarle copa).
   TextColumn get copasJson => text().withDefault(const Constant('[]'))();
   /// Identificador estable para sincronizar con Google Sheets (columna ID de
   /// la hoja). Nulo si esta fila aún no se ha subido/bajado con ID.
