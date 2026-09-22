@@ -127,18 +127,25 @@ class GoogleSheetsService {
     }
   }
 
-  /// Añade [filas] al final de la pestaña.
+  /// Añade [filas] al final de la pestaña. Si se indica [ultimaColumna]
+  /// (0-based), el rango se restringe a A:esaColumna para que la API busque
+  /// la tabla justo bajo la cabecera conocida, en vez de adivinar entre
+  /// bloques de datos sueltos que pueda haber en el resto de la pestaña.
   Future<void> anadirFilas(
-      String hojaId, String tituloPestana, List<List<String>> filas) async {
+      String hojaId, String tituloPestana, List<List<String>> filas,
+      {int? ultimaColumna}) async {
     if (filas.isEmpty) return;
     final cli = await _auth.clienteAutenticado();
     try {
       final api = sheets.SheetsApi(cli);
       final vr = sheets.ValueRange(values: filas);
+      final rango = ultimaColumna != null
+          ? "'$tituloPestana'!A:${columnaLetra(ultimaColumna)}"
+          : "'$tituloPestana'";
       await api.spreadsheets.values.append(
         vr,
         hojaId,
-        "'$tituloPestana'",
+        rango,
         valueInputOption: 'USER_ENTERED',
         insertDataOption: 'INSERT_ROWS',
       );

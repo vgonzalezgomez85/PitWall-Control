@@ -60,6 +60,7 @@ class PlanSubida {
   final List<FilaSubida> nuevas;
   final List<FilaSubida> conflictos;
   final int identicas;
+  final int ancho;
   PlanSubida({
     this.error,
     this.vinculo,
@@ -68,6 +69,7 @@ class PlanSubida {
     this.nuevas = const [],
     this.conflictos = const [],
     this.identicas = 0,
+    this.ancho = 0,
   });
   bool get vacio => nuevas.isEmpty && conflictos.isEmpty;
 }
@@ -288,6 +290,7 @@ class SubidorCatalogo {
       nuevas: nuevas,
       conflictos: conflictos,
       identicas: identicas,
+      ancho: width,
     );
   }
 
@@ -298,7 +301,8 @@ class SubidorCatalogo {
     final appendRows =
         plan.nuevas.where((f) => f.aplicar).map((f) => f.valores).toList();
     if (appendRows.isNotEmpty) {
-      await svc.anadirFilas(plan.hojaId, plan.pestana, appendRows);
+      await svc.anadirFilas(plan.hojaId, plan.pestana, appendRows,
+          ultimaColumna: plan.ancho > 0 ? plan.ancho - 1 : null);
     }
     var act = 0;
     for (final f in plan.conflictos.where((f) => f.aplicar)) {
