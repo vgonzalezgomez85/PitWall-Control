@@ -50,7 +50,7 @@ part 'app_database.g.dart';
     CatalogoNeumaticos,
     CatalogoEngranajes,
     CatalogoMotores,
-    CatalogoMotoresBorrados,
+    CatalogoBorrados,
     CatalogoCopas,
     CatalogoClubs,
     HojasVinculadas,
@@ -64,7 +64,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 39;
+  int get schemaVersion => 40;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -413,7 +413,29 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 39) {
             // Borrados de motores pendientes de confirmar en la hoja.
-            await _aplicar(() => m.createTable(catalogoMotoresBorrados));
+            // Sustituida en la migración 40 por la tabla genérica
+            // catalogo_borrados; aquí no queda nada que hacer.
+          }
+          if (from < 40) {
+            // Sincronización por ID extendida al resto de catálogos: mismo
+            // identificador estable en cada tabla, y tabla de borrados
+            // pendientes genérica (antes solo existía para motores).
+            await _aplicar(() =>
+                customStatement('DROP TABLE IF EXISTS catalogo_motores_borrados'));
+            await _aplicar(() => m.createTable(catalogoBorrados));
+            for (final tabla in [
+              'catalogo_coches',
+              'catalogo_marcas',
+              'catalogo_llantas',
+              'catalogo_bancadas',
+              'catalogo_neumaticos',
+              'catalogo_engranajes',
+              'catalogo_copas',
+              'catalogo_clubs',
+            ]) {
+              await _aplicar(() =>
+                  customStatement('ALTER TABLE $tabla ADD COLUMN id_externo TEXT'));
+            }
           }
         },
       );

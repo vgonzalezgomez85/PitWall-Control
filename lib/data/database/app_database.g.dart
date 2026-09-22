@@ -6915,6 +6915,17 @@ class $CatalogoCochesTable extends CatalogoCoches
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _idExternoMeta = const VerificationMeta(
+    'idExterno',
+  );
+  @override
+  late final GeneratedColumn<String> idExterno = GeneratedColumn<String>(
+    'id_externo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -6926,6 +6937,7 @@ class $CatalogoCochesTable extends CatalogoCoches
     activo,
     copasJson,
     fotoPath,
+    idExterno,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -7001,6 +7013,12 @@ class $CatalogoCochesTable extends CatalogoCoches
         fotoPath.isAcceptableOrUnknown(data['foto_path']!, _fotoPathMeta),
       );
     }
+    if (data.containsKey('id_externo')) {
+      context.handle(
+        _idExternoMeta,
+        idExterno.isAcceptableOrUnknown(data['id_externo']!, _idExternoMeta),
+      );
+    }
     return context;
   }
 
@@ -7046,6 +7064,10 @@ class $CatalogoCochesTable extends CatalogoCoches
         DriftSqlType.string,
         data['${effectivePrefix}foto_path'],
       ),
+      idExterno: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_externo'],
+      ),
     );
   }
 
@@ -7070,6 +7092,10 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
   /// Nombre de archivo de la foto del coche (en la carpeta de fotos local).
   /// Sirve para comprobar en la verificación que el coche entregado coincide.
   final String? fotoPath;
+
+  /// Identificador estable para sincronizar con Google Sheets (columna ID de
+  /// la hoja). Nulo si esta fila aún no se ha subido/bajado con ID.
+  final String? idExterno;
   const CatalogoCoche({
     required this.id,
     required this.nombre,
@@ -7080,6 +7106,7 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
     required this.activo,
     required this.copasJson,
     this.fotoPath,
+    this.idExterno,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -7094,6 +7121,9 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
     map['copas_json'] = Variable<String>(copasJson);
     if (!nullToAbsent || fotoPath != null) {
       map['foto_path'] = Variable<String>(fotoPath);
+    }
+    if (!nullToAbsent || idExterno != null) {
+      map['id_externo'] = Variable<String>(idExterno);
     }
     return map;
   }
@@ -7111,6 +7141,9 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
       fotoPath: fotoPath == null && nullToAbsent
           ? const Value.absent()
           : Value(fotoPath),
+      idExterno: idExterno == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idExterno),
     );
   }
 
@@ -7129,6 +7162,7 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
       activo: serializer.fromJson<bool>(json['activo']),
       copasJson: serializer.fromJson<String>(json['copasJson']),
       fotoPath: serializer.fromJson<String?>(json['fotoPath']),
+      idExterno: serializer.fromJson<String?>(json['idExterno']),
     );
   }
   @override
@@ -7144,6 +7178,7 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
       'activo': serializer.toJson<bool>(activo),
       'copasJson': serializer.toJson<String>(copasJson),
       'fotoPath': serializer.toJson<String?>(fotoPath),
+      'idExterno': serializer.toJson<String?>(idExterno),
     };
   }
 
@@ -7157,6 +7192,7 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
     bool? activo,
     String? copasJson,
     Value<String?> fotoPath = const Value.absent(),
+    Value<String?> idExterno = const Value.absent(),
   }) => CatalogoCoche(
     id: id ?? this.id,
     nombre: nombre ?? this.nombre,
@@ -7167,6 +7203,7 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
     activo: activo ?? this.activo,
     copasJson: copasJson ?? this.copasJson,
     fotoPath: fotoPath.present ? fotoPath.value : this.fotoPath,
+    idExterno: idExterno.present ? idExterno.value : this.idExterno,
   );
   CatalogoCoche copyWithCompanion(CatalogoCochesCompanion data) {
     return CatalogoCoche(
@@ -7181,6 +7218,7 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
       activo: data.activo.present ? data.activo.value : this.activo,
       copasJson: data.copasJson.present ? data.copasJson.value : this.copasJson,
       fotoPath: data.fotoPath.present ? data.fotoPath.value : this.fotoPath,
+      idExterno: data.idExterno.present ? data.idExterno.value : this.idExterno,
     );
   }
 
@@ -7195,7 +7233,8 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
           ..write('creditosCoche: $creditosCoche, ')
           ..write('activo: $activo, ')
           ..write('copasJson: $copasJson, ')
-          ..write('fotoPath: $fotoPath')
+          ..write('fotoPath: $fotoPath, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
@@ -7211,6 +7250,7 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
     activo,
     copasJson,
     fotoPath,
+    idExterno,
   );
   @override
   bool operator ==(Object other) =>
@@ -7224,7 +7264,8 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
           other.creditosCoche == this.creditosCoche &&
           other.activo == this.activo &&
           other.copasJson == this.copasJson &&
-          other.fotoPath == this.fotoPath);
+          other.fotoPath == this.fotoPath &&
+          other.idExterno == this.idExterno);
 }
 
 class CatalogoCochesCompanion extends UpdateCompanion<CatalogoCoche> {
@@ -7237,6 +7278,7 @@ class CatalogoCochesCompanion extends UpdateCompanion<CatalogoCoche> {
   final Value<bool> activo;
   final Value<String> copasJson;
   final Value<String?> fotoPath;
+  final Value<String?> idExterno;
   const CatalogoCochesCompanion({
     this.id = const Value.absent(),
     this.nombre = const Value.absent(),
@@ -7247,6 +7289,7 @@ class CatalogoCochesCompanion extends UpdateCompanion<CatalogoCoche> {
     this.activo = const Value.absent(),
     this.copasJson = const Value.absent(),
     this.fotoPath = const Value.absent(),
+    this.idExterno = const Value.absent(),
   });
   CatalogoCochesCompanion.insert({
     this.id = const Value.absent(),
@@ -7258,6 +7301,7 @@ class CatalogoCochesCompanion extends UpdateCompanion<CatalogoCoche> {
     this.activo = const Value.absent(),
     this.copasJson = const Value.absent(),
     this.fotoPath = const Value.absent(),
+    this.idExterno = const Value.absent(),
   }) : nombre = Value(nombre),
        marca = Value(marca),
        modelo = Value(modelo),
@@ -7272,6 +7316,7 @@ class CatalogoCochesCompanion extends UpdateCompanion<CatalogoCoche> {
     Expression<bool>? activo,
     Expression<String>? copasJson,
     Expression<String>? fotoPath,
+    Expression<String>? idExterno,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -7283,6 +7328,7 @@ class CatalogoCochesCompanion extends UpdateCompanion<CatalogoCoche> {
       if (activo != null) 'activo': activo,
       if (copasJson != null) 'copas_json': copasJson,
       if (fotoPath != null) 'foto_path': fotoPath,
+      if (idExterno != null) 'id_externo': idExterno,
     });
   }
 
@@ -7296,6 +7342,7 @@ class CatalogoCochesCompanion extends UpdateCompanion<CatalogoCoche> {
     Value<bool>? activo,
     Value<String>? copasJson,
     Value<String?>? fotoPath,
+    Value<String?>? idExterno,
   }) {
     return CatalogoCochesCompanion(
       id: id ?? this.id,
@@ -7307,6 +7354,7 @@ class CatalogoCochesCompanion extends UpdateCompanion<CatalogoCoche> {
       activo: activo ?? this.activo,
       copasJson: copasJson ?? this.copasJson,
       fotoPath: fotoPath ?? this.fotoPath,
+      idExterno: idExterno ?? this.idExterno,
     );
   }
 
@@ -7340,6 +7388,9 @@ class CatalogoCochesCompanion extends UpdateCompanion<CatalogoCoche> {
     if (fotoPath.present) {
       map['foto_path'] = Variable<String>(fotoPath.value);
     }
+    if (idExterno.present) {
+      map['id_externo'] = Variable<String>(idExterno.value);
+    }
     return map;
   }
 
@@ -7354,7 +7405,8 @@ class CatalogoCochesCompanion extends UpdateCompanion<CatalogoCoche> {
           ..write('creditosCoche: $creditosCoche, ')
           ..write('activo: $activo, ')
           ..write('copasJson: $copasJson, ')
-          ..write('fotoPath: $fotoPath')
+          ..write('fotoPath: $fotoPath, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
@@ -11324,8 +11376,19 @@ class $CatalogoMarcasTable extends CatalogoMarcas
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _idExternoMeta = const VerificationMeta(
+    'idExterno',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, codigo, nombre];
+  late final GeneratedColumn<String> idExterno = GeneratedColumn<String>(
+    'id_externo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, codigo, nombre, idExterno];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -11357,6 +11420,12 @@ class $CatalogoMarcasTable extends CatalogoMarcas
     } else if (isInserting) {
       context.missing(_nombreMeta);
     }
+    if (data.containsKey('id_externo')) {
+      context.handle(
+        _idExternoMeta,
+        idExterno.isAcceptableOrUnknown(data['id_externo']!, _idExternoMeta),
+      );
+    }
     return context;
   }
 
@@ -11378,6 +11447,10 @@ class $CatalogoMarcasTable extends CatalogoMarcas
         DriftSqlType.string,
         data['${effectivePrefix}nombre'],
       )!,
+      idExterno: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_externo'],
+      ),
     );
   }
 
@@ -11391,10 +11464,12 @@ class CatalogoMarca extends DataClass implements Insertable<CatalogoMarca> {
   final int id;
   final String codigo;
   final String nombre;
+  final String? idExterno;
   const CatalogoMarca({
     required this.id,
     required this.codigo,
     required this.nombre,
+    this.idExterno,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -11402,6 +11477,9 @@ class CatalogoMarca extends DataClass implements Insertable<CatalogoMarca> {
     map['id'] = Variable<int>(id);
     map['codigo'] = Variable<String>(codigo);
     map['nombre'] = Variable<String>(nombre);
+    if (!nullToAbsent || idExterno != null) {
+      map['id_externo'] = Variable<String>(idExterno);
+    }
     return map;
   }
 
@@ -11410,6 +11488,9 @@ class CatalogoMarca extends DataClass implements Insertable<CatalogoMarca> {
       id: Value(id),
       codigo: Value(codigo),
       nombre: Value(nombre),
+      idExterno: idExterno == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idExterno),
     );
   }
 
@@ -11422,6 +11503,7 @@ class CatalogoMarca extends DataClass implements Insertable<CatalogoMarca> {
       id: serializer.fromJson<int>(json['id']),
       codigo: serializer.fromJson<String>(json['codigo']),
       nombre: serializer.fromJson<String>(json['nombre']),
+      idExterno: serializer.fromJson<String?>(json['idExterno']),
     );
   }
   @override
@@ -11431,20 +11513,27 @@ class CatalogoMarca extends DataClass implements Insertable<CatalogoMarca> {
       'id': serializer.toJson<int>(id),
       'codigo': serializer.toJson<String>(codigo),
       'nombre': serializer.toJson<String>(nombre),
+      'idExterno': serializer.toJson<String?>(idExterno),
     };
   }
 
-  CatalogoMarca copyWith({int? id, String? codigo, String? nombre}) =>
-      CatalogoMarca(
-        id: id ?? this.id,
-        codigo: codigo ?? this.codigo,
-        nombre: nombre ?? this.nombre,
-      );
+  CatalogoMarca copyWith({
+    int? id,
+    String? codigo,
+    String? nombre,
+    Value<String?> idExterno = const Value.absent(),
+  }) => CatalogoMarca(
+    id: id ?? this.id,
+    codigo: codigo ?? this.codigo,
+    nombre: nombre ?? this.nombre,
+    idExterno: idExterno.present ? idExterno.value : this.idExterno,
+  );
   CatalogoMarca copyWithCompanion(CatalogoMarcasCompanion data) {
     return CatalogoMarca(
       id: data.id.present ? data.id.value : this.id,
       codigo: data.codigo.present ? data.codigo.value : this.codigo,
       nombre: data.nombre.present ? data.nombre.value : this.nombre,
+      idExterno: data.idExterno.present ? data.idExterno.value : this.idExterno,
     );
   }
 
@@ -11453,46 +11542,53 @@ class CatalogoMarca extends DataClass implements Insertable<CatalogoMarca> {
     return (StringBuffer('CatalogoMarca(')
           ..write('id: $id, ')
           ..write('codigo: $codigo, ')
-          ..write('nombre: $nombre')
+          ..write('nombre: $nombre, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, codigo, nombre);
+  int get hashCode => Object.hash(id, codigo, nombre, idExterno);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CatalogoMarca &&
           other.id == this.id &&
           other.codigo == this.codigo &&
-          other.nombre == this.nombre);
+          other.nombre == this.nombre &&
+          other.idExterno == this.idExterno);
 }
 
 class CatalogoMarcasCompanion extends UpdateCompanion<CatalogoMarca> {
   final Value<int> id;
   final Value<String> codigo;
   final Value<String> nombre;
+  final Value<String?> idExterno;
   const CatalogoMarcasCompanion({
     this.id = const Value.absent(),
     this.codigo = const Value.absent(),
     this.nombre = const Value.absent(),
+    this.idExterno = const Value.absent(),
   });
   CatalogoMarcasCompanion.insert({
     this.id = const Value.absent(),
     required String codigo,
     required String nombre,
+    this.idExterno = const Value.absent(),
   }) : codigo = Value(codigo),
        nombre = Value(nombre);
   static Insertable<CatalogoMarca> custom({
     Expression<int>? id,
     Expression<String>? codigo,
     Expression<String>? nombre,
+    Expression<String>? idExterno,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (codigo != null) 'codigo': codigo,
       if (nombre != null) 'nombre': nombre,
+      if (idExterno != null) 'id_externo': idExterno,
     });
   }
 
@@ -11500,11 +11596,13 @@ class CatalogoMarcasCompanion extends UpdateCompanion<CatalogoMarca> {
     Value<int>? id,
     Value<String>? codigo,
     Value<String>? nombre,
+    Value<String?>? idExterno,
   }) {
     return CatalogoMarcasCompanion(
       id: id ?? this.id,
       codigo: codigo ?? this.codigo,
       nombre: nombre ?? this.nombre,
+      idExterno: idExterno ?? this.idExterno,
     );
   }
 
@@ -11520,6 +11618,9 @@ class CatalogoMarcasCompanion extends UpdateCompanion<CatalogoMarca> {
     if (nombre.present) {
       map['nombre'] = Variable<String>(nombre.value);
     }
+    if (idExterno.present) {
+      map['id_externo'] = Variable<String>(idExterno.value);
+    }
     return map;
   }
 
@@ -11528,7 +11629,8 @@ class CatalogoMarcasCompanion extends UpdateCompanion<CatalogoMarca> {
     return (StringBuffer('CatalogoMarcasCompanion(')
           ..write('id: $id, ')
           ..write('codigo: $codigo, ')
-          ..write('nombre: $nombre')
+          ..write('nombre: $nombre, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
@@ -11584,8 +11686,25 @@ class $CatalogoLlantasTable extends CatalogoLlantas
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _idExternoMeta = const VerificationMeta(
+    'idExterno',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, dimension, tipo, copasJson];
+  late final GeneratedColumn<String> idExterno = GeneratedColumn<String>(
+    'id_externo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    dimension,
+    tipo,
+    copasJson,
+    idExterno,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -11623,6 +11742,12 @@ class $CatalogoLlantasTable extends CatalogoLlantas
         copasJson.isAcceptableOrUnknown(data['copas_json']!, _copasJsonMeta),
       );
     }
+    if (data.containsKey('id_externo')) {
+      context.handle(
+        _idExternoMeta,
+        idExterno.isAcceptableOrUnknown(data['id_externo']!, _idExternoMeta),
+      );
+    }
     return context;
   }
 
@@ -11648,6 +11773,10 @@ class $CatalogoLlantasTable extends CatalogoLlantas
         DriftSqlType.string,
         data['${effectivePrefix}copas_json'],
       ),
+      idExterno: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_externo'],
+      ),
     );
   }
 
@@ -11662,11 +11791,13 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
   final String dimension;
   final String tipo;
   final String? copasJson;
+  final String? idExterno;
   const CatalogoLlanta({
     required this.id,
     required this.dimension,
     required this.tipo,
     this.copasJson,
+    this.idExterno,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -11676,6 +11807,9 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
     map['tipo'] = Variable<String>(tipo);
     if (!nullToAbsent || copasJson != null) {
       map['copas_json'] = Variable<String>(copasJson);
+    }
+    if (!nullToAbsent || idExterno != null) {
+      map['id_externo'] = Variable<String>(idExterno);
     }
     return map;
   }
@@ -11688,6 +11822,9 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
       copasJson: copasJson == null && nullToAbsent
           ? const Value.absent()
           : Value(copasJson),
+      idExterno: idExterno == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idExterno),
     );
   }
 
@@ -11701,6 +11838,7 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
       dimension: serializer.fromJson<String>(json['dimension']),
       tipo: serializer.fromJson<String>(json['tipo']),
       copasJson: serializer.fromJson<String?>(json['copasJson']),
+      idExterno: serializer.fromJson<String?>(json['idExterno']),
     );
   }
   @override
@@ -11711,6 +11849,7 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
       'dimension': serializer.toJson<String>(dimension),
       'tipo': serializer.toJson<String>(tipo),
       'copasJson': serializer.toJson<String?>(copasJson),
+      'idExterno': serializer.toJson<String?>(idExterno),
     };
   }
 
@@ -11719,11 +11858,13 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
     String? dimension,
     String? tipo,
     Value<String?> copasJson = const Value.absent(),
+    Value<String?> idExterno = const Value.absent(),
   }) => CatalogoLlanta(
     id: id ?? this.id,
     dimension: dimension ?? this.dimension,
     tipo: tipo ?? this.tipo,
     copasJson: copasJson.present ? copasJson.value : this.copasJson,
+    idExterno: idExterno.present ? idExterno.value : this.idExterno,
   );
   CatalogoLlanta copyWithCompanion(CatalogoLlantasCompanion data) {
     return CatalogoLlanta(
@@ -11731,6 +11872,7 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
       dimension: data.dimension.present ? data.dimension.value : this.dimension,
       tipo: data.tipo.present ? data.tipo.value : this.tipo,
       copasJson: data.copasJson.present ? data.copasJson.value : this.copasJson,
+      idExterno: data.idExterno.present ? data.idExterno.value : this.idExterno,
     );
   }
 
@@ -11740,13 +11882,14 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
           ..write('id: $id, ')
           ..write('dimension: $dimension, ')
           ..write('tipo: $tipo, ')
-          ..write('copasJson: $copasJson')
+          ..write('copasJson: $copasJson, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, dimension, tipo, copasJson);
+  int get hashCode => Object.hash(id, dimension, tipo, copasJson, idExterno);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -11754,7 +11897,8 @@ class CatalogoLlanta extends DataClass implements Insertable<CatalogoLlanta> {
           other.id == this.id &&
           other.dimension == this.dimension &&
           other.tipo == this.tipo &&
-          other.copasJson == this.copasJson);
+          other.copasJson == this.copasJson &&
+          other.idExterno == this.idExterno);
 }
 
 class CatalogoLlantasCompanion extends UpdateCompanion<CatalogoLlanta> {
@@ -11762,17 +11906,20 @@ class CatalogoLlantasCompanion extends UpdateCompanion<CatalogoLlanta> {
   final Value<String> dimension;
   final Value<String> tipo;
   final Value<String?> copasJson;
+  final Value<String?> idExterno;
   const CatalogoLlantasCompanion({
     this.id = const Value.absent(),
     this.dimension = const Value.absent(),
     this.tipo = const Value.absent(),
     this.copasJson = const Value.absent(),
+    this.idExterno = const Value.absent(),
   });
   CatalogoLlantasCompanion.insert({
     this.id = const Value.absent(),
     required String dimension,
     required String tipo,
     this.copasJson = const Value.absent(),
+    this.idExterno = const Value.absent(),
   }) : dimension = Value(dimension),
        tipo = Value(tipo);
   static Insertable<CatalogoLlanta> custom({
@@ -11780,12 +11927,14 @@ class CatalogoLlantasCompanion extends UpdateCompanion<CatalogoLlanta> {
     Expression<String>? dimension,
     Expression<String>? tipo,
     Expression<String>? copasJson,
+    Expression<String>? idExterno,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (dimension != null) 'dimension': dimension,
       if (tipo != null) 'tipo': tipo,
       if (copasJson != null) 'copas_json': copasJson,
+      if (idExterno != null) 'id_externo': idExterno,
     });
   }
 
@@ -11794,12 +11943,14 @@ class CatalogoLlantasCompanion extends UpdateCompanion<CatalogoLlanta> {
     Value<String>? dimension,
     Value<String>? tipo,
     Value<String?>? copasJson,
+    Value<String?>? idExterno,
   }) {
     return CatalogoLlantasCompanion(
       id: id ?? this.id,
       dimension: dimension ?? this.dimension,
       tipo: tipo ?? this.tipo,
       copasJson: copasJson ?? this.copasJson,
+      idExterno: idExterno ?? this.idExterno,
     );
   }
 
@@ -11818,6 +11969,9 @@ class CatalogoLlantasCompanion extends UpdateCompanion<CatalogoLlanta> {
     if (copasJson.present) {
       map['copas_json'] = Variable<String>(copasJson.value);
     }
+    if (idExterno.present) {
+      map['id_externo'] = Variable<String>(idExterno.value);
+    }
     return map;
   }
 
@@ -11827,7 +11981,8 @@ class CatalogoLlantasCompanion extends UpdateCompanion<CatalogoLlanta> {
           ..write('id: $id, ')
           ..write('dimension: $dimension, ')
           ..write('tipo: $tipo, ')
-          ..write('copasJson: $copasJson')
+          ..write('copasJson: $copasJson, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
@@ -11873,8 +12028,19 @@ class $CatalogoBancadasTable extends CatalogoBancadas
     requiredDuringInsert: false,
     defaultValue: const Constant('[]'),
   );
+  static const VerificationMeta _idExternoMeta = const VerificationMeta(
+    'idExterno',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, nombre, copasJson];
+  late final GeneratedColumn<String> idExterno = GeneratedColumn<String>(
+    'id_externo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, nombre, copasJson, idExterno];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -11904,6 +12070,12 @@ class $CatalogoBancadasTable extends CatalogoBancadas
         copasJson.isAcceptableOrUnknown(data['copas_json']!, _copasJsonMeta),
       );
     }
+    if (data.containsKey('id_externo')) {
+      context.handle(
+        _idExternoMeta,
+        idExterno.isAcceptableOrUnknown(data['id_externo']!, _idExternoMeta),
+      );
+    }
     return context;
   }
 
@@ -11925,6 +12097,10 @@ class $CatalogoBancadasTable extends CatalogoBancadas
         DriftSqlType.string,
         data['${effectivePrefix}copas_json'],
       )!,
+      idExterno: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_externo'],
+      ),
     );
   }
 
@@ -11940,10 +12116,12 @@ class CatalogoBancada extends DataClass implements Insertable<CatalogoBancada> {
 
   /// JSON array de copas donde aplica. Vacío "[]" = aplica a todas.
   final String copasJson;
+  final String? idExterno;
   const CatalogoBancada({
     required this.id,
     required this.nombre,
     required this.copasJson,
+    this.idExterno,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -11951,6 +12129,9 @@ class CatalogoBancada extends DataClass implements Insertable<CatalogoBancada> {
     map['id'] = Variable<int>(id);
     map['nombre'] = Variable<String>(nombre);
     map['copas_json'] = Variable<String>(copasJson);
+    if (!nullToAbsent || idExterno != null) {
+      map['id_externo'] = Variable<String>(idExterno);
+    }
     return map;
   }
 
@@ -11959,6 +12140,9 @@ class CatalogoBancada extends DataClass implements Insertable<CatalogoBancada> {
       id: Value(id),
       nombre: Value(nombre),
       copasJson: Value(copasJson),
+      idExterno: idExterno == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idExterno),
     );
   }
 
@@ -11971,6 +12155,7 @@ class CatalogoBancada extends DataClass implements Insertable<CatalogoBancada> {
       id: serializer.fromJson<int>(json['id']),
       nombre: serializer.fromJson<String>(json['nombre']),
       copasJson: serializer.fromJson<String>(json['copasJson']),
+      idExterno: serializer.fromJson<String?>(json['idExterno']),
     );
   }
   @override
@@ -11980,20 +12165,27 @@ class CatalogoBancada extends DataClass implements Insertable<CatalogoBancada> {
       'id': serializer.toJson<int>(id),
       'nombre': serializer.toJson<String>(nombre),
       'copasJson': serializer.toJson<String>(copasJson),
+      'idExterno': serializer.toJson<String?>(idExterno),
     };
   }
 
-  CatalogoBancada copyWith({int? id, String? nombre, String? copasJson}) =>
-      CatalogoBancada(
-        id: id ?? this.id,
-        nombre: nombre ?? this.nombre,
-        copasJson: copasJson ?? this.copasJson,
-      );
+  CatalogoBancada copyWith({
+    int? id,
+    String? nombre,
+    String? copasJson,
+    Value<String?> idExterno = const Value.absent(),
+  }) => CatalogoBancada(
+    id: id ?? this.id,
+    nombre: nombre ?? this.nombre,
+    copasJson: copasJson ?? this.copasJson,
+    idExterno: idExterno.present ? idExterno.value : this.idExterno,
+  );
   CatalogoBancada copyWithCompanion(CatalogoBancadasCompanion data) {
     return CatalogoBancada(
       id: data.id.present ? data.id.value : this.id,
       nombre: data.nombre.present ? data.nombre.value : this.nombre,
       copasJson: data.copasJson.present ? data.copasJson.value : this.copasJson,
+      idExterno: data.idExterno.present ? data.idExterno.value : this.idExterno,
     );
   }
 
@@ -12002,45 +12194,52 @@ class CatalogoBancada extends DataClass implements Insertable<CatalogoBancada> {
     return (StringBuffer('CatalogoBancada(')
           ..write('id: $id, ')
           ..write('nombre: $nombre, ')
-          ..write('copasJson: $copasJson')
+          ..write('copasJson: $copasJson, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, nombre, copasJson);
+  int get hashCode => Object.hash(id, nombre, copasJson, idExterno);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CatalogoBancada &&
           other.id == this.id &&
           other.nombre == this.nombre &&
-          other.copasJson == this.copasJson);
+          other.copasJson == this.copasJson &&
+          other.idExterno == this.idExterno);
 }
 
 class CatalogoBancadasCompanion extends UpdateCompanion<CatalogoBancada> {
   final Value<int> id;
   final Value<String> nombre;
   final Value<String> copasJson;
+  final Value<String?> idExterno;
   const CatalogoBancadasCompanion({
     this.id = const Value.absent(),
     this.nombre = const Value.absent(),
     this.copasJson = const Value.absent(),
+    this.idExterno = const Value.absent(),
   });
   CatalogoBancadasCompanion.insert({
     this.id = const Value.absent(),
     required String nombre,
     this.copasJson = const Value.absent(),
+    this.idExterno = const Value.absent(),
   }) : nombre = Value(nombre);
   static Insertable<CatalogoBancada> custom({
     Expression<int>? id,
     Expression<String>? nombre,
     Expression<String>? copasJson,
+    Expression<String>? idExterno,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (nombre != null) 'nombre': nombre,
       if (copasJson != null) 'copas_json': copasJson,
+      if (idExterno != null) 'id_externo': idExterno,
     });
   }
 
@@ -12048,11 +12247,13 @@ class CatalogoBancadasCompanion extends UpdateCompanion<CatalogoBancada> {
     Value<int>? id,
     Value<String>? nombre,
     Value<String>? copasJson,
+    Value<String?>? idExterno,
   }) {
     return CatalogoBancadasCompanion(
       id: id ?? this.id,
       nombre: nombre ?? this.nombre,
       copasJson: copasJson ?? this.copasJson,
+      idExterno: idExterno ?? this.idExterno,
     );
   }
 
@@ -12068,6 +12269,9 @@ class CatalogoBancadasCompanion extends UpdateCompanion<CatalogoBancada> {
     if (copasJson.present) {
       map['copas_json'] = Variable<String>(copasJson.value);
     }
+    if (idExterno.present) {
+      map['id_externo'] = Variable<String>(idExterno.value);
+    }
     return map;
   }
 
@@ -12076,7 +12280,8 @@ class CatalogoBancadasCompanion extends UpdateCompanion<CatalogoBancada> {
     return (StringBuffer('CatalogoBancadasCompanion(')
           ..write('id: $id, ')
           ..write('nombre: $nombre, ')
-          ..write('copasJson: $copasJson')
+          ..write('copasJson: $copasJson, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
@@ -12381,8 +12586,25 @@ class $CatalogoNeumaticosTable extends CatalogoNeumaticos
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _idExternoMeta = const VerificationMeta(
+    'idExterno',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, nombre, referencia, copasJson];
+  late final GeneratedColumn<String> idExterno = GeneratedColumn<String>(
+    'id_externo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    nombre,
+    referencia,
+    copasJson,
+    idExterno,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -12418,6 +12640,12 @@ class $CatalogoNeumaticosTable extends CatalogoNeumaticos
         copasJson.isAcceptableOrUnknown(data['copas_json']!, _copasJsonMeta),
       );
     }
+    if (data.containsKey('id_externo')) {
+      context.handle(
+        _idExternoMeta,
+        idExterno.isAcceptableOrUnknown(data['id_externo']!, _idExternoMeta),
+      );
+    }
     return context;
   }
 
@@ -12443,6 +12671,10 @@ class $CatalogoNeumaticosTable extends CatalogoNeumaticos
         DriftSqlType.string,
         data['${effectivePrefix}copas_json'],
       ),
+      idExterno: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_externo'],
+      ),
     );
   }
 
@@ -12458,11 +12690,13 @@ class CatalogoNeumatico extends DataClass
   final String nombre;
   final String? referencia;
   final String? copasJson;
+  final String? idExterno;
   const CatalogoNeumatico({
     required this.id,
     required this.nombre,
     this.referencia,
     this.copasJson,
+    this.idExterno,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -12474,6 +12708,9 @@ class CatalogoNeumatico extends DataClass
     }
     if (!nullToAbsent || copasJson != null) {
       map['copas_json'] = Variable<String>(copasJson);
+    }
+    if (!nullToAbsent || idExterno != null) {
+      map['id_externo'] = Variable<String>(idExterno);
     }
     return map;
   }
@@ -12488,6 +12725,9 @@ class CatalogoNeumatico extends DataClass
       copasJson: copasJson == null && nullToAbsent
           ? const Value.absent()
           : Value(copasJson),
+      idExterno: idExterno == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idExterno),
     );
   }
 
@@ -12501,6 +12741,7 @@ class CatalogoNeumatico extends DataClass
       nombre: serializer.fromJson<String>(json['nombre']),
       referencia: serializer.fromJson<String?>(json['referencia']),
       copasJson: serializer.fromJson<String?>(json['copasJson']),
+      idExterno: serializer.fromJson<String?>(json['idExterno']),
     );
   }
   @override
@@ -12511,6 +12752,7 @@ class CatalogoNeumatico extends DataClass
       'nombre': serializer.toJson<String>(nombre),
       'referencia': serializer.toJson<String?>(referencia),
       'copasJson': serializer.toJson<String?>(copasJson),
+      'idExterno': serializer.toJson<String?>(idExterno),
     };
   }
 
@@ -12519,11 +12761,13 @@ class CatalogoNeumatico extends DataClass
     String? nombre,
     Value<String?> referencia = const Value.absent(),
     Value<String?> copasJson = const Value.absent(),
+    Value<String?> idExterno = const Value.absent(),
   }) => CatalogoNeumatico(
     id: id ?? this.id,
     nombre: nombre ?? this.nombre,
     referencia: referencia.present ? referencia.value : this.referencia,
     copasJson: copasJson.present ? copasJson.value : this.copasJson,
+    idExterno: idExterno.present ? idExterno.value : this.idExterno,
   );
   CatalogoNeumatico copyWithCompanion(CatalogoNeumaticosCompanion data) {
     return CatalogoNeumatico(
@@ -12533,6 +12777,7 @@ class CatalogoNeumatico extends DataClass
           ? data.referencia.value
           : this.referencia,
       copasJson: data.copasJson.present ? data.copasJson.value : this.copasJson,
+      idExterno: data.idExterno.present ? data.idExterno.value : this.idExterno,
     );
   }
 
@@ -12542,13 +12787,14 @@ class CatalogoNeumatico extends DataClass
           ..write('id: $id, ')
           ..write('nombre: $nombre, ')
           ..write('referencia: $referencia, ')
-          ..write('copasJson: $copasJson')
+          ..write('copasJson: $copasJson, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, nombre, referencia, copasJson);
+  int get hashCode => Object.hash(id, nombre, referencia, copasJson, idExterno);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -12556,7 +12802,8 @@ class CatalogoNeumatico extends DataClass
           other.id == this.id &&
           other.nombre == this.nombre &&
           other.referencia == this.referencia &&
-          other.copasJson == this.copasJson);
+          other.copasJson == this.copasJson &&
+          other.idExterno == this.idExterno);
 }
 
 class CatalogoNeumaticosCompanion extends UpdateCompanion<CatalogoNeumatico> {
@@ -12564,29 +12811,34 @@ class CatalogoNeumaticosCompanion extends UpdateCompanion<CatalogoNeumatico> {
   final Value<String> nombre;
   final Value<String?> referencia;
   final Value<String?> copasJson;
+  final Value<String?> idExterno;
   const CatalogoNeumaticosCompanion({
     this.id = const Value.absent(),
     this.nombre = const Value.absent(),
     this.referencia = const Value.absent(),
     this.copasJson = const Value.absent(),
+    this.idExterno = const Value.absent(),
   });
   CatalogoNeumaticosCompanion.insert({
     this.id = const Value.absent(),
     required String nombre,
     this.referencia = const Value.absent(),
     this.copasJson = const Value.absent(),
+    this.idExterno = const Value.absent(),
   }) : nombre = Value(nombre);
   static Insertable<CatalogoNeumatico> custom({
     Expression<int>? id,
     Expression<String>? nombre,
     Expression<String>? referencia,
     Expression<String>? copasJson,
+    Expression<String>? idExterno,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (nombre != null) 'nombre': nombre,
       if (referencia != null) 'referencia': referencia,
       if (copasJson != null) 'copas_json': copasJson,
+      if (idExterno != null) 'id_externo': idExterno,
     });
   }
 
@@ -12595,12 +12847,14 @@ class CatalogoNeumaticosCompanion extends UpdateCompanion<CatalogoNeumatico> {
     Value<String>? nombre,
     Value<String?>? referencia,
     Value<String?>? copasJson,
+    Value<String?>? idExterno,
   }) {
     return CatalogoNeumaticosCompanion(
       id: id ?? this.id,
       nombre: nombre ?? this.nombre,
       referencia: referencia ?? this.referencia,
       copasJson: copasJson ?? this.copasJson,
+      idExterno: idExterno ?? this.idExterno,
     );
   }
 
@@ -12619,6 +12873,9 @@ class CatalogoNeumaticosCompanion extends UpdateCompanion<CatalogoNeumatico> {
     if (copasJson.present) {
       map['copas_json'] = Variable<String>(copasJson.value);
     }
+    if (idExterno.present) {
+      map['id_externo'] = Variable<String>(idExterno.value);
+    }
     return map;
   }
 
@@ -12628,7 +12885,8 @@ class CatalogoNeumaticosCompanion extends UpdateCompanion<CatalogoNeumatico> {
           ..write('id: $id, ')
           ..write('nombre: $nombre, ')
           ..write('referencia: $referencia, ')
-          ..write('copasJson: $copasJson')
+          ..write('copasJson: $copasJson, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
@@ -12693,8 +12951,26 @@ class $CatalogoEngranajesTable extends CatalogoEngranajes
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _idExternoMeta = const VerificationMeta(
+    'idExterno',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, tipo, marca, dientes, copasJson];
+  late final GeneratedColumn<String> idExterno = GeneratedColumn<String>(
+    'id_externo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    tipo,
+    marca,
+    dientes,
+    copasJson,
+    idExterno,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -12740,6 +13016,12 @@ class $CatalogoEngranajesTable extends CatalogoEngranajes
         copasJson.isAcceptableOrUnknown(data['copas_json']!, _copasJsonMeta),
       );
     }
+    if (data.containsKey('id_externo')) {
+      context.handle(
+        _idExternoMeta,
+        idExterno.isAcceptableOrUnknown(data['id_externo']!, _idExternoMeta),
+      );
+    }
     return context;
   }
 
@@ -12769,6 +13051,10 @@ class $CatalogoEngranajesTable extends CatalogoEngranajes
         DriftSqlType.string,
         data['${effectivePrefix}copas_json'],
       ),
+      idExterno: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_externo'],
+      ),
     );
   }
 
@@ -12785,12 +13071,14 @@ class CatalogoEngranaje extends DataClass
   final String marca;
   final int dientes;
   final String? copasJson;
+  final String? idExterno;
   const CatalogoEngranaje({
     required this.id,
     required this.tipo,
     required this.marca,
     required this.dientes,
     this.copasJson,
+    this.idExterno,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -12801,6 +13089,9 @@ class CatalogoEngranaje extends DataClass
     map['dientes'] = Variable<int>(dientes);
     if (!nullToAbsent || copasJson != null) {
       map['copas_json'] = Variable<String>(copasJson);
+    }
+    if (!nullToAbsent || idExterno != null) {
+      map['id_externo'] = Variable<String>(idExterno);
     }
     return map;
   }
@@ -12814,6 +13105,9 @@ class CatalogoEngranaje extends DataClass
       copasJson: copasJson == null && nullToAbsent
           ? const Value.absent()
           : Value(copasJson),
+      idExterno: idExterno == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idExterno),
     );
   }
 
@@ -12828,6 +13122,7 @@ class CatalogoEngranaje extends DataClass
       marca: serializer.fromJson<String>(json['marca']),
       dientes: serializer.fromJson<int>(json['dientes']),
       copasJson: serializer.fromJson<String?>(json['copasJson']),
+      idExterno: serializer.fromJson<String?>(json['idExterno']),
     );
   }
   @override
@@ -12839,6 +13134,7 @@ class CatalogoEngranaje extends DataClass
       'marca': serializer.toJson<String>(marca),
       'dientes': serializer.toJson<int>(dientes),
       'copasJson': serializer.toJson<String?>(copasJson),
+      'idExterno': serializer.toJson<String?>(idExterno),
     };
   }
 
@@ -12848,12 +13144,14 @@ class CatalogoEngranaje extends DataClass
     String? marca,
     int? dientes,
     Value<String?> copasJson = const Value.absent(),
+    Value<String?> idExterno = const Value.absent(),
   }) => CatalogoEngranaje(
     id: id ?? this.id,
     tipo: tipo ?? this.tipo,
     marca: marca ?? this.marca,
     dientes: dientes ?? this.dientes,
     copasJson: copasJson.present ? copasJson.value : this.copasJson,
+    idExterno: idExterno.present ? idExterno.value : this.idExterno,
   );
   CatalogoEngranaje copyWithCompanion(CatalogoEngranajesCompanion data) {
     return CatalogoEngranaje(
@@ -12862,6 +13160,7 @@ class CatalogoEngranaje extends DataClass
       marca: data.marca.present ? data.marca.value : this.marca,
       dientes: data.dientes.present ? data.dientes.value : this.dientes,
       copasJson: data.copasJson.present ? data.copasJson.value : this.copasJson,
+      idExterno: data.idExterno.present ? data.idExterno.value : this.idExterno,
     );
   }
 
@@ -12872,13 +13171,15 @@ class CatalogoEngranaje extends DataClass
           ..write('tipo: $tipo, ')
           ..write('marca: $marca, ')
           ..write('dientes: $dientes, ')
-          ..write('copasJson: $copasJson')
+          ..write('copasJson: $copasJson, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, tipo, marca, dientes, copasJson);
+  int get hashCode =>
+      Object.hash(id, tipo, marca, dientes, copasJson, idExterno);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -12887,7 +13188,8 @@ class CatalogoEngranaje extends DataClass
           other.tipo == this.tipo &&
           other.marca == this.marca &&
           other.dientes == this.dientes &&
-          other.copasJson == this.copasJson);
+          other.copasJson == this.copasJson &&
+          other.idExterno == this.idExterno);
 }
 
 class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
@@ -12896,12 +13198,14 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
   final Value<String> marca;
   final Value<int> dientes;
   final Value<String?> copasJson;
+  final Value<String?> idExterno;
   const CatalogoEngranajesCompanion({
     this.id = const Value.absent(),
     this.tipo = const Value.absent(),
     this.marca = const Value.absent(),
     this.dientes = const Value.absent(),
     this.copasJson = const Value.absent(),
+    this.idExterno = const Value.absent(),
   });
   CatalogoEngranajesCompanion.insert({
     this.id = const Value.absent(),
@@ -12909,6 +13213,7 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
     required String marca,
     required int dientes,
     this.copasJson = const Value.absent(),
+    this.idExterno = const Value.absent(),
   }) : tipo = Value(tipo),
        marca = Value(marca),
        dientes = Value(dientes);
@@ -12918,6 +13223,7 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
     Expression<String>? marca,
     Expression<int>? dientes,
     Expression<String>? copasJson,
+    Expression<String>? idExterno,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -12925,6 +13231,7 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
       if (marca != null) 'marca': marca,
       if (dientes != null) 'dientes': dientes,
       if (copasJson != null) 'copas_json': copasJson,
+      if (idExterno != null) 'id_externo': idExterno,
     });
   }
 
@@ -12934,6 +13241,7 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
     Value<String>? marca,
     Value<int>? dientes,
     Value<String?>? copasJson,
+    Value<String?>? idExterno,
   }) {
     return CatalogoEngranajesCompanion(
       id: id ?? this.id,
@@ -12941,6 +13249,7 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
       marca: marca ?? this.marca,
       dientes: dientes ?? this.dientes,
       copasJson: copasJson ?? this.copasJson,
+      idExterno: idExterno ?? this.idExterno,
     );
   }
 
@@ -12962,6 +13271,9 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
     if (copasJson.present) {
       map['copas_json'] = Variable<String>(copasJson.value);
     }
+    if (idExterno.present) {
+      map['id_externo'] = Variable<String>(idExterno.value);
+    }
     return map;
   }
 
@@ -12972,7 +13284,8 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
           ..write('tipo: $tipo, ')
           ..write('marca: $marca, ')
           ..write('dientes: $dientes, ')
-          ..write('copasJson: $copasJson')
+          ..write('copasJson: $copasJson, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
@@ -13375,12 +13688,12 @@ class CatalogoMotoresCompanion extends UpdateCompanion<CatalogoMotore> {
   }
 }
 
-class $CatalogoMotoresBorradosTable extends CatalogoMotoresBorrados
-    with TableInfo<$CatalogoMotoresBorradosTable, CatalogoMotoresBorrado> {
+class $CatalogoBorradosTable extends CatalogoBorrados
+    with TableInfo<$CatalogoBorradosTable, CatalogoBorrado> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $CatalogoMotoresBorradosTable(this.attachedDatabase, [this._alias]);
+  $CatalogoBorradosTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -13394,6 +13707,17 @@ class $CatalogoMotoresBorradosTable extends CatalogoMotoresBorrados
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _entidadMeta = const VerificationMeta(
+    'entidad',
+  );
+  @override
+  late final GeneratedColumn<String> entidad = GeneratedColumn<String>(
+    'entidad',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _idExternoMeta = const VerificationMeta(
     'idExterno',
   );
@@ -13406,21 +13730,29 @@ class $CatalogoMotoresBorradosTable extends CatalogoMotoresBorrados
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, idExterno];
+  List<GeneratedColumn> get $columns => [id, entidad, idExterno];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'catalogo_motores_borrados';
+  static const String $name = 'catalogo_borrados';
   @override
   VerificationContext validateIntegrity(
-    Insertable<CatalogoMotoresBorrado> instance, {
+    Insertable<CatalogoBorrado> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('entidad')) {
+      context.handle(
+        _entidadMeta,
+        entidad.isAcceptableOrUnknown(data['entidad']!, _entidadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entidadMeta);
     }
     if (data.containsKey('id_externo')) {
       context.handle(
@@ -13436,12 +13768,16 @@ class $CatalogoMotoresBorradosTable extends CatalogoMotoresBorrados
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  CatalogoMotoresBorrado map(Map<String, dynamic> data, {String? tablePrefix}) {
+  CatalogoBorrado map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return CatalogoMotoresBorrado(
+    return CatalogoBorrado(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
+      )!,
+      entidad: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entidad'],
       )!,
       idExterno: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -13451,38 +13787,45 @@ class $CatalogoMotoresBorradosTable extends CatalogoMotoresBorrados
   }
 
   @override
-  $CatalogoMotoresBorradosTable createAlias(String alias) {
-    return $CatalogoMotoresBorradosTable(attachedDatabase, alias);
+  $CatalogoBorradosTable createAlias(String alias) {
+    return $CatalogoBorradosTable(attachedDatabase, alias);
   }
 }
 
-class CatalogoMotoresBorrado extends DataClass
-    implements Insertable<CatalogoMotoresBorrado> {
+class CatalogoBorrado extends DataClass implements Insertable<CatalogoBorrado> {
   final int id;
+  final String entidad;
   final String idExterno;
-  const CatalogoMotoresBorrado({required this.id, required this.idExterno});
+  const CatalogoBorrado({
+    required this.id,
+    required this.entidad,
+    required this.idExterno,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['entidad'] = Variable<String>(entidad);
     map['id_externo'] = Variable<String>(idExterno);
     return map;
   }
 
-  CatalogoMotoresBorradosCompanion toCompanion(bool nullToAbsent) {
-    return CatalogoMotoresBorradosCompanion(
+  CatalogoBorradosCompanion toCompanion(bool nullToAbsent) {
+    return CatalogoBorradosCompanion(
       id: Value(id),
+      entidad: Value(entidad),
       idExterno: Value(idExterno),
     );
   }
 
-  factory CatalogoMotoresBorrado.fromJson(
+  factory CatalogoBorrado.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return CatalogoMotoresBorrado(
+    return CatalogoBorrado(
       id: serializer.fromJson<int>(json['id']),
+      entidad: serializer.fromJson<String>(json['entidad']),
       idExterno: serializer.fromJson<String>(json['idExterno']),
     );
   }
@@ -13491,71 +13834,81 @@ class CatalogoMotoresBorrado extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'entidad': serializer.toJson<String>(entidad),
       'idExterno': serializer.toJson<String>(idExterno),
     };
   }
 
-  CatalogoMotoresBorrado copyWith({int? id, String? idExterno}) =>
-      CatalogoMotoresBorrado(
+  CatalogoBorrado copyWith({int? id, String? entidad, String? idExterno}) =>
+      CatalogoBorrado(
         id: id ?? this.id,
+        entidad: entidad ?? this.entidad,
         idExterno: idExterno ?? this.idExterno,
       );
-  CatalogoMotoresBorrado copyWithCompanion(
-    CatalogoMotoresBorradosCompanion data,
-  ) {
-    return CatalogoMotoresBorrado(
+  CatalogoBorrado copyWithCompanion(CatalogoBorradosCompanion data) {
+    return CatalogoBorrado(
       id: data.id.present ? data.id.value : this.id,
+      entidad: data.entidad.present ? data.entidad.value : this.entidad,
       idExterno: data.idExterno.present ? data.idExterno.value : this.idExterno,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('CatalogoMotoresBorrado(')
+    return (StringBuffer('CatalogoBorrado(')
           ..write('id: $id, ')
+          ..write('entidad: $entidad, ')
           ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, idExterno);
+  int get hashCode => Object.hash(id, entidad, idExterno);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is CatalogoMotoresBorrado &&
+      (other is CatalogoBorrado &&
           other.id == this.id &&
+          other.entidad == this.entidad &&
           other.idExterno == this.idExterno);
 }
 
-class CatalogoMotoresBorradosCompanion
-    extends UpdateCompanion<CatalogoMotoresBorrado> {
+class CatalogoBorradosCompanion extends UpdateCompanion<CatalogoBorrado> {
   final Value<int> id;
+  final Value<String> entidad;
   final Value<String> idExterno;
-  const CatalogoMotoresBorradosCompanion({
+  const CatalogoBorradosCompanion({
     this.id = const Value.absent(),
+    this.entidad = const Value.absent(),
     this.idExterno = const Value.absent(),
   });
-  CatalogoMotoresBorradosCompanion.insert({
+  CatalogoBorradosCompanion.insert({
     this.id = const Value.absent(),
+    required String entidad,
     required String idExterno,
-  }) : idExterno = Value(idExterno);
-  static Insertable<CatalogoMotoresBorrado> custom({
+  }) : entidad = Value(entidad),
+       idExterno = Value(idExterno);
+  static Insertable<CatalogoBorrado> custom({
     Expression<int>? id,
+    Expression<String>? entidad,
     Expression<String>? idExterno,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (entidad != null) 'entidad': entidad,
       if (idExterno != null) 'id_externo': idExterno,
     });
   }
 
-  CatalogoMotoresBorradosCompanion copyWith({
+  CatalogoBorradosCompanion copyWith({
     Value<int>? id,
+    Value<String>? entidad,
     Value<String>? idExterno,
   }) {
-    return CatalogoMotoresBorradosCompanion(
+    return CatalogoBorradosCompanion(
       id: id ?? this.id,
+      entidad: entidad ?? this.entidad,
       idExterno: idExterno ?? this.idExterno,
     );
   }
@@ -13566,6 +13919,9 @@ class CatalogoMotoresBorradosCompanion
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
+    if (entidad.present) {
+      map['entidad'] = Variable<String>(entidad.value);
+    }
     if (idExterno.present) {
       map['id_externo'] = Variable<String>(idExterno.value);
     }
@@ -13574,8 +13930,9 @@ class CatalogoMotoresBorradosCompanion
 
   @override
   String toString() {
-    return (StringBuffer('CatalogoMotoresBorradosCompanion(')
+    return (StringBuffer('CatalogoBorradosCompanion(')
           ..write('id: $id, ')
+          ..write('entidad: $entidad, ')
           ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
@@ -13610,8 +13967,19 @@ class $CatalogoCopasTable extends CatalogoCopas
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _idExternoMeta = const VerificationMeta(
+    'idExterno',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, nombre];
+  late final GeneratedColumn<String> idExterno = GeneratedColumn<String>(
+    'id_externo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, nombre, idExterno];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -13635,6 +14003,12 @@ class $CatalogoCopasTable extends CatalogoCopas
     } else if (isInserting) {
       context.missing(_nombreMeta);
     }
+    if (data.containsKey('id_externo')) {
+      context.handle(
+        _idExternoMeta,
+        idExterno.isAcceptableOrUnknown(data['id_externo']!, _idExternoMeta),
+      );
+    }
     return context;
   }
 
@@ -13652,6 +14026,10 @@ class $CatalogoCopasTable extends CatalogoCopas
         DriftSqlType.string,
         data['${effectivePrefix}nombre'],
       )!,
+      idExterno: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_externo'],
+      ),
     );
   }
 
@@ -13664,17 +14042,27 @@ class $CatalogoCopasTable extends CatalogoCopas
 class CatalogoCopa extends DataClass implements Insertable<CatalogoCopa> {
   final int id;
   final String nombre;
-  const CatalogoCopa({required this.id, required this.nombre});
+  final String? idExterno;
+  const CatalogoCopa({required this.id, required this.nombre, this.idExterno});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['nombre'] = Variable<String>(nombre);
+    if (!nullToAbsent || idExterno != null) {
+      map['id_externo'] = Variable<String>(idExterno);
+    }
     return map;
   }
 
   CatalogoCopasCompanion toCompanion(bool nullToAbsent) {
-    return CatalogoCopasCompanion(id: Value(id), nombre: Value(nombre));
+    return CatalogoCopasCompanion(
+      id: Value(id),
+      nombre: Value(nombre),
+      idExterno: idExterno == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idExterno),
+    );
   }
 
   factory CatalogoCopa.fromJson(
@@ -13685,6 +14073,7 @@ class CatalogoCopa extends DataClass implements Insertable<CatalogoCopa> {
     return CatalogoCopa(
       id: serializer.fromJson<int>(json['id']),
       nombre: serializer.fromJson<String>(json['nombre']),
+      idExterno: serializer.fromJson<String?>(json['idExterno']),
     );
   }
   @override
@@ -13693,15 +14082,24 @@ class CatalogoCopa extends DataClass implements Insertable<CatalogoCopa> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'nombre': serializer.toJson<String>(nombre),
+      'idExterno': serializer.toJson<String?>(idExterno),
     };
   }
 
-  CatalogoCopa copyWith({int? id, String? nombre}) =>
-      CatalogoCopa(id: id ?? this.id, nombre: nombre ?? this.nombre);
+  CatalogoCopa copyWith({
+    int? id,
+    String? nombre,
+    Value<String?> idExterno = const Value.absent(),
+  }) => CatalogoCopa(
+    id: id ?? this.id,
+    nombre: nombre ?? this.nombre,
+    idExterno: idExterno.present ? idExterno.value : this.idExterno,
+  );
   CatalogoCopa copyWithCompanion(CatalogoCopasCompanion data) {
     return CatalogoCopa(
       id: data.id.present ? data.id.value : this.id,
       nombre: data.nombre.present ? data.nombre.value : this.nombre,
+      idExterno: data.idExterno.present ? data.idExterno.value : this.idExterno,
     );
   }
 
@@ -13709,46 +14107,58 @@ class CatalogoCopa extends DataClass implements Insertable<CatalogoCopa> {
   String toString() {
     return (StringBuffer('CatalogoCopa(')
           ..write('id: $id, ')
-          ..write('nombre: $nombre')
+          ..write('nombre: $nombre, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, nombre);
+  int get hashCode => Object.hash(id, nombre, idExterno);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CatalogoCopa &&
           other.id == this.id &&
-          other.nombre == this.nombre);
+          other.nombre == this.nombre &&
+          other.idExterno == this.idExterno);
 }
 
 class CatalogoCopasCompanion extends UpdateCompanion<CatalogoCopa> {
   final Value<int> id;
   final Value<String> nombre;
+  final Value<String?> idExterno;
   const CatalogoCopasCompanion({
     this.id = const Value.absent(),
     this.nombre = const Value.absent(),
+    this.idExterno = const Value.absent(),
   });
   CatalogoCopasCompanion.insert({
     this.id = const Value.absent(),
     required String nombre,
+    this.idExterno = const Value.absent(),
   }) : nombre = Value(nombre);
   static Insertable<CatalogoCopa> custom({
     Expression<int>? id,
     Expression<String>? nombre,
+    Expression<String>? idExterno,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (nombre != null) 'nombre': nombre,
+      if (idExterno != null) 'id_externo': idExterno,
     });
   }
 
-  CatalogoCopasCompanion copyWith({Value<int>? id, Value<String>? nombre}) {
+  CatalogoCopasCompanion copyWith({
+    Value<int>? id,
+    Value<String>? nombre,
+    Value<String?>? idExterno,
+  }) {
     return CatalogoCopasCompanion(
       id: id ?? this.id,
       nombre: nombre ?? this.nombre,
+      idExterno: idExterno ?? this.idExterno,
     );
   }
 
@@ -13761,6 +14171,9 @@ class CatalogoCopasCompanion extends UpdateCompanion<CatalogoCopa> {
     if (nombre.present) {
       map['nombre'] = Variable<String>(nombre.value);
     }
+    if (idExterno.present) {
+      map['id_externo'] = Variable<String>(idExterno.value);
+    }
     return map;
   }
 
@@ -13768,7 +14181,8 @@ class CatalogoCopasCompanion extends UpdateCompanion<CatalogoCopa> {
   String toString() {
     return (StringBuffer('CatalogoCopasCompanion(')
           ..write('id: $id, ')
-          ..write('nombre: $nombre')
+          ..write('nombre: $nombre, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
@@ -13802,8 +14216,19 @@ class $CatalogoClubsTable extends CatalogoClubs
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _idExternoMeta = const VerificationMeta(
+    'idExterno',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, nombre];
+  late final GeneratedColumn<String> idExterno = GeneratedColumn<String>(
+    'id_externo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, nombre, idExterno];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -13827,6 +14252,12 @@ class $CatalogoClubsTable extends CatalogoClubs
     } else if (isInserting) {
       context.missing(_nombreMeta);
     }
+    if (data.containsKey('id_externo')) {
+      context.handle(
+        _idExternoMeta,
+        idExterno.isAcceptableOrUnknown(data['id_externo']!, _idExternoMeta),
+      );
+    }
     return context;
   }
 
@@ -13844,6 +14275,10 @@ class $CatalogoClubsTable extends CatalogoClubs
         DriftSqlType.string,
         data['${effectivePrefix}nombre'],
       )!,
+      idExterno: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_externo'],
+      ),
     );
   }
 
@@ -13856,17 +14291,27 @@ class $CatalogoClubsTable extends CatalogoClubs
 class CatalogoClub extends DataClass implements Insertable<CatalogoClub> {
   final int id;
   final String nombre;
-  const CatalogoClub({required this.id, required this.nombre});
+  final String? idExterno;
+  const CatalogoClub({required this.id, required this.nombre, this.idExterno});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['nombre'] = Variable<String>(nombre);
+    if (!nullToAbsent || idExterno != null) {
+      map['id_externo'] = Variable<String>(idExterno);
+    }
     return map;
   }
 
   CatalogoClubsCompanion toCompanion(bool nullToAbsent) {
-    return CatalogoClubsCompanion(id: Value(id), nombre: Value(nombre));
+    return CatalogoClubsCompanion(
+      id: Value(id),
+      nombre: Value(nombre),
+      idExterno: idExterno == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idExterno),
+    );
   }
 
   factory CatalogoClub.fromJson(
@@ -13877,6 +14322,7 @@ class CatalogoClub extends DataClass implements Insertable<CatalogoClub> {
     return CatalogoClub(
       id: serializer.fromJson<int>(json['id']),
       nombre: serializer.fromJson<String>(json['nombre']),
+      idExterno: serializer.fromJson<String?>(json['idExterno']),
     );
   }
   @override
@@ -13885,15 +14331,24 @@ class CatalogoClub extends DataClass implements Insertable<CatalogoClub> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'nombre': serializer.toJson<String>(nombre),
+      'idExterno': serializer.toJson<String?>(idExterno),
     };
   }
 
-  CatalogoClub copyWith({int? id, String? nombre}) =>
-      CatalogoClub(id: id ?? this.id, nombre: nombre ?? this.nombre);
+  CatalogoClub copyWith({
+    int? id,
+    String? nombre,
+    Value<String?> idExterno = const Value.absent(),
+  }) => CatalogoClub(
+    id: id ?? this.id,
+    nombre: nombre ?? this.nombre,
+    idExterno: idExterno.present ? idExterno.value : this.idExterno,
+  );
   CatalogoClub copyWithCompanion(CatalogoClubsCompanion data) {
     return CatalogoClub(
       id: data.id.present ? data.id.value : this.id,
       nombre: data.nombre.present ? data.nombre.value : this.nombre,
+      idExterno: data.idExterno.present ? data.idExterno.value : this.idExterno,
     );
   }
 
@@ -13901,46 +14356,58 @@ class CatalogoClub extends DataClass implements Insertable<CatalogoClub> {
   String toString() {
     return (StringBuffer('CatalogoClub(')
           ..write('id: $id, ')
-          ..write('nombre: $nombre')
+          ..write('nombre: $nombre, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, nombre);
+  int get hashCode => Object.hash(id, nombre, idExterno);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CatalogoClub &&
           other.id == this.id &&
-          other.nombre == this.nombre);
+          other.nombre == this.nombre &&
+          other.idExterno == this.idExterno);
 }
 
 class CatalogoClubsCompanion extends UpdateCompanion<CatalogoClub> {
   final Value<int> id;
   final Value<String> nombre;
+  final Value<String?> idExterno;
   const CatalogoClubsCompanion({
     this.id = const Value.absent(),
     this.nombre = const Value.absent(),
+    this.idExterno = const Value.absent(),
   });
   CatalogoClubsCompanion.insert({
     this.id = const Value.absent(),
     required String nombre,
+    this.idExterno = const Value.absent(),
   }) : nombre = Value(nombre);
   static Insertable<CatalogoClub> custom({
     Expression<int>? id,
     Expression<String>? nombre,
+    Expression<String>? idExterno,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (nombre != null) 'nombre': nombre,
+      if (idExterno != null) 'id_externo': idExterno,
     });
   }
 
-  CatalogoClubsCompanion copyWith({Value<int>? id, Value<String>? nombre}) {
+  CatalogoClubsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? nombre,
+    Value<String?>? idExterno,
+  }) {
     return CatalogoClubsCompanion(
       id: id ?? this.id,
       nombre: nombre ?? this.nombre,
+      idExterno: idExterno ?? this.idExterno,
     );
   }
 
@@ -13953,6 +14420,9 @@ class CatalogoClubsCompanion extends UpdateCompanion<CatalogoClub> {
     if (nombre.present) {
       map['nombre'] = Variable<String>(nombre.value);
     }
+    if (idExterno.present) {
+      map['id_externo'] = Variable<String>(idExterno.value);
+    }
     return map;
   }
 
@@ -13960,7 +14430,8 @@ class CatalogoClubsCompanion extends UpdateCompanion<CatalogoClub> {
   String toString() {
     return (StringBuffer('CatalogoClubsCompanion(')
           ..write('id: $id, ')
-          ..write('nombre: $nombre')
+          ..write('nombre: $nombre, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
@@ -15190,8 +15661,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CatalogoMotoresTable catalogoMotores = $CatalogoMotoresTable(
     this,
   );
-  late final $CatalogoMotoresBorradosTable catalogoMotoresBorrados =
-      $CatalogoMotoresBorradosTable(this);
+  late final $CatalogoBorradosTable catalogoBorrados = $CatalogoBorradosTable(
+    this,
+  );
   late final $CatalogoCopasTable catalogoCopas = $CatalogoCopasTable(this);
   late final $CatalogoClubsTable catalogoClubs = $CatalogoClubsTable(this);
   late final $HojasVinculadasTable hojasVinculadas = $HojasVinculadasTable(
@@ -15229,7 +15701,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     catalogoNeumaticos,
     catalogoEngranajes,
     catalogoMotores,
-    catalogoMotoresBorrados,
+    catalogoBorrados,
     catalogoCopas,
     catalogoClubs,
     hojasVinculadas,
@@ -24189,6 +24661,7 @@ typedef $$CatalogoCochesTableCreateCompanionBuilder =
       Value<bool> activo,
       Value<String> copasJson,
       Value<String?> fotoPath,
+      Value<String?> idExterno,
     });
 typedef $$CatalogoCochesTableUpdateCompanionBuilder =
     CatalogoCochesCompanion Function({
@@ -24201,6 +24674,7 @@ typedef $$CatalogoCochesTableUpdateCompanionBuilder =
       Value<bool> activo,
       Value<String> copasJson,
       Value<String?> fotoPath,
+      Value<String?> idExterno,
     });
 
 final class $$CatalogoCochesTableReferences
@@ -24287,6 +24761,11 @@ class $$CatalogoCochesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> verificacionesRefs(
     Expression<bool> Function($$VerificacionesTableFilterComposer f) f,
   ) {
@@ -24366,6 +24845,11 @@ class $$CatalogoCochesTableOrderingComposer
     column: $table.fotoPath,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CatalogoCochesTableAnnotationComposer
@@ -24405,6 +24889,9 @@ class $$CatalogoCochesTableAnnotationComposer
 
   GeneratedColumn<String> get fotoPath =>
       $composableBuilder(column: $table.fotoPath, builder: (column) => column);
+
+  GeneratedColumn<String> get idExterno =>
+      $composableBuilder(column: $table.idExterno, builder: (column) => column);
 
   Expression<T> verificacionesRefs<T extends Object>(
     Expression<T> Function($$VerificacionesTableAnnotationComposer a) f,
@@ -24471,6 +24958,7 @@ class $$CatalogoCochesTableTableManager
                 Value<bool> activo = const Value.absent(),
                 Value<String> copasJson = const Value.absent(),
                 Value<String?> fotoPath = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoCochesCompanion(
                 id: id,
                 nombre: nombre,
@@ -24481,6 +24969,7 @@ class $$CatalogoCochesTableTableManager
                 activo: activo,
                 copasJson: copasJson,
                 fotoPath: fotoPath,
+                idExterno: idExterno,
               ),
           createCompanionCallback:
               ({
@@ -24493,6 +24982,7 @@ class $$CatalogoCochesTableTableManager
                 Value<bool> activo = const Value.absent(),
                 Value<String> copasJson = const Value.absent(),
                 Value<String?> fotoPath = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoCochesCompanion.insert(
                 id: id,
                 nombre: nombre,
@@ -24503,6 +24993,7 @@ class $$CatalogoCochesTableTableManager
                 activo: activo,
                 copasJson: copasJson,
                 fotoPath: fotoPath,
+                idExterno: idExterno,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -27654,12 +28145,14 @@ typedef $$CatalogoMarcasTableCreateCompanionBuilder =
       Value<int> id,
       required String codigo,
       required String nombre,
+      Value<String?> idExterno,
     });
 typedef $$CatalogoMarcasTableUpdateCompanionBuilder =
     CatalogoMarcasCompanion Function({
       Value<int> id,
       Value<String> codigo,
       Value<String> nombre,
+      Value<String?> idExterno,
     });
 
 class $$CatalogoMarcasTableFilterComposer
@@ -27683,6 +28176,11 @@ class $$CatalogoMarcasTableFilterComposer
 
   ColumnFilters<String> get nombre => $composableBuilder(
     column: $table.nombre,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -27710,6 +28208,11 @@ class $$CatalogoMarcasTableOrderingComposer
     column: $table.nombre,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CatalogoMarcasTableAnnotationComposer
@@ -27729,6 +28232,9 @@ class $$CatalogoMarcasTableAnnotationComposer
 
   GeneratedColumn<String> get nombre =>
       $composableBuilder(column: $table.nombre, builder: (column) => column);
+
+  GeneratedColumn<String> get idExterno =>
+      $composableBuilder(column: $table.idExterno, builder: (column) => column);
 }
 
 class $$CatalogoMarcasTableTableManager
@@ -27767,20 +28273,24 @@ class $$CatalogoMarcasTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> codigo = const Value.absent(),
                 Value<String> nombre = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoMarcasCompanion(
                 id: id,
                 codigo: codigo,
                 nombre: nombre,
+                idExterno: idExterno,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String codigo,
                 required String nombre,
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoMarcasCompanion.insert(
                 id: id,
                 codigo: codigo,
                 nombre: nombre,
+                idExterno: idExterno,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -27813,6 +28323,7 @@ typedef $$CatalogoLlantasTableCreateCompanionBuilder =
       required String dimension,
       required String tipo,
       Value<String?> copasJson,
+      Value<String?> idExterno,
     });
 typedef $$CatalogoLlantasTableUpdateCompanionBuilder =
     CatalogoLlantasCompanion Function({
@@ -27820,6 +28331,7 @@ typedef $$CatalogoLlantasTableUpdateCompanionBuilder =
       Value<String> dimension,
       Value<String> tipo,
       Value<String?> copasJson,
+      Value<String?> idExterno,
     });
 
 class $$CatalogoLlantasTableFilterComposer
@@ -27848,6 +28360,11 @@ class $$CatalogoLlantasTableFilterComposer
 
   ColumnFilters<String> get copasJson => $composableBuilder(
     column: $table.copasJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -27880,6 +28397,11 @@ class $$CatalogoLlantasTableOrderingComposer
     column: $table.copasJson,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CatalogoLlantasTableAnnotationComposer
@@ -27902,6 +28424,9 @@ class $$CatalogoLlantasTableAnnotationComposer
 
   GeneratedColumn<String> get copasJson =>
       $composableBuilder(column: $table.copasJson, builder: (column) => column);
+
+  GeneratedColumn<String> get idExterno =>
+      $composableBuilder(column: $table.idExterno, builder: (column) => column);
 }
 
 class $$CatalogoLlantasTableTableManager
@@ -27945,11 +28470,13 @@ class $$CatalogoLlantasTableTableManager
                 Value<String> dimension = const Value.absent(),
                 Value<String> tipo = const Value.absent(),
                 Value<String?> copasJson = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoLlantasCompanion(
                 id: id,
                 dimension: dimension,
                 tipo: tipo,
                 copasJson: copasJson,
+                idExterno: idExterno,
               ),
           createCompanionCallback:
               ({
@@ -27957,11 +28484,13 @@ class $$CatalogoLlantasTableTableManager
                 required String dimension,
                 required String tipo,
                 Value<String?> copasJson = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoLlantasCompanion.insert(
                 id: id,
                 dimension: dimension,
                 tipo: tipo,
                 copasJson: copasJson,
+                idExterno: idExterno,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -27993,12 +28522,14 @@ typedef $$CatalogoBancadasTableCreateCompanionBuilder =
       Value<int> id,
       required String nombre,
       Value<String> copasJson,
+      Value<String?> idExterno,
     });
 typedef $$CatalogoBancadasTableUpdateCompanionBuilder =
     CatalogoBancadasCompanion Function({
       Value<int> id,
       Value<String> nombre,
       Value<String> copasJson,
+      Value<String?> idExterno,
     });
 
 class $$CatalogoBancadasTableFilterComposer
@@ -28022,6 +28553,11 @@ class $$CatalogoBancadasTableFilterComposer
 
   ColumnFilters<String> get copasJson => $composableBuilder(
     column: $table.copasJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -28049,6 +28585,11 @@ class $$CatalogoBancadasTableOrderingComposer
     column: $table.copasJson,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CatalogoBancadasTableAnnotationComposer
@@ -28068,6 +28609,9 @@ class $$CatalogoBancadasTableAnnotationComposer
 
   GeneratedColumn<String> get copasJson =>
       $composableBuilder(column: $table.copasJson, builder: (column) => column);
+
+  GeneratedColumn<String> get idExterno =>
+      $composableBuilder(column: $table.idExterno, builder: (column) => column);
 }
 
 class $$CatalogoBancadasTableTableManager
@@ -28110,20 +28654,24 @@ class $$CatalogoBancadasTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> nombre = const Value.absent(),
                 Value<String> copasJson = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoBancadasCompanion(
                 id: id,
                 nombre: nombre,
                 copasJson: copasJson,
+                idExterno: idExterno,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String nombre,
                 Value<String> copasJson = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoBancadasCompanion.insert(
                 id: id,
                 nombre: nombre,
                 copasJson: copasJson,
+                idExterno: idExterno,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -28314,6 +28862,7 @@ typedef $$CatalogoNeumaticosTableCreateCompanionBuilder =
       required String nombre,
       Value<String?> referencia,
       Value<String?> copasJson,
+      Value<String?> idExterno,
     });
 typedef $$CatalogoNeumaticosTableUpdateCompanionBuilder =
     CatalogoNeumaticosCompanion Function({
@@ -28321,6 +28870,7 @@ typedef $$CatalogoNeumaticosTableUpdateCompanionBuilder =
       Value<String> nombre,
       Value<String?> referencia,
       Value<String?> copasJson,
+      Value<String?> idExterno,
     });
 
 class $$CatalogoNeumaticosTableFilterComposer
@@ -28349,6 +28899,11 @@ class $$CatalogoNeumaticosTableFilterComposer
 
   ColumnFilters<String> get copasJson => $composableBuilder(
     column: $table.copasJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -28381,6 +28936,11 @@ class $$CatalogoNeumaticosTableOrderingComposer
     column: $table.copasJson,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CatalogoNeumaticosTableAnnotationComposer
@@ -28405,6 +28965,9 @@ class $$CatalogoNeumaticosTableAnnotationComposer
 
   GeneratedColumn<String> get copasJson =>
       $composableBuilder(column: $table.copasJson, builder: (column) => column);
+
+  GeneratedColumn<String> get idExterno =>
+      $composableBuilder(column: $table.idExterno, builder: (column) => column);
 }
 
 class $$CatalogoNeumaticosTableTableManager
@@ -28451,11 +29014,13 @@ class $$CatalogoNeumaticosTableTableManager
                 Value<String> nombre = const Value.absent(),
                 Value<String?> referencia = const Value.absent(),
                 Value<String?> copasJson = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoNeumaticosCompanion(
                 id: id,
                 nombre: nombre,
                 referencia: referencia,
                 copasJson: copasJson,
+                idExterno: idExterno,
               ),
           createCompanionCallback:
               ({
@@ -28463,11 +29028,13 @@ class $$CatalogoNeumaticosTableTableManager
                 required String nombre,
                 Value<String?> referencia = const Value.absent(),
                 Value<String?> copasJson = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoNeumaticosCompanion.insert(
                 id: id,
                 nombre: nombre,
                 referencia: referencia,
                 copasJson: copasJson,
+                idExterno: idExterno,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -28505,6 +29072,7 @@ typedef $$CatalogoEngranajesTableCreateCompanionBuilder =
       required String marca,
       required int dientes,
       Value<String?> copasJson,
+      Value<String?> idExterno,
     });
 typedef $$CatalogoEngranajesTableUpdateCompanionBuilder =
     CatalogoEngranajesCompanion Function({
@@ -28513,6 +29081,7 @@ typedef $$CatalogoEngranajesTableUpdateCompanionBuilder =
       Value<String> marca,
       Value<int> dientes,
       Value<String?> copasJson,
+      Value<String?> idExterno,
     });
 
 class $$CatalogoEngranajesTableFilterComposer
@@ -28546,6 +29115,11 @@ class $$CatalogoEngranajesTableFilterComposer
 
   ColumnFilters<String> get copasJson => $composableBuilder(
     column: $table.copasJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -28583,6 +29157,11 @@ class $$CatalogoEngranajesTableOrderingComposer
     column: $table.copasJson,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CatalogoEngranajesTableAnnotationComposer
@@ -28608,6 +29187,9 @@ class $$CatalogoEngranajesTableAnnotationComposer
 
   GeneratedColumn<String> get copasJson =>
       $composableBuilder(column: $table.copasJson, builder: (column) => column);
+
+  GeneratedColumn<String> get idExterno =>
+      $composableBuilder(column: $table.idExterno, builder: (column) => column);
 }
 
 class $$CatalogoEngranajesTableTableManager
@@ -28655,12 +29237,14 @@ class $$CatalogoEngranajesTableTableManager
                 Value<String> marca = const Value.absent(),
                 Value<int> dientes = const Value.absent(),
                 Value<String?> copasJson = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoEngranajesCompanion(
                 id: id,
                 tipo: tipo,
                 marca: marca,
                 dientes: dientes,
                 copasJson: copasJson,
+                idExterno: idExterno,
               ),
           createCompanionCallback:
               ({
@@ -28669,12 +29253,14 @@ class $$CatalogoEngranajesTableTableManager
                 required String marca,
                 required int dientes,
                 Value<String?> copasJson = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoEngranajesCompanion.insert(
                 id: id,
                 tipo: tipo,
                 marca: marca,
                 dientes: dientes,
                 copasJson: copasJson,
+                idExterno: idExterno,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -28924,20 +29510,22 @@ typedef $$CatalogoMotoresTableProcessedTableManager =
       CatalogoMotore,
       PrefetchHooks Function()
     >;
-typedef $$CatalogoMotoresBorradosTableCreateCompanionBuilder =
-    CatalogoMotoresBorradosCompanion Function({
+typedef $$CatalogoBorradosTableCreateCompanionBuilder =
+    CatalogoBorradosCompanion Function({
       Value<int> id,
+      required String entidad,
       required String idExterno,
     });
-typedef $$CatalogoMotoresBorradosTableUpdateCompanionBuilder =
-    CatalogoMotoresBorradosCompanion Function({
+typedef $$CatalogoBorradosTableUpdateCompanionBuilder =
+    CatalogoBorradosCompanion Function({
       Value<int> id,
+      Value<String> entidad,
       Value<String> idExterno,
     });
 
-class $$CatalogoMotoresBorradosTableFilterComposer
-    extends Composer<_$AppDatabase, $CatalogoMotoresBorradosTable> {
-  $$CatalogoMotoresBorradosTableFilterComposer({
+class $$CatalogoBorradosTableFilterComposer
+    extends Composer<_$AppDatabase, $CatalogoBorradosTable> {
+  $$CatalogoBorradosTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -28949,15 +29537,20 @@ class $$CatalogoMotoresBorradosTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get entidad => $composableBuilder(
+    column: $table.entidad,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get idExterno => $composableBuilder(
     column: $table.idExterno,
     builder: (column) => ColumnFilters(column),
   );
 }
 
-class $$CatalogoMotoresBorradosTableOrderingComposer
-    extends Composer<_$AppDatabase, $CatalogoMotoresBorradosTable> {
-  $$CatalogoMotoresBorradosTableOrderingComposer({
+class $$CatalogoBorradosTableOrderingComposer
+    extends Composer<_$AppDatabase, $CatalogoBorradosTable> {
+  $$CatalogoBorradosTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -28969,15 +29562,20 @@ class $$CatalogoMotoresBorradosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get entidad => $composableBuilder(
+    column: $table.entidad,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get idExterno => $composableBuilder(
     column: $table.idExterno,
     builder: (column) => ColumnOrderings(column),
   );
 }
 
-class $$CatalogoMotoresBorradosTableAnnotationComposer
-    extends Composer<_$AppDatabase, $CatalogoMotoresBorradosTable> {
-  $$CatalogoMotoresBorradosTableAnnotationComposer({
+class $$CatalogoBorradosTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CatalogoBorradosTable> {
+  $$CatalogoBorradosTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -28987,68 +29585,66 @@ class $$CatalogoMotoresBorradosTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
+  GeneratedColumn<String> get entidad =>
+      $composableBuilder(column: $table.entidad, builder: (column) => column);
+
   GeneratedColumn<String> get idExterno =>
       $composableBuilder(column: $table.idExterno, builder: (column) => column);
 }
 
-class $$CatalogoMotoresBorradosTableTableManager
+class $$CatalogoBorradosTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $CatalogoMotoresBorradosTable,
-          CatalogoMotoresBorrado,
-          $$CatalogoMotoresBorradosTableFilterComposer,
-          $$CatalogoMotoresBorradosTableOrderingComposer,
-          $$CatalogoMotoresBorradosTableAnnotationComposer,
-          $$CatalogoMotoresBorradosTableCreateCompanionBuilder,
-          $$CatalogoMotoresBorradosTableUpdateCompanionBuilder,
+          $CatalogoBorradosTable,
+          CatalogoBorrado,
+          $$CatalogoBorradosTableFilterComposer,
+          $$CatalogoBorradosTableOrderingComposer,
+          $$CatalogoBorradosTableAnnotationComposer,
+          $$CatalogoBorradosTableCreateCompanionBuilder,
+          $$CatalogoBorradosTableUpdateCompanionBuilder,
           (
-            CatalogoMotoresBorrado,
+            CatalogoBorrado,
             BaseReferences<
               _$AppDatabase,
-              $CatalogoMotoresBorradosTable,
-              CatalogoMotoresBorrado
+              $CatalogoBorradosTable,
+              CatalogoBorrado
             >,
           ),
-          CatalogoMotoresBorrado,
+          CatalogoBorrado,
           PrefetchHooks Function()
         > {
-  $$CatalogoMotoresBorradosTableTableManager(
+  $$CatalogoBorradosTableTableManager(
     _$AppDatabase db,
-    $CatalogoMotoresBorradosTable table,
+    $CatalogoBorradosTable table,
   ) : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$CatalogoMotoresBorradosTableFilterComposer(
-                $db: db,
-                $table: table,
-              ),
+              $$CatalogoBorradosTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$CatalogoMotoresBorradosTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
+              $$CatalogoBorradosTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$CatalogoMotoresBorradosTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
+              $$CatalogoBorradosTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String> entidad = const Value.absent(),
                 Value<String> idExterno = const Value.absent(),
-              }) => CatalogoMotoresBorradosCompanion(
+              }) => CatalogoBorradosCompanion(
                 id: id,
+                entidad: entidad,
                 idExterno: idExterno,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                required String entidad,
                 required String idExterno,
-              }) => CatalogoMotoresBorradosCompanion.insert(
+              }) => CatalogoBorradosCompanion.insert(
                 id: id,
+                entidad: entidad,
                 idExterno: idExterno,
               ),
           withReferenceMapper: (p0) => p0
@@ -29059,31 +29655,35 @@ class $$CatalogoMotoresBorradosTableTableManager
       );
 }
 
-typedef $$CatalogoMotoresBorradosTableProcessedTableManager =
+typedef $$CatalogoBorradosTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $CatalogoMotoresBorradosTable,
-      CatalogoMotoresBorrado,
-      $$CatalogoMotoresBorradosTableFilterComposer,
-      $$CatalogoMotoresBorradosTableOrderingComposer,
-      $$CatalogoMotoresBorradosTableAnnotationComposer,
-      $$CatalogoMotoresBorradosTableCreateCompanionBuilder,
-      $$CatalogoMotoresBorradosTableUpdateCompanionBuilder,
+      $CatalogoBorradosTable,
+      CatalogoBorrado,
+      $$CatalogoBorradosTableFilterComposer,
+      $$CatalogoBorradosTableOrderingComposer,
+      $$CatalogoBorradosTableAnnotationComposer,
+      $$CatalogoBorradosTableCreateCompanionBuilder,
+      $$CatalogoBorradosTableUpdateCompanionBuilder,
       (
-        CatalogoMotoresBorrado,
-        BaseReferences<
-          _$AppDatabase,
-          $CatalogoMotoresBorradosTable,
-          CatalogoMotoresBorrado
-        >,
+        CatalogoBorrado,
+        BaseReferences<_$AppDatabase, $CatalogoBorradosTable, CatalogoBorrado>,
       ),
-      CatalogoMotoresBorrado,
+      CatalogoBorrado,
       PrefetchHooks Function()
     >;
 typedef $$CatalogoCopasTableCreateCompanionBuilder =
-    CatalogoCopasCompanion Function({Value<int> id, required String nombre});
+    CatalogoCopasCompanion Function({
+      Value<int> id,
+      required String nombre,
+      Value<String?> idExterno,
+    });
 typedef $$CatalogoCopasTableUpdateCompanionBuilder =
-    CatalogoCopasCompanion Function({Value<int> id, Value<String> nombre});
+    CatalogoCopasCompanion Function({
+      Value<int> id,
+      Value<String> nombre,
+      Value<String?> idExterno,
+    });
 
 class $$CatalogoCopasTableFilterComposer
     extends Composer<_$AppDatabase, $CatalogoCopasTable> {
@@ -29101,6 +29701,11 @@ class $$CatalogoCopasTableFilterComposer
 
   ColumnFilters<String> get nombre => $composableBuilder(
     column: $table.nombre,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -29123,6 +29728,11 @@ class $$CatalogoCopasTableOrderingComposer
     column: $table.nombre,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CatalogoCopasTableAnnotationComposer
@@ -29139,6 +29749,9 @@ class $$CatalogoCopasTableAnnotationComposer
 
   GeneratedColumn<String> get nombre =>
       $composableBuilder(column: $table.nombre, builder: (column) => column);
+
+  GeneratedColumn<String> get idExterno =>
+      $composableBuilder(column: $table.idExterno, builder: (column) => column);
 }
 
 class $$CatalogoCopasTableTableManager
@@ -29174,12 +29787,22 @@ class $$CatalogoCopasTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> nombre = const Value.absent(),
-              }) => CatalogoCopasCompanion(id: id, nombre: nombre),
+                Value<String?> idExterno = const Value.absent(),
+              }) => CatalogoCopasCompanion(
+                id: id,
+                nombre: nombre,
+                idExterno: idExterno,
+              ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String nombre,
-              }) => CatalogoCopasCompanion.insert(id: id, nombre: nombre),
+                Value<String?> idExterno = const Value.absent(),
+              }) => CatalogoCopasCompanion.insert(
+                id: id,
+                nombre: nombre,
+                idExterno: idExterno,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
@@ -29206,9 +29829,17 @@ typedef $$CatalogoCopasTableProcessedTableManager =
       PrefetchHooks Function()
     >;
 typedef $$CatalogoClubsTableCreateCompanionBuilder =
-    CatalogoClubsCompanion Function({Value<int> id, required String nombre});
+    CatalogoClubsCompanion Function({
+      Value<int> id,
+      required String nombre,
+      Value<String?> idExterno,
+    });
 typedef $$CatalogoClubsTableUpdateCompanionBuilder =
-    CatalogoClubsCompanion Function({Value<int> id, Value<String> nombre});
+    CatalogoClubsCompanion Function({
+      Value<int> id,
+      Value<String> nombre,
+      Value<String?> idExterno,
+    });
 
 class $$CatalogoClubsTableFilterComposer
     extends Composer<_$AppDatabase, $CatalogoClubsTable> {
@@ -29226,6 +29857,11 @@ class $$CatalogoClubsTableFilterComposer
 
   ColumnFilters<String> get nombre => $composableBuilder(
     column: $table.nombre,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -29248,6 +29884,11 @@ class $$CatalogoClubsTableOrderingComposer
     column: $table.nombre,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CatalogoClubsTableAnnotationComposer
@@ -29264,6 +29905,9 @@ class $$CatalogoClubsTableAnnotationComposer
 
   GeneratedColumn<String> get nombre =>
       $composableBuilder(column: $table.nombre, builder: (column) => column);
+
+  GeneratedColumn<String> get idExterno =>
+      $composableBuilder(column: $table.idExterno, builder: (column) => column);
 }
 
 class $$CatalogoClubsTableTableManager
@@ -29299,12 +29943,22 @@ class $$CatalogoClubsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> nombre = const Value.absent(),
-              }) => CatalogoClubsCompanion(id: id, nombre: nombre),
+                Value<String?> idExterno = const Value.absent(),
+              }) => CatalogoClubsCompanion(
+                id: id,
+                nombre: nombre,
+                idExterno: idExterno,
+              ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String nombre,
-              }) => CatalogoClubsCompanion.insert(id: id, nombre: nombre),
+                Value<String?> idExterno = const Value.absent(),
+              }) => CatalogoClubsCompanion.insert(
+                id: id,
+                nombre: nombre,
+                idExterno: idExterno,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
@@ -29965,11 +30619,8 @@ class $AppDatabaseManager {
       $$CatalogoEngranajesTableTableManager(_db, _db.catalogoEngranajes);
   $$CatalogoMotoresTableTableManager get catalogoMotores =>
       $$CatalogoMotoresTableTableManager(_db, _db.catalogoMotores);
-  $$CatalogoMotoresBorradosTableTableManager get catalogoMotoresBorrados =>
-      $$CatalogoMotoresBorradosTableTableManager(
-        _db,
-        _db.catalogoMotoresBorrados,
-      );
+  $$CatalogoBorradosTableTableManager get catalogoBorrados =>
+      $$CatalogoBorradosTableTableManager(_db, _db.catalogoBorrados);
   $$CatalogoCopasTableTableManager get catalogoCopas =>
       $$CatalogoCopasTableTableManager(_db, _db.catalogoCopas);
   $$CatalogoClubsTableTableManager get catalogoClubs =>

@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import 'importar_catalogo.dart' show TipoCatalogo;
 
 // ============== Coches ==============
 final cochesCatalogoProvider =
@@ -122,6 +123,54 @@ class RepositorioCatalogos {
   RepositorioCatalogos(this.db);
   final AppDatabase db;
 
+  /// Apunta [idExterno] como pendiente de borrar en la hoja vinculada de
+  /// [entidad] (p.ej. "catalogo_coches"). No hace nada si la fila nunca se
+  /// había sincronizado (sin id externo).
+  Future<void> _registrarBorrado(String entidad, String? idExterno) async {
+    if (idExterno == null || idExterno.isEmpty) return;
+    await db.into(db.catalogoBorrados).insert(CatalogoBorradosCompanion.insert(
+        entidad: entidad, idExterno: idExterno));
+  }
+
+  /// Guarda el id externo recién asignado a una fila tras subirla a Sheets
+  /// por primera vez, para que la próxima subida/bajada la reconozca por id.
+  Future<void> actualizarIdExterno(
+      TipoCatalogo tipo, int id, String idExterno) async {
+    switch (tipo) {
+      case TipoCatalogo.coches:
+        await (db.update(db.catalogoCoches)..where((t) => t.id.equals(id)))
+            .write(CatalogoCochesCompanion(idExterno: Value(idExterno)));
+      case TipoCatalogo.marcas:
+        await (db.update(db.catalogoMarcas)..where((t) => t.id.equals(id)))
+            .write(CatalogoMarcasCompanion(idExterno: Value(idExterno)));
+      case TipoCatalogo.llantas:
+        await (db.update(db.catalogoLlantas)..where((t) => t.id.equals(id)))
+            .write(CatalogoLlantasCompanion(idExterno: Value(idExterno)));
+      case TipoCatalogo.bancadas:
+        await (db.update(db.catalogoBancadas)..where((t) => t.id.equals(id)))
+            .write(CatalogoBancadasCompanion(idExterno: Value(idExterno)));
+      case TipoCatalogo.neumaticos:
+        await (db.update(db.catalogoNeumaticos)
+              ..where((t) => t.id.equals(id)))
+            .write(CatalogoNeumaticosCompanion(idExterno: Value(idExterno)));
+      case TipoCatalogo.engranajes:
+        await (db.update(db.catalogoEngranajes)
+              ..where((t) => t.id.equals(id)))
+            .write(CatalogoEngranajesCompanion(idExterno: Value(idExterno)));
+      case TipoCatalogo.motores:
+        await (db.update(db.catalogoMotores)..where((t) => t.id.equals(id)))
+            .write(CatalogoMotoresCompanion(idExterno: Value(idExterno)));
+      case TipoCatalogo.copas:
+        await (db.update(db.catalogoCopas)..where((t) => t.id.equals(id)))
+            .write(CatalogoCopasCompanion(idExterno: Value(idExterno)));
+      case TipoCatalogo.clubs:
+        await (db.update(db.catalogoClubs)..where((t) => t.id.equals(id)))
+            .write(CatalogoClubsCompanion(idExterno: Value(idExterno)));
+      case TipoCatalogo.chasis:
+        break; // sin hoja vinculada todavía
+    }
+  }
+
   // ---- Coches ----
   Future<int> crearCoche({
     required String nombre,
@@ -131,6 +180,7 @@ class RepositorioCatalogos {
     int creditosCoche = 0,
     String? copasJson,
     String? fotoPath,
+    String? idExterno,
   }) {
     return db.into(db.catalogoCoches).insert(CatalogoCochesCompanion.insert(
           nombre: nombre,
@@ -141,6 +191,8 @@ class RepositorioCatalogos {
           copasJson:
               copasJson == null ? const Value.absent() : Value(copasJson),
           fotoPath: Value(fotoPath),
+          idExterno:
+              idExterno == null ? const Value.absent() : Value(idExterno),
         ));
   }
 
@@ -150,13 +202,21 @@ class RepositorioCatalogos {
   }
 
   Future<void> borrarCoche(int id) async {
+    final x = await (db.select(db.catalogoCoches)
+          ..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    await _registrarBorrado('catalogo_coches', x?.idExterno);
     await (db.delete(db.catalogoCoches)..where((t) => t.id.equals(id))).go();
   }
 
   // ---- Marcas ----
-  Future<int> crearMarca(String codigo, String nombre) {
-    return db.into(db.catalogoMarcas).insert(
-        CatalogoMarcasCompanion.insert(codigo: codigo, nombre: nombre));
+  Future<int> crearMarca(String codigo, String nombre, {String? idExterno}) {
+    return db.into(db.catalogoMarcas).insert(CatalogoMarcasCompanion.insert(
+          codigo: codigo,
+          nombre: nombre,
+          idExterno:
+              idExterno == null ? const Value.absent() : Value(idExterno),
+        ));
   }
 
   Future<void> actualizarMarca(int id, String codigo, String nombre) async {
@@ -166,18 +226,24 @@ class RepositorioCatalogos {
   }
 
   Future<void> borrarMarca(int id) async {
+    final x = await (db.select(db.catalogoMarcas)
+          ..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    await _registrarBorrado('catalogo_marcas', x?.idExterno);
     await (db.delete(db.catalogoMarcas)..where((t) => t.id.equals(id))).go();
   }
 
   // ---- Llantas ----
   Future<int> crearLlanta(String dimension, String tipo,
-      {String? copasJson}) {
+      {String? copasJson, String? idExterno}) {
     return db.into(db.catalogoLlantas).insert(
         CatalogoLlantasCompanion.insert(
             dimension: dimension,
             tipo: tipo,
             copasJson:
-                copasJson == null ? const Value.absent() : Value(copasJson)));
+                copasJson == null ? const Value.absent() : Value(copasJson),
+            idExterno:
+                idExterno == null ? const Value.absent() : Value(idExterno)));
   }
 
   Future<void> actualizarLlanta(int id, String dimension, String tipo,
@@ -191,13 +257,20 @@ class RepositorioCatalogos {
   }
 
   Future<void> borrarLlanta(int id) async {
+    final x = await (db.select(db.catalogoLlantas)
+          ..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    await _registrarBorrado('catalogo_llantas', x?.idExterno);
     await (db.delete(db.catalogoLlantas)..where((t) => t.id.equals(id))).go();
   }
 
   // ---- Bancadas ----
-  Future<int> crearBancada(String nombre) {
-    return db.into(db.catalogoBancadas)
-        .insert(CatalogoBancadasCompanion.insert(nombre: nombre));
+  Future<int> crearBancada(String nombre, {String? idExterno}) {
+    return db.into(db.catalogoBancadas).insert(
+        CatalogoBancadasCompanion.insert(
+            nombre: nombre,
+            idExterno:
+                idExterno == null ? const Value.absent() : Value(idExterno)));
   }
 
   Future<void> actualizarBancada(int id, String nombre) async {
@@ -206,7 +279,12 @@ class RepositorioCatalogos {
   }
 
   Future<void> borrarBancada(int id) async {
-    await (db.delete(db.catalogoBancadas)..where((t) => t.id.equals(id))).go();
+    final x = await (db.select(db.catalogoBancadas)
+          ..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    await _registrarBorrado('catalogo_bancadas', x?.idExterno);
+    await (db.delete(db.catalogoBancadas)..where((t) => t.id.equals(id)))
+        .go();
   }
 
   // ---- Chasis ----
@@ -226,13 +304,15 @@ class RepositorioCatalogos {
 
   // ---- Neumáticos ----
   Future<int> crearNeumatico(String nombre, String? referencia,
-      {String? copasJson}) {
+      {String? copasJson, String? idExterno}) {
     return db.into(db.catalogoNeumaticos).insert(
         CatalogoNeumaticosCompanion.insert(
             nombre: nombre,
             referencia: Value(referencia),
             copasJson:
-                copasJson == null ? const Value.absent() : Value(copasJson)));
+                copasJson == null ? const Value.absent() : Value(copasJson),
+            idExterno:
+                idExterno == null ? const Value.absent() : Value(idExterno)));
   }
 
   Future<void> actualizarNeumatico(
@@ -247,6 +327,10 @@ class RepositorioCatalogos {
   }
 
   Future<void> borrarNeumatico(int id) async {
+    final x = await (db.select(db.catalogoNeumaticos)
+          ..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    await _registrarBorrado('catalogo_neumaticos', x?.idExterno);
     await (db.delete(db.catalogoNeumaticos)..where((t) => t.id.equals(id)))
         .go();
   }
@@ -257,6 +341,7 @@ class RepositorioCatalogos {
     required String marca,
     required int dientes,
     String? copasJson,
+    String? idExterno,
   }) {
     return db.into(db.catalogoEngranajes).insert(
         CatalogoEngranajesCompanion.insert(
@@ -264,7 +349,9 @@ class RepositorioCatalogos {
             marca: marca,
             dientes: dientes,
             copasJson:
-                copasJson == null ? const Value.absent() : Value(copasJson)));
+                copasJson == null ? const Value.absent() : Value(copasJson),
+            idExterno:
+                idExterno == null ? const Value.absent() : Value(idExterno)));
   }
 
   Future<void> actualizarEngranaje(
@@ -280,6 +367,10 @@ class RepositorioCatalogos {
   }
 
   Future<void> borrarEngranaje(int id) async {
+    final x = await (db.select(db.catalogoEngranajes)
+          ..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    await _registrarBorrado('catalogo_engranajes', x?.idExterno);
     await (db.delete(db.catalogoEngranajes)..where((t) => t.id.equals(id)))
         .go();
   }
@@ -309,23 +400,20 @@ class RepositorioCatalogos {
   }
 
   Future<void> borrarMotor(int id) async {
-    // Si ya se había subido a Sheets (tiene id externo), se apunta como
-    // pendiente de borrar allí también — se confirma en la próxima subida.
-    final motor = await (db.select(db.catalogoMotores)
+    final x = await (db.select(db.catalogoMotores)
           ..where((t) => t.id.equals(id)))
         .getSingleOrNull();
-    final idExt = motor?.idExterno;
-    if (idExt != null && idExt.isNotEmpty) {
-      await db.into(db.catalogoMotoresBorrados).insert(
-          CatalogoMotoresBorradosCompanion.insert(idExterno: idExt));
-    }
+    await _registrarBorrado('catalogo_motores', x?.idExterno);
     await (db.delete(db.catalogoMotores)..where((t) => t.id.equals(id))).go();
   }
 
   // ---- Copas ----
-  Future<int> crearCopa(String nombre) {
-    return db.into(db.catalogoCopas)
-        .insert(CatalogoCopasCompanion.insert(nombre: nombre));
+  Future<int> crearCopa(String nombre, {String? idExterno}) {
+    return db.into(db.catalogoCopas).insert(CatalogoCopasCompanion.insert(
+          nombre: nombre,
+          idExterno:
+              idExterno == null ? const Value.absent() : Value(idExterno),
+        ));
   }
 
   Future<void> actualizarCopa(int id, String nombre) async {
@@ -334,13 +422,20 @@ class RepositorioCatalogos {
   }
 
   Future<void> borrarCopa(int id) async {
+    final x = await (db.select(db.catalogoCopas)
+          ..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    await _registrarBorrado('catalogo_copas', x?.idExterno);
     await (db.delete(db.catalogoCopas)..where((t) => t.id.equals(id))).go();
   }
 
   // ---- Clubs ----
-  Future<int> crearClub(String nombre) {
-    return db.into(db.catalogoClubs)
-        .insert(CatalogoClubsCompanion.insert(nombre: nombre));
+  Future<int> crearClub(String nombre, {String? idExterno}) {
+    return db.into(db.catalogoClubs).insert(CatalogoClubsCompanion.insert(
+          nombre: nombre,
+          idExterno:
+              idExterno == null ? const Value.absent() : Value(idExterno),
+        ));
   }
 
   Future<void> actualizarClub(int id, String nombre) async {
@@ -349,6 +444,10 @@ class RepositorioCatalogos {
   }
 
   Future<void> borrarClub(int id) async {
+    final x = await (db.select(db.catalogoClubs)
+          ..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    await _registrarBorrado('catalogo_clubs', x?.idExterno);
     await (db.delete(db.catalogoClubs)..where((t) => t.id.equals(id))).go();
   }
 }

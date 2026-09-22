@@ -373,12 +373,16 @@ class CatalogoCoches extends Table {
   /// Nombre de archivo de la foto del coche (en la carpeta de fotos local).
   /// Sirve para comprobar en la verificación que el coche entregado coincide.
   TextColumn get fotoPath => text().nullable()();
+  /// Identificador estable para sincronizar con Google Sheets (columna ID de
+  /// la hoja). Nulo si esta fila aún no se ha subido/bajado con ID.
+  TextColumn get idExterno => text().nullable()();
 }
 
 class CatalogoMarcas extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get codigo => text()(); // SIT, SCA, SLP…
   TextColumn get nombre => text()();
+  TextColumn get idExterno => text().nullable()();
 }
 
 class CatalogoLlantas extends Table {
@@ -386,6 +390,7 @@ class CatalogoLlantas extends Table {
   TextColumn get dimension => text()(); // "15,8 x 8 PL"
   TextColumn get tipo => text()(); // DELANTERA | TRASERA | AMBAS
   TextColumn get copasJson => text().nullable()(); // JSON con las copas
+  TextColumn get idExterno => text().nullable()();
 }
 
 class CatalogoBancadas extends Table {
@@ -393,6 +398,7 @@ class CatalogoBancadas extends Table {
   TextColumn get nombre => text()(); // "Scaleauto RT3 1,0"
   /// JSON array de copas donde aplica. Vacío "[]" = aplica a todas.
   TextColumn get copasJson => text().withDefault(const Constant('[]'))();
+  TextColumn get idExterno => text().nullable()();
 }
 
 class CatalogoChasis extends Table {
@@ -407,6 +413,7 @@ class CatalogoNeumaticos extends Table {
   TextColumn get nombre => text()(); // "AS25 19,0 NEGRO"
   TextColumn get referencia => text().nullable()();
   TextColumn get copasJson => text().nullable()(); // JSON con las copas
+  TextColumn get idExterno => text().nullable()();
 }
 
 /// Engranajes: piñones y coronas homologados.
@@ -416,6 +423,7 @@ class CatalogoEngranajes extends Table {
   TextColumn get marca => text()();
   IntColumn get dientes => integer()();
   TextColumn get copasJson => text().nullable()(); // JSON con las copas
+  TextColumn get idExterno => text().nullable()();
 }
 
 /// Motores homologados (con sus medidas de referencia).
@@ -431,22 +439,26 @@ class CatalogoMotores extends Table {
   TextColumn get idExterno => text().nullable()();
 }
 
-/// Ids externos de motores borrados en la app que aún no se han borrado en
-/// la hoja vinculada — a la espera de que el usuario lo confirme en la
-/// próxima subida (nunca se borra en Sheets en silencio).
-class CatalogoMotoresBorrados extends Table {
+/// Ids externos borrados en la app que aún no se han borrado en la hoja
+/// vinculada de cada catálogo (columna [entidad], p.ej. "catalogo_motores")
+/// — a la espera de que el usuario lo confirme en la próxima subida (nunca
+/// se borra en Sheets en silencio).
+class CatalogoBorrados extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get entidad => text()();
   TextColumn get idExterno => text()();
 }
 
 class CatalogoCopas extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get nombre => text()(); // GT, GT2, SLOT.IT, LMP, LMP2
+  TextColumn get idExterno => text().nullable()();
 }
 
 class CatalogoClubs extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get nombre => text()();
+  TextColumn get idExterno => text().nullable()();
 }
 
 // ============================================================

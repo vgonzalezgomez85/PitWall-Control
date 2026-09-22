@@ -17,7 +17,6 @@
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:convert';
 
-import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
@@ -25,6 +24,7 @@ import '../../data/database/app_database.dart';
 import '../../services/generador_id.dart';
 import '../../services/google_sheets_service.dart';
 import '../catalogos/importar_catalogo.dart';
+import '../catalogos/repositorio_catalogos.dart';
 import 'repositorio_hojas_vinculadas.dart';
 
 /// Diferencia de una columna entre la app y la hoja.
@@ -135,6 +135,7 @@ class SubidorCatalogo {
                 'colPesoMin': c.pesoMin,
                 'colCreditos': c.creditosCoche,
                 'colCopa': _copasStr(c.copasJson),
+                'colId': c.idExterno ?? '',
               }
           ],
         );
@@ -160,7 +161,12 @@ class SubidorCatalogo {
           keyFields: ['colCodigo'],
           ids: [for (final x in xs) x.id],
           rows: [
-            for (final x in xs) {'colCodigo': x.codigo, 'colNombre': x.nombre}
+            for (final x in xs)
+              {
+                'colCodigo': x.codigo,
+                'colNombre': x.nombre,
+                'colId': x.idExterno ?? '',
+              }
           ],
         );
       case TipoCatalogo.neumaticos:
@@ -170,7 +176,11 @@ class SubidorCatalogo {
           ids: [for (final x in xs) x.id],
           rows: [
             for (final x in xs)
-              {'colNombre': x.nombre, 'colReferencia': x.referencia ?? ''}
+              {
+                'colNombre': x.nombre,
+                'colReferencia': x.referencia ?? '',
+                'colId': x.idExterno ?? '',
+              }
           ],
         );
       case TipoCatalogo.llantas:
@@ -180,7 +190,11 @@ class SubidorCatalogo {
           ids: [for (final x in xs) x.id],
           rows: [
             for (final x in xs)
-              {'colDimension': x.dimension, 'colTipo': x.tipo}
+              {
+                'colDimension': x.dimension,
+                'colTipo': x.tipo,
+                'colId': x.idExterno ?? '',
+              }
           ],
         );
       case TipoCatalogo.engranajes:
@@ -194,6 +208,7 @@ class SubidorCatalogo {
                 'colTipo': x.tipo,
                 'colMarca': x.marca,
                 'colDientes': x.dientes,
+                'colId': x.idExterno ?? '',
               }
           ],
         );
@@ -202,7 +217,10 @@ class SubidorCatalogo {
         return (
           keyFields: ['colNombre'],
           ids: [for (final x in xs) x.id],
-          rows: [for (final x in xs) {'colNombre': x.nombre}],
+          rows: [
+            for (final x in xs)
+              {'colNombre': x.nombre, 'colId': x.idExterno ?? ''}
+          ],
         );
       case TipoCatalogo.chasis:
         final xs = await _db.select(_db.catalogoChasis).get();
@@ -216,14 +234,20 @@ class SubidorCatalogo {
         return (
           keyFields: ['colNombre'],
           ids: [for (final x in xs) x.id],
-          rows: [for (final x in xs) {'colNombre': x.nombre}],
+          rows: [
+            for (final x in xs)
+              {'colNombre': x.nombre, 'colId': x.idExterno ?? ''}
+          ],
         );
       case TipoCatalogo.clubs:
         final xs = await _db.select(_db.catalogoClubs).get();
         return (
           keyFields: ['colNombre'],
           ids: [for (final x in xs) x.id],
-          rows: [for (final x in xs) {'colNombre': x.nombre}],
+          rows: [
+            for (final x in xs)
+              {'colNombre': x.nombre, 'colId': x.idExterno ?? ''}
+          ],
         );
     }
   }
@@ -302,16 +326,19 @@ class SubidorCatalogo {
     final borrados = <FilaSubida>[];
     var identicas = 0;
 
-    // Borrados locales pendientes de confirmar en la hoja (solo motores, el
-    // catálogo piloto). Si el tombstone ya no está en la hoja (alguien la
-    // borró a mano), se limpia directamente sin pedir nada.
-    if (idColIdx != null && tipo == TipoCatalogo.motores) {
+    // Borrados locales pendientes de confirmar en la hoja. Si el tombstone
+    // ya no está en la hoja (alguien la borró a mano), se limpia
+    // directamente sin pedir nada.
+    if (idColIdx != null) {
+      final entidad = 'catalogo_${tipo.name}';
       final nombreCol = colDe('colNombre');
-      final tombstones = await _db.select(_db.catalogoMotoresBorrados).get();
+      final tombstones = await (_db.select(_db.catalogoBorrados)
+            ..where((t) => t.entidad.equals(entidad)))
+          .get();
       for (final t in tombstones) {
         final rowIdx = sheetPorId[t.idExterno];
         if (rowIdx == null) {
-          await (_db.delete(_db.catalogoMotoresBorrados)
+          await (_db.delete(_db.catalogoBorrados)
                 ..where((x) => x.id.equals(t.id)))
               .go();
           continue;
@@ -452,15 +479,13 @@ class SubidorCatalogo {
     // Las filas nuevas que estrenaban id externo ya están en la hoja: se
     // guarda ese id en el catálogo local para que la próxima subida/bajada
     // las reconozca por id en vez de volver a tratarlas como nuevas.
-    if (plan.tipo == TipoCatalogo.motores) {
+    if (plan.tipo != null) {
+      final repo = ref.read(repoCatalogosProvider);
       for (final f in plan.nuevas) {
         if (!f.aplicar || f.dbId == null || f.idExternoNuevo == null) {
           continue;
         }
-        await (_db.update(_db.catalogoMotores)
-              ..where((t) => t.id.equals(f.dbId!)))
-            .write(CatalogoMotoresCompanion(
-                idExterno: Value(f.idExternoNuevo)));
+        await repo.actualizarIdExterno(plan.tipo!, f.dbId!, f.idExternoNuevo!);
       }
     }
     // Borrados: de mayor a menor número de fila, para que borrar una no
@@ -471,7 +496,7 @@ class SubidorCatalogo {
     for (final f in aBorrar) {
       await svc.borrarFila(plan.hojaId, plan.pestana, f.filaNum1);
       if (f.tombstoneId != null) {
-        await (_db.delete(_db.catalogoMotoresBorrados)
+        await (_db.delete(_db.catalogoBorrados)
               ..where((t) => t.id.equals(f.tombstoneId!)))
             .go();
       }

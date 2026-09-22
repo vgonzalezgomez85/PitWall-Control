@@ -14,6 +14,11 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.6.0] — 2026-09-22
+
+### Añadido
+- **Sincronización por ID extendida a todos los catálogos** (coches, marcas, llantas, engranajes, bancadas, neumáticos, copas y clubs), con el mismo criterio validado en Motores: si la hoja vinculada tiene una columna "ID", subir/bajar/borrar empareja por ese identificador en vez de por el nombre. Cada catálogo sin esa columna sigue funcionando exactamente como antes.
+
 ## [1.5.0] — 2026-09-22
 
 ### Añadido

@@ -319,113 +319,314 @@ class ActualizadorDrive {
 
       final db = ref.read(dbProvider);
       final repo = ref.read(repoCatalogosProvider);
+      final svc = ref.read(googleSheetsServiceProvider);
       int nuevos = 0, actualizados = 0, saltados = 0;
+
+      // Columna "ID" (convención fija, igual que al subir): si la hoja ya
+      // la tiene, se empareja por id en vez de por nombre/clave — hace
+      // falta cuando el nombre solo no distingue filas (p.ej. un motor
+      // repetido en varias copas).
+      final idHeader =
+          datos.columnas.firstWhere((c) => _norm(c) == 'id', orElse: () => '');
+      final idColIdx = idHeader.isEmpty ? -1 : datos.columnas.indexOf(idHeader);
 
       switch (tipo) {
         case TipoCatalogo.coches:
           final actuales = await db.select(db.catalogoCoches).get();
-          final porNombre = {for (final c in actuales) _norm(c.nombre): c};
-          for (final fila in datos.filas) {
-            final nombre = fila[m.colNombre]?.trim() ?? '';
-            if (nombre.isEmpty) { saltados++; continue; }
-            final marca = fila[m.colMarca]?.trim() ?? '';
-            final modelo = fila[m.colModelo]?.trim() ?? nombre;
-            final peso = double.tryParse(
-                    (fila[m.colPesoMin] ?? '17').replaceAll(',', '.')) ??
-                17.0;
-            final cred =
-                int.tryParse(fila[m.colCreditos]?.trim() ?? '0') ?? 0;
-            final copas = (fila[m.colCopa] ?? '')
-                .split(',')
-                .map((s) => s.trim())
-                .where((s) => s.isNotEmpty)
-                .toList();
-            final ex = porNombre[_norm(nombre)];
-            if (ex == null) {
-              await repo.crearCoche(
-                  nombre: nombre, marca: marca, modelo: modelo,
-                  pesoMin: peso, creditosCoche: cred,
-                  copasJson: copas.isEmpty ? null : json.encode(copas));
-              nuevos++;
-            } else if (ex.marca != marca ||
-                ex.modelo != modelo ||
-                ex.pesoMin != peso ||
-                ex.creditosCoche != cred) {
-              await repo.actualizarCoche(
-                  ex.id,
-                  CatalogoCochesCompanion(
-                    marca: Value(marca),
-                    modelo: Value(modelo),
-                    pesoMin: Value(peso),
-                    creditosCoche: Value(cred),
-                  ));
-              actualizados++;
-            } else {
-              saltados++;
+          if (idColIdx < 0) {
+            final porNombre = {for (final c in actuales) _norm(c.nombre): c};
+            for (final fila in datos.filas) {
+              final nombre = fila[m.colNombre]?.trim() ?? '';
+              if (nombre.isEmpty) { saltados++; continue; }
+              final marca = fila[m.colMarca]?.trim() ?? '';
+              final modelo = fila[m.colModelo]?.trim() ?? nombre;
+              final peso = double.tryParse(
+                      (fila[m.colPesoMin] ?? '17').replaceAll(',', '.')) ??
+                  17.0;
+              final cred =
+                  int.tryParse(fila[m.colCreditos]?.trim() ?? '0') ?? 0;
+              final copas = (fila[m.colCopa] ?? '')
+                  .split(',')
+                  .map((s) => s.trim())
+                  .where((s) => s.isNotEmpty)
+                  .toList();
+              final ex = porNombre[_norm(nombre)];
+              if (ex == null) {
+                await repo.crearCoche(
+                    nombre: nombre, marca: marca, modelo: modelo,
+                    pesoMin: peso, creditosCoche: cred,
+                    copasJson: copas.isEmpty ? null : json.encode(copas));
+                nuevos++;
+              } else if (ex.marca != marca ||
+                  ex.modelo != modelo ||
+                  ex.pesoMin != peso ||
+                  ex.creditosCoche != cred) {
+                await repo.actualizarCoche(
+                    ex.id,
+                    CatalogoCochesCompanion(
+                      marca: Value(marca),
+                      modelo: Value(modelo),
+                      pesoMin: Value(peso),
+                      creditosCoche: Value(cred),
+                    ));
+                actualizados++;
+              } else {
+                saltados++;
+              }
+            }
+          } else {
+            final porId = {
+              for (final x in actuales)
+                if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
+            };
+            var siguienteId = [
+              maxIdExterno(datos.filas.map((f) => f[idHeader])),
+              maxIdExterno(actuales.map((x) => x.idExterno)),
+            ].reduce((a, b) => a > b ? a : b);
+            for (var k = 0; k < datos.filas.length; k++) {
+              final fila = datos.filas[k];
+              final nombre = fila[m.colNombre]?.trim() ?? '';
+              if (nombre.isEmpty) { saltados++; continue; }
+              final marca = fila[m.colMarca]?.trim() ?? '';
+              final modelo = fila[m.colModelo]?.trim() ?? nombre;
+              final peso = double.tryParse(
+                      (fila[m.colPesoMin] ?? '17').replaceAll(',', '.')) ??
+                  17.0;
+              final cred =
+                  int.tryParse(fila[m.colCreditos]?.trim() ?? '0') ?? 0;
+              final copas = (fila[m.colCopa] ?? '')
+                  .split(',')
+                  .map((s) => s.trim())
+                  .where((s) => s.isNotEmpty)
+                  .toList();
+              final copasJson = copas.isEmpty ? null : json.encode(copas);
+              final idHoja = fila[idHeader]?.trim() ?? '';
+              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              if (ex != null) {
+                if (ex.nombre != nombre ||
+                    ex.marca != marca ||
+                    ex.modelo != modelo ||
+                    ex.pesoMin != peso ||
+                    ex.creditosCoche != cred) {
+                  await repo.actualizarCoche(
+                      ex.id,
+                      CatalogoCochesCompanion(
+                        nombre: Value(nombre),
+                        marca: Value(marca),
+                        modelo: Value(modelo),
+                        pesoMin: Value(peso),
+                        creditosCoche: Value(cred),
+                      ));
+                  actualizados++;
+                } else {
+                  saltados++;
+                }
+              } else {
+                String idFinal;
+                if (idHoja.isEmpty) {
+                  siguienteId++;
+                  idFinal = siguienteId.toString();
+                } else {
+                  idFinal = idHoja;
+                }
+                await repo.crearCoche(
+                    nombre: nombre, marca: marca, modelo: modelo,
+                    pesoMin: peso, creditosCoche: cred,
+                    copasJson: copasJson, idExterno: idFinal);
+                if (idHoja.isEmpty) {
+                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
+                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                }
+                nuevos++;
+              }
             }
           }
         case TipoCatalogo.marcas:
           final actuales = await db.select(db.catalogoMarcas).get();
-          final porCodigo = {for (final x in actuales) _norm(x.codigo): x};
-          for (final fila in datos.filas) {
-            final cod = fila[m.colCodigo]?.trim() ?? '';
-            final nom = fila[m.colNombre]?.trim() ?? '';
-            if (cod.isEmpty || nom.isEmpty) { saltados++; continue; }
-            final ex = porCodigo[_norm(cod)];
-            if (ex == null) {
-              await repo.crearMarca(cod, nom);
-              nuevos++;
-            } else if (ex.nombre != nom) {
-              await repo.actualizarMarca(ex.id, ex.codigo, nom);
-              actualizados++;
-            } else {
-              saltados++;
+          if (idColIdx < 0) {
+            final porCodigo = {for (final x in actuales) _norm(x.codigo): x};
+            for (final fila in datos.filas) {
+              final cod = fila[m.colCodigo]?.trim() ?? '';
+              final nom = fila[m.colNombre]?.trim() ?? '';
+              if (cod.isEmpty || nom.isEmpty) { saltados++; continue; }
+              final ex = porCodigo[_norm(cod)];
+              if (ex == null) {
+                await repo.crearMarca(cod, nom);
+                nuevos++;
+              } else if (ex.nombre != nom) {
+                await repo.actualizarMarca(ex.id, ex.codigo, nom);
+                actualizados++;
+              } else {
+                saltados++;
+              }
+            }
+          } else {
+            final porId = {
+              for (final x in actuales)
+                if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
+            };
+            var siguienteId = [
+              maxIdExterno(datos.filas.map((f) => f[idHeader])),
+              maxIdExterno(actuales.map((x) => x.idExterno)),
+            ].reduce((a, b) => a > b ? a : b);
+            for (var k = 0; k < datos.filas.length; k++) {
+              final fila = datos.filas[k];
+              final cod = fila[m.colCodigo]?.trim() ?? '';
+              final nom = fila[m.colNombre]?.trim() ?? '';
+              if (cod.isEmpty || nom.isEmpty) { saltados++; continue; }
+              final idHoja = fila[idHeader]?.trim() ?? '';
+              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              if (ex != null) {
+                if (ex.codigo != cod || ex.nombre != nom) {
+                  await repo.actualizarMarca(ex.id, cod, nom);
+                  actualizados++;
+                } else {
+                  saltados++;
+                }
+              } else {
+                String idFinal;
+                if (idHoja.isEmpty) {
+                  siguienteId++;
+                  idFinal = siguienteId.toString();
+                } else {
+                  idFinal = idHoja;
+                }
+                await repo.crearMarca(cod, nom, idExterno: idFinal);
+                if (idHoja.isEmpty) {
+                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
+                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                }
+                nuevos++;
+              }
             }
           }
         case TipoCatalogo.llantas:
           final actuales = await db.select(db.catalogoLlantas).get();
-          final claves = {
-            for (final x in actuales) '${_norm(x.dimension)}|${x.tipo}'
-          };
-          for (final fila in datos.filas) {
-            final dim = fila[m.colDimension]?.trim() ?? '';
-            if (dim.isEmpty) { saltados++; continue; }
-            var t = (fila[m.colTipo] ?? 'DELANTERA').trim().toUpperCase();
-            if (!['DELANTERA', 'TRASERA', 'AMBAS'].contains(t)) {
-              t = 'DELANTERA';
+          if (idColIdx < 0) {
+            final claves = {
+              for (final x in actuales) '${_norm(x.dimension)}|${x.tipo}'
+            };
+            for (final fila in datos.filas) {
+              final dim = fila[m.colDimension]?.trim() ?? '';
+              if (dim.isEmpty) { saltados++; continue; }
+              var t = (fila[m.colTipo] ?? 'DELANTERA').trim().toUpperCase();
+              if (!['DELANTERA', 'TRASERA', 'AMBAS'].contains(t)) {
+                t = 'DELANTERA';
+              }
+              if (claves.contains('${_norm(dim)}|$t')) { saltados++; continue; }
+              await repo.crearLlanta(dim, t);
+              claves.add('${_norm(dim)}|$t');
+              nuevos++;
             }
-            if (claves.contains('${_norm(dim)}|$t')) { saltados++; continue; }
-            await repo.crearLlanta(dim, t);
-            claves.add('${_norm(dim)}|$t');
-            nuevos++;
+          } else {
+            final porId = {
+              for (final x in actuales)
+                if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
+            };
+            var siguienteId = [
+              maxIdExterno(datos.filas.map((f) => f[idHeader])),
+              maxIdExterno(actuales.map((x) => x.idExterno)),
+            ].reduce((a, b) => a > b ? a : b);
+            for (var k = 0; k < datos.filas.length; k++) {
+              final fila = datos.filas[k];
+              final dim = fila[m.colDimension]?.trim() ?? '';
+              if (dim.isEmpty) { saltados++; continue; }
+              var t = (fila[m.colTipo] ?? 'DELANTERA').trim().toUpperCase();
+              if (!['DELANTERA', 'TRASERA', 'AMBAS'].contains(t)) {
+                t = 'DELANTERA';
+              }
+              final idHoja = fila[idHeader]?.trim() ?? '';
+              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              if (ex != null) {
+                if (ex.dimension != dim || ex.tipo != t) {
+                  await repo.actualizarLlanta(ex.id, dim, t);
+                  actualizados++;
+                } else {
+                  saltados++;
+                }
+              } else {
+                String idFinal;
+                if (idHoja.isEmpty) {
+                  siguienteId++;
+                  idFinal = siguienteId.toString();
+                } else {
+                  idFinal = idHoja;
+                }
+                await repo.crearLlanta(dim, t, idExterno: idFinal);
+                if (idHoja.isEmpty) {
+                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
+                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                }
+                nuevos++;
+              }
+            }
           }
         case TipoCatalogo.engranajes:
-          final actuales = await db.select(db.catalogoEngranajes).get();
-          final claves = {
-            for (final x in actuales)
-              '${x.tipo}|${_norm(x.marca)}|${x.dientes}'
-          };
-          for (final fila in datos.filas) {
-            final marca = fila[m.colMarca]?.trim() ?? '';
-            final dientes = int.tryParse(fila[m.colDientes]?.trim() ?? '');
-            if (marca.isEmpty || dientes == null) { saltados++; continue; }
-            final tNorm = _norm(fila[m.colTipo] ?? '');
-            final t = tNorm.contains('corona') ? 'CORONA' : 'PINON';
-            final clave = '$t|${_norm(marca)}|$dientes';
-            if (claves.contains(clave)) { saltados++; continue; }
-            await repo.crearEngranaje(tipo: t, marca: marca, dientes: dientes);
-            claves.add(clave);
-            nuevos++;
+          final actualesEngr = await db.select(db.catalogoEngranajes).get();
+          if (idColIdx < 0) {
+            final claves = {
+              for (final x in actualesEngr)
+                '${x.tipo}|${_norm(x.marca)}|${x.dientes}'
+            };
+            for (final fila in datos.filas) {
+              final marca = fila[m.colMarca]?.trim() ?? '';
+              final dientes = int.tryParse(fila[m.colDientes]?.trim() ?? '');
+              if (marca.isEmpty || dientes == null) { saltados++; continue; }
+              final tNorm = _norm(fila[m.colTipo] ?? '');
+              final t = tNorm.contains('corona') ? 'CORONA' : 'PINON';
+              final clave = '$t|${_norm(marca)}|$dientes';
+              if (claves.contains(clave)) { saltados++; continue; }
+              await repo.crearEngranaje(
+                  tipo: t, marca: marca, dientes: dientes);
+              claves.add(clave);
+              nuevos++;
+            }
+          } else {
+            final porId = {
+              for (final x in actualesEngr)
+                if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
+            };
+            var siguienteId = [
+              maxIdExterno(datos.filas.map((f) => f[idHeader])),
+              maxIdExterno(actualesEngr.map((x) => x.idExterno)),
+            ].reduce((a, b) => a > b ? a : b);
+            for (var k = 0; k < datos.filas.length; k++) {
+              final fila = datos.filas[k];
+              final marca = fila[m.colMarca]?.trim() ?? '';
+              final dientes = int.tryParse(fila[m.colDientes]?.trim() ?? '');
+              if (marca.isEmpty || dientes == null) { saltados++; continue; }
+              final tNorm = _norm(fila[m.colTipo] ?? '');
+              final t = tNorm.contains('corona') ? 'CORONA' : 'PINON';
+              final idHoja = fila[idHeader]?.trim() ?? '';
+              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              if (ex != null) {
+                if (ex.tipo != t || ex.marca != marca || ex.dientes != dientes) {
+                  await repo.actualizarEngranaje(ex.id, t, marca, dientes);
+                  actualizados++;
+                } else {
+                  saltados++;
+                }
+              } else {
+                String idFinal;
+                if (idHoja.isEmpty) {
+                  siguienteId++;
+                  idFinal = siguienteId.toString();
+                } else {
+                  idFinal = idHoja;
+                }
+                await repo.crearEngranaje(
+                    tipo: t, marca: marca, dientes: dientes, idExterno: idFinal);
+                if (idHoja.isEmpty) {
+                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
+                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                }
+                nuevos++;
+              }
+            }
           }
         case TipoCatalogo.motores:
           final actuales = await db.select(db.catalogoMotores).get();
-          // Columna "ID" (convención fija, igual que al subir): si la hoja
-          // ya la tiene, se empareja por id en vez de por nombre — el mismo
-          // motor puede repetirse con distinta copa y el nombre solo no
-          // distingue esas filas.
-          final idHeader = datos.columnas
-              .firstWhere((c) => _norm(c) == 'id', orElse: () => '');
-          if (idHeader.isEmpty) {
+          if (idColIdx < 0) {
             // Sin columna ID todavía: comportamiento de siempre (por nombre).
             final porNombre = {for (final x in actuales) _norm(x.nombre): x};
             for (final fila in datos.filas) {
@@ -462,8 +663,6 @@ class ActualizadorDrive {
               for (final x in actuales)
                 if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
             };
-            final svc = ref.read(googleSheetsServiceProvider);
-            final idColIdx = datos.columnas.indexOf(idHeader);
             // Contador correlativo para ids nuevos (filas tecleadas a mano
             // en la hoja sin id): arranca en el mayor visto entre la hoja y
             // lo local, y sigue subiendo dentro de esta misma pasada.
@@ -531,58 +730,153 @@ class ActualizadorDrive {
           }
         case TipoCatalogo.neumaticos:
           final actuales = await db.select(db.catalogoNeumaticos).get();
-          final porNombre = {for (final x in actuales) _norm(x.nombre): x};
-          for (final fila in datos.filas) {
-            final n = fila[m.colNombre]?.trim() ?? '';
-            if (n.isEmpty) { saltados++; continue; }
-            final r = fila[m.colReferencia]?.trim();
-            final ex = porNombre[_norm(n)];
-            if (ex == null) {
-              await repo.crearNeumatico(
-                  n, (r == null || r.isEmpty) ? null : r);
-              nuevos++;
-            } else {
-              saltados++;
+          if (idColIdx < 0) {
+            final porNombre = {for (final x in actuales) _norm(x.nombre): x};
+            for (final fila in datos.filas) {
+              final n = fila[m.colNombre]?.trim() ?? '';
+              if (n.isEmpty) { saltados++; continue; }
+              final r = fila[m.colReferencia]?.trim();
+              final ex = porNombre[_norm(n)];
+              if (ex == null) {
+                await repo.crearNeumatico(
+                    n, (r == null || r.isEmpty) ? null : r);
+                nuevos++;
+              } else {
+                saltados++;
+              }
+            }
+          } else {
+            final porId = {
+              for (final x in actuales)
+                if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
+            };
+            var siguienteId = [
+              maxIdExterno(datos.filas.map((f) => f[idHeader])),
+              maxIdExterno(actuales.map((x) => x.idExterno)),
+            ].reduce((a, b) => a > b ? a : b);
+            for (var k = 0; k < datos.filas.length; k++) {
+              final fila = datos.filas[k];
+              final n = fila[m.colNombre]?.trim() ?? '';
+              if (n.isEmpty) { saltados++; continue; }
+              final r = fila[m.colReferencia]?.trim();
+              final idHoja = fila[idHeader]?.trim() ?? '';
+              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              if (ex != null) {
+                if (ex.nombre != n || (ex.referencia ?? '') != (r ?? '')) {
+                  await repo.actualizarNeumatico(ex.id, n, r);
+                  actualizados++;
+                } else {
+                  saltados++;
+                }
+              } else {
+                String idFinal;
+                if (idHoja.isEmpty) {
+                  siguienteId++;
+                  idFinal = siguienteId.toString();
+                } else {
+                  idFinal = idHoja;
+                }
+                await repo.crearNeumatico(
+                    n, (r == null || r.isEmpty) ? null : r,
+                    idExterno: idFinal);
+                if (idHoja.isEmpty) {
+                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
+                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                }
+                nuevos++;
+              }
             }
           }
-        case TipoCatalogo.bancadas:
         case TipoCatalogo.chasis:
-        case TipoCatalogo.copas:
-        case TipoCatalogo.clubs:
-          final nombres = switch (tipo) {
-            TipoCatalogo.bancadas => (await db
-                    .select(db.catalogoBancadas)
-                    .get())
-                .map((x) => _norm(x.nombre))
-                .toSet(),
-            TipoCatalogo.chasis => (await db.select(db.catalogoChasis).get())
-                .map((x) => _norm(x.nombre))
-                .toSet(),
-            TipoCatalogo.copas => (await db.select(db.catalogoCopas).get())
-                .map((x) => _norm(x.nombre))
-                .toSet(),
-            _ => (await db.select(db.catalogoClubs).get())
-                .map((x) => _norm(x.nombre))
-                .toSet(),
-          };
+          // Sin columna ID: catálogo sin hoja vinculada todavía.
+          final nombresChasis = (await db.select(db.catalogoChasis).get())
+              .map((x) => _norm(x.nombre))
+              .toSet();
           for (final fila in datos.filas) {
             final n = fila[m.colNombre]?.trim() ?? '';
-            if (n.isEmpty || nombres.contains(_norm(n))) {
+            if (n.isEmpty || nombresChasis.contains(_norm(n))) {
               saltados++;
               continue;
             }
-            switch (tipo) {
-              case TipoCatalogo.bancadas:
-                await repo.crearBancada(n);
-              case TipoCatalogo.chasis:
-                await repo.crearChasis(n);
-              case TipoCatalogo.copas:
-                await repo.crearCopa(n);
-              default:
-                await repo.crearClub(n);
-            }
-            nombres.add(_norm(n));
+            await repo.crearChasis(n);
+            nombresChasis.add(_norm(n));
             nuevos++;
+          }
+        case TipoCatalogo.bancadas:
+        case TipoCatalogo.copas:
+        case TipoCatalogo.clubs:
+          Future<int> crear(String n, {String? idExterno}) => switch (tipo) {
+                TipoCatalogo.bancadas =>
+                  repo.crearBancada(n, idExterno: idExterno),
+                TipoCatalogo.copas => repo.crearCopa(n, idExterno: idExterno),
+                _ => repo.crearClub(n, idExterno: idExterno),
+              };
+          Future<void> actualizar(int id, String n) => switch (tipo) {
+                TipoCatalogo.bancadas => repo.actualizarBancada(id, n),
+                TipoCatalogo.copas => repo.actualizarCopa(id, n),
+                _ => repo.actualizarClub(id, n),
+              };
+          final actualesSimple = switch (tipo) {
+            TipoCatalogo.bancadas => (await db.select(db.catalogoBancadas).get())
+                .map((x) => (id: x.id, nombre: x.nombre, idExterno: x.idExterno))
+                .toList(),
+            TipoCatalogo.copas => (await db.select(db.catalogoCopas).get())
+                .map((x) => (id: x.id, nombre: x.nombre, idExterno: x.idExterno))
+                .toList(),
+            _ => (await db.select(db.catalogoClubs).get())
+                .map((x) => (id: x.id, nombre: x.nombre, idExterno: x.idExterno))
+                .toList(),
+          };
+          if (idColIdx < 0) {
+            final nombres = actualesSimple.map((x) => _norm(x.nombre)).toSet();
+            for (final fila in datos.filas) {
+              final n = fila[m.colNombre]?.trim() ?? '';
+              if (n.isEmpty || nombres.contains(_norm(n))) {
+                saltados++;
+                continue;
+              }
+              await crear(n);
+              nombres.add(_norm(n));
+              nuevos++;
+            }
+          } else {
+            final porId = {
+              for (final x in actualesSimple)
+                if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
+            };
+            var siguienteId = [
+              maxIdExterno(datos.filas.map((f) => f[idHeader])),
+              maxIdExterno(actualesSimple.map((x) => x.idExterno)),
+            ].reduce((a, b) => a > b ? a : b);
+            for (var k = 0; k < datos.filas.length; k++) {
+              final fila = datos.filas[k];
+              final n = fila[m.colNombre]?.trim() ?? '';
+              if (n.isEmpty) { saltados++; continue; }
+              final idHoja = fila[idHeader]?.trim() ?? '';
+              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              if (ex != null) {
+                if (ex.nombre != n) {
+                  await actualizar(ex.id, n);
+                  actualizados++;
+                } else {
+                  saltados++;
+                }
+              } else {
+                String idFinal;
+                if (idHoja.isEmpty) {
+                  siguienteId++;
+                  idFinal = siguienteId.toString();
+                } else {
+                  idFinal = idHoja;
+                }
+                await crear(n, idExterno: idFinal);
+                if (idHoja.isEmpty) {
+                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
+                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                }
+                nuevos++;
+              }
+            }
           }
       }
 
