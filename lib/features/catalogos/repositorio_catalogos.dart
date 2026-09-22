@@ -86,7 +86,7 @@ final engranajesCatalogoProvider =
   return (db.select(db.catalogoEngranajes)
         ..orderBy([
           (t) => OrderingTerm.asc(t.tipo),
-          (t) => OrderingTerm.asc(t.marca),
+          (t) => OrderingTerm.asc(t.diametro),
           (t) => OrderingTerm.asc(t.dientes),
         ]))
       .watch();
@@ -265,17 +265,25 @@ class RepositorioCatalogos {
   }
 
   // ---- Bancadas ----
-  Future<int> crearBancada(String nombre, {String? idExterno}) {
+  Future<int> crearBancada(String nombre,
+      {String? copasJson, String? idExterno}) {
     return db.into(db.catalogoBancadas).insert(
         CatalogoBancadasCompanion.insert(
             nombre: nombre,
+            copasJson:
+                copasJson == null ? const Value.absent() : Value(copasJson),
             idExterno:
                 idExterno == null ? const Value.absent() : Value(idExterno)));
   }
 
-  Future<void> actualizarBancada(int id, String nombre) async {
+  Future<void> actualizarBancada(int id, String nombre,
+      {String? copasJson}) async {
     await (db.update(db.catalogoBancadas)..where((t) => t.id.equals(id)))
-        .write(CatalogoBancadasCompanion(nombre: Value(nombre)));
+        .write(CatalogoBancadasCompanion(
+          nombre: Value(nombre),
+          copasJson:
+              copasJson == null ? const Value.absent() : Value(copasJson),
+        ));
   }
 
   Future<void> borrarBancada(int id) async {
@@ -338,7 +346,7 @@ class RepositorioCatalogos {
   // ---- Engranajes (piñones y coronas) ----
   Future<int> crearEngranaje({
     required String tipo, // PINON | CORONA
-    required String marca,
+    double? diametro,
     required int dientes,
     String? copasJson,
     String? idExterno,
@@ -346,7 +354,7 @@ class RepositorioCatalogos {
     return db.into(db.catalogoEngranajes).insert(
         CatalogoEngranajesCompanion.insert(
             tipo: tipo,
-            marca: marca,
+            diametro: Value(diametro),
             dientes: dientes,
             copasJson:
                 copasJson == null ? const Value.absent() : Value(copasJson),
@@ -355,12 +363,12 @@ class RepositorioCatalogos {
   }
 
   Future<void> actualizarEngranaje(
-      int id, String tipo, String marca, int dientes,
+      int id, String tipo, double? diametro, int dientes,
       {String? copasJson}) async {
     await (db.update(db.catalogoEngranajes)..where((t) => t.id.equals(id)))
         .write(CatalogoEngranajesCompanion(
             tipo: Value(tipo),
-            marca: Value(marca),
+            diametro: Value(diametro),
             dientes: Value(dientes),
             copasJson:
                 copasJson == null ? const Value.absent() : Value(copasJson)));

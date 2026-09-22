@@ -248,7 +248,7 @@ final engranajesFiltradosProvider = StreamProvider.autoDispose
   final db = ref.watch(dbProvider);
   return (db.select(db.catalogoEngranajes)
         ..where((t) => t.tipo.equals(args.tipo))
-        ..orderBy([(t) => OrderingTerm.asc(t.marca)]))
+        ..orderBy([(t) => OrderingTerm.asc(t.diametro)]))
       .watch()
       .map((todos) {
     final copa = args.copa;

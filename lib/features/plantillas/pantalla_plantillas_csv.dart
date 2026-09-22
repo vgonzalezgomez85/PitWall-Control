@@ -114,11 +114,11 @@ const _plantillas = <_Plantilla>[
   ),
   _Plantilla(
     titulo: 'Catálogo · Engranajes',
-    descripcion: 'Piñones y coronas (tipo, marca, dientes).',
+    descripcion: 'Piñones y coronas (tipo, diámetro, dientes).',
     icono: Icons.settings_outlined,
     archivo: 'plantilla-engranajes.csv',
-    cabeceras: ['Tipo', 'Marca', 'Dientes'],
-    ejemplo: ['CORONA', 'Slot.it', '28'],
+    cabeceras: ['Tipo', 'Diametro', 'Dientes'],
+    ejemplo: ['CORONA', '6,5', '28'],
   ),
 ];
 

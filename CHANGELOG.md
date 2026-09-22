@@ -14,6 +14,16 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.7.0] — 2026-09-22
+
+### Añadido
+- **Engranajes ahora guarda diámetro en vez de marca**, para cuadrar con la hoja real (que ya no tiene columna de marca). Afecta al modelo de datos, la pantalla de edición, la exportación/plantilla Excel y la sincronización con Sheets.
+- **Copa/categoría sincronizable en Llantas, Neumáticos, Engranajes y Bancadas**, con el mismo criterio que ya tenían Coches y Motores (antes ni se subía ni se bajaba).
+
+### Corregido
+- **Al actualizar Coches desde Drive, la copa/categoría nunca se guardaba** aunque cambiara en la hoja — se quedaba fuera de la comparación y de la escritura.
+- **Varios vínculos con Google Sheets apuntaban a pestañas o cabeceras que ya no existían** (renombradas en la hoja después de vincular): Coches y Copas/Categorías buscaban la columna "COPA" en vez de "CATEGORÍA/COPA"; Copas apuntaba a la pestaña "COPAS/CATEG." en vez de "COPASCATEG."; Llantas apuntaba a "DIAMETRO RUEDAS" en vez de "LLANTAS"; Neumáticos apuntaba a "NEUMATICOS" sin tilde en vez de "NEUMÁTICOS"; Engranajes buscaba una columna "MARCA" que ya no existe. Todos corregidos.
+
 ## [1.6.0] — 2026-09-22
 
 ### Añadido

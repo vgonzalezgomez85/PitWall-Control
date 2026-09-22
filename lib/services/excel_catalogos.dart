@@ -151,10 +151,10 @@ Future<Uint8List> exportarCatalogosExcel(AppDatabase db) async {
               ])
           .toList());
 
-  await hoja('Engranajes', ['ID', 'Tipo', 'Marca', 'Dientes', 'Copas'],
+  await hoja('Engranajes', ['ID', 'Tipo', 'Diametro', 'Dientes', 'Copas'],
       () async => (await db.select(db.catalogoEngranajes).get())
           .map((g) => [
-                _int(g.id), _txt(g.tipo), _txt(g.marca), _int(g.dientes),
+                _int(g.id), _txt(g.tipo), _dbl(g.diametro), _int(g.dientes),
                 _txt(_copasATexto(g.copasJson)),
               ])
           .toList());
@@ -304,12 +304,11 @@ Future<ResultadoImportCatalogos> importarCatalogosExcel(
     });
 
     await hoja('Engranajes', (fila, cols, id) async {
-      final marca = _celda(fila, cols, 'marca');
       final dientes = _celdaInt(fila, cols, 'dientes');
-      if (marca.isEmpty || dientes == null) return;
+      if (dientes == null) return;
       final c = CatalogoEngranajesCompanion(
         tipo: Value(_celda(fila, cols, 'tipo').toUpperCase()),
-        marca: Value(marca),
+        diametro: Value(_celdaDbl(fila, cols, 'diametro')),
         dientes: Value(dientes),
         copasJson: Value(_textoACopas(_celda(fila, cols, 'copas'))),
       );

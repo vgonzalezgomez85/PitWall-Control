@@ -1080,7 +1080,7 @@ class _TabEngranajes extends ConsumerWidget {
     return _ListaCatalogo<CatalogoEngranaje>(
       datos: ref.watch(engranajesCatalogoProvider),
       vacio: 'Sin engranajes',
-      textoBuscable: (g) => '${g.marca} ${g.dientes} ${g.tipo}',
+      textoBuscable: (g) => '${g.diametro ?? ''} ${g.dientes} ${g.tipo}',
       copasJsonDe: (g) => g.copasJson,
       copas: copas,
       fab: FloatingActionButton.extended(
@@ -1097,7 +1097,8 @@ class _TabEngranajes extends ConsumerWidget {
                 : Icons.album_outlined,
             color: cs.primary,
           ),
-          title: Text('${g.marca} · ${g.dientes} dientes'),
+          title: Text(
+              '${g.diametro != null ? '⌀${g.diametro} · ' : ''}${g.dientes} dientes'),
           subtitle: Text(
             '${g.tipo == 'PINON' ? 'Piñón' : 'Corona'}'
             '\nCopas: ${_resumenCopas(_decodeCopas(g.copasJson))}',
@@ -1109,7 +1110,7 @@ class _TabEngranajes extends ConsumerWidget {
                 _editar(context, ref, g);
               } else if (op == 'borrar') {
                 final ok = await _confirmarBorrar(
-                    context, '${g.marca} ${g.dientes}d');
+                    context, '${g.tipo} ${g.dientes}d');
                 if (ok) {
                   await ref.read(repoCatalogosProvider).borrarEngranaje(g.id);
                 }
@@ -1127,7 +1128,8 @@ class _TabEngranajes extends ConsumerWidget {
 
   Future<void> _editar(
       BuildContext context, WidgetRef ref, CatalogoEngranaje? g) async {
-    final marca = TextEditingController(text: g?.marca ?? '');
+    final diametro =
+        TextEditingController(text: g?.diametro?.toString() ?? '');
     final dientes = TextEditingController(text: g?.dientes.toString() ?? '');
     String tipo = g?.tipo ?? 'PINON';
     final copasIni = g == null ? <String>{} : _decodeCopas(g.copasJson).toSet();
@@ -1151,9 +1153,11 @@ class _TabEngranajes extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               TextField(
-                controller: marca,
+                controller: diametro,
                 decoration: const InputDecoration(
-                    labelText: 'Marca *', helperText: 'Ej: Slot.it, Scaleauto'),
+                    labelText: 'Diámetro', helperText: 'Ej: 6,5'),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -1169,16 +1173,16 @@ class _TabEngranajes extends ConsumerWidget {
       ),
     );
     if (res == null || !res.ok) return;
-    final m = marca.text.trim();
+    final dia = double.tryParse(diametro.text.trim().replaceAll(',', '.'));
     final d = int.tryParse(dientes.text.trim());
-    if (m.isEmpty || d == null) return;
+    if (d == null) return;
     final copasJson = json.encode(res.copas.toList());
     final repo = ref.read(repoCatalogosProvider);
     if (g == null) {
       await repo.crearEngranaje(
-          tipo: tipo, marca: m, dientes: d, copasJson: copasJson);
+          tipo: tipo, diametro: dia, dientes: d, copasJson: copasJson);
     } else {
-      await repo.actualizarEngranaje(g.id, tipo, m, d, copasJson: copasJson);
+      await repo.actualizarEngranaje(g.id, tipo, dia, d, copasJson: copasJson);
     }
   }
 }

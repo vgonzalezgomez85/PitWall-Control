@@ -12920,14 +12920,16 @@ class $CatalogoEngranajesTable extends CatalogoEngranajes
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _marcaMeta = const VerificationMeta('marca');
+  static const VerificationMeta _diametroMeta = const VerificationMeta(
+    'diametro',
+  );
   @override
-  late final GeneratedColumn<String> marca = GeneratedColumn<String>(
-    'marca',
+  late final GeneratedColumn<double> diametro = GeneratedColumn<double>(
+    'diametro',
     aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _dientesMeta = const VerificationMeta(
     'dientes',
@@ -12966,7 +12968,7 @@ class $CatalogoEngranajesTable extends CatalogoEngranajes
   List<GeneratedColumn> get $columns => [
     id,
     tipo,
-    marca,
+    diametro,
     dientes,
     copasJson,
     idExterno,
@@ -12994,13 +12996,11 @@ class $CatalogoEngranajesTable extends CatalogoEngranajes
     } else if (isInserting) {
       context.missing(_tipoMeta);
     }
-    if (data.containsKey('marca')) {
+    if (data.containsKey('diametro')) {
       context.handle(
-        _marcaMeta,
-        marca.isAcceptableOrUnknown(data['marca']!, _marcaMeta),
+        _diametroMeta,
+        diametro.isAcceptableOrUnknown(data['diametro']!, _diametroMeta),
       );
-    } else if (isInserting) {
-      context.missing(_marcaMeta);
     }
     if (data.containsKey('dientes')) {
       context.handle(
@@ -13039,10 +13039,10 @@ class $CatalogoEngranajesTable extends CatalogoEngranajes
         DriftSqlType.string,
         data['${effectivePrefix}tipo'],
       )!,
-      marca: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}marca'],
-      )!,
+      diametro: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}diametro'],
+      ),
       dientes: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}dientes'],
@@ -13068,14 +13068,14 @@ class CatalogoEngranaje extends DataClass
     implements Insertable<CatalogoEngranaje> {
   final int id;
   final String tipo;
-  final String marca;
+  final double? diametro;
   final int dientes;
   final String? copasJson;
   final String? idExterno;
   const CatalogoEngranaje({
     required this.id,
     required this.tipo,
-    required this.marca,
+    this.diametro,
     required this.dientes,
     this.copasJson,
     this.idExterno,
@@ -13085,7 +13085,9 @@ class CatalogoEngranaje extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['tipo'] = Variable<String>(tipo);
-    map['marca'] = Variable<String>(marca);
+    if (!nullToAbsent || diametro != null) {
+      map['diametro'] = Variable<double>(diametro);
+    }
     map['dientes'] = Variable<int>(dientes);
     if (!nullToAbsent || copasJson != null) {
       map['copas_json'] = Variable<String>(copasJson);
@@ -13100,7 +13102,9 @@ class CatalogoEngranaje extends DataClass
     return CatalogoEngranajesCompanion(
       id: Value(id),
       tipo: Value(tipo),
-      marca: Value(marca),
+      diametro: diametro == null && nullToAbsent
+          ? const Value.absent()
+          : Value(diametro),
       dientes: Value(dientes),
       copasJson: copasJson == null && nullToAbsent
           ? const Value.absent()
@@ -13119,7 +13123,7 @@ class CatalogoEngranaje extends DataClass
     return CatalogoEngranaje(
       id: serializer.fromJson<int>(json['id']),
       tipo: serializer.fromJson<String>(json['tipo']),
-      marca: serializer.fromJson<String>(json['marca']),
+      diametro: serializer.fromJson<double?>(json['diametro']),
       dientes: serializer.fromJson<int>(json['dientes']),
       copasJson: serializer.fromJson<String?>(json['copasJson']),
       idExterno: serializer.fromJson<String?>(json['idExterno']),
@@ -13131,7 +13135,7 @@ class CatalogoEngranaje extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'tipo': serializer.toJson<String>(tipo),
-      'marca': serializer.toJson<String>(marca),
+      'diametro': serializer.toJson<double?>(diametro),
       'dientes': serializer.toJson<int>(dientes),
       'copasJson': serializer.toJson<String?>(copasJson),
       'idExterno': serializer.toJson<String?>(idExterno),
@@ -13141,14 +13145,14 @@ class CatalogoEngranaje extends DataClass
   CatalogoEngranaje copyWith({
     int? id,
     String? tipo,
-    String? marca,
+    Value<double?> diametro = const Value.absent(),
     int? dientes,
     Value<String?> copasJson = const Value.absent(),
     Value<String?> idExterno = const Value.absent(),
   }) => CatalogoEngranaje(
     id: id ?? this.id,
     tipo: tipo ?? this.tipo,
-    marca: marca ?? this.marca,
+    diametro: diametro.present ? diametro.value : this.diametro,
     dientes: dientes ?? this.dientes,
     copasJson: copasJson.present ? copasJson.value : this.copasJson,
     idExterno: idExterno.present ? idExterno.value : this.idExterno,
@@ -13157,7 +13161,7 @@ class CatalogoEngranaje extends DataClass
     return CatalogoEngranaje(
       id: data.id.present ? data.id.value : this.id,
       tipo: data.tipo.present ? data.tipo.value : this.tipo,
-      marca: data.marca.present ? data.marca.value : this.marca,
+      diametro: data.diametro.present ? data.diametro.value : this.diametro,
       dientes: data.dientes.present ? data.dientes.value : this.dientes,
       copasJson: data.copasJson.present ? data.copasJson.value : this.copasJson,
       idExterno: data.idExterno.present ? data.idExterno.value : this.idExterno,
@@ -13169,7 +13173,7 @@ class CatalogoEngranaje extends DataClass
     return (StringBuffer('CatalogoEngranaje(')
           ..write('id: $id, ')
           ..write('tipo: $tipo, ')
-          ..write('marca: $marca, ')
+          ..write('diametro: $diametro, ')
           ..write('dientes: $dientes, ')
           ..write('copasJson: $copasJson, ')
           ..write('idExterno: $idExterno')
@@ -13179,14 +13183,14 @@ class CatalogoEngranaje extends DataClass
 
   @override
   int get hashCode =>
-      Object.hash(id, tipo, marca, dientes, copasJson, idExterno);
+      Object.hash(id, tipo, diametro, dientes, copasJson, idExterno);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CatalogoEngranaje &&
           other.id == this.id &&
           other.tipo == this.tipo &&
-          other.marca == this.marca &&
+          other.diametro == this.diametro &&
           other.dientes == this.dientes &&
           other.copasJson == this.copasJson &&
           other.idExterno == this.idExterno);
@@ -13195,14 +13199,14 @@ class CatalogoEngranaje extends DataClass
 class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
   final Value<int> id;
   final Value<String> tipo;
-  final Value<String> marca;
+  final Value<double?> diametro;
   final Value<int> dientes;
   final Value<String?> copasJson;
   final Value<String?> idExterno;
   const CatalogoEngranajesCompanion({
     this.id = const Value.absent(),
     this.tipo = const Value.absent(),
-    this.marca = const Value.absent(),
+    this.diametro = const Value.absent(),
     this.dientes = const Value.absent(),
     this.copasJson = const Value.absent(),
     this.idExterno = const Value.absent(),
@@ -13210,17 +13214,16 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
   CatalogoEngranajesCompanion.insert({
     this.id = const Value.absent(),
     required String tipo,
-    required String marca,
+    this.diametro = const Value.absent(),
     required int dientes,
     this.copasJson = const Value.absent(),
     this.idExterno = const Value.absent(),
   }) : tipo = Value(tipo),
-       marca = Value(marca),
        dientes = Value(dientes);
   static Insertable<CatalogoEngranaje> custom({
     Expression<int>? id,
     Expression<String>? tipo,
-    Expression<String>? marca,
+    Expression<double>? diametro,
     Expression<int>? dientes,
     Expression<String>? copasJson,
     Expression<String>? idExterno,
@@ -13228,7 +13231,7 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (tipo != null) 'tipo': tipo,
-      if (marca != null) 'marca': marca,
+      if (diametro != null) 'diametro': diametro,
       if (dientes != null) 'dientes': dientes,
       if (copasJson != null) 'copas_json': copasJson,
       if (idExterno != null) 'id_externo': idExterno,
@@ -13238,7 +13241,7 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
   CatalogoEngranajesCompanion copyWith({
     Value<int>? id,
     Value<String>? tipo,
-    Value<String>? marca,
+    Value<double?>? diametro,
     Value<int>? dientes,
     Value<String?>? copasJson,
     Value<String?>? idExterno,
@@ -13246,7 +13249,7 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
     return CatalogoEngranajesCompanion(
       id: id ?? this.id,
       tipo: tipo ?? this.tipo,
-      marca: marca ?? this.marca,
+      diametro: diametro ?? this.diametro,
       dientes: dientes ?? this.dientes,
       copasJson: copasJson ?? this.copasJson,
       idExterno: idExterno ?? this.idExterno,
@@ -13262,8 +13265,8 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
     if (tipo.present) {
       map['tipo'] = Variable<String>(tipo.value);
     }
-    if (marca.present) {
-      map['marca'] = Variable<String>(marca.value);
+    if (diametro.present) {
+      map['diametro'] = Variable<double>(diametro.value);
     }
     if (dientes.present) {
       map['dientes'] = Variable<int>(dientes.value);
@@ -13282,7 +13285,7 @@ class CatalogoEngranajesCompanion extends UpdateCompanion<CatalogoEngranaje> {
     return (StringBuffer('CatalogoEngranajesCompanion(')
           ..write('id: $id, ')
           ..write('tipo: $tipo, ')
-          ..write('marca: $marca, ')
+          ..write('diametro: $diametro, ')
           ..write('dientes: $dientes, ')
           ..write('copasJson: $copasJson, ')
           ..write('idExterno: $idExterno')
@@ -29069,7 +29072,7 @@ typedef $$CatalogoEngranajesTableCreateCompanionBuilder =
     CatalogoEngranajesCompanion Function({
       Value<int> id,
       required String tipo,
-      required String marca,
+      Value<double?> diametro,
       required int dientes,
       Value<String?> copasJson,
       Value<String?> idExterno,
@@ -29078,7 +29081,7 @@ typedef $$CatalogoEngranajesTableUpdateCompanionBuilder =
     CatalogoEngranajesCompanion Function({
       Value<int> id,
       Value<String> tipo,
-      Value<String> marca,
+      Value<double?> diametro,
       Value<int> dientes,
       Value<String?> copasJson,
       Value<String?> idExterno,
@@ -29103,8 +29106,8 @@ class $$CatalogoEngranajesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get marca => $composableBuilder(
-    column: $table.marca,
+  ColumnFilters<double> get diametro => $composableBuilder(
+    column: $table.diametro,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -29143,8 +29146,8 @@ class $$CatalogoEngranajesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get marca => $composableBuilder(
-    column: $table.marca,
+  ColumnOrderings<double> get diametro => $composableBuilder(
+    column: $table.diametro,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -29179,8 +29182,8 @@ class $$CatalogoEngranajesTableAnnotationComposer
   GeneratedColumn<String> get tipo =>
       $composableBuilder(column: $table.tipo, builder: (column) => column);
 
-  GeneratedColumn<String> get marca =>
-      $composableBuilder(column: $table.marca, builder: (column) => column);
+  GeneratedColumn<double> get diametro =>
+      $composableBuilder(column: $table.diametro, builder: (column) => column);
 
   GeneratedColumn<int> get dientes =>
       $composableBuilder(column: $table.dientes, builder: (column) => column);
@@ -29234,14 +29237,14 @@ class $$CatalogoEngranajesTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> tipo = const Value.absent(),
-                Value<String> marca = const Value.absent(),
+                Value<double?> diametro = const Value.absent(),
                 Value<int> dientes = const Value.absent(),
                 Value<String?> copasJson = const Value.absent(),
                 Value<String?> idExterno = const Value.absent(),
               }) => CatalogoEngranajesCompanion(
                 id: id,
                 tipo: tipo,
-                marca: marca,
+                diametro: diametro,
                 dientes: dientes,
                 copasJson: copasJson,
                 idExterno: idExterno,
@@ -29250,14 +29253,14 @@ class $$CatalogoEngranajesTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 required String tipo,
-                required String marca,
+                Value<double?> diametro = const Value.absent(),
                 required int dientes,
                 Value<String?> copasJson = const Value.absent(),
                 Value<String?> idExterno = const Value.absent(),
               }) => CatalogoEngranajesCompanion.insert(
                 id: id,
                 tipo: tipo,
-                marca: marca,
+                diametro: diametro,
                 dientes: dientes,
                 copasJson: copasJson,
                 idExterno: idExterno,

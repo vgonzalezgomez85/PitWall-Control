@@ -179,6 +179,7 @@ class SubidorCatalogo {
               {
                 'colNombre': x.nombre,
                 'colReferencia': x.referencia ?? '',
+                'colCopa': _copasStr(x.copasJson ?? '[]'),
                 'colId': x.idExterno ?? '',
               }
           ],
@@ -193,6 +194,7 @@ class SubidorCatalogo {
               {
                 'colDimension': x.dimension,
                 'colTipo': x.tipo,
+                'colCopa': _copasStr(x.copasJson ?? '[]'),
                 'colId': x.idExterno ?? '',
               }
           ],
@@ -200,14 +202,15 @@ class SubidorCatalogo {
       case TipoCatalogo.engranajes:
         final xs = await _db.select(_db.catalogoEngranajes).get();
         return (
-          keyFields: ['colTipo', 'colMarca', 'colDientes'],
+          keyFields: ['colTipo', 'colDiametro', 'colDientes'],
           ids: [for (final x in xs) x.id],
           rows: [
             for (final x in xs)
               {
                 'colTipo': x.tipo,
-                'colMarca': x.marca,
+                'colDiametro': x.diametro ?? '',
                 'colDientes': x.dientes,
+                'colCopa': _copasStr(x.copasJson ?? '[]'),
                 'colId': x.idExterno ?? '',
               }
           ],
@@ -219,7 +222,11 @@ class SubidorCatalogo {
           ids: [for (final x in xs) x.id],
           rows: [
             for (final x in xs)
-              {'colNombre': x.nombre, 'colId': x.idExterno ?? ''}
+              {
+                'colNombre': x.nombre,
+                'colCopa': _copasStr(x.copasJson),
+                'colId': x.idExterno ?? '',
+              }
           ],
         );
       case TipoCatalogo.chasis:

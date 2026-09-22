@@ -64,7 +64,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 40;
+  int get schemaVersion => 41;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -436,6 +436,15 @@ class AppDatabase extends _$AppDatabase {
               await _aplicar(() =>
                   customStatement('ALTER TABLE $tabla ADD COLUMN id_externo TEXT'));
             }
+          }
+          if (from < 41) {
+            // Engranajes: "marca" deja de existir (la hoja real ya no la
+            // tiene) y se sustituye por "diámetro". Requiere SQLite 3.35+
+            // (incluido en la versión empaquetada con la app).
+            await _aplicar(
+                () => customStatement('ALTER TABLE catalogo_engranajes DROP COLUMN marca'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE catalogo_engranajes ADD COLUMN diametro REAL'));
           }
         },
       );

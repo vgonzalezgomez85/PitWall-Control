@@ -55,7 +55,7 @@ class MapeoCatalogo {
   // Neumáticos
   String? colReferencia;
   // Engranajes
-  String? colDientes;
+  String? colDientes, colDiametro;
   // Motores
   String? colRpm, colGauss;
   // Identificador estable para sincronizar sin depender del nombre (opcional;
@@ -71,7 +71,7 @@ class MapeoCatalogo {
       case TipoCatalogo.llantas:
         return colDimension != null;
       case TipoCatalogo.engranajes:
-        return colMarca != null && colDientes != null;
+        return colDientes != null;
       case TipoCatalogo.motores:
         return colNombre != null;
       case TipoCatalogo.bancadas:
@@ -308,6 +308,16 @@ class _PantallaImportarCatalogoState
     return false;
   }
 
+  /// Copas separadas por coma en la celda; vacío = aplica a todas.
+  static String? _copasJsonDe(String? raw) {
+    final copas = (raw ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    return copas.isEmpty ? null : json.encode(copas);
+  }
+
   MapeoCatalogo _detectarMapeo(List<String> cols, TipoCatalogo t) {
     final m = MapeoCatalogo();
     for (final c in cols) {
@@ -347,8 +357,13 @@ class _PantallaImportarCatalogoState
               _match(n, ['tipo', 'delantera trasera', 'd t'])) {
             m.colTipo = c;
           }
+          if (m.colCopa == null && _match(n, ['copa', 'copas'])) {
+            m.colCopa = c;
+          }
         case TipoCatalogo.engranajes:
-          if (m.colMarca == null && _match(n, ['marca'])) m.colMarca = c;
+          if (m.colDiametro == null && _match(n, ['diametro'])) {
+            m.colDiametro = c;
+          }
           if (m.colDientes == null &&
               _match(n, ['dientes', 'teeth', 'z'])) {
             m.colDientes = c;
@@ -356,6 +371,9 @@ class _PantallaImportarCatalogoState
           if (m.colTipo == null &&
               _match(n, ['tipo', 'pinon corona', 'pinon', 'corona'])) {
             m.colTipo = c;
+          }
+          if (m.colCopa == null && _match(n, ['copa', 'copas'])) {
+            m.colCopa = c;
           }
         case TipoCatalogo.motores:
           if (m.colNombre == null && _match(n, ['motor', 'nombre'])) {
@@ -376,12 +394,21 @@ class _PantallaImportarCatalogoState
               _match(n, ['referencia', 'ref', 'sku'])) {
             m.colReferencia = c;
           }
+          if (m.colCopa == null && _match(n, ['copa', 'copas'])) {
+            m.colCopa = c;
+          }
         case TipoCatalogo.bancadas:
+          if (m.colNombre == null && _match(n, ['nombre', 'bancada'])) {
+            m.colNombre = c;
+          }
+          if (m.colCopa == null && _match(n, ['copa', 'copas'])) {
+            m.colCopa = c;
+          }
         case TipoCatalogo.chasis:
         case TipoCatalogo.copas:
         case TipoCatalogo.clubs:
           if (m.colNombre == null &&
-              _match(n, ['nombre', 'bancada', 'chasis', 'copa', 'club', 'categoria'])) {
+              _match(n, ['nombre', 'chasis', 'copa', 'club', 'categoria'])) {
             m.colNombre = c;
           }
       }
@@ -414,19 +441,13 @@ class _PantallaImportarCatalogoState
                   17.0;
               final cred =
                   int.tryParse(fila[_mapeo.colCreditos]?.trim() ?? '0') ?? 0;
-              // Copas separadas por coma; vacío = aplica a todas.
-              final copas = (fila[_mapeo.colCopa] ?? '')
-                  .split(',')
-                  .map((s) => s.trim())
-                  .where((s) => s.isNotEmpty)
-                  .toList();
               await repo.crearCoche(
                   nombre: nombre,
                   marca: marca,
                   modelo: modelo,
                   pesoMin: peso,
                   creditosCoche: cred,
-                  copasJson: copas.isEmpty ? null : json.encode(copas));
+                  copasJson: _copasJsonDe(fila[_mapeo.colCopa]));
             case TipoCatalogo.marcas:
               final cod = fila[_mapeo.colCodigo]?.trim() ?? '';
               final nom = fila[_mapeo.colNombre]?.trim() ?? '';
@@ -440,37 +461,38 @@ class _PantallaImportarCatalogoState
               if (!['DELANTERA', 'TRASERA', 'AMBAS'].contains(tipo)) {
                 tipo = 'DELANTERA';
               }
-              await repo.crearLlanta(dim, tipo);
+              await repo.crearLlanta(dim, tipo,
+                  copasJson: _copasJsonDe(fila[_mapeo.colCopa]));
             case TipoCatalogo.engranajes:
-              final marca = fila[_mapeo.colMarca]?.trim() ?? '';
               final dientes =
                   int.tryParse(fila[_mapeo.colDientes]?.trim() ?? '');
-              if (marca.isEmpty || dientes == null) { saltados++; continue; }
+              if (dientes == null) { saltados++; continue; }
+              final diametro = double.tryParse(
+                  (fila[_mapeo.colDiametro] ?? '').trim().replaceAll(',', '.'));
               final tipoTxt = _norm(fila[_mapeo.colTipo] ?? '');
               final tipoEng =
                   tipoTxt.contains('corona') ? 'CORONA' : 'PINON';
               await repo.crearEngranaje(
-                  tipo: tipoEng, marca: marca, dientes: dientes);
+                  tipo: tipoEng,
+                  diametro: diametro,
+                  dientes: dientes,
+                  copasJson: _copasJsonDe(fila[_mapeo.colCopa]));
             case TipoCatalogo.motores:
               final nombre = fila[_mapeo.colNombre]?.trim() ?? '';
               if (nombre.isEmpty) { saltados++; continue; }
               final rpm = int.tryParse(fila[_mapeo.colRpm]?.trim() ?? '');
               final gauss = double.tryParse(
                   (fila[_mapeo.colGauss] ?? '').trim().replaceAll(',', '.'));
-              final copas = (fila[_mapeo.colCopa] ?? '')
-                  .split(',')
-                  .map((s) => s.trim())
-                  .where((s) => s.isNotEmpty)
-                  .toList();
               await repo.crearMotor(
                   nombre: nombre,
                   rpm: rpm,
                   gauss: gauss,
-                  copasJson: copas.isEmpty ? null : json.encode(copas));
+                  copasJson: _copasJsonDe(fila[_mapeo.colCopa]));
             case TipoCatalogo.bancadas:
               final n = fila[_mapeo.colNombre]?.trim() ?? '';
               if (n.isEmpty) { saltados++; continue; }
-              await repo.crearBancada(n);
+              await repo.crearBancada(n,
+                  copasJson: _copasJsonDe(fila[_mapeo.colCopa]));
             case TipoCatalogo.chasis:
               final n = fila[_mapeo.colNombre]?.trim() ?? '';
               if (n.isEmpty) { saltados++; continue; }
@@ -480,7 +502,8 @@ class _PantallaImportarCatalogoState
               if (n.isEmpty) { saltados++; continue; }
               final r = fila[_mapeo.colReferencia]?.trim();
               await repo.crearNeumatico(
-                  n, r == null || r.isEmpty ? null : r);
+                  n, r == null || r.isEmpty ? null : r,
+                  copasJson: _copasJsonDe(fila[_mapeo.colCopa]));
             case TipoCatalogo.copas:
               final n = fila[_mapeo.colNombre]?.trim() ?? '';
               if (n.isEmpty) { saltados++; continue; }
@@ -517,6 +540,7 @@ class _PantallaImportarCatalogoState
                 'colTipo': _mapeo.colTipo,
                 'colReferencia': _mapeo.colReferencia,
                 'colDientes': _mapeo.colDientes,
+                'colDiametro': _mapeo.colDiametro,
                 'colRpm': _mapeo.colRpm,
                 'colGauss': _mapeo.colGauss,
                 'colId': _mapeo.colId,
@@ -845,15 +869,19 @@ class _PantallaImportarCatalogoState
               (v) => setState(() => _mapeo.colDimension = v)),
           sel('Tipo', _mapeo.colTipo,
               (v) => setState(() => _mapeo.colTipo = v)),
+          sel('Copa(s)', _mapeo.colCopa,
+              (v) => setState(() => _mapeo.colCopa = v)),
         ];
       case TipoCatalogo.engranajes:
         return [
-          sel('Marca *', _mapeo.colMarca,
-              (v) => setState(() => _mapeo.colMarca = v)),
           sel('Dientes *', _mapeo.colDientes,
               (v) => setState(() => _mapeo.colDientes = v)),
+          sel('Diámetro', _mapeo.colDiametro,
+              (v) => setState(() => _mapeo.colDiametro = v)),
           sel('Tipo (piñón/corona)', _mapeo.colTipo,
               (v) => setState(() => _mapeo.colTipo = v)),
+          sel('Copa(s)', _mapeo.colCopa,
+              (v) => setState(() => _mapeo.colCopa = v)),
         ];
       case TipoCatalogo.motores:
         return [
@@ -872,8 +900,16 @@ class _PantallaImportarCatalogoState
               (v) => setState(() => _mapeo.colNombre = v)),
           sel('Referencia', _mapeo.colReferencia,
               (v) => setState(() => _mapeo.colReferencia = v)),
+          sel('Copa(s)', _mapeo.colCopa,
+              (v) => setState(() => _mapeo.colCopa = v)),
         ];
       case TipoCatalogo.bancadas:
+        return [
+          sel('Nombre *', _mapeo.colNombre,
+              (v) => setState(() => _mapeo.colNombre = v)),
+          sel('Copa(s)', _mapeo.colCopa,
+              (v) => setState(() => _mapeo.colCopa = v)),
+        ];
       case TipoCatalogo.chasis:
       case TipoCatalogo.copas:
       case TipoCatalogo.clubs:

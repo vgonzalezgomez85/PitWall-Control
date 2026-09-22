@@ -420,7 +420,7 @@ class CatalogoNeumaticos extends Table {
 class CatalogoEngranajes extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get tipo => text()(); // PINON | CORONA
-  TextColumn get marca => text()();
+  RealColumn get diametro => real().nullable()();
   IntColumn get dientes => integer()();
   TextColumn get copasJson => text().nullable()(); // JSON con las copas
   TextColumn get idExterno => text().nullable()();
