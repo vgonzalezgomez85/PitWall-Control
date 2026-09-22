@@ -43,8 +43,8 @@ class _State extends ConsumerState<PantallaSubirSheet> {
       final r = await ref.read(subidorCatalogoProvider).aplicar(plan);
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(
-        content: Text(
-            '✓ Subido al Sheet: ${r.anadidas} añadidas, ${r.actualizadas} actualizadas.'),
+        content: Text('✓ Subido al Sheet: ${r.anadidas} añadidas, '
+            '${r.actualizadas} actualizadas, ${r.borradas} borradas.'),
         duration: const Duration(seconds: 4),
       ));
       Navigator.of(context).pop();
@@ -60,8 +60,10 @@ class _State extends ConsumerState<PantallaSubirSheet> {
     final cs = Theme.of(context).colorScheme;
     final nuevas = plan.nuevas;
     final conflictos = plan.conflictos;
+    final borrados = plan.borrados;
     final totalAplicar = nuevas.where((f) => f.aplicar).length +
-        conflictos.where((f) => f.aplicar).length;
+        conflictos.where((f) => f.aplicar).length +
+        borrados.where((f) => f.aplicar).length;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Subir al Sheet')),
@@ -91,10 +93,29 @@ class _State extends ConsumerState<PantallaSubirSheet> {
                     'Se subirán tus cambios al Google Sheet.\n'
                     '· ${nuevas.length} filas nuevas (se añaden)\n'
                     '· ${conflictos.length} con diferencias (elige cuáles pisan la hoja)\n'
+                    '${borrados.isNotEmpty ? '· ${borrados.length} borradas en la app, pendientes de borrar en la hoja (elige cuáles)\n' : ''}'
                     '· ${plan.identicas} idénticas (se ignoran)',
                     style: TextStyle(color: cs.onSurface, fontSize: 13),
                   ),
                 ),
+                if (borrados.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text('Borradas en la app — ¿borrar también en la hoja?',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 4),
+                  ...borrados.map((f) => Card(
+                        child: SwitchListTile(
+                          dense: true,
+                          value: f.aplicar,
+                          onChanged: (v) => setState(() => f.aplicar = v),
+                          secondary: Icon(Icons.delete_outline, color: cs.error),
+                          title: Text(f.etiqueta),
+                          subtitle: Text(f.aplicar
+                              ? 'Se borrará esa fila del Sheet'
+                              : 'Se deja en el Sheet (no se borra)'),
+                        ),
+                      )),
+                ],
                 if (nuevas.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text('Filas nuevas',

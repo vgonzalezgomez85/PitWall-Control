@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../services/generador_id.dart';
 import '../../services/google_sheets_service.dart';
 import '../catalogos/importar_catalogo.dart';
 import '../catalogos/repositorio_catalogos.dart';
@@ -55,15 +56,19 @@ class ActualizadorDrive {
   ActualizadorDrive(this.ref);
   final Ref ref;
 
-  Future<({List<String> columnas, List<Map<String, String>> filas})>
-      _leerPestana(VinculoHoja v) async {
+  Future<
+      ({
+        List<String> columnas,
+        List<Map<String, String>> filas,
+        List<int> filaAbs
+      })> _leerPestana(VinculoHoja v) async {
     final svc = ref.read(googleSheetsServiceProvider);
     final filas = await svc.leerPestana(v.fila.hojaId, v.fila.pestanaTitulo);
     return _normalizar(filas);
   }
 
-  ({List<String> columnas, List<Map<String, String>> filas}) _normalizar(
-      List<List<String>> filas) {
+  ({List<String> columnas, List<Map<String, String>> filas, List<int> filaAbs})
+      _normalizar(List<List<String>> filas) {
     int idxCab = -1;
     for (var i = 0; i < filas.length; i++) {
       final llenas = filas[i].where((c) => c.trim().isNotEmpty).length;
@@ -73,10 +78,11 @@ class ActualizadorDrive {
       }
     }
     if (idxCab == -1) {
-      return (columnas: <String>[], filas: <Map<String, String>>[]);
+      return (columnas: <String>[], filas: <Map<String, String>>[], filaAbs: <int>[]);
     }
     final columnas = filas[idxCab].map((c) => c.trim()).toList();
     final out = <Map<String, String>>[];
+    final filaAbs = <int>[];
     for (var i = idxCab + 1; i < filas.length; i++) {
       final celdas = filas[i].map((c) => c.trim()).toList();
       if (!celdas.any((c) => c.isNotEmpty)) continue;
@@ -87,8 +93,13 @@ class ActualizadorDrive {
       }
       if (mapa.values.every((v) => v.isEmpty)) continue;
       out.add(mapa);
+      filaAbs.add(i);
     }
-    return (columnas: columnas.where((c) => c.isNotEmpty).toList(), filas: out);
+    return (
+      columnas: columnas.where((c) => c.isNotEmpty).toList(),
+      filas: out,
+      filaAbs: filaAbs,
+    );
   }
 
   static String _norm(String s) =>
@@ -408,34 +419,114 @@ class ActualizadorDrive {
           }
         case TipoCatalogo.motores:
           final actuales = await db.select(db.catalogoMotores).get();
-          final porNombre = {for (final x in actuales) _norm(x.nombre): x};
-          for (final fila in datos.filas) {
-            final n = fila[m.colNombre]?.trim() ?? '';
-            if (n.isEmpty) { saltados++; continue; }
-            final rpm = int.tryParse(fila[m.colRpm]?.trim() ?? '');
-            final gauss = double.tryParse(
-                (fila[m.colGauss] ?? '').trim().replaceAll(',', '.'));
-            final ex = porNombre[_norm(n)];
-            if (ex == null) {
+          // Columna "ID" (convención fija, igual que al subir): si la hoja
+          // ya la tiene, se empareja por id en vez de por nombre — el mismo
+          // motor puede repetirse con distinta copa y el nombre solo no
+          // distingue esas filas.
+          final idHeader = datos.columnas
+              .firstWhere((c) => _norm(c) == 'id', orElse: () => '');
+          if (idHeader.isEmpty) {
+            // Sin columna ID todavía: comportamiento de siempre (por nombre).
+            final porNombre = {for (final x in actuales) _norm(x.nombre): x};
+            for (final fila in datos.filas) {
+              final n = fila[m.colNombre]?.trim() ?? '';
+              if (n.isEmpty) { saltados++; continue; }
+              final rpm = int.tryParse(fila[m.colRpm]?.trim() ?? '');
+              final gauss = double.tryParse(
+                  (fila[m.colGauss] ?? '').trim().replaceAll(',', '.'));
+              final ex = porNombre[_norm(n)];
+              if (ex == null) {
+                final copas = (fila[m.colCopa] ?? '')
+                    .split(',')
+                    .map((s) => s.trim())
+                    .where((s) => s.isNotEmpty)
+                    .toList();
+                await repo.crearMotor(
+                    nombre: n,
+                    rpm: rpm,
+                    gauss: gauss,
+                    copasJson: copas.isEmpty ? null : json.encode(copas));
+                nuevos++;
+              } else if (ex.rpm != rpm || ex.gauss != gauss) {
+                await repo.actualizarMotor(
+                    ex.id,
+                    CatalogoMotoresCompanion(
+                        rpm: Value(rpm), gauss: Value(gauss)));
+                actualizados++;
+              } else {
+                saltados++;
+              }
+            }
+          } else {
+            final porId = {
+              for (final x in actuales)
+                if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
+            };
+            final svc = ref.read(googleSheetsServiceProvider);
+            final idColIdx = datos.columnas.indexOf(idHeader);
+            // Contador correlativo para ids nuevos (filas tecleadas a mano
+            // en la hoja sin id): arranca en el mayor visto entre la hoja y
+            // lo local, y sigue subiendo dentro de esta misma pasada.
+            var siguienteId = [
+              maxIdExterno(datos.filas.map((f) => f[idHeader])),
+              maxIdExterno(actuales.map((x) => x.idExterno)),
+            ].reduce((a, b) => a > b ? a : b);
+            for (var k = 0; k < datos.filas.length; k++) {
+              final fila = datos.filas[k];
+              final n = fila[m.colNombre]?.trim() ?? '';
+              if (n.isEmpty) { saltados++; continue; }
+              final rpm = int.tryParse(fila[m.colRpm]?.trim() ?? '');
+              final gauss = double.tryParse(
+                  (fila[m.colGauss] ?? '').trim().replaceAll(',', '.'));
               final copas = (fila[m.colCopa] ?? '')
                   .split(',')
                   .map((s) => s.trim())
                   .where((s) => s.isNotEmpty)
                   .toList();
-              await ref.read(repoCatalogosProvider).crearMotor(
-                  nombre: n,
-                  rpm: rpm,
-                  gauss: gauss,
-                  copasJson: copas.isEmpty ? null : json.encode(copas));
-              nuevos++;
-            } else if (ex.rpm != rpm || ex.gauss != gauss) {
-              await ref.read(repoCatalogosProvider).actualizarMotor(
-                  ex.id,
-                  CatalogoMotoresCompanion(
-                      rpm: Value(rpm), gauss: Value(gauss)));
-              actualizados++;
-            } else {
-              saltados++;
+              final copasJson = copas.isEmpty ? '[]' : json.encode(copas);
+              final idHoja = fila[idHeader]?.trim() ?? '';
+              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              if (ex != null) {
+                if (ex.nombre != n ||
+                    ex.rpm != rpm ||
+                    ex.gauss != gauss ||
+                    ex.copasJson != copasJson) {
+                  await repo.actualizarMotor(
+                      ex.id,
+                      CatalogoMotoresCompanion(
+                        nombre: Value(n),
+                        rpm: Value(rpm),
+                        gauss: Value(gauss),
+                        copasJson: Value(copasJson),
+                      ));
+                  actualizados++;
+                } else {
+                  saltados++;
+                }
+              } else {
+                // Fila que no reclama ningún motor local: viene nueva de la
+                // hoja (tecleada a mano). Se crea localmente y, si no traía
+                // id, se le asigna uno y se escribe de vuelta en la celda
+                // para que quede emparejada a partir de ahora.
+                String idFinal;
+                if (idHoja.isEmpty) {
+                  siguienteId++;
+                  idFinal = siguienteId.toString();
+                } else {
+                  idFinal = idHoja;
+                }
+                await repo.crearMotor(
+                    nombre: n,
+                    rpm: rpm,
+                    gauss: gauss,
+                    copasJson: copasJson == '[]' ? null : copasJson,
+                    idExterno: idFinal);
+                if (idHoja.isEmpty) {
+                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
+                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                }
+                nuevos++;
+              }
             }
           }
         case TipoCatalogo.neumaticos:

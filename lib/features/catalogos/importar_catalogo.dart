@@ -58,6 +58,9 @@ class MapeoCatalogo {
   String? colDientes;
   // Motores
   String? colRpm, colGauss;
+  // Identificador estable para sincronizar sin depender del nombre (opcional;
+  // solo motores por ahora).
+  String? colId;
 
   bool esValidoPara(TipoCatalogo t) {
     switch (t) {
@@ -309,6 +312,7 @@ class _PantallaImportarCatalogoState
     final m = MapeoCatalogo();
     for (final c in cols) {
       final n = _norm(c);
+      if (m.colId == null && n == 'id') m.colId = c;
       switch (t) {
         case TipoCatalogo.coches:
           if (m.colNombre == null &&
@@ -515,6 +519,7 @@ class _PantallaImportarCatalogoState
                 'colDientes': _mapeo.colDientes,
                 'colRpm': _mapeo.colRpm,
                 'colGauss': _mapeo.colGauss,
+                'colId': _mapeo.colId,
               },
             );
         vinculada = true;

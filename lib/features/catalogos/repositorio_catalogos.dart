@@ -290,6 +290,7 @@ class RepositorioCatalogos {
     int? rpm,
     double? gauss,
     String? copasJson,
+    String? idExterno,
   }) {
     return db.into(db.catalogoMotores).insert(CatalogoMotoresCompanion.insert(
           nombre: nombre,
@@ -297,6 +298,8 @@ class RepositorioCatalogos {
           gauss: Value(gauss),
           copasJson:
               copasJson == null ? const Value.absent() : Value(copasJson),
+          idExterno:
+              idExterno == null ? const Value.absent() : Value(idExterno),
         ));
   }
 
@@ -306,6 +309,16 @@ class RepositorioCatalogos {
   }
 
   Future<void> borrarMotor(int id) async {
+    // Si ya se había subido a Sheets (tiene id externo), se apunta como
+    // pendiente de borrar allí también — se confirma en la próxima subida.
+    final motor = await (db.select(db.catalogoMotores)
+          ..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    final idExt = motor?.idExterno;
+    if (idExt != null && idExt.isNotEmpty) {
+      await db.into(db.catalogoMotoresBorrados).insert(
+          CatalogoMotoresBorradosCompanion.insert(idExterno: idExt));
+    }
     await (db.delete(db.catalogoMotores)..where((t) => t.id.equals(id))).go();
   }
 

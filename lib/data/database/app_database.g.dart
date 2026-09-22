@@ -13036,8 +13036,26 @@ class $CatalogoMotoresTable extends CatalogoMotores
     requiredDuringInsert: false,
     defaultValue: const Constant('[]'),
   );
+  static const VerificationMeta _idExternoMeta = const VerificationMeta(
+    'idExterno',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, nombre, rpm, gauss, copasJson];
+  late final GeneratedColumn<String> idExterno = GeneratedColumn<String>(
+    'id_externo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    nombre,
+    rpm,
+    gauss,
+    copasJson,
+    idExterno,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -13079,6 +13097,12 @@ class $CatalogoMotoresTable extends CatalogoMotores
         copasJson.isAcceptableOrUnknown(data['copas_json']!, _copasJsonMeta),
       );
     }
+    if (data.containsKey('id_externo')) {
+      context.handle(
+        _idExternoMeta,
+        idExterno.isAcceptableOrUnknown(data['id_externo']!, _idExternoMeta),
+      );
+    }
     return context;
   }
 
@@ -13108,6 +13132,10 @@ class $CatalogoMotoresTable extends CatalogoMotores
         DriftSqlType.string,
         data['${effectivePrefix}copas_json'],
       )!,
+      idExterno: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_externo'],
+      ),
     );
   }
 
@@ -13125,12 +13153,17 @@ class CatalogoMotore extends DataClass implements Insertable<CatalogoMotore> {
 
   /// JSON array de copas donde aplica. Vacío "[]" = aplica a todas.
   final String copasJson;
+
+  /// Identificador estable para sincronizar con Google Sheets (columna ID de
+  /// la hoja). Nulo si esta fila aún no se ha subido/bajado con ID.
+  final String? idExterno;
   const CatalogoMotore({
     required this.id,
     required this.nombre,
     this.rpm,
     this.gauss,
     required this.copasJson,
+    this.idExterno,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -13144,6 +13177,9 @@ class CatalogoMotore extends DataClass implements Insertable<CatalogoMotore> {
       map['gauss'] = Variable<double>(gauss);
     }
     map['copas_json'] = Variable<String>(copasJson);
+    if (!nullToAbsent || idExterno != null) {
+      map['id_externo'] = Variable<String>(idExterno);
+    }
     return map;
   }
 
@@ -13156,6 +13192,9 @@ class CatalogoMotore extends DataClass implements Insertable<CatalogoMotore> {
           ? const Value.absent()
           : Value(gauss),
       copasJson: Value(copasJson),
+      idExterno: idExterno == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idExterno),
     );
   }
 
@@ -13170,6 +13209,7 @@ class CatalogoMotore extends DataClass implements Insertable<CatalogoMotore> {
       rpm: serializer.fromJson<int?>(json['rpm']),
       gauss: serializer.fromJson<double?>(json['gauss']),
       copasJson: serializer.fromJson<String>(json['copasJson']),
+      idExterno: serializer.fromJson<String?>(json['idExterno']),
     );
   }
   @override
@@ -13181,6 +13221,7 @@ class CatalogoMotore extends DataClass implements Insertable<CatalogoMotore> {
       'rpm': serializer.toJson<int?>(rpm),
       'gauss': serializer.toJson<double?>(gauss),
       'copasJson': serializer.toJson<String>(copasJson),
+      'idExterno': serializer.toJson<String?>(idExterno),
     };
   }
 
@@ -13190,12 +13231,14 @@ class CatalogoMotore extends DataClass implements Insertable<CatalogoMotore> {
     Value<int?> rpm = const Value.absent(),
     Value<double?> gauss = const Value.absent(),
     String? copasJson,
+    Value<String?> idExterno = const Value.absent(),
   }) => CatalogoMotore(
     id: id ?? this.id,
     nombre: nombre ?? this.nombre,
     rpm: rpm.present ? rpm.value : this.rpm,
     gauss: gauss.present ? gauss.value : this.gauss,
     copasJson: copasJson ?? this.copasJson,
+    idExterno: idExterno.present ? idExterno.value : this.idExterno,
   );
   CatalogoMotore copyWithCompanion(CatalogoMotoresCompanion data) {
     return CatalogoMotore(
@@ -13204,6 +13247,7 @@ class CatalogoMotore extends DataClass implements Insertable<CatalogoMotore> {
       rpm: data.rpm.present ? data.rpm.value : this.rpm,
       gauss: data.gauss.present ? data.gauss.value : this.gauss,
       copasJson: data.copasJson.present ? data.copasJson.value : this.copasJson,
+      idExterno: data.idExterno.present ? data.idExterno.value : this.idExterno,
     );
   }
 
@@ -13214,13 +13258,14 @@ class CatalogoMotore extends DataClass implements Insertable<CatalogoMotore> {
           ..write('nombre: $nombre, ')
           ..write('rpm: $rpm, ')
           ..write('gauss: $gauss, ')
-          ..write('copasJson: $copasJson')
+          ..write('copasJson: $copasJson, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, nombre, rpm, gauss, copasJson);
+  int get hashCode => Object.hash(id, nombre, rpm, gauss, copasJson, idExterno);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -13229,7 +13274,8 @@ class CatalogoMotore extends DataClass implements Insertable<CatalogoMotore> {
           other.nombre == this.nombre &&
           other.rpm == this.rpm &&
           other.gauss == this.gauss &&
-          other.copasJson == this.copasJson);
+          other.copasJson == this.copasJson &&
+          other.idExterno == this.idExterno);
 }
 
 class CatalogoMotoresCompanion extends UpdateCompanion<CatalogoMotore> {
@@ -13238,12 +13284,14 @@ class CatalogoMotoresCompanion extends UpdateCompanion<CatalogoMotore> {
   final Value<int?> rpm;
   final Value<double?> gauss;
   final Value<String> copasJson;
+  final Value<String?> idExterno;
   const CatalogoMotoresCompanion({
     this.id = const Value.absent(),
     this.nombre = const Value.absent(),
     this.rpm = const Value.absent(),
     this.gauss = const Value.absent(),
     this.copasJson = const Value.absent(),
+    this.idExterno = const Value.absent(),
   });
   CatalogoMotoresCompanion.insert({
     this.id = const Value.absent(),
@@ -13251,6 +13299,7 @@ class CatalogoMotoresCompanion extends UpdateCompanion<CatalogoMotore> {
     this.rpm = const Value.absent(),
     this.gauss = const Value.absent(),
     this.copasJson = const Value.absent(),
+    this.idExterno = const Value.absent(),
   }) : nombre = Value(nombre);
   static Insertable<CatalogoMotore> custom({
     Expression<int>? id,
@@ -13258,6 +13307,7 @@ class CatalogoMotoresCompanion extends UpdateCompanion<CatalogoMotore> {
     Expression<int>? rpm,
     Expression<double>? gauss,
     Expression<String>? copasJson,
+    Expression<String>? idExterno,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -13265,6 +13315,7 @@ class CatalogoMotoresCompanion extends UpdateCompanion<CatalogoMotore> {
       if (rpm != null) 'rpm': rpm,
       if (gauss != null) 'gauss': gauss,
       if (copasJson != null) 'copas_json': copasJson,
+      if (idExterno != null) 'id_externo': idExterno,
     });
   }
 
@@ -13274,6 +13325,7 @@ class CatalogoMotoresCompanion extends UpdateCompanion<CatalogoMotore> {
     Value<int?>? rpm,
     Value<double?>? gauss,
     Value<String>? copasJson,
+    Value<String?>? idExterno,
   }) {
     return CatalogoMotoresCompanion(
       id: id ?? this.id,
@@ -13281,6 +13333,7 @@ class CatalogoMotoresCompanion extends UpdateCompanion<CatalogoMotore> {
       rpm: rpm ?? this.rpm,
       gauss: gauss ?? this.gauss,
       copasJson: copasJson ?? this.copasJson,
+      idExterno: idExterno ?? this.idExterno,
     );
   }
 
@@ -13302,6 +13355,9 @@ class CatalogoMotoresCompanion extends UpdateCompanion<CatalogoMotore> {
     if (copasJson.present) {
       map['copas_json'] = Variable<String>(copasJson.value);
     }
+    if (idExterno.present) {
+      map['id_externo'] = Variable<String>(idExterno.value);
+    }
     return map;
   }
 
@@ -13312,7 +13368,215 @@ class CatalogoMotoresCompanion extends UpdateCompanion<CatalogoMotore> {
           ..write('nombre: $nombre, ')
           ..write('rpm: $rpm, ')
           ..write('gauss: $gauss, ')
-          ..write('copasJson: $copasJson')
+          ..write('copasJson: $copasJson, ')
+          ..write('idExterno: $idExterno')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CatalogoMotoresBorradosTable extends CatalogoMotoresBorrados
+    with TableInfo<$CatalogoMotoresBorradosTable, CatalogoMotoresBorrado> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CatalogoMotoresBorradosTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _idExternoMeta = const VerificationMeta(
+    'idExterno',
+  );
+  @override
+  late final GeneratedColumn<String> idExterno = GeneratedColumn<String>(
+    'id_externo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, idExterno];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'catalogo_motores_borrados';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CatalogoMotoresBorrado> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('id_externo')) {
+      context.handle(
+        _idExternoMeta,
+        idExterno.isAcceptableOrUnknown(data['id_externo']!, _idExternoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_idExternoMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CatalogoMotoresBorrado map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CatalogoMotoresBorrado(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      idExterno: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_externo'],
+      )!,
+    );
+  }
+
+  @override
+  $CatalogoMotoresBorradosTable createAlias(String alias) {
+    return $CatalogoMotoresBorradosTable(attachedDatabase, alias);
+  }
+}
+
+class CatalogoMotoresBorrado extends DataClass
+    implements Insertable<CatalogoMotoresBorrado> {
+  final int id;
+  final String idExterno;
+  const CatalogoMotoresBorrado({required this.id, required this.idExterno});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['id_externo'] = Variable<String>(idExterno);
+    return map;
+  }
+
+  CatalogoMotoresBorradosCompanion toCompanion(bool nullToAbsent) {
+    return CatalogoMotoresBorradosCompanion(
+      id: Value(id),
+      idExterno: Value(idExterno),
+    );
+  }
+
+  factory CatalogoMotoresBorrado.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CatalogoMotoresBorrado(
+      id: serializer.fromJson<int>(json['id']),
+      idExterno: serializer.fromJson<String>(json['idExterno']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'idExterno': serializer.toJson<String>(idExterno),
+    };
+  }
+
+  CatalogoMotoresBorrado copyWith({int? id, String? idExterno}) =>
+      CatalogoMotoresBorrado(
+        id: id ?? this.id,
+        idExterno: idExterno ?? this.idExterno,
+      );
+  CatalogoMotoresBorrado copyWithCompanion(
+    CatalogoMotoresBorradosCompanion data,
+  ) {
+    return CatalogoMotoresBorrado(
+      id: data.id.present ? data.id.value : this.id,
+      idExterno: data.idExterno.present ? data.idExterno.value : this.idExterno,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CatalogoMotoresBorrado(')
+          ..write('id: $id, ')
+          ..write('idExterno: $idExterno')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, idExterno);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CatalogoMotoresBorrado &&
+          other.id == this.id &&
+          other.idExterno == this.idExterno);
+}
+
+class CatalogoMotoresBorradosCompanion
+    extends UpdateCompanion<CatalogoMotoresBorrado> {
+  final Value<int> id;
+  final Value<String> idExterno;
+  const CatalogoMotoresBorradosCompanion({
+    this.id = const Value.absent(),
+    this.idExterno = const Value.absent(),
+  });
+  CatalogoMotoresBorradosCompanion.insert({
+    this.id = const Value.absent(),
+    required String idExterno,
+  }) : idExterno = Value(idExterno);
+  static Insertable<CatalogoMotoresBorrado> custom({
+    Expression<int>? id,
+    Expression<String>? idExterno,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (idExterno != null) 'id_externo': idExterno,
+    });
+  }
+
+  CatalogoMotoresBorradosCompanion copyWith({
+    Value<int>? id,
+    Value<String>? idExterno,
+  }) {
+    return CatalogoMotoresBorradosCompanion(
+      id: id ?? this.id,
+      idExterno: idExterno ?? this.idExterno,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (idExterno.present) {
+      map['id_externo'] = Variable<String>(idExterno.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CatalogoMotoresBorradosCompanion(')
+          ..write('id: $id, ')
+          ..write('idExterno: $idExterno')
           ..write(')'))
         .toString();
   }
@@ -14926,6 +15190,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CatalogoMotoresTable catalogoMotores = $CatalogoMotoresTable(
     this,
   );
+  late final $CatalogoMotoresBorradosTable catalogoMotoresBorrados =
+      $CatalogoMotoresBorradosTable(this);
   late final $CatalogoCopasTable catalogoCopas = $CatalogoCopasTable(this);
   late final $CatalogoClubsTable catalogoClubs = $CatalogoClubsTable(this);
   late final $HojasVinculadasTable hojasVinculadas = $HojasVinculadasTable(
@@ -14963,6 +15229,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     catalogoNeumaticos,
     catalogoEngranajes,
     catalogoMotores,
+    catalogoMotoresBorrados,
     catalogoCopas,
     catalogoClubs,
     hojasVinculadas,
@@ -28445,6 +28712,7 @@ typedef $$CatalogoMotoresTableCreateCompanionBuilder =
       Value<int?> rpm,
       Value<double?> gauss,
       Value<String> copasJson,
+      Value<String?> idExterno,
     });
 typedef $$CatalogoMotoresTableUpdateCompanionBuilder =
     CatalogoMotoresCompanion Function({
@@ -28453,6 +28721,7 @@ typedef $$CatalogoMotoresTableUpdateCompanionBuilder =
       Value<int?> rpm,
       Value<double?> gauss,
       Value<String> copasJson,
+      Value<String?> idExterno,
     });
 
 class $$CatalogoMotoresTableFilterComposer
@@ -28486,6 +28755,11 @@ class $$CatalogoMotoresTableFilterComposer
 
   ColumnFilters<String> get copasJson => $composableBuilder(
     column: $table.copasJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -28523,6 +28797,11 @@ class $$CatalogoMotoresTableOrderingComposer
     column: $table.copasJson,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CatalogoMotoresTableAnnotationComposer
@@ -28548,6 +28827,9 @@ class $$CatalogoMotoresTableAnnotationComposer
 
   GeneratedColumn<String> get copasJson =>
       $composableBuilder(column: $table.copasJson, builder: (column) => column);
+
+  GeneratedColumn<String> get idExterno =>
+      $composableBuilder(column: $table.idExterno, builder: (column) => column);
 }
 
 class $$CatalogoMotoresTableTableManager
@@ -28592,12 +28874,14 @@ class $$CatalogoMotoresTableTableManager
                 Value<int?> rpm = const Value.absent(),
                 Value<double?> gauss = const Value.absent(),
                 Value<String> copasJson = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoMotoresCompanion(
                 id: id,
                 nombre: nombre,
                 rpm: rpm,
                 gauss: gauss,
                 copasJson: copasJson,
+                idExterno: idExterno,
               ),
           createCompanionCallback:
               ({
@@ -28606,12 +28890,14 @@ class $$CatalogoMotoresTableTableManager
                 Value<int?> rpm = const Value.absent(),
                 Value<double?> gauss = const Value.absent(),
                 Value<String> copasJson = const Value.absent(),
+                Value<String?> idExterno = const Value.absent(),
               }) => CatalogoMotoresCompanion.insert(
                 id: id,
                 nombre: nombre,
                 rpm: rpm,
                 gauss: gauss,
                 copasJson: copasJson,
+                idExterno: idExterno,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -28636,6 +28922,162 @@ typedef $$CatalogoMotoresTableProcessedTableManager =
         BaseReferences<_$AppDatabase, $CatalogoMotoresTable, CatalogoMotore>,
       ),
       CatalogoMotore,
+      PrefetchHooks Function()
+    >;
+typedef $$CatalogoMotoresBorradosTableCreateCompanionBuilder =
+    CatalogoMotoresBorradosCompanion Function({
+      Value<int> id,
+      required String idExterno,
+    });
+typedef $$CatalogoMotoresBorradosTableUpdateCompanionBuilder =
+    CatalogoMotoresBorradosCompanion Function({
+      Value<int> id,
+      Value<String> idExterno,
+    });
+
+class $$CatalogoMotoresBorradosTableFilterComposer
+    extends Composer<_$AppDatabase, $CatalogoMotoresBorradosTable> {
+  $$CatalogoMotoresBorradosTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CatalogoMotoresBorradosTableOrderingComposer
+    extends Composer<_$AppDatabase, $CatalogoMotoresBorradosTable> {
+  $$CatalogoMotoresBorradosTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get idExterno => $composableBuilder(
+    column: $table.idExterno,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CatalogoMotoresBorradosTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CatalogoMotoresBorradosTable> {
+  $$CatalogoMotoresBorradosTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get idExterno =>
+      $composableBuilder(column: $table.idExterno, builder: (column) => column);
+}
+
+class $$CatalogoMotoresBorradosTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CatalogoMotoresBorradosTable,
+          CatalogoMotoresBorrado,
+          $$CatalogoMotoresBorradosTableFilterComposer,
+          $$CatalogoMotoresBorradosTableOrderingComposer,
+          $$CatalogoMotoresBorradosTableAnnotationComposer,
+          $$CatalogoMotoresBorradosTableCreateCompanionBuilder,
+          $$CatalogoMotoresBorradosTableUpdateCompanionBuilder,
+          (
+            CatalogoMotoresBorrado,
+            BaseReferences<
+              _$AppDatabase,
+              $CatalogoMotoresBorradosTable,
+              CatalogoMotoresBorrado
+            >,
+          ),
+          CatalogoMotoresBorrado,
+          PrefetchHooks Function()
+        > {
+  $$CatalogoMotoresBorradosTableTableManager(
+    _$AppDatabase db,
+    $CatalogoMotoresBorradosTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CatalogoMotoresBorradosTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$CatalogoMotoresBorradosTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$CatalogoMotoresBorradosTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> idExterno = const Value.absent(),
+              }) => CatalogoMotoresBorradosCompanion(
+                id: id,
+                idExterno: idExterno,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String idExterno,
+              }) => CatalogoMotoresBorradosCompanion.insert(
+                id: id,
+                idExterno: idExterno,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CatalogoMotoresBorradosTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CatalogoMotoresBorradosTable,
+      CatalogoMotoresBorrado,
+      $$CatalogoMotoresBorradosTableFilterComposer,
+      $$CatalogoMotoresBorradosTableOrderingComposer,
+      $$CatalogoMotoresBorradosTableAnnotationComposer,
+      $$CatalogoMotoresBorradosTableCreateCompanionBuilder,
+      $$CatalogoMotoresBorradosTableUpdateCompanionBuilder,
+      (
+        CatalogoMotoresBorrado,
+        BaseReferences<
+          _$AppDatabase,
+          $CatalogoMotoresBorradosTable,
+          CatalogoMotoresBorrado
+        >,
+      ),
+      CatalogoMotoresBorrado,
       PrefetchHooks Function()
     >;
 typedef $$CatalogoCopasTableCreateCompanionBuilder =
@@ -29523,6 +29965,11 @@ class $AppDatabaseManager {
       $$CatalogoEngranajesTableTableManager(_db, _db.catalogoEngranajes);
   $$CatalogoMotoresTableTableManager get catalogoMotores =>
       $$CatalogoMotoresTableTableManager(_db, _db.catalogoMotores);
+  $$CatalogoMotoresBorradosTableTableManager get catalogoMotoresBorrados =>
+      $$CatalogoMotoresBorradosTableTableManager(
+        _db,
+        _db.catalogoMotoresBorrados,
+      );
   $$CatalogoCopasTableTableManager get catalogoCopas =>
       $$CatalogoCopasTableTableManager(_db, _db.catalogoCopas);
   $$CatalogoClubsTableTableManager get catalogoClubs =>

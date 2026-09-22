@@ -14,10 +14,14 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
-## [1.4.1] — 2026-09-22
+## [1.5.0] — 2026-09-22
+
+### Añadido
+- **Sincronización por ID con Google Sheets (piloto: Motores).** La hoja puede tener una columna "ID": si existe, subir y bajar el catálogo empareja las filas por ese identificador en vez de por el nombre, así que un motor con el mismo nombre repetido en varias copas (p. ej. "BOXER 2" en GRUPO C, GT, GT2...) ya no se confunde ni se duplica. Los motores locales sin id reciben uno correlativo automáticamente la primera vez que se suben; las filas nuevas tecleadas directamente en la hoja se importan y se les asigna id igual. Borrar un motor en la app ahora también se puede propagar a la hoja: aparece como "a borrar" en la pantalla de revisión de la subida, para confirmarlo antes de que se borre de verdad. El resto de catálogos (coches, marcas, llantas...) siguen funcionando igual que antes.
 
 ### Corregido
 - **Al subir el catálogo a Google Sheets, las filas nuevas podían acabar en columnas cada vez más a la derecha** en vez de bajo la cabecera real, si la hoja tenía algún bloque de datos suelto en otra zona. Ahora el añadido de filas fija explícitamente el rango de columnas de la cabecera detectada, así que siempre escribe justo debajo de ella.
+- **Los valores decimales (gauss, peso mínimo...) podían llegar a Sheets convertidos en fechas** (p. ej. "5.5" se guardaba como el número de serie de "5 de mayo") por la forma en que Sheets interpreta texto con punto decimal en hojas con configuración regional española. Ahora se envían como números reales, no como texto, así que no hay ninguna conversión de por medio.
 
 ## [1.4.0] — 2026-09-21
 

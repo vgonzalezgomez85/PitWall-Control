@@ -112,8 +112,8 @@ class GoogleSheetsService {
   }
 
   /// Sobrescribe una fila (1-based) de una pestaña con [valores].
-  Future<void> escribirFila(
-      String hojaId, String tituloPestana, int fila1, List<String> valores) async {
+  Future<void> escribirFila(String hojaId, String tituloPestana, int fila1,
+      List<Object?> valores) async {
     final cli = await _auth.clienteAutenticado();
     try {
       final api = sheets.SheetsApi(cli);
@@ -127,20 +127,80 @@ class GoogleSheetsService {
     }
   }
 
+  /// Borra físicamente una fila (1-based) de una pestaña.
+  Future<void> borrarFila(
+      String hojaId, String tituloPestana, int fila1) async {
+    final cli = await _auth.clienteAutenticado();
+    try {
+      final api = sheets.SheetsApi(cli);
+      final meta = await api.spreadsheets
+          .get(hojaId, $fields: 'sheets.properties');
+      sheets.SheetProperties? props;
+      for (final s in meta.sheets ?? const <sheets.Sheet>[]) {
+        if (s.properties?.title == tituloPestana) {
+          props = s.properties;
+          break;
+        }
+      }
+      final gid = props?.sheetId;
+      if (gid == null) return;
+      await api.spreadsheets.batchUpdate(
+        sheets.BatchUpdateSpreadsheetRequest(requests: [
+          sheets.Request(
+            deleteDimension: sheets.DeleteDimensionRequest(
+              range: sheets.DimensionRange(
+                sheetId: gid,
+                dimension: 'ROWS',
+                startIndex: fila1 - 1,
+                endIndex: fila1,
+              ),
+            ),
+          ),
+        ]),
+        hojaId,
+      );
+    } finally {
+      cli.close();
+    }
+  }
+
+  /// Escribe una única celda (fila 1-based, columna 0-based).
+  Future<void> escribirCelda(String hojaId, String tituloPestana, int fila1,
+      int col0, Object? valor) async {
+    final cli = await _auth.clienteAutenticado();
+    try {
+      final api = sheets.SheetsApi(cli);
+      final letra = columnaLetra(col0);
+      final rango = "'$tituloPestana'!$letra$fila1:$letra$fila1";
+      final vr = sheets.ValueRange(values: [
+        [valor]
+      ]);
+      await api.spreadsheets.values
+          .update(vr, hojaId, rango, valueInputOption: 'USER_ENTERED');
+    } finally {
+      cli.close();
+    }
+  }
+
   /// Añade [filas] al final de la pestaña. Si se indica [ultimaColumna]
-  /// (0-based), el rango se restringe a A:esaColumna para que la API busque
+  /// (0-based), el rango se restringe a esa columna para que la API busque
   /// la tabla justo bajo la cabecera conocida, en vez de adivinar entre
   /// bloques de datos sueltos que pueda haber en el resto de la pestaña.
+  /// [primeraColumna] (0-based) debe ser la primera columna con contenido en
+  /// la cabecera: el "append" de Sheets ubica la tabla ahí y coloca [filas]
+  /// en relativo a esa columna, así que [filas] no debe incluir relleno de
+  /// columnas vacías a su izquierda (verían su desplazamiento duplicado).
   Future<void> anadirFilas(
-      String hojaId, String tituloPestana, List<List<String>> filas,
-      {int? ultimaColumna}) async {
+      String hojaId, String tituloPestana, List<List<Object?>> filas,
+      {int? primeraColumna, int? ultimaColumna}) async {
     if (filas.isEmpty) return;
     final cli = await _auth.clienteAutenticado();
     try {
       final api = sheets.SheetsApi(cli);
       final vr = sheets.ValueRange(values: filas);
+      final desde = columnaLetra(primeraColumna ?? 0);
       final rango = ultimaColumna != null
-          ? "'$tituloPestana'!A:${columnaLetra(ultimaColumna)}"
+          ? "'$tituloPestana'!$desde:${columnaLetra(ultimaColumna)}"
           : "'$tituloPestana'";
       await api.spreadsheets.values.append(
         vr,

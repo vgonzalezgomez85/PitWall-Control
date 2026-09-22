@@ -50,6 +50,7 @@ part 'app_database.g.dart';
     CatalogoNeumaticos,
     CatalogoEngranajes,
     CatalogoMotores,
+    CatalogoMotoresBorrados,
     CatalogoCopas,
     CatalogoClubs,
     HojasVinculadas,
@@ -63,7 +64,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 37;
+  int get schemaVersion => 39;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -402,6 +403,17 @@ class AppDatabase extends _$AppDatabase {
                 'ALTER TABLE verificaciones ADD COLUMN carroceria_conforme INTEGER'));
             await _aplicar(() => customStatement(
                 'ALTER TABLE verificaciones ADD COLUMN carroceria_piezas_faltantes TEXT'));
+          }
+          if (from < 38) {
+            // Identificador estable para sincronizar con Google Sheets sin
+            // depender del nombre (piloto: motores, que puede repetir nombre
+            // con distinta copa).
+            await _aplicar(() => customStatement(
+                'ALTER TABLE catalogo_motores ADD COLUMN id_externo TEXT'));
+          }
+          if (from < 39) {
+            // Borrados de motores pendientes de confirmar en la hoja.
+            await _aplicar(() => m.createTable(catalogoMotoresBorrados));
           }
         },
       );

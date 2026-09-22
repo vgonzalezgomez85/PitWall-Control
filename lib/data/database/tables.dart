@@ -426,6 +426,17 @@ class CatalogoMotores extends Table {
   RealColumn get gauss => real().nullable()();
   /// JSON array de copas donde aplica. Vacío "[]" = aplica a todas.
   TextColumn get copasJson => text().withDefault(const Constant('[]'))();
+  /// Identificador estable para sincronizar con Google Sheets (columna ID de
+  /// la hoja). Nulo si esta fila aún no se ha subido/bajado con ID.
+  TextColumn get idExterno => text().nullable()();
+}
+
+/// Ids externos de motores borrados en la app que aún no se han borrado en
+/// la hoja vinculada — a la espera de que el usuario lo confirme en la
+/// próxima subida (nunca se borra en Sheets en silencio).
+class CatalogoMotoresBorrados extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get idExterno => text()();
 }
 
 class CatalogoCopas extends Table {
