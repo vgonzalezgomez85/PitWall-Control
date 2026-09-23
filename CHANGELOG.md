@@ -14,6 +14,17 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.9.4] — 2026-09-23
+
+### Corregido
+- **"Actualizar desde Drive" duplicaba el catálogo entero la primera vez que la hoja tenía columna ID.** Las filas locales aún no tenían ID, así que ninguna casaba y se creaban todas de nuevo. Ahora, si una fila de la hoja no casa por ID, se adopta la fila local sin ID con la misma clave (nombre+marca en coches, código en marcas, nombre+copas en motores, etc.): se le asigna el ID y se actualiza en vez de duplicarla. Vale para todos los catálogos.
+
+## [1.9.3] — 2026-09-23
+
+### Corregido
+- **Al cambiar la copa en la verificación, el desplegable de coches seguía mostrando coches de otra copa.** Si ningún coche tenía la copa exacta, se mostraban los de todas las copas del campeonato (p. ej. los GT3 al pasar a LMP-2). Ahora solo salen los de la copa elegida y, si no hay ninguno, el campo lo avisa.
+- **Las copas se comparan ignorando guiones, puntos y espacios**, además de mayúsculas: "LMP-2", "LMP 2" y "LMP2" cuentan como la misma copa en todos los filtros de la verificación.
+
 ## [1.9.2] — 2026-09-23
 
 ### Corregido

@@ -105,6 +105,45 @@ class ActualizadorDrive {
   static String _norm(String s) =>
       s.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
 
+  /// Copas de un JSON normalizadas y ordenadas, para usarlas como clave.
+  static String _copasClave(String? copasJson) {
+    try {
+      final raw = jsonDecode(copasJson ?? '[]');
+      if (raw is List) {
+        return (raw.map((e) => _norm(e.toString())).toList()..sort()).join(',');
+      }
+    } catch (_) {}
+    return '';
+  }
+
+  /// Si una fila de la hoja no casa por ID, adopta una fila local sin id
+  /// externo con la misma clave natural: le asigna el id de la hoja (o uno
+  /// nuevo, que se escribe en la hoja) y la devuelve para actualizarla. Sin
+  /// esto, la primera sincronización por ID duplicaba el catálogo entero.
+  Future<T?> _adoptar<T>(
+    _SinId<T> sinId,
+    List<String> claves,
+    int Function(T) idLocal,
+    TipoCatalogo tipo,
+    String idHoja,
+    int Function() nuevoId,
+    VinculoHoja v,
+    int filaAbs,
+    int idColIdx,
+  ) async {
+    final x = sinId.tomar(claves);
+    if (x == null) return null;
+    final idFinal = idHoja.isNotEmpty ? idHoja : nuevoId().toString();
+    await ref
+        .read(repoCatalogosProvider)
+        .actualizarIdExterno(tipo, idLocal(x), idFinal);
+    if (idHoja.isEmpty) {
+      await ref.read(googleSheetsServiceProvider).escribirCelda(
+          v.fila.hojaId, v.fila.pestanaTitulo, filaAbs + 1, idColIdx, idFinal);
+    }
+    return x;
+  }
+
   /// Copas separadas por coma en la celda; vacío = aplica a todas. Se
   /// normaliza siempre a "[]" (nunca null) para poder comparar con lo ya
   /// guardado sin ambigüedad entre "sin copas" y "no sincronizado".
@@ -395,6 +434,10 @@ class ActualizadorDrive {
               for (final x in actuales)
                 if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
             };
+            // Filas locales aún sin id (primera sincronización por ID): se
+            // adoptan por clave natural en vez de duplicarlas.
+            final sinId = _SinId(actuales, (x) => x.idExterno,
+                (x) => ['${_norm(x.nombre)}|${_norm(x.marca)}', _norm(x.nombre)]);
             var siguienteId = [
               maxIdExterno(datos.filas.map((f) => f[idHeader])),
               maxIdExterno(actuales.map((x) => x.idExterno)),
@@ -417,7 +460,10 @@ class ActualizadorDrive {
                   .toList();
               final copasJson = copas.isEmpty ? null : json.encode(copas);
               final idHoja = fila[idHeader]?.trim() ?? '';
-              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
+                  await _adoptar(sinId, ['${_norm(nombre)}|${_norm(marca)}', _norm(nombre)], (x) => x.id,
+                      tipo, idHoja, () => ++siguienteId, v,
+                      datos.filaAbs[k], idColIdx);
               if (ex != null) {
                 if (ex.nombre != nombre ||
                     ex.marca != marca ||
@@ -483,6 +529,10 @@ class ActualizadorDrive {
               for (final x in actuales)
                 if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
             };
+            // Filas locales aún sin id (primera sincronización por ID): se
+            // adoptan por clave natural en vez de duplicarlas.
+            final sinId = _SinId(actuales, (x) => x.idExterno,
+                (x) => [_norm(x.codigo)]);
             var siguienteId = [
               maxIdExterno(datos.filas.map((f) => f[idHeader])),
               maxIdExterno(actuales.map((x) => x.idExterno)),
@@ -493,7 +543,10 @@ class ActualizadorDrive {
               final nom = fila[m.colNombre]?.trim() ?? '';
               if (cod.isEmpty || nom.isEmpty) { saltados++; continue; }
               final idHoja = fila[idHeader]?.trim() ?? '';
-              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
+                  await _adoptar(sinId, [_norm(cod)], (x) => x.id,
+                      tipo, idHoja, () => ++siguienteId, v,
+                      datos.filaAbs[k], idColIdx);
               if (ex != null) {
                 if (ex.codigo != cod || ex.nombre != nom) {
                   await repo.actualizarMarca(ex.id, cod, nom);
@@ -542,6 +595,10 @@ class ActualizadorDrive {
               for (final x in actuales)
                 if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
             };
+            // Filas locales aún sin id (primera sincronización por ID): se
+            // adoptan por clave natural en vez de duplicarlas.
+            final sinId = _SinId(actuales, (x) => x.idExterno,
+                (x) => ['${_norm(x.dimension)}|${x.tipo}']);
             var siguienteId = [
               maxIdExterno(datos.filas.map((f) => f[idHeader])),
               maxIdExterno(actuales.map((x) => x.idExterno)),
@@ -556,7 +613,10 @@ class ActualizadorDrive {
               }
               final copasJson = _copasJsonDe(fila[m.colCopa]);
               final idHoja = fila[idHeader]?.trim() ?? '';
-              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
+                  await _adoptar(sinId, ['${_norm(dim)}|$t'], (x) => x.id,
+                      tipo, idHoja, () => ++siguienteId, v,
+                      datos.filaAbs[k], idColIdx);
               if (ex != null) {
                 if (ex.dimension != dim ||
                     ex.tipo != t ||
@@ -614,6 +674,10 @@ class ActualizadorDrive {
               for (final x in actualesEngr)
                 if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
             };
+            // Filas locales aún sin id (primera sincronización por ID): se
+            // adoptan por clave natural en vez de duplicarlas.
+            final sinId = _SinId(actualesEngr, (x) => x.idExterno,
+                (x) => ['${x.tipo}|${x.diametro}|${x.dientes}']);
             var siguienteId = [
               maxIdExterno(datos.filas.map((f) => f[idHeader])),
               maxIdExterno(actualesEngr.map((x) => x.idExterno)),
@@ -628,7 +692,10 @@ class ActualizadorDrive {
               final t = tNorm.contains('corona') ? 'CORONA' : 'PINON';
               final copasJson = _copasJsonDe(fila[m.colCopa]);
               final idHoja = fila[idHeader]?.trim() ?? '';
-              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
+                  await _adoptar(sinId, ['$t|$diametro|$dientes'], (x) => x.id,
+                      tipo, idHoja, () => ++siguienteId, v,
+                      datos.filaAbs[k], idColIdx);
               if (ex != null) {
                 if (ex.tipo != t ||
                     ex.diametro != diametro ||
@@ -701,6 +768,10 @@ class ActualizadorDrive {
               for (final x in actuales)
                 if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
             };
+            // Filas locales aún sin id (primera sincronización por ID): se
+            // adoptan por clave natural en vez de duplicarlas.
+            final sinId = _SinId(actuales, (x) => x.idExterno,
+                (x) => ['${_norm(x.nombre)}|${_copasClave(x.copasJson)}', _norm(x.nombre)]);
             // Contador correlativo para ids nuevos (filas tecleadas a mano
             // en la hoja sin id): arranca en el mayor visto entre la hoja y
             // lo local, y sigue subiendo dentro de esta misma pasada.
@@ -722,7 +793,10 @@ class ActualizadorDrive {
                   .toList();
               final copasJson = copas.isEmpty ? '[]' : json.encode(copas);
               final idHoja = fila[idHeader]?.trim() ?? '';
-              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
+                  await _adoptar(sinId, ['${_norm(n)}|${_copasClave(copasJson)}', _norm(n)], (x) => x.id,
+                      tipo, idHoja, () => ++siguienteId, v,
+                      datos.filaAbs[k], idColIdx);
               if (ex != null) {
                 if (ex.nombre != n ||
                     ex.rpm != rpm ||
@@ -789,6 +863,10 @@ class ActualizadorDrive {
               for (final x in actuales)
                 if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
             };
+            // Filas locales aún sin id (primera sincronización por ID): se
+            // adoptan por clave natural en vez de duplicarlas.
+            final sinId = _SinId(actuales, (x) => x.idExterno,
+                (x) => [_norm(x.nombre)]);
             var siguienteId = [
               maxIdExterno(datos.filas.map((f) => f[idHeader])),
               maxIdExterno(actuales.map((x) => x.idExterno)),
@@ -800,7 +878,10 @@ class ActualizadorDrive {
               final r = fila[m.colReferencia]?.trim();
               final copasJson = _copasJsonDe(fila[m.colCopa]);
               final idHoja = fila[idHeader]?.trim() ?? '';
-              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
+                  await _adoptar(sinId, [_norm(n)], (x) => x.id,
+                      tipo, idHoja, () => ++siguienteId, v,
+                      datos.filaAbs[k], idColIdx);
               if (ex != null) {
                 if (ex.nombre != n ||
                     (ex.referencia ?? '') != (r ?? '') ||
@@ -865,6 +946,10 @@ class ActualizadorDrive {
               for (final x in actualesBanc)
                 if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
             };
+            // Filas locales aún sin id (primera sincronización por ID): se
+            // adoptan por clave natural en vez de duplicarlas.
+            final sinId = _SinId(actualesBanc, (x) => x.idExterno,
+                (x) => [_norm(x.nombre)]);
             var siguienteId = [
               maxIdExterno(datos.filas.map((f) => f[idHeader])),
               maxIdExterno(actualesBanc.map((x) => x.idExterno)),
@@ -875,7 +960,10 @@ class ActualizadorDrive {
               if (n.isEmpty) { saltados++; continue; }
               final copasJson = _copasJsonDe(fila[m.colCopa]);
               final idHoja = fila[idHeader]?.trim() ?? '';
-              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
+                  await _adoptar(sinId, [_norm(n)], (x) => x.id,
+                      tipo, idHoja, () => ++siguienteId, v,
+                      datos.filaAbs[k], idColIdx);
               if (ex != null) {
                 if (ex.nombre != n || ex.copasJson != copasJson) {
                   await repo.actualizarBancada(ex.id, n,
@@ -937,6 +1025,10 @@ class ActualizadorDrive {
               for (final x in actualesSimple)
                 if ((x.idExterno ?? '').isNotEmpty) x.idExterno!: x
             };
+            // Filas locales aún sin id (primera sincronización por ID): se
+            // adoptan por clave natural en vez de duplicarlas.
+            final sinId = _SinId(actualesSimple, (x) => x.idExterno,
+                (x) => [_norm(x.nombre)]);
             var siguienteId = [
               maxIdExterno(datos.filas.map((f) => f[idHeader])),
               maxIdExterno(actualesSimple.map((x) => x.idExterno)),
@@ -946,7 +1038,10 @@ class ActualizadorDrive {
               final n = fila[m.colNombre]?.trim() ?? '';
               if (n.isEmpty) { saltados++; continue; }
               final idHoja = fila[idHeader]?.trim() ?? '';
-              final ex = idHoja.isEmpty ? null : porId[idHoja];
+              final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
+                  await _adoptar(sinId, [_norm(n)], (x) => x.id,
+                      tipo, idHoja, () => ++siguienteId, v,
+                      datos.filaAbs[k], idColIdx);
               if (ex != null) {
                 if (ex.nombre != n) {
                   await actualizar(ex.id, n);
@@ -1063,3 +1158,30 @@ class ActualizadorDrive {
 final actualizadorDriveProvider = Provider<ActualizadorDrive>((ref) {
   return ActualizadorDrive(ref);
 });
+
+/// Filas locales sin id externo, indexadas por una o más claves naturales
+/// (de más a menos específica). Cada fila se adopta como mucho una vez.
+class _SinId<T> {
+  _SinId(Iterable<T> filas, String? Function(T) idExterno,
+      List<String> Function(T) claves) {
+    for (final f in filas) {
+      if ((idExterno(f) ?? '').isNotEmpty) continue;
+      final cs = claves(f);
+      for (var i = 0; i < cs.length; i++) {
+        _porClave.putIfAbsent('$i:${cs[i]}', () => []).add(f);
+      }
+    }
+  }
+
+  final _porClave = <String, List<T>>{};
+  final _tomadas = <T>{};
+
+  T? tomar(List<String> claves) {
+    for (var i = 0; i < claves.length; i++) {
+      for (final f in _porClave['$i:${claves[i]}'] ?? <T>[]) {
+        if (_tomadas.add(f)) return f;
+      }
+    }
+    return null;
+  }
+}
