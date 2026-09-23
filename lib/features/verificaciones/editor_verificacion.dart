@@ -1051,12 +1051,12 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                     labelText: 'uMs',
                                     helperText: motorSel?.gauss == null
                                         ? null
-                                        : 'Mín ${motorSel!.gauss}',
+                                        : 'Máx ${motorSel!.gauss}',
                                     suffixIcon: _iconoCumpleMotor(
                                         cs,
                                         _parseDouble(_motorUms.text),
                                         motorSel?.gauss,
-                                        maximo: false),
+                                        maximo: true),
                                   ),
                                   keyboardType:
                                       const TextInputType.numberWithOptions(

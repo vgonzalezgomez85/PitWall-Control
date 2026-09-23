@@ -168,7 +168,7 @@ class ValidadorVerificacion {
     }
 
     // MOTOR PROPIO — comparar medidas con la referencia del catálogo.
-    // Un motor trucado da más RPM y pierde gauss respecto a la referencia.
+    // RPM y gauss (uMs) son máximos: no pueden superar la referencia.
     if (d.motorTipo == 'PROPIO') {
       if (d.motorRefNombre == null) {
         if (d.motorRpm != null || d.motorUms != null) {
@@ -189,12 +189,12 @@ class ValidadorVerificacion {
           ));
         }
         if (d.motorUms != null && d.motorRefGauss != null &&
-            d.motorUms! < d.motorRefGauss!) {
+            d.motorUms! > d.motorRefGauss!) {
           hallazgos.add(HallazgoValidacion(
             'motorUms',
             NivelValidacion.infraccion,
-            'Imán por debajo de la referencia del ${d.motorRefNombre} '
-            '(mín ${d.motorRefGauss}, medido ${d.motorUms}).',
+            'Imán por encima de la referencia del ${d.motorRefNombre} '
+            '(máx ${d.motorRefGauss}, medido ${d.motorUms}).',
           ));
         }
       }

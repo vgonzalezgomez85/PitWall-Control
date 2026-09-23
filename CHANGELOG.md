@@ -14,6 +14,16 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.9.2] — 2026-09-23
+
+### Corregido
+- **Los gauss (uMs) del motor propio se comprobaban como mínimo y son un máximo.** La ficha de verificación ahora muestra "Máx" bajo uMs, y marca como infracción un imán por encima de la referencia del catálogo (antes lo hacía con uno por debajo).
+
+## [1.9.1] — 2026-09-23
+
+### Corregido
+- **La copa cambiada desde la ficha de verificación no se veía fuera de ella.** La lista de Verificaciones, Inscritos y Editar mangas seguían mostrando la copa del equipo (p. ej. LMP) aunque en esa prueba corriera otra. Ahora muestran la copa de la prueba, y la lista de Verificaciones se actualiza al volver de la ficha. El generador de mangas también agrupa por la copa de la prueba.
+
 ## [1.9.0] — 2026-09-22
 
 ### Añadido
