@@ -178,7 +178,7 @@ class _TarjetaVerificacion extends StatelessWidget {
         ),
         title: Text(fila.equipo.nombre),
         subtitle: Text(
-            '${fila.pilotosTexto}\n${fila.coche?.modelo ?? "Sin coche asignado"}  ·  Copa ${fila.equipo.copa}'),
+            '${fila.pilotosTexto}\n${fila.coche?.modelo ?? "Sin coche asignado"}  ·  Copa ${fila.copa}'),
         isThreeLine: true,
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

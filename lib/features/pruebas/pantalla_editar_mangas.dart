@@ -55,6 +55,13 @@ final _mangasConEquiposProvider = StreamProvider.autoDispose
       .watch()
       .asyncMap((mangas) async {
     final out = <_MangaConEquipos>[];
+    // Copa por equipo en esta prueba (snapshot de inscripción).
+    final copasPrueba = <int, String>{
+      for (final ip in await (db.select(db.inscripcionesPrueba)
+            ..where((t) => t.pruebaId.equals(pruebaId)))
+          .get())
+        if (ip.copa != null) ip.equipoId: ip.copa!,
+    };
     for (final m in mangas) {
       final inscritos = await (db.select(db.inscripciones)
             ..where((t) => t.mangaId.equals(m.id)))
@@ -80,7 +87,7 @@ final _mangasConEquiposProvider = StreamProvider.autoDispose
           equipoId: eq.id,
           nombre: eq.nombre,
           pilotos: pilotos,
-          copa: eq.copa,
+          copa: copasPrueba[eq.id] ?? eq.copa,
         ));
       }
       out.add(_MangaConEquipos(manga: m, equipos: lista));

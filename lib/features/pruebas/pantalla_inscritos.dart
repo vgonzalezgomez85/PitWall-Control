@@ -258,9 +258,9 @@ class _TarjetaInscrito extends ConsumerWidget {
         title: Text(inscrito.equipo.nombre),
         subtitle: Text(
           esIndividual
-              ? 'Copa: ${inscrito.equipo.copa}'
+              ? 'Copa: ${inscrito.copa}'
                   '${inscrito.inscripcion.preferenciaDia != null ? "  ·  ${inscrito.inscripcion.preferenciaDia}" : ""}'
-              : '${inscrito.nombrePilotos}\nCopa: ${inscrito.equipo.copa}'
+              : '${inscrito.nombrePilotos}\nCopa: ${inscrito.copa}'
                   '${inscrito.inscripcion.preferenciaDia != null ? "  ·  ${inscrito.inscripcion.preferenciaDia}" : ""}',
         ),
         isThreeLine: !esIndividual,

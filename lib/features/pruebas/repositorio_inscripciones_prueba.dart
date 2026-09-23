@@ -39,6 +39,9 @@ class InscritoPrueba {
   String get nombrePilotos => piloto2 == null
       ? piloto1.nombre
       : '${piloto1.nombre} + ${piloto2!.nombre}';
+
+  /// Copa que corre el equipo en esta prueba (snapshot); cae a la del equipo.
+  String get copa => inscripcion.copa ?? equipo.copa;
 }
 
 final inscritosPruebaProvider =

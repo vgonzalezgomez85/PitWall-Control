@@ -32,13 +32,21 @@ class VerificacionConEquipo {
   final Piloto? piloto2;
   final CatalogoCoche? coche;
 
+  /// Copa que corre el equipo en la prueba de esta manga (snapshot de
+  /// inscripción); null = usa la copa actual del equipo.
+  final String? copaPrueba;
+
   VerificacionConEquipo({
     this.verificacion,
     required this.equipo,
     required this.piloto1,
     this.piloto2,
     this.coche,
+    this.copaPrueba,
   });
+
+  /// Copa efectiva en esta prueba.
+  String get copa => copaPrueba ?? equipo.copa;
 
   String get pilotosTexto => piloto2 == null
       ? piloto1.nombre
@@ -51,7 +59,8 @@ class VerificacionConEquipo {
 /// Una verificación por cada equipo inscrito en la manga.
 ///
 /// Se refresca cuando cambian las inscripciones **o** las verificaciones de la
-/// manga (clave para que el autoguardado actualice la lista al instante).
+/// manga (clave para que el autoguardado actualice la lista al instante), y
+/// también cuando cambia la copa de la prueba (editada desde la ficha).
 final verificacionesMangaProvider = StreamProvider.autoDispose
     .family<List<VerificacionConEquipo>, int>((ref, mangaId) {
   final db = ref.watch(dbProvider);
@@ -61,11 +70,26 @@ final verificacionesMangaProvider = StreamProvider.autoDispose
   final verStream = (db.select(db.verificaciones)
         ..where((t) => t.mangaId.equals(mangaId)))
       .watch();
+  final insPruebaStream = db.select(db.inscripcionesPrueba).watch();
 
-  return _ticksDeCualquiera([insStream, verStream]).asyncMap((_) async {
+  return _ticksDeCualquiera([insStream, verStream, insPruebaStream])
+      .asyncMap((_) async {
     final inscritos = await (db.select(db.inscripciones)
           ..where((t) => t.mangaId.equals(mangaId)))
         .get();
+    final manga = await (db.select(db.mangas)
+          ..where((t) => t.id.equals(mangaId)))
+        .getSingleOrNull();
+    // Copa por equipo en la prueba de esta manga (snapshot de inscripción).
+    final copasPrueba = <int, String>{};
+    if (manga != null) {
+      final insPrueba = await (db.select(db.inscripcionesPrueba)
+            ..where((t) => t.pruebaId.equals(manga.pruebaId)))
+          .get();
+      for (final ip in insPrueba) {
+        if (ip.copa != null) copasPrueba[ip.equipoId] = ip.copa!;
+      }
+    }
     final out = <VerificacionConEquipo>[];
     for (final i in inscritos) {
       final eq = await (db.select(db.equipos)
@@ -95,6 +119,7 @@ final verificacionesMangaProvider = StreamProvider.autoDispose
       out.add(VerificacionConEquipo(
         verificacion: ver,
         equipo: eq, piloto1: p1, piloto2: p2, coche: coche,
+        copaPrueba: copasPrueba[eq.id],
       ));
     }
     out.sort((a, b) => a.equipo.nombre.compareTo(b.equipo.nombre));

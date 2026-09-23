@@ -112,7 +112,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
       return EquipoSemilla(
         equipoId: i.equipo.id,
         nombre: i.equipo.nombre,
-        copa: i.equipo.copa,
+        copa: i.copa,
         puntuacion: puntos,
         preferenciaDia: i.inscripcion.preferenciaDia,
       );
@@ -163,7 +163,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
       return EquipoSemilla(
         equipoId: i.equipo.id,
         nombre: i.equipo.nombre,
-        copa: i.equipo.copa,
+        copa: i.copa,
         puntuacion: puntos,
         preferenciaDia: i.inscripcion.preferenciaDia,
       );
@@ -208,7 +208,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
       return EquipoSemilla(
         equipoId: i.equipo.id,
         nombre: i.equipo.nombre,
-        copa: i.equipo.copa,
+        copa: i.copa,
         puntuacion: puntos,
         preferenciaDia: i.inscripcion.preferenciaDia,
       );
