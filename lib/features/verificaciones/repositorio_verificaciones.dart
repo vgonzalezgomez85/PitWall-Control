@@ -202,8 +202,10 @@ final bancadasProvider =
   return db.select(db.catalogoBancadas).watch();
 });
 
+/// Normaliza un nombre de copa para compararlo: ignora mayúsculas, espacios
+/// y signos ("LMP-2", "LMP 2" y "lmp2" son la misma copa).
 String _normCopa(String s) =>
-    s.toUpperCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+    s.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9ÁÉÍÓÚÜÑ]'), '');
 
 bool _aplicaA(String copasJson, String copa) {
   try {
@@ -295,40 +297,18 @@ final chasisFiltradosProvider = StreamProvider.autoDispose
   });
 });
 
-/// Coches a mostrar en la verificación.
-/// - `copa`: copa que corre el equipo en la prueba. `camp`: copas del
-///   campeonato separadas por '|'.
-/// Regla: coches marcados con la copa del equipo; si ninguno, coches
-/// marcados con alguna de las copas del campeonato. Un coche sin copa
-/// marcada no se puede usar en ninguna copa (no se enseña nunca). Si no
-/// hay copa de equipo ni de campeonato (sin contexto de copa), se muestran
-/// todos.
+/// Coches a mostrar en la verificación, filtrados por la copa que corre el
+/// equipo en la prueba. Solo los marcados con esa copa: si no hay ninguno,
+/// la lista sale vacía (antes caía a los coches de todas las copas del
+/// campeonato, lo que escondía copas mal escritas). Sin copa → todos.
 final cochesFiltradosProvider = StreamProvider.autoDispose
-    .family<List<CatalogoCoche>, ({String? copa, String camp})>((ref, args) {
+    .family<List<CatalogoCoche>, String?>((ref, copa) {
   final db = ref.watch(dbProvider);
   return (db.select(db.catalogoCoches)..where((t) => t.activo.equals(true)))
       .watch()
       .map((todos) {
-    final copa = args.copa;
-    // 1) Coches marcados con la copa exacta del equipo.
-    if (copa != null && copa.isNotEmpty) {
-      final aplicables =
-          todos.where((c) => _aplicaA(c.copasJson, copa)).toList();
-      if (aplicables.isNotEmpty) return aplicables;
-    }
-    // 2) Copas del campeonato.
-    final champCopas = args.camp.isEmpty
-        ? const <String>[]
-        : args.camp.split('|').where((s) => s.isNotEmpty).toList();
-    if (champCopas.isNotEmpty) {
-      return todos
-          .where((c) => champCopas.any((cc) => _tieneCopa(c.copasJson, cc)))
-          .toList();
-    }
-    // 3) Sin copa de equipo ni de campeonato: no hay contexto de copa que
-    // filtrar, se muestran todos.
-    if ((copa == null || copa.isEmpty) && champCopas.isEmpty) return todos;
-    return const <CatalogoCoche>[];
+    if (copa == null || copa.isEmpty) return todos;
+    return todos.where((c) => _aplicaA(c.copasJson, copa)).toList();
   });
 });
 

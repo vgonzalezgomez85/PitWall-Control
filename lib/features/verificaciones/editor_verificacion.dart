@@ -35,8 +35,6 @@ import '../equipos/repositorio_equipos.dart';
 import '../pruebas/repositorio_inscripciones_prueba.dart';
 import 'repositorio_verificaciones.dart';
 
-/// Copas/categorías de un campeonato (de su copas_json) unidas por '|', para
-/// pasarlas al filtro de coches de la verificación.
 /// "12" si min==max (fijo), "24–30" si es rango.
 String _rangoDientesTxt(int min, int max) => min == max ? '$min' : '$min–$max';
 
@@ -56,19 +54,6 @@ String _rangoDientesTxt(int min, int max) => min == max ? '$min' : '$min–$max'
     }
   } catch (_) {}
   return (null, null);
-}
-
-/// Copas del campeonato (de su copas_json) unidas por '|', para el respaldo
-/// del filtro de coches cuando la copa del equipo no cuadra con ninguno.
-String _copasDeCampeonato(String? copasJson) {
-  if (copasJson == null || copasJson.isEmpty) return '';
-  try {
-    final raw = jsonDecode(copasJson);
-    if (raw is List) {
-      return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).join('|');
-    }
-  } catch (_) {}
-  return '';
 }
 
 /// Dientes distintos del catálogo de engranajes ya filtrado (tipo + copa).
@@ -665,13 +650,12 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     final campActivo = ref.watch(campeonatoActivoProvider);
     final (anchuraEjeDelMax, anchuraEjeTraMax) =
         _anchuraEjeMax(campActivo?.anchuraEjeJson, copaEquipo);
-    final champCopas = _copasDeCampeonato(campActivo?.copasJson);
     final reglaPinon = _rangoDientesTxt(
         campActivo?.pinonDientesMin ?? 12, campActivo?.pinonDientesMax ?? 12);
     final reglaCorona = _rangoDientesTxt(
         campActivo?.coronaDientesMin ?? 24, campActivo?.coronaDientesMax ?? 30);
     final cochesAsync = ref.watch(
-        cochesFiltradosProvider((copa: copaEquipo, camp: champCopas)));
+        cochesFiltradosProvider(copaEquipo));
     final bancadasFiltAsync = ref.watch(bancadasFiltradasProvider(copaEquipo));
     final motoresAsync = ref.watch(motoresFiltradosProvider(copaEquipo));
     // Marcas de piñón/corona homologadas para la copa (si hay catálogo de
@@ -858,8 +842,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                 etiqueta: 'Modelo de coche',
                 titulo: 'Elegir coche',
                 icono: Icons.directions_car_outlined,
-                helper:
-                    'Se muestran peso mínimo y créditos del coche al elegirlo',
+                helper: coches.isEmpty && copaEquipo != null
+                    ? 'No hay coches con la copa $copaEquipo en el catálogo'
+                    : 'Se muestran peso mínimo y créditos del coche al elegirlo',
                 valor: coches.where((c) => c.id == _cocheId).firstOrNull,
                 opciones: coches,
                 etiquetaOpcion: (c) => c.nombre,
