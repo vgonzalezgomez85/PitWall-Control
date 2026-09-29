@@ -21,6 +21,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import 'pantalla_inscritos.dart';
+import 'repositorio_inscripciones_prueba.dart';
+import 'repositorio_pruebas.dart';
 
 /// Datos enriquecidos de una manga con su lista de equipos inscritos.
 class _MangaConEquipos {
@@ -47,13 +50,15 @@ class _EquipoInscrito {
 }
 
 final _mangasConEquiposProvider = StreamProvider.autoDispose
-    .family<List<_MangaConEquipos>, int>((ref, pruebaId) {
+    .family<List<_MangaConEquipos>, int>((ref, pruebaId) async* {
   final db = ref.watch(dbProvider);
-  return (db.select(db.mangas)
-        ..where((t) => t.pruebaId.equals(pruebaId))
-        ..orderBy([(t) => d.OrderingTerm.asc(t.id)]))
-      .watch()
-      .asyncMap((mangas) async {
+  // Se recarga al cambiar mangas o inscripciones (mover, dar de baja…): un
+  // watch() de mangas solo no se entera de los cambios en inscripciones.
+  Future<List<_MangaConEquipos>> cargar() async {
+    final mangas = await (db.select(db.mangas)
+          ..where((t) => t.pruebaId.equals(pruebaId))
+          ..orderBy([(t) => d.OrderingTerm.asc(t.id)]))
+        .get();
     final out = <_MangaConEquipos>[];
     // Copa por equipo en esta prueba (snapshot de inscripción).
     final copasPrueba = <int, String>{
@@ -93,7 +98,13 @@ final _mangasConEquiposProvider = StreamProvider.autoDispose
       out.add(_MangaConEquipos(manga: m, equipos: lista));
     }
     return out;
-  });
+  }
+
+  yield await cargar();
+  await for (final _ in db.tableUpdates(d.TableUpdateQuery.onAllTables(
+      [db.mangas, db.inscripciones, db.inscripcionesPrueba]))) {
+    yield await cargar();
+  }
 });
 
 class PantallaEditarMangas extends ConsumerWidget {
@@ -232,10 +243,9 @@ class _FilaEquipo extends ConsumerWidget {
       ),
     );
     if (destino == null) return;
-    final db = ref.read(dbProvider);
-    await (db.update(db.inscripciones)
-          ..where((t) => t.id.equals(equipo.inscripcionId)))
-        .write(InscripcionesCompanion(mangaId: d.Value(destino)));
+    await ref
+        .read(repoInscripcionesProvider)
+        .moverAManga(equipo.inscripcionId, destino);
   }
 
   @override
@@ -264,6 +274,21 @@ class _FilaEquipo extends ConsumerWidget {
             ),
             Text(equipo.copa,
                 style: TextStyle(color: cs.outline, fontSize: 12)),
+            IconButton(
+              tooltip: 'Dar de baja de la prueba',
+              icon: Icon(Icons.person_remove_outlined,
+                  color: cs.error, size: 20),
+              onPressed: () async {
+                final pruebaId = todasLasMangas
+                    .firstWhere((m) => m.manga.id == mangaActualId)
+                    .manga
+                    .pruebaId;
+                if (await confirmarBajaPrueba(context, equipo.nombre)) {
+                  await ref.read(repoInscripcionesPruebaProvider).darDeBaja(
+                      pruebaId: pruebaId, equipoId: equipo.equipoId);
+                }
+              },
+            ),
           ],
         ),
       ),

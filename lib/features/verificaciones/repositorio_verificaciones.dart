@@ -287,14 +287,12 @@ final motoresFiltradosProvider = StreamProvider.autoDispose
   });
 });
 
-/// Chasis filtrados por la copa del equipo.
-final chasisFiltradosProvider = StreamProvider.autoDispose
-    .family<List<CatalogoChasi>, String?>((ref, copa) {
+/// Chasis de la verificación. Sin copa: se usan siempre todos, sin filtrar.
+final chasisProvider = StreamProvider.autoDispose<List<CatalogoChasi>>((ref) {
   final db = ref.watch(dbProvider);
-  return db.select(db.catalogoChasis).watch().map((todos) {
-    if (copa == null || copa.isEmpty) return todos;
-    return todos.where((c) => _aplicaA(c.copasJson, copa)).toList();
-  });
+  return (db.select(db.catalogoChasis)
+        ..orderBy([(t) => OrderingTerm.asc(t.nombre)]))
+      .watch();
 });
 
 /// Coches a mostrar en la verificación, filtrados por la copa que corre el

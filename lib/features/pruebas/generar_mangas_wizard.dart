@@ -19,9 +19,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
-import '../../data/database/app_database.dart';
 import '../../domain/generador_mangas.dart';
+import '../equipos/repositorio_equipos.dart';
 import 'repositorio_inscripciones_prueba.dart';
+import 'repositorio_pruebas.dart';
 
 class GenerarMangasWizard extends ConsumerStatefulWidget {
   const GenerarMangasWizard({
@@ -39,7 +40,8 @@ class GenerarMangasWizard extends ConsumerStatefulWidget {
 }
 
 class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
-  /// Carriles de la pista = máximo de equipos por manga (corren a la vez).
+  /// Carriles de la pista. Una manga intenta llenarlos todos; si sobran
+  /// equipos, puede llevar alguno más (rotan).
   int _carriles = 6;
   /// Minutos que dura el turno de cada equipo en un carril. Junto a
   /// [_carriles] determina la duración real de una manga, usada para
@@ -49,6 +51,16 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
   List<TextEditingController> _nombresControllers = [];
   bool _sustituir = true;
   bool _trabajando = false;
+  /// Solo individuales: carril de salida 1..N / D1.. por puntos, y pisters
+  /// entre mangas del mismo día.
+  bool _asignarCarriles = false;
+  bool _asignarPisters = false;
+
+  bool get _esIndividual =>
+      maxPilotosEquipo(ref.read(campeonatoActivoProvider)?.formato ?? 'PAREJAS') ==
+      1;
+  bool get _conCarriles => _esIndividual && _asignarCarriles;
+  bool get _conPisters => _esIndividual && _asignarPisters;
 
   /// Cache de puntuaciones por piloto.
   Map<int, num> _puntosPorPiloto = {};
@@ -68,42 +80,8 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
     final db = ref.read(dbProvider);
     final activo = ref.read(campeonatoActivoProvider)!;
 
-    // 1) Puntos BRUTOS acumulados en este campeonato
-    final pruebas = await (db.select(db.pruebas)
-          ..where((t) => t.campeonatoId.equals(activo.id)))
-        .get();
-    final pruebaIds = pruebas.map((p) => p.id).toSet();
-    final mangas = await (db.select(db.mangas)
-          ..where((t) => t.pruebaId.isIn(pruebaIds)))
-        .get();
-    final mangaIds = mangas.map((m) => m.id).toSet();
-    final resultados = mangaIds.isEmpty
-        ? <Resultado>[]
-        : await (db.select(db.resultados)
-              ..where((t) => t.mangaId.isIn(mangaIds)))
-            .get();
-
-    final brutoPorPiloto = <int, int>{};
-    for (final r in resultados) {
-      brutoPorPiloto.update(
-          r.pilotoId, (v) => v + r.puntos,
-          ifAbsent: () => r.puntos);
-    }
-
-    // 2) Si no hay puntos en este campeonato, fallback a saldo año anterior.
-    final perfiles = await (db.select(db.pilotoCampeonato)
-          ..where((t) => t.campeonatoId.equals(activo.id)))
-        .get();
-    final saldoAnterior = {
-      for (final p in perfiles) p.pilotoId: p.saldoTemporadaAnterior,
-    };
-
-    final hayPuntosEsteAnio = brutoPorPiloto.values.any((v) => v > 0);
-    if (hayPuntosEsteAnio) {
-      _puntosPorPiloto = {...brutoPorPiloto};
-    } else {
-      _puntosPorPiloto = {...saldoAnterior};
-    }
+    // 1) Puntos del campeonato (o puntuación previa si aún no hay).
+    _puntosPorPiloto = await puntosSemillaPorPiloto(db, activo.id);
 
     // 3) Calcular sugerencia de mangas según las preferencias de día.
     final semillasTmp = widget.inscritos.map((i) {
@@ -231,7 +209,10 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
       await ref.read(repoInscripcionesPruebaProvider).aplicarGeneracion(
             pruebaId: widget.pruebaId,
             mangasGeneradas: _previa,
+            carrilesPorManga: _carriles,
             sustituirExistentes: _sustituir,
+            asignarCarriles: _conCarriles,
+            asignarPisters: _conPisters,
           );
       if (!mounted) return;
       await showDialog<void>(
@@ -241,7 +222,8 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
           content: Text(
               'Se han creado ${_previa.length} mangas con '
               '${_previa.fold<int>(0, (n, m) => n + m.equipos.length)} equipos.\n\n'
-              'Los carriles se asignarán antes de la carrera.'),
+              '${_conCarriles ? 'Con carril de salida asignado.' : 'Los carriles se asignarán antes de la carrera.'}'
+              '${_conPisters ? '\nPisters asignados entre las mangas de cada día.' : ''}'),
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(context),
@@ -396,7 +378,8 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
           const SizedBox(height: 4),
           Text(
             'Sugerido: ${GeneradorMangas.numMangasSugerido(totalEquipos: total, tamMax: _carriles)} '
-            '(máximo $_carriles equipos por manga). Puedes cambiarlo.',
+            '(sin carriles vacíos con $_carriles carriles: si sobran '
+            'equipos, las mangas pasan de $_carriles). Puedes cambiarlo.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -435,16 +418,55 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
                   onChanged: (_) => _recalcular(),
                 ),
               )),
+          if (_esIndividual) ...[
+            const SizedBox(height: 12),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Asignar carril automáticamente'),
+              subtitle: Text(
+                  'Por puntos, de más a menos: carriles 1 a $_carriles y, '
+                  'si hay más pilotos, D1, D2…'),
+              value: _asignarCarriles,
+              onChanged: (v) => setState(() => _asignarCarriles = v),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Asignar pisters'),
+              subtitle: const Text(
+                  'Entre las mangas del mismo día. 2 mangas: 1ª↔2ª. '
+                  '3: la 3ª hace de pisters en la 1ª, la 1ª en la 2ª y la '
+                  '2ª en la 3ª. 4: 1ª↔2ª y 3ª↔4ª.'),
+              value: _asignarPisters,
+              onChanged: (v) => setState(() => _asignarPisters = v),
+            ),
+          ],
           const SizedBox(height: 24),
           Text('4. Vista previa',
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Text(
-            'Los carriles los asignarás después, antes de la carrera.',
+            _conCarriles
+                ? 'El número de la izquierda es el carril de salida.'
+                : 'Los carriles los asignarás después, antes de la carrera.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
-          ..._previa.map((m) => _MangaPreview(manga: m)),
+          ...() {
+            final pisters = _conPisters
+                ? GeneradorMangas.asignarPisters(
+                    _previa.map((m) => m.nombre).toList())
+                : null;
+            return _previa.asMap().entries.map((e) => _MangaPreview(
+                  manga: e.value,
+                  carriles: _conCarriles
+                      ? GeneradorMangas.carrilesSalida(
+                          e.value.equipos.length, _carriles)
+                      : null,
+                  pisters: pisters?[e.key] == null
+                      ? null
+                      : _previa[pisters![e.key]!].nombre,
+                ));
+          }(),
           if (_sinManga.isNotEmpty) ...[
             const SizedBox(height: 8),
             _BloqueSinManga(equipos: _sinManga),
@@ -544,8 +566,12 @@ class _BloqueSinManga extends StatelessWidget {
 }
 
 class _MangaPreview extends StatelessWidget {
-  const _MangaPreview({required this.manga});
+  const _MangaPreview({required this.manga, this.carriles, this.pisters});
   final MangaGenerada manga;
+  /// Carril de salida de cada equipo (mismo orden), si se asigna.
+  final List<String>? carriles;
+  /// Nombre de la manga que hace de pisters en esta, si se asigna.
+  final String? pisters;
 
   @override
   Widget build(BuildContext context) {
@@ -572,6 +598,18 @@ class _MangaPreview extends StatelessWidget {
                   ),
                 ],
               ),
+              if (pisters != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.sports_outlined, size: 16, color: cs.outline),
+                      const SizedBox(width: 6),
+                      Text('Pisters: pilotos de $pisters',
+                          style: TextStyle(color: cs.outline, fontSize: 13)),
+                    ],
+                  ),
+                ),
               const Divider(),
               ...manga.equipos.asMap().entries.map((e) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 3),
@@ -585,7 +623,7 @@ class _MangaPreview extends StatelessWidget {
                             color: cs.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Text('${e.key + 1}',
+                          child: Text(carriles?[e.key] ?? '${e.key + 1}',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: cs.onSurface,

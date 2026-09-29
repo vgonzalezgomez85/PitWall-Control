@@ -30,6 +30,9 @@ class FilaInscripcion {
   /// Estado al cruzar con BD: 'ok' | 'equipo_no_existe' | 'ya_inscrito'
   String estado;
   int? equipoIdCoincidente; // si lo encontramos en el campeonato
+  /// Formato individual: piloto del campeonato aún sin equipo de un piloto;
+  /// se le crea al importar.
+  int? pilotoIdCoincidente;
   bool importar;
 
   FilaInscripcion({

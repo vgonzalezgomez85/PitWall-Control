@@ -104,6 +104,12 @@ const Map<String, List<String>> _textos = {
   'PILOTOS': ['PILOTOS', 'DRIVERS', 'PILOTI', 'PILOTES'],
   'PUNTOS': ['PUNTOS', 'POINTS', 'PUNTI', 'POINTS'],
   'CARRIL': ['CARRIL', 'LANE', 'CORSIA', 'COULOIR'],
+  'Pisters: pilotos de': [
+    'Pisters: pilotos de',
+    'Marshals: drivers from',
+    'Commissari: piloti di',
+    'Commissaires : pilotes de',
+  ],
   // Créditos
   'Control de créditos': ['Control de créditos', 'Credit control', 'Controllo crediti', 'Contrôle des crédits'],
   'INICIAL': ['INICIAL', 'INITIAL', 'INIZIALE', 'INITIAL'],

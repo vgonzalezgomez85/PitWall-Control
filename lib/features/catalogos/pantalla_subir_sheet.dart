@@ -44,8 +44,10 @@ class _State extends ConsumerState<PantallaSubirSheet> {
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(
         content: Text('✓ Subido al Sheet: ${r.anadidas} añadidas, '
-            '${r.actualizadas} actualizadas, ${r.borradas} borradas.'),
-        duration: const Duration(seconds: 4),
+            '${r.actualizadas} actualizadas, ${r.borradas} borradas.'
+            '${r.fotosFallidas.isEmpty ? '' : '\n✗ Fotos sin subir: '
+                '${r.fotosFallidas.join('; ')}'}'),
+        duration: Duration(seconds: r.fotosFallidas.isEmpty ? 4 : 10),
       ));
       Navigator.of(context).pop();
     } catch (e) {

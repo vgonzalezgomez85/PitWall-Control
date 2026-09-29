@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../services/fotos_coches_drive.dart';
 import '../../services/generador_id.dart';
 import '../../services/google_sheets_service.dart';
 import '../catalogos/importar_catalogo.dart';
@@ -104,6 +105,54 @@ class ActualizadorDrive {
 
   static String _norm(String s) =>
       s.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+
+  /// Descarga las fotos de coche enlazadas en la columna FOTO que aún no
+  /// estén en local (o cuyo enlace haya cambiado). Se hace después de
+  /// crear/actualizar los coches, emparejando por ID (o por nombre si la
+  /// hoja no tiene columna ID). Una celda vacía no borra la foto local.
+  Future<({int bajadas, List<String> fallidas})> _bajarFotosCoches(
+    ({List<String> columnas, List<Map<String, String>> filas, List<int> filaAbs})
+        datos,
+    MapeoCatalogo m,
+    String idHeader,
+  ) async {
+    final db = ref.read(dbProvider);
+    final coches = await db.select(db.catalogoCoches).get();
+    final porId = {
+      for (final c in coches)
+        if ((c.idExterno ?? '').isNotEmpty) c.idExterno!: c
+    };
+    final porNombre = {for (final c in coches) _norm(c.nombre): c};
+    final pendientes = <(CatalogoCoche, String)>[];
+    for (final fila in datos.filas) {
+      final idDrive = FotosCochesDrive.idDeEnlace(fila[m.colFoto]);
+      if (idDrive == null) continue;
+      final coche = idHeader.isNotEmpty
+          ? porId[fila[idHeader]?.trim() ?? '']
+          : porNombre[_norm(fila[m.colNombre] ?? '')];
+      if (coche == null) continue;
+      if (FotosCochesDrive.idDeFotoLocal(coche.fotoPath) == idDrive) continue;
+      pendientes.add((coche, idDrive));
+    }
+    if (pendientes.isEmpty) return (bajadas: 0, fallidas: <String>[]);
+
+    final fotos = ref.read(fotosCochesDriveProvider);
+    var bajadas = 0;
+    final fallidas = <String>[];
+    await fotos.conDrive((api) async {
+      for (final (coche, idDrive) in pendientes) {
+        try {
+          final nombre = await fotos.descargar(api, idDrive);
+          await ref.read(repoCatalogosProvider).actualizarCoche(
+              coche.id, CatalogoCochesCompanion(fotoPath: Value(nombre)));
+          bajadas++;
+        } catch (e) {
+          fallidas.add('${coche.nombre}: $e');
+        }
+      }
+    });
+    return (bajadas: bajadas, fallidas: fallidas);
+  }
 
   /// Copas de un JSON normalizadas y ordenadas, para usarlas como clave.
   static String _copasClave(String? copasJson) {
@@ -367,7 +416,13 @@ class ActualizadorDrive {
         ..colDientes = v.mapeo['colDientes']
         ..colDiametro = v.mapeo['colDiametro']
         ..colRpm = v.mapeo['colRpm']
-        ..colGauss = v.mapeo['colGauss'];
+        ..colGauss = v.mapeo['colGauss']
+        // Vínculos creados antes de existir la columna FOTO no la tienen en
+        // el mapeo: se detecta por el nombre de la cabecera.
+        ..colFoto = v.mapeo['colFoto'] ??
+            datos.columnas
+                .where((c) => ['foto', 'imagen'].contains(_norm(c)))
+                .firstOrNull;
 
       final db = ref.read(dbProvider);
       final repo = ref.read(repoCatalogosProvider);
@@ -1068,8 +1123,19 @@ class ActualizadorDrive {
           }
       }
 
-      final resumen =
+      var resumen =
           'Nuevos: $nuevos · Actualizados: $actualizados · Sin cambios: $saltados';
+      if (tipo == TipoCatalogo.coches && m.colFoto != null) {
+        final f = await _bajarFotosCoches(datos, m, idHeader);
+        if (f.bajadas > 0 || f.fallidas.isNotEmpty) {
+          resumen += ' · Fotos: ${f.bajadas}';
+          if (f.fallidas.isNotEmpty) {
+            resumen += ' (fallan ${f.fallidas.length}: '
+                '${f.fallidas.take(3).join('; ')}'
+                '${f.fallidas.length > 3 ? '…' : ''})';
+          }
+        }
+      }
       await ref.read(repoHojasVinculadasProvider).marcarSync(v.fila.id, resumen);
       return ResultadoActualizacion(
         ok: true, mensaje: resumen,
@@ -1100,27 +1166,26 @@ class ActualizadorDrive {
       final db = ref.read(dbProvider);
       final repo = ref.read(repoInscripcionesPruebaProvider);
 
-      final equipos = await (db.select(db.equipos)
-            ..where((t) => t.campeonatoId.equals(activo.id)))
-          .get();
-      final porNombre = {for (final e in equipos) _norm(e.nombre): e};
+      final buscador = await BuscadorInscritos.cargar(
+          db, activo, ref.read(copasProvider));
       final yaIns = await (db.select(db.inscripcionesPrueba)
             ..where((t) => t.pruebaId.equals(pruebaId)))
           .get();
       final idsYa = yaIns.map((i) => i.equipoId).toSet();
 
-      int nuevos = 0, ya = 0, sin = 0;
+      int nuevos = 0, ya = 0;
+      final noReconocidos = <String>[];
       for (final f in filas) {
-        final eq = porNombre[_norm(f.nombreEquipo)];
-        if (eq == null) { sin++; continue; }
-        if (idsYa.contains(eq.id)) {
+        final equipoId = await buscador.resolver(f.nombreEquipo);
+        if (equipoId == null) { noReconocidos.add(f.nombreEquipo); continue; }
+        if (idsYa.contains(equipoId)) {
           // actualizar día/notas si llegan nuevos valores
           if ((f.preferenciaDia ?? '').isNotEmpty ||
               (f.notas ?? '').isNotEmpty) {
             await (db.update(db.inscripcionesPrueba)
                   ..where((t) =>
                       t.pruebaId.equals(pruebaId) &
-                      t.equipoId.equals(eq.id)))
+                      t.equipoId.equals(equipoId)))
                 .write(InscripcionesPruebaCompanion(
               preferenciaDia: f.preferenciaDia == null
                   ? const Value.absent()
@@ -1135,15 +1200,20 @@ class ActualizadorDrive {
         }
         await repo.inscribir(
           pruebaId: pruebaId,
-          equipoId: eq.id,
+          equipoId: equipoId,
           preferenciaDia: f.preferenciaDia,
           notas: f.notas,
         );
-        idsYa.add(eq.id);
+        idsYa.add(equipoId);
         nuevos++;
       }
-      final resumen =
+      final sin = noReconocidos.length;
+      var resumen =
           'Nuevas inscripciones: $nuevos · Ya inscritos: $ya · No reconocidos: $sin';
+      if (sin > 0) {
+        resumen += ' (${noReconocidos.take(5).join(', ')}'
+            '${sin > 5 ? '…' : ''})';
+      }
       await ref.read(repoHojasVinculadasProvider).marcarSync(v.fila.id, resumen);
       return ResultadoActualizacion(
         ok: true, mensaje: resumen,

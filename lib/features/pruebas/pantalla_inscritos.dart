@@ -30,6 +30,29 @@ import 'generar_mangas_wizard.dart';
 import 'importador_inscripciones.dart';
 import 'repositorio_inscripciones_prueba.dart';
 
+/// Confirma la baja de un piloto/equipo de la prueba (se borra el día de
+/// carrera, etc.). Lo quita de Inscritos y de su manga.
+Future<bool> confirmarBajaPrueba(BuildContext context, String nombre) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Dar de baja de la prueba'),
+      content: Text('¿Dar de baja a "$nombre"?\n\n'
+          'Se quita de Inscritos y de su manga. Los carriles del resto no '
+          'cambian: si hace falta, renumera la manga después.'),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar')),
+        FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Dar de baja')),
+      ],
+    ),
+  );
+  return ok == true;
+}
+
 class PantallaInscritos extends ConsumerWidget {
   const PantallaInscritos({super.key, required this.pruebaId});
 
@@ -268,23 +291,7 @@ class _TarjetaInscrito extends ConsumerWidget {
           icon: const Icon(Icons.more_vert),
           onSelected: (op) async {
             if (op == 'quitar') {
-              final ok = await showDialog<bool>(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: const Text('Quitar inscripción'),
-                  content: Text(
-                      '¿Quitar a "${inscrito.equipo.nombre}" de esta prueba?'),
-                  actions: [
-                    TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancelar')),
-                    FilledButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Quitar')),
-                  ],
-                ),
-              );
-              if (ok == true) {
+              if (await confirmarBajaPrueba(context, inscrito.equipo.nombre)) {
                 await ref
                     .read(repoInscripcionesPruebaProvider)
                     .quitar(inscrito.inscripcion.id);
@@ -292,7 +299,7 @@ class _TarjetaInscrito extends ConsumerWidget {
             }
           },
           itemBuilder: (_) => [
-            const PopupMenuItem(value: 'quitar', child: Text('Quitar')),
+            const PopupMenuItem(value: 'quitar', child: Text('Dar de baja')),
           ],
         ),
       ),
@@ -670,10 +677,8 @@ class _PantallaImportarInscripcionesState
     final activo = ref.read(campeonatoActivoProvider);
     if (activo == null) return;
     final db = ref.read(dbProvider);
-    final equipos = await (db.select(db.equipos)
-          ..where((t) => t.campeonatoId.equals(activo.id)))
-        .get();
-    final porNombre = {for (final e in equipos) _norm(e.nombre): e};
+    final buscador =
+        await BuscadorInscritos.cargar(db, activo, ref.read(copasProvider));
 
     final yaInscritos = await (db.select(db.inscripcionesPrueba)
           ..where((t) => t.pruebaId.equals(widget.pruebaId)))
@@ -681,8 +686,13 @@ class _PantallaImportarInscripcionesState
     final idsYa = yaInscritos.map((i) => i.equipoId).toSet();
 
     for (final f in filas) {
-      final eq = porNombre[_norm(f.nombreEquipo)];
-      if (eq == null) {
+      final eq = buscador.equipo(f.nombreEquipo);
+      final piloto = eq == null ? buscador.pilotoSinEquipo(f.nombreEquipo) : null;
+      if (piloto != null) {
+        // Individual: piloto sin equipo todavía; se le crea al importar.
+        f.estado = 'ok';
+        f.pilotoIdCoincidente = piloto.id;
+      } else if (eq == null) {
         f.estado = 'equipo_no_existe';
         f.importar = false;
       } else if (idsYa.contains(eq.id)) {
@@ -697,15 +707,24 @@ class _PantallaImportarInscripcionesState
     if (mounted) setState(() => _previo = filas);
   }
 
-  static String _norm(String s) =>
-      s.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
-
   Future<void> _importar() async {
     setState(() => _trabajando = true);
     int ok = 0, saltados = 0;
     try {
       final repo = ref.read(repoInscripcionesPruebaProvider);
+      final activo = ref.read(campeonatoActivoProvider);
+      final buscador = activo == null
+          ? null
+          : await BuscadorInscritos.cargar(
+              ref.read(dbProvider), activo, ref.read(copasProvider));
       for (final f in _previo) {
+        if (f.importar &&
+            f.equipoIdCoincidente == null &&
+            f.pilotoIdCoincidente != null &&
+            buscador != null) {
+          f.equipoIdCoincidente =
+              await buscador.crearEquipoDePiloto(f.pilotoIdCoincidente!);
+        }
         if (!f.importar || f.equipoIdCoincidente == null) {
           saltados++;
           continue;

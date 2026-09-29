@@ -172,9 +172,10 @@ Future<Uint8List> exportarCatalogosExcel(AppDatabase db) async {
           .map((b) => [_int(b.id), _txt(b.nombre), _txt(_copasATexto(b.copasJson))])
           .toList());
 
-  await hoja('Chasis', ['ID', 'Nombre', 'Copas'],
+  // Chasis sin copa: se usan siempre todos.
+  await hoja('Chasis', ['ID', 'Nombre'],
       () async => (await db.select(db.catalogoChasis).get())
-          .map((c) => [_int(c.id), _txt(c.nombre), _txt(_copasATexto(c.copasJson))])
+          .map((c) => [_int(c.id), _txt(c.nombre)])
           .toList());
 
   await hoja('Neumaticos', ['ID', 'Nombre', 'Referencia', 'Copas'],
@@ -358,10 +359,7 @@ Future<ResultadoImportCatalogos> importarCatalogosExcel(
     await hoja('Chasis', (fila, cols, id) async {
       final nombre = _celda(fila, cols, 'nombre');
       if (nombre.isEmpty) return;
-      final c = CatalogoChasisCompanion(
-        nombre: Value(nombre),
-        copasJson: Value(_textoACopas(_celda(fila, cols, 'copas'))),
-      );
+      final c = CatalogoChasisCompanion(nombre: Value(nombre));
       if (id != null) {
         await (db.update(db.catalogoChasis)..where((t) => t.id.equals(id))).write(c);
         res.suma('Chasis');

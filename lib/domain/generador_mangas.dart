@@ -80,14 +80,14 @@ class GeneradorMangas {
   /// día, el equipo queda en `sinManga`.
   ///
   /// Para cada GRUPO de mangas del mismo día, se aplica la regla de reparto:
-  /// - Máx `tamMaxManga` por manga (default 10).
-  /// - Para 11 equipos del mismo día en 2 mangas: 5 + 6.
-  /// - 12+: reparto igualado; impar → 1ª manga MÁS equipos.
+  /// - `tamMaxManga` = carriles (default 10). La última manga del día nunca
+  ///   deja carriles vacíos si se puede evitar (ver [_distribuirEquipos]).
   /// - Los equipos con MÁS puntos van a la manga más TARDÍA del día
   ///   (las mangas se llenan de la última a la primera).
   ///
   /// Los equipos sin preferencia de día se distribuyen entre las mangas
-  /// que aún tengan hueco, llenando primero las que tienen más capacidad.
+  /// que aún tengan hueco, llenando primero las que tienen más capacidad;
+  /// si todas están llenas, van a la manga con menos equipos.
   ///
   /// Dentro de cada manga: orden por puntuación descendente.
   /// NO se asignan carriles aquí.
@@ -195,16 +195,11 @@ class GeneradorMangas {
       (i) => config.tamMaxManga - cubos[i].length,
     );
     for (final eq in sinPreferencia) {
-      // Buscar el primer cubo con hueco
-      int idx = -1;
-      for (var i = 0; i < numMangas; i++) {
-        if (huecos[i] > 0) {
-          if (idx == -1 || huecos[i] > huecos[idx]) idx = i;
-        }
-      }
-      if (idx == -1) {
-        sinManga.add(eq);
-        continue;
+      // La manga con más hueco; si todas están llenas (las mangas pueden
+      // pasar del número de carriles), la que tenga menos equipos.
+      var idx = 0;
+      for (var i = 1; i < numMangas; i++) {
+        if (huecos[i] > huecos[idx]) idx = i;
       }
       cubos[idx].add(eq);
       huecos[idx]--;
@@ -227,44 +222,39 @@ class GeneradorMangas {
 
   /// Calcula cuántos equipos van en cada manga.
   ///
-  /// Regla:
-  /// - 1..tamMax equipos → 1 manga con todos (acumulando hasta tamMax)
-  /// - 11 equipos → 5 + 6 (1ª con menos, caso especial)
-  /// - 12+ equipos → reparto lo más igualado posible. Si la división es
-  ///   impar, las primeras mangas tienen 1 equipo más que las últimas.
+  /// Reparto lo más igualado posible; lo que sobra de la división decide
+  /// qué mangas llevan un equipo más. La ÚLTIMA manga no puede dejar
+  /// carriles vacíos, así que:
+  /// - Si las mangas no llegan a llenar los carriles (`base < tamMax`), el
+  ///   equipo de más va a las ÚLTIMAS: 17 con 6 carriles en 3 mangas →
+  ///   5 + 6 + 6; 11 con 10 en 2 → 5 + 6.
+  /// - Si todas llenan los carriles, va a las PRIMERAS: 17 con 6 en 2
+  ///   mangas → 9 + 8.
   static List<int> _distribuirEquipos(int total, int numMangas,
       {int tamMax = 10}) {
     if (total <= 0 || numMangas <= 0) return [];
     if (numMangas == 1) return [total];
 
-    if (total == 11 && numMangas == 2) {
-      return [5, 6];
-    }
-
     final base = total ~/ numMangas;
     final resto = total % numMangas;
-    return List.generate(
-      numMangas,
-      (i) => i < resto ? base + 1 : base,
-    );
+    final extraAlFinal = base < tamMax;
+    return List.generate(numMangas, (i) {
+      final conExtra = extraAlFinal ? i >= numMangas - resto : i < resto;
+      return conExtra ? base + 1 : base;
+    });
   }
 
   /// Calcula automáticamente el número de mangas necesario según el total
   /// de equipos y el tamaño máximo por manga (carriles).
   ///
-  /// No es un simple "hacia arriba": solo se añade una manga extra si el
-  /// resto de repartir a `tamMax` supera la MITAD de `tamMax`; en empate se
-  /// queda con menos mangas (más grandes) en vez de crear una casi vacía.
-  /// P.ej. con máximo 6: 13 equipos → 2 mangas (7+6, resto 1 ≤ 3). 15 y 15
-  /// (uno por día) → 2 mangas cada día (resto 3, empate, no sube a 3).
-  /// 16 equipos → si sube a 3 (resto 4 > 3) → reparto 6+5+5.
+  /// Tantas mangas como carriles completos se puedan llenar (hacia abajo):
+  /// ninguna manga deja carriles vacíos y lo que sobra se reparte entre
+  /// ellas, aunque pasen un poco del número de carriles (los equipos rotan).
+  /// P.ej. con 6 carriles: 13 → 2 mangas (7+6); 16 → 8+8; 17 → 9+8.
+  /// Con menos equipos que carriles, una sola manga.
   static int numMangasSugerido({required int totalEquipos, int tamMax = 10}) {
-    if (totalEquipos <= 0) return 1;
     if (totalEquipos <= tamMax) return 1;
-    final base = totalEquipos ~/ tamMax;
-    final resto = totalEquipos % tamMax;
-    final num = resto > tamMax / 2 ? base + 1 : base;
-    return num.clamp(1, totalEquipos);
+    return totalEquipos ~/ tamMax;
   }
 
   /// Sugiere nombres de mangas según el número.
@@ -338,6 +328,55 @@ class GeneradorMangas {
       }
     }
     return out;
+  }
+
+  /// Carriles de salida para una manga de [numEquipos] ya ordenada por
+  /// puntuación descendente (solo individuales): los primeros [carriles]
+  /// salen del 1 al N y el resto descansan D1, D2…
+  static List<String> carrilesSalida(int numEquipos, int carriles) => [
+        for (var i = 0; i < numEquipos; i++)
+          i < carriles ? '${i + 1}' : 'D${i - carriles + 1}',
+      ];
+
+  /// Qué manga hace de pisters en cada una (solo individuales). Devuelve,
+  /// para cada índice de [nombresMangas], el índice de la manga cuyos
+  /// pilotos hacen de pisters en ella (o null si va sola en su día).
+  ///
+  /// Se empareja dentro de cada día, en el orden en que aparecen:
+  /// - 2 mangas: 1↔2. 4: 1↔2 y 3↔4. Número par → siempre parejas.
+  /// - 3 mangas: la 3ª hace de pisters en la 1ª, la 1ª en la 2ª y la 2ª en
+  ///   la 3ª. Número impar (5, 7…) → parejas y las tres últimas en ese ciclo.
+  static List<int?> asignarPisters(List<String> nombresMangas) {
+    final porDia = <String, List<int>>{};
+    for (var i = 0; i < nombresMangas.length; i++) {
+      porDia.putIfAbsent(_diaDe(nombresMangas[i]) ?? '', () => []).add(i);
+    }
+    final out = List<int?>.filled(nombresMangas.length, null);
+    for (final g in porDia.values) {
+      final n = g.length;
+      if (n < 2) continue;
+      final parejas = n.isEven ? n : n - 3;
+      for (var k = 0; k < parejas; k += 2) {
+        out[g[k]] = g[k + 1];
+        out[g[k + 1]] = g[k];
+      }
+      if (n.isOdd) {
+        final a = g[n - 3], b = g[n - 2], c = g[n - 1];
+        out[a] = c;
+        out[b] = a;
+        out[c] = b;
+      }
+    }
+    return out;
+  }
+
+  static String? _diaDe(String nombre) {
+    final nom = _norm(nombre);
+    for (final dia in const ['jueves', 'viernes', 'sabado', 'domingo',
+        'lunes', 'martes', 'miercoles']) {
+      if (nom.contains(dia)) return dia;
+    }
+    return null;
   }
 
   static String _capitalizar(String s) {

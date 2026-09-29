@@ -64,7 +64,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 41;
+  int get schemaVersion => 42;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -445,6 +445,12 @@ class AppDatabase extends _$AppDatabase {
                 () => customStatement('ALTER TABLE catalogo_engranajes DROP COLUMN marca'));
             await _aplicar(() => customStatement(
                 'ALTER TABLE catalogo_engranajes ADD COLUMN diametro REAL'));
+          }
+          if (from < 42) {
+            // Pisters por manga en campeonatos individuales: qué manga hace
+            // de pisters en esta.
+            await _aplicar(() => customStatement(
+                'ALTER TABLE mangas ADD COLUMN pisters_manga_id INTEGER'));
           }
         },
       );

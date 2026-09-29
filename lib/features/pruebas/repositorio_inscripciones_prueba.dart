@@ -21,6 +21,92 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/generador_mangas.dart';
+import '../equipos/repositorio_equipos.dart';
+
+/// Empareja los nombres de una hoja/archivo de inscripciones con los equipos
+/// del campeonato. En formato individual la hoja trae el nombre del piloto:
+/// se busca también por piloto y, si está en el campeonato pero aún no tiene
+/// su equipo de un piloto, se le crea (igual que al inscribirlo a mano).
+class BuscadorInscritos {
+  BuscadorInscritos._(this._db, this._campeonato, this._copas);
+
+  final AppDatabase _db;
+  final Campeonato _campeonato;
+  final List<String> _copas;
+  final _porNombre = <String, Equipo>{};
+  final _pilotosPorNombre = <String, Piloto>{};
+  final _equipoPorPiloto = <int, Equipo>{};
+
+  static Future<BuscadorInscritos> cargar(
+      AppDatabase db, Campeonato campeonato, List<String> copas) async {
+    final b = BuscadorInscritos._(db, campeonato, copas);
+    final equipos = await (db.select(db.equipos)
+          ..where((t) => t.campeonatoId.equals(campeonato.id)))
+        .get();
+    for (final e in equipos) {
+      b._porNombre[_norm(e.nombre)] = e;
+    }
+    if (maxPilotosEquipo(campeonato.formato) == 1) {
+      final ids = (await (db.select(db.pilotoCampeonato)
+                ..where((t) => t.campeonatoId.equals(campeonato.id)))
+              .get())
+          .map((pc) => pc.pilotoId)
+          .toSet();
+      for (final p in await db.select(db.pilotos).get()) {
+        if (ids.contains(p.id)) b._pilotosPorNombre[_norm(p.nombre)] = p;
+      }
+      for (final e in equipos) {
+        b._equipoPorPiloto.putIfAbsent(e.piloto1Id, () => e);
+      }
+    }
+    return b;
+  }
+
+  static String _norm(String s) =>
+      s.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+
+  /// Equipo ya existente para [nombre] (por nombre de equipo o, en
+  /// individual, por nombre de su piloto).
+  Equipo? equipo(String nombre) {
+    final e = _porNombre[_norm(nombre)];
+    if (e != null) return e;
+    final p = _pilotosPorNombre[_norm(nombre)];
+    return p == null ? null : _equipoPorPiloto[p.id];
+  }
+
+  /// Piloto del campeonato (individual) que aún no tiene equipo. Solo si
+  /// hay copa con la que crearlo.
+  Piloto? pilotoSinEquipo(String nombre) {
+    if (_copas.isEmpty || equipo(nombre) != null) return null;
+    return _pilotosPorNombre[_norm(nombre)];
+  }
+
+  /// Crea el equipo de un piloto para [pilotoId] con la primera copa.
+  Future<int> crearEquipoDePiloto(int pilotoId) async {
+    final existente = _equipoPorPiloto[pilotoId];
+    if (existente != null) return existente.id;
+    final p = _pilotosPorNombre.values.firstWhere((p) => p.id == pilotoId);
+    final id = await RepositorioEquipos(_db).crearN(
+      campeonatoId: _campeonato.id,
+      nombre: p.nombre,
+      copa: _copas.first,
+      pilotoIds: [p.id],
+    );
+    final eq = await (_db.select(_db.equipos)..where((t) => t.id.equals(id)))
+        .getSingle();
+    _equipoPorPiloto[p.id] = eq;
+    _porNombre[_norm(eq.nombre)] = eq;
+    return id;
+  }
+
+  /// Equipo para [nombre], creándolo si es un piloto sin equipo.
+  Future<int?> resolver(String nombre) async {
+    final e = equipo(nombre);
+    if (e != null) return e.id;
+    final p = pilotoSinEquipo(nombre);
+    return p == null ? null : crearEquipoDePiloto(p.id);
+  }
+}
 
 /// Inscripción enriquecida con datos del equipo y sus pilotos.
 class InscritoPrueba {
@@ -101,9 +187,47 @@ class RepositorioInscripcionesPrueba {
         );
   }
 
+  /// Da de baja la inscripción a la prueba: también quita al equipo de la
+  /// manga de esa prueba en la que estuviera (el resto de carriles no se
+  /// tocan; se puede renumerar la manga después).
   Future<void> quitar(int id) async {
-    await (db.delete(db.inscripcionesPrueba)..where((t) => t.id.equals(id)))
-        .go();
+    await db.transaction(() async {
+      final ins = await (db.select(db.inscripcionesPrueba)
+            ..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
+      if (ins == null) return;
+      final mangas = await (db.select(db.mangas)
+            ..where((t) => t.pruebaId.equals(ins.pruebaId)))
+          .get();
+      await (db.delete(db.inscripciones)
+            ..where((t) =>
+                t.equipoId.equals(ins.equipoId) &
+                t.mangaId.isIn(mangas.map((m) => m.id))))
+          .go();
+      await (db.delete(db.inscripcionesPrueba)..where((t) => t.id.equals(id)))
+          .go();
+    });
+  }
+
+  /// Igual que [quitar], buscando la inscripción por prueba y equipo.
+  Future<void> darDeBaja({required int pruebaId, required int equipoId}) async {
+    final ins = await (db.select(db.inscripcionesPrueba)
+          ..where((t) =>
+              t.pruebaId.equals(pruebaId) & t.equipoId.equals(equipoId)))
+        .getSingleOrNull();
+    if (ins != null) {
+      await quitar(ins.id);
+    } else {
+      // Metido a mano en una manga sin estar en Inscritos.
+      final mangas = await (db.select(db.mangas)
+            ..where((t) => t.pruebaId.equals(pruebaId)))
+          .get();
+      await (db.delete(db.inscripciones)
+            ..where((t) =>
+                t.equipoId.equals(equipoId) &
+                t.mangaId.isIn(mangas.map((m) => m.id))))
+          .go();
+    }
   }
 
   Future<void> marcarAsignada(int id, bool asignada) async {
@@ -145,6 +269,10 @@ class RepositorioInscripcionesPrueba {
     DateTime? fechaBase,
     int carrilesPorManga = 10,
     bool sustituirExistentes = false,
+    // Solo individuales: carril de salida 1..N / D1.. por orden de puntos,
+    // y qué manga hace de pisters en cada una.
+    bool asignarCarriles = false,
+    bool asignarPisters = false,
   }) async {
     await db.transaction(() async {
       if (sustituirExistentes) {
@@ -161,7 +289,8 @@ class RepositorioInscripcionesPrueba {
             .go();
       }
 
-      // Crear las mangas y sus inscripciones SIN asignar carril
+      // Crear las mangas y sus inscripciones (con carril si se pide)
+      final ids = <int>[];
       for (final mg in mangasGeneradas) {
         final mangaId = await db.into(db.mangas).insert(
               MangasCompanion.insert(
@@ -170,14 +299,30 @@ class RepositorioInscripcionesPrueba {
                 numCarriles: Value(carrilesPorManga),
               ),
             );
-        for (final eq in mg.equipos) {
+        ids.add(mangaId);
+        final carriles = asignarCarriles
+            ? GeneradorMangas.carrilesSalida(
+                mg.equipos.length, carrilesPorManga)
+            : null;
+        for (var i = 0; i < mg.equipos.length; i++) {
           await db.into(db.inscripciones).insert(
                 InscripcionesCompanion.insert(
                   mangaId: mangaId,
-                  equipoId: eq.equipoId,
-                  // sin carril ni seed por defecto
+                  equipoId: mg.equipos[i].equipoId,
+                  carrilSalida: Value(carriles?[i]),
                 ),
               );
+        }
+      }
+
+      if (asignarPisters) {
+        final pisters = GeneradorMangas.asignarPisters(
+            mangasGeneradas.map((m) => m.nombre).toList());
+        for (var i = 0; i < ids.length; i++) {
+          final j = pisters[i];
+          if (j == null) continue;
+          await (db.update(db.mangas)..where((t) => t.id.equals(ids[i])))
+              .write(MangasCompanion(pistersMangaId: Value(ids[j])));
         }
       }
 

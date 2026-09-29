@@ -15,11 +15,14 @@
 //
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/proveedores.dart';
+import '../../data/database/app_database.dart';
+import '../equipos/repositorio_equipos.dart';
 import 'repositorio_pruebas.dart';
 
 class EditorManga extends ConsumerStatefulWidget {
@@ -39,6 +42,9 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
 
   DateTime? _fechaHora;
   String _estado = 'PROGRAMADA';
+  /// Solo individuales: manga cuyos pilotos hacen de pisters en esta.
+  int? _pistersMangaId;
+  List<Manga> _otrasMangas = const [];
   bool _cargando = true;
   bool _guardando = false;
 
@@ -49,11 +55,17 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
   }
 
   Future<void> _cargar() async {
+    final db = ref.read(dbProvider);
+    _otrasMangas = (await (db.select(db.mangas)
+              ..where((t) => t.pruebaId.equals(widget.pruebaId))
+              ..orderBy([(t) => OrderingTerm.asc(t.id)]))
+            .get())
+        .where((m) => m.id != widget.mangaId)
+        .toList();
     if (widget.mangaId == null) {
       setState(() => _cargando = false);
       return;
     }
-    final db = ref.read(dbProvider);
     final m = await (db.select(db.mangas)
           ..where((t) => t.id.equals(widget.mangaId!)))
         .getSingle();
@@ -61,6 +73,8 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
     _numCarriles.text = m.numCarriles.toString();
     _fechaHora = m.fechaHora;
     _estado = m.estado;
+    _pistersMangaId =
+        _otrasMangas.any((o) => o.id == m.pistersMangaId) ? m.pistersMangaId : null;
     if (mounted) setState(() => _cargando = false);
   }
 
@@ -100,13 +114,17 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
     final repo = ref.read(repoMangasProvider);
     try {
       if (widget.mangaId == null) {
-        await repo.crear(
+        final id = await repo.crear(
           pruebaId: widget.pruebaId,
           nombre: _nombre.text.trim(),
           fechaHora: _fechaHora,
           numCarriles: int.parse(_numCarriles.text),
         );
+        if (_pistersMangaId != null) {
+          await repo.cambiarPisters(id, _pistersMangaId);
+        }
       } else {
+        await repo.cambiarPisters(widget.mangaId!, _pistersMangaId);
         await repo.actualizar(
           id: widget.mangaId!,
           nombre: _nombre.text.trim(),
@@ -225,6 +243,29 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
                 return null;
               },
             ),
+            if (maxPilotosEquipo(
+                        ref.watch(campeonatoActivoProvider)?.formato ??
+                            'PAREJAS') ==
+                    1 &&
+                _otrasMangas.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              DropdownButtonFormField<int?>(
+                initialValue: _pistersMangaId,
+                decoration: const InputDecoration(
+                  labelText: 'Pisters',
+                  helperText: 'Manga cuyos pilotos hacen de pisters en esta',
+                  prefixIcon: Icon(Icons.sports_outlined),
+                ),
+                items: [
+                  const DropdownMenuItem<int?>(
+                      value: null, child: Text('— sin pisters —')),
+                  for (final o in _otrasMangas)
+                    DropdownMenuItem<int?>(
+                        value: o.id, child: Text('Pilotos de ${o.nombre}')),
+                ],
+                onChanged: (v) => setState(() => _pistersMangaId = v),
+              ),
+            ],
             if (!esNuevo) ...[
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(

@@ -17,10 +17,12 @@
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:convert';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../services/fotos_coches_drive.dart';
 import '../../services/generador_id.dart';
 import '../../services/google_sheets_service.dart';
 import '../catalogos/importar_catalogo.dart';
@@ -50,6 +52,9 @@ class FilaSubida {
   // Si esta fila representa un borrado pendiente (ver [PlanSubida.borrados]),
   // el id (local, de la tabla de borrados) a limpiar tras aplicar.
   final int? tombstoneId;
+  // Coche con foto solo en local: se sube a Drive al aplicar y su enlace se
+  // escribe en la columna [col] de la fila.
+  final ({int cocheId, String fotoPath, int col})? fotoPendiente;
   FilaSubida({
     required this.etiqueta,
     required this.esNueva,
@@ -60,6 +65,7 @@ class FilaSubida {
     this.dbId,
     this.idExternoNuevo,
     this.tombstoneId,
+    this.fotoPendiente,
   });
 }
 
@@ -136,6 +142,9 @@ class SubidorCatalogo {
                 'colCreditos': c.creditosCoche,
                 'colCopa': _copasStr(c.copasJson),
                 'colId': c.idExterno ?? '',
+                // No es un valor de celda: la foto local, que [preparar]
+                // trata aparte (ver _fotoCoche).
+                'colFoto': c.fotoPath ?? '',
               }
           ],
         );
@@ -296,6 +305,10 @@ class SubidorCatalogo {
 
     int? colDe(String field) {
       if (field == 'colId') return idColIdx;
+      // Vínculos anteriores a la columna FOTO: se busca por la cabecera.
+      if (field == 'colFoto' && v.mapeo['colFoto'] == null) {
+        return headerIdx['foto'] ?? headerIdx['imagen'];
+      }
       final hn = v.mapeo[field];
       if (hn == null) return null;
       return headerIdx[_norm(hn.toString())];
@@ -405,15 +418,19 @@ class SubidorCatalogo {
         // Nueva → append.
         final fila = List<Object?>.filled(width, '');
         campos.forEach((field, val) {
+          if (field == 'colFoto') return;
           final c = colDe(field);
           if (c != null && c < width) fila[c] = val;
         });
+        final foto = _fotoCoche(campos, colDe('colFoto'), '', width,
+            local.ids[i], fila);
         nuevas.add(FilaSubida(
           etiqueta: etiqueta,
           esNueva: true,
           valores: fila,
           dbId: idNuevoGenerado != null ? local.ids[i] : null,
           idExternoNuevo: idNuevoGenerado,
+          fotoPendiente: foto.pendiente,
         ));
       } else {
         final existente = List<String>.from(raw[rowIdx]);
@@ -423,6 +440,7 @@ class SubidorCatalogo {
         final fila = List<Object?>.from(existente);
         final diffs = <DiffColumna>[];
         campos.forEach((field, val) {
+          if (field == 'colFoto') return;
           final c = colDe(field);
           if (c == null || c >= width) return;
           if (_norm(existente[c]) != _norm(val)) {
@@ -433,6 +451,11 @@ class SubidorCatalogo {
             fila[c] = val;
           }
         });
+        final cFoto = colDe('colFoto');
+        final foto = _fotoCoche(campos, cFoto,
+            cFoto == null || cFoto >= width ? '' : existente[cFoto], width,
+            local.ids[i], fila);
+        if (foto.diff != null) diffs.add(foto.diff!);
         if (diffs.isEmpty) {
           identicas++;
         } else {
@@ -442,6 +465,7 @@ class SubidorCatalogo {
             filaNum1: rowIdx + 1,
             valores: fila,
             diffs: diffs,
+            fotoPendiente: foto.pendiente,
           ));
         }
       }
@@ -461,11 +485,72 @@ class SubidorCatalogo {
     );
   }
 
+  /// Foto de coche al subir: solo rellena la celda FOTO si en la hoja está
+  /// vacía (la hoja manda; un enlace distinto no se sobrescribe). Si la foto
+  /// ya viene de Drive se escribe su enlace; si solo está en local, queda
+  /// pendiente de subir a Drive al aplicar.
+  ({DiffColumna? diff, ({int cocheId, String fotoPath, int col})? pendiente})
+      _fotoCoche(Map<String, Object?> campos, int? col, String celdaHoja,
+          int width, int cocheId, List<Object?> fila) {
+    final fotoPath = (campos['colFoto'] as String?) ?? '';
+    if (col == null || col >= width || fotoPath.isEmpty) {
+      return (diff: null, pendiente: null);
+    }
+    if (celdaHoja.trim().isNotEmpty) return (diff: null, pendiente: null);
+    final idDrive = FotosCochesDrive.idDeFotoLocal(fotoPath);
+    if (idDrive != null) {
+      final enlace = FotosCochesDrive.enlace(idDrive);
+      fila[col] = enlace;
+      return (diff: DiffColumna('FOTO', enlace, ''), pendiente: null);
+    }
+    return (
+      diff: DiffColumna('FOTO', '(se sube la foto a Drive)', ''),
+      pendiente: (cocheId: cocheId, fotoPath: fotoPath, col: col),
+    );
+  }
+
+  /// Sube a Drive las fotos pendientes de las filas marcadas y escribe su
+  /// enlace en la fila. Devuelve las que fallan (la fila se sube igual, sin
+  /// enlace).
+  Future<List<String>> _subirFotos(List<FilaSubida> filas) async {
+    final pendientes = filas.where((f) => f.fotoPendiente != null).toList();
+    if (pendientes.isEmpty) return const [];
+    final fotos = ref.read(fotosCochesDriveProvider);
+    final repo = ref.read(repoCatalogosProvider);
+    final fallidas = <String>[];
+    await fotos.conDrive((api) async {
+      for (final f in pendientes) {
+        final fp = f.fotoPendiente!;
+        try {
+          final idDrive = await fotos.subir(api, fp.fotoPath, f.etiqueta);
+          final nombre = await fotos.renombrarLocal(fp.fotoPath, idDrive);
+          await repo.actualizarCoche(
+              fp.cocheId, CatalogoCochesCompanion(fotoPath: Value(nombre)));
+          f.valores[fp.col] = FotosCochesDrive.enlace(idDrive);
+        } catch (e) {
+          f.valores[fp.col] = '';
+          fallidas.add('${f.etiqueta}: $e');
+        }
+      }
+    });
+    return fallidas;
+  }
+
   /// Aplica el plan: añade las nuevas marcadas, sobrescribe los conflictos
   /// marcados y borra en la hoja los borrados confirmados.
-  Future<({int anadidas, int actualizadas, int borradas})> aplicar(
-      PlanSubida plan) async {
+  Future<
+      ({
+        int anadidas,
+        int actualizadas,
+        int borradas,
+        List<String> fotosFallidas
+      })> aplicar(PlanSubida plan) async {
     final svc = ref.read(googleSheetsServiceProvider);
+    // Primero las fotos: su enlace va dentro de la fila que se escribe.
+    final fotosFallidas = await _subirFotos([
+      ...plan.nuevas.where((f) => f.aplicar),
+      ...plan.conflictos.where((f) => f.aplicar),
+    ]);
     // Se recorta el relleno de columnas vacías de la izquierda (antes de
     // primeraCol): el "append" de Sheets ya detecta la tabla a partir de esa
     // columna, así que enviar ese relleno duplicaría el desplazamiento.
@@ -509,7 +594,12 @@ class SubidorCatalogo {
       }
       borr++;
     }
-    return (anadidas: appendRows.length, actualizadas: act, borradas: borr);
+    return (
+      anadidas: appendRows.length,
+      actualizadas: act,
+      borradas: borr,
+      fotosFallidas: fotosFallidas,
+    );
   }
 }
 

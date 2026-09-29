@@ -14,6 +14,57 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.12.0] — 2026-09-26
+
+### Añadido
+- **Cambios a mano en las mangas el día de carrera:**
+  - **Renumerar carriles** (botón en el detalle de la manga, solo campeonatos individuales): vuelve a asignar los carriles por puntos, de más a menos, 1 al número de carriles de la manga y luego D1, D2…
+  - **Intercambiar carril con…** en el menú de cada piloto de la manga.
+  - **Pisters editables** en "Editar manga" (solo individuales): elige qué manga hace de pisters en esta, o ninguna.
+  - **Aviso de carriles repetidos** en el detalle de la manga, con los pilotos afectados.
+  - **Dar de baja de la prueba** a un piloto que se borra: desde Inscritos, desde el menú del piloto en el detalle de la manga o con el botón rojo en "Editar mangas". Lo quita de Inscritos y de su manga; el resto de carriles no cambia (se puede renumerar después).
+
+### Corregido
+- **"Quitar" en Inscritos dejaba al piloto dentro de su manga.** Ahora es "Dar de baja" y lo quita de las dos. Y "Quitar de la manga" lo devuelve a Inscritos como pendiente de manga.
+- **"Editar mangas" no se refrescaba** al mover o quitar un piloto hasta volver a abrir la pantalla.
+- **Al mover un piloto a otra manga se llevaba su carril**, y podía quedar repetido en la manga de destino. Ahora llega sin carril, para asignárselo allí.
+
+## [1.11.0] — 2026-09-26
+
+### Añadido
+- **Generar mangas: asignar carril y pisters automáticamente (solo campeonatos individuales).** Dos opciones nuevas en el asistente, desmarcadas por defecto:
+  - **Asignar carril automáticamente**: dentro de cada manga, por puntos de más a menos, los pilotos salen en los carriles 1 al número de carriles y, si hay más, D1, D2… (descansos).
+  - **Asignar pisters**: entre las mangas del mismo día. Con 2 mangas, los de la 2ª hacen de pisters en la 1ª y viceversa; con 3, los de la 3ª en la 1ª, los de la 1ª en la 2ª y los de la 2ª en la 3ª; con 4, 1ª↔2ª y 3ª↔4ª (con más mangas, parejas y, si son impares, las tres últimas en ciclo).
+  - Se ven en la vista previa, en el detalle de la manga ("Pisters: pilotos de…" con sus nombres) y en el PDF de mangas.
+
+### Corregido
+- **Las mangas creadas con el asistente se guardaban siempre con 10 carriles**, fuese cual fuese el número elegido. Ahora guardan los carriles del asistente.
+
+## [1.10.2] — 2026-09-25
+
+### Corregido
+- **El generador de mangas dejaba carriles vacíos en la última manga del día.** Con 17 pilotos el jueves y 6 carriles salían 3 mangas de 6 + 6 + 5, con la de 5 al final. Ahora se hacen tantas mangas como carriles completos se puedan llenar y lo que sobra se reparte entre ellas: 17 → 2 mangas de 9 + 8 (13 → 7 + 6; 16 → 8 + 8). Si se fuerzan más mangas a mano, la manga con menos pilotos va delante y la última siempre llena los carriles (17 en 3 → 5 + 6 + 6).
+- **Los equipos sin día preferido se quedaban fuera ("sin manga") si las mangas ya estaban llenas.** Ahora van a la manga con menos equipos.
+
+## [1.10.1] — 2026-09-25
+
+### Corregido
+- **En campeonatos individuales, las inscripciones desde Google Sheets o archivo no reconocían a los pilotos nuevos.** Solo se buscaba por nombre de equipo, así que un piloto dado de alta desde la hoja de pilotos (que aún no tiene su equipo de un piloto) salía como "No reconocido" / "No existe". Ahora, en formato individual, también se busca por el nombre del piloto del campeonato y, si no tiene equipo, se le crea con la copa del campeonato, igual que al inscribirlo a mano. Vale para "Actualizar desde Drive", "Vincular Google Sheet" y "Desde archivo CSV / Excel".
+- **El resumen de "Actualizar desde Drive" en Inscritos muestra los nombres no reconocidos**, para saber qué revisar en la hoja.
+
+## [1.10.0] — 2026-09-23
+
+### Añadido
+- **Fotos de coche sincronizadas con Google Sheets/Drive.** En la hoja de coches, una columna **FOTO** con el enlace de Drive de la imagen (Compartir → Copiar enlace):
+  - **Actualizar desde Drive** descarga la foto (reducida a JPEG de 1600 px como máximo) y la asigna al coche. Solo se vuelve a descargar si cambia el enlace; una celda vacía no borra la foto local.
+  - **Subir al Sheet** sube a Drive (carpeta "PitWall Control - Fotos coches") las fotos que solo están en la app y escribe su enlace en la hoja, solo si la celda FOTO está vacía.
+  - Los vínculos de hoja ya creados detectan la columna FOTO por su cabecera, sin tener que volver a importar. No sirven las imágenes pegadas dentro de la celda ni `=IMAGE()`: tiene que ser el enlace en texto.
+
+## [1.9.5] — 2026-09-23
+
+### Mejorado
+- **Chasis deja de tener copa: en la verificación salen siempre todos.** Antes, un chasis sin copa no se podía usar y el desplegable salía vacío (la hoja de chasis no tiene columna de copa). La pantalla de Chasis ya no pide copas, y el Excel de catálogos exporta los chasis sin la columna Copas.
+
 ## [1.9.4] — 2026-09-23
 
 ### Corregido

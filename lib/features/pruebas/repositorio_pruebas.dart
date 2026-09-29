@@ -20,6 +20,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../domain/generador_mangas.dart';
+
+/// Puntos con los que se ordena a los pilotos al hacer mangas y carriles:
+/// los puntos brutos acumulados en el campeonato y, si aún no hay ninguno,
+/// la puntuación previa (saldo de la temporada anterior).
+Future<Map<int, num>> puntosSemillaPorPiloto(
+    AppDatabase db, int campeonatoId) async {
+  final pruebas = await (db.select(db.pruebas)
+        ..where((t) => t.campeonatoId.equals(campeonatoId)))
+      .get();
+  final mangas = await (db.select(db.mangas)
+        ..where((t) => t.pruebaId.isIn(pruebas.map((p) => p.id))))
+      .get();
+  final mangaIds = mangas.map((m) => m.id).toSet();
+  final resultados = mangaIds.isEmpty
+      ? <Resultado>[]
+      : await (db.select(db.resultados)
+            ..where((t) => t.mangaId.isIn(mangaIds)))
+          .get();
+  final bruto = <int, num>{};
+  for (final r in resultados) {
+    bruto.update(r.pilotoId, (v) => v + r.puntos, ifAbsent: () => r.puntos);
+  }
+  if (bruto.values.any((v) => v > 0)) return bruto;
+  final perfiles = await (db.select(db.pilotoCampeonato)
+        ..where((t) => t.campeonatoId.equals(campeonatoId)))
+      .get();
+  return {for (final p in perfiles) p.pilotoId: p.saldoTemporadaAnterior};
+}
 
 const estadosPrueba = ['PROGRAMADA', 'EN_CURSO', 'TERMINADA', 'CANCELADA'];
 
@@ -167,7 +196,16 @@ class RepositorioMangas {
     );
   }
 
+  /// Manga cuyos pilotos hacen de pisters en [id] (null = ninguna).
+  Future<void> cambiarPisters(int id, int? pistersMangaId) async {
+    await (db.update(db.mangas)..where((t) => t.id.equals(id)))
+        .write(MangasCompanion(pistersMangaId: Value(pistersMangaId)));
+  }
+
   Future<void> borrar(int id) async {
+    // Las mangas que tenían a esta como pisters se quedan sin asignar.
+    await (db.update(db.mangas)..where((t) => t.pistersMangaId.equals(id)))
+        .write(const MangasCompanion(pistersMangaId: Value(null)));
     await (db.delete(db.mangas)..where((t) => t.id.equals(id))).go();
   }
 }
@@ -276,10 +314,96 @@ class RepositorioInscripciones {
         .write(companion);
   }
 
-  Future<void> quitar(int inscripcionId) async {
-    await (db.delete(db.inscripciones)
+  /// Mueve la inscripción a otra manga. Se queda sin carril: el que tenía
+  /// era de la manga de origen y en la nueva podría estar ocupado.
+  Future<void> moverAManga(int inscripcionId, int mangaId) async {
+    await (db.update(db.inscripciones)
           ..where((t) => t.id.equals(inscripcionId)))
-        .go();
+        .write(InscripcionesCompanion(
+      mangaId: Value(mangaId),
+      carrilSalida: const Value(null),
+      seedDirecto: const Value(false),
+    ));
+  }
+
+  /// Intercambia carril (y marca de seed) entre dos inscripciones.
+  Future<void> intercambiarCarril(int aId, int bId) async {
+    await db.transaction(() async {
+      final a = await (db.select(db.inscripciones)
+            ..where((t) => t.id.equals(aId)))
+          .getSingle();
+      final b = await (db.select(db.inscripciones)
+            ..where((t) => t.id.equals(bId)))
+          .getSingle();
+      await cambiarCarril(
+          inscripcionId: a.id,
+          carrilSalida: b.carrilSalida,
+          seedDirecto: b.seedDirecto);
+      await cambiarCarril(
+          inscripcionId: b.id,
+          carrilSalida: a.carrilSalida,
+          seedDirecto: a.seedDirecto);
+    });
+  }
+
+  /// Vuelve a numerar los carriles de la manga como el generador: por
+  /// puntos de más a menos, 1..numCarriles y luego D1, D2…
+  Future<void> renumerarCarriles(int mangaId) async {
+    await db.transaction(() async {
+      final manga = await (db.select(db.mangas)
+            ..where((t) => t.id.equals(mangaId)))
+          .getSingle();
+      final prueba = await (db.select(db.pruebas)
+            ..where((t) => t.id.equals(manga.pruebaId)))
+          .getSingle();
+      final puntos = await puntosSemillaPorPiloto(db, prueba.campeonatoId);
+      final ins = await (db.select(db.inscripciones)
+            ..where((t) => t.mangaId.equals(mangaId)))
+          .get();
+      final filas = <(Inscripcione, num, String)>[];
+      for (final i in ins) {
+        final eq = await (db.select(db.equipos)
+              ..where((t) => t.id.equals(i.equipoId)))
+            .getSingle();
+        final pts = (puntos[eq.piloto1Id] ?? 0) +
+            (eq.piloto2Id == null ? 0 : (puntos[eq.piloto2Id!] ?? 0));
+        filas.add((i, pts, eq.nombre));
+      }
+      filas.sort((a, b) {
+        final c = b.$2.compareTo(a.$2);
+        return c != 0 ? c : a.$3.compareTo(b.$3);
+      });
+      final carriles =
+          GeneradorMangas.carrilesSalida(filas.length, manga.numCarriles);
+      for (var k = 0; k < filas.length; k++) {
+        await cambiarCarril(
+            inscripcionId: filas[k].$1.id,
+            carrilSalida: carriles[k],
+            seedDirecto: false);
+      }
+    });
+  }
+
+  /// Quita al equipo de la manga. Sigue inscrito a la prueba, pero vuelve a
+  /// quedar "sin manga" en Inscritos.
+  Future<void> quitar(int inscripcionId) async {
+    await db.transaction(() async {
+      final ins = await (db.select(db.inscripciones)
+            ..where((t) => t.id.equals(inscripcionId)))
+          .getSingleOrNull();
+      if (ins == null) return;
+      final manga = await (db.select(db.mangas)
+            ..where((t) => t.id.equals(ins.mangaId)))
+          .getSingle();
+      await (db.delete(db.inscripciones)
+            ..where((t) => t.id.equals(inscripcionId)))
+          .go();
+      await (db.update(db.inscripcionesPrueba)
+            ..where((t) =>
+                t.pruebaId.equals(manga.pruebaId) &
+                t.equipoId.equals(ins.equipoId)))
+          .write(const InscripcionesPruebaCompanion(asignada: Value(false)));
+    });
   }
 }
 

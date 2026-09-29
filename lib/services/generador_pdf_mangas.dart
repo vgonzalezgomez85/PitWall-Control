@@ -25,6 +25,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../core/proveedores.dart';
 import '../data/database/app_database.dart';
+import '../features/pruebas/repositorio_pruebas.dart';
 import 'exportar_config.dart';
 import 'pdf_marca.dart';
 import 'pdf_util.dart';
@@ -87,7 +88,7 @@ class GeneradorPdfMangas {
         .getSingle();
 
     // Obtener puntos brutos acumulados por piloto en este campeonato
-    final puntosPiloto = await _puntosBrutosPorPiloto(db, prueba.campeonatoId);
+    final puntosPiloto = await puntosSemillaPorPiloto(db, prueba.campeonatoId);
 
     // Cargar mangas con sus inscritos
     final mangas = await (db.select(db.mangas)
@@ -184,10 +185,22 @@ class GeneradorPdfMangas {
         ),
       );
     }
+    // Pisters (individuales): nombre de la manga y de sus pilotos.
+    String? pistersDe(_MangaPdf m) {
+      final id = m.manga.pistersMangaId;
+      if (id == null) return null;
+      final otra = mangasPdf.where((x) => x.manga.id == id).firstOrNull;
+      if (otra == null) return null;
+      final nombres = otra.filas.map((f) => f.nombreEquipo).join(', ');
+      return '${t('Pisters: pilotos de')} ${otra.manga.nombre}'
+          '${nombres.isEmpty ? '' : ' — $nombres'}';
+    }
+
     for (final m in mangasPdf) {
+      final pisters = pistersDe(m);
       agregarHojaUnica(
         pdf,
-        filas: m.filas.length + 6, // margen para hero + banda + cabecera
+        filas: m.filas.length + (pisters == null ? 6 : 7), // hero + banda + cabecera (+ pisters)
         contenido: (ctx) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
           children: [
@@ -199,6 +212,15 @@ class GeneradorPdfMangas {
             ),
             pw.SizedBox(height: 10),
             _bandaManga(m),
+            if (pisters != null)
+              pw.Padding(
+                padding: const pw.EdgeInsets.fromLTRB(10, 6, 10, 0),
+                child: pw.Text(pisters,
+                    style: pw.TextStyle(
+                        color: _texto,
+                        fontSize: 9,
+                        fontWeight: pw.FontWeight.bold)),
+              ),
             pw.Container(
               color: PdfColors.white,
               padding: const pw.EdgeInsets.fromLTRB(10, 6, 10, 4),
@@ -215,38 +237,6 @@ class GeneradorPdfMangas {
     }
 
     return pdf.save();
-  }
-
-  Future<Map<int, num>> _puntosBrutosPorPiloto(
-      AppDatabase db, int campeonatoId) async {
-    final pruebas = await (db.select(db.pruebas)
-          ..where((t) => t.campeonatoId.equals(campeonatoId)))
-        .get();
-    final pids = pruebas.map((p) => p.id).toSet();
-    final mgs = await (db.select(db.mangas)
-          ..where((t) => t.pruebaId.isIn(pids)))
-        .get();
-    final mids = mgs.map((m) => m.id).toSet();
-    final res = mids.isEmpty
-        ? <Resultado>[]
-        : await (db.select(db.resultados)
-              ..where((t) => t.mangaId.isIn(mids)))
-            .get();
-    final map = <int, num>{};
-    for (final r in res) {
-      map.update(r.pilotoId, (v) => v + r.puntos, ifAbsent: () => r.puntos);
-    }
-    // fallback: saldo año anterior si no hay puntos
-    final hay = map.values.any((v) => v > 0);
-    if (!hay) {
-      final perfiles = await (db.select(db.pilotoCampeonato)
-            ..where((t) => t.campeonatoId.equals(campeonatoId)))
-          .get();
-      for (final p in perfiles) {
-        map[p.pilotoId] = p.saldoTemporadaAnterior;
-      }
-    }
-    return map;
   }
 
   // ---- BANDA DE MANGA ----

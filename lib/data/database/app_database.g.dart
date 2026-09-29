@@ -4476,6 +4476,17 @@ class $MangasTable extends Mangas with TableInfo<$MangasTable, Manga> {
     requiredDuringInsert: false,
     defaultValue: const Constant('PROGRAMADA'),
   );
+  static const VerificationMeta _pistersMangaIdMeta = const VerificationMeta(
+    'pistersMangaId',
+  );
+  @override
+  late final GeneratedColumn<int> pistersMangaId = GeneratedColumn<int>(
+    'pisters_manga_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4484,6 +4495,7 @@ class $MangasTable extends Mangas with TableInfo<$MangasTable, Manga> {
     fechaHora,
     numCarriles,
     estado,
+    pistersMangaId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4537,6 +4549,15 @@ class $MangasTable extends Mangas with TableInfo<$MangasTable, Manga> {
         estado.isAcceptableOrUnknown(data['estado']!, _estadoMeta),
       );
     }
+    if (data.containsKey('pisters_manga_id')) {
+      context.handle(
+        _pistersMangaIdMeta,
+        pistersMangaId.isAcceptableOrUnknown(
+          data['pisters_manga_id']!,
+          _pistersMangaIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -4570,6 +4591,10 @@ class $MangasTable extends Mangas with TableInfo<$MangasTable, Manga> {
         DriftSqlType.string,
         data['${effectivePrefix}estado'],
       )!,
+      pistersMangaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}pisters_manga_id'],
+      ),
     );
   }
 
@@ -4586,6 +4611,9 @@ class Manga extends DataClass implements Insertable<Manga> {
   final DateTime? fechaHora;
   final int numCarriles;
   final String estado;
+
+  /// Manga cuyos pilotos hacen de pisters en esta (solo individuales).
+  final int? pistersMangaId;
   const Manga({
     required this.id,
     required this.pruebaId,
@@ -4593,6 +4621,7 @@ class Manga extends DataClass implements Insertable<Manga> {
     this.fechaHora,
     required this.numCarriles,
     required this.estado,
+    this.pistersMangaId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4605,6 +4634,9 @@ class Manga extends DataClass implements Insertable<Manga> {
     }
     map['num_carriles'] = Variable<int>(numCarriles);
     map['estado'] = Variable<String>(estado);
+    if (!nullToAbsent || pistersMangaId != null) {
+      map['pisters_manga_id'] = Variable<int>(pistersMangaId);
+    }
     return map;
   }
 
@@ -4618,6 +4650,9 @@ class Manga extends DataClass implements Insertable<Manga> {
           : Value(fechaHora),
       numCarriles: Value(numCarriles),
       estado: Value(estado),
+      pistersMangaId: pistersMangaId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pistersMangaId),
     );
   }
 
@@ -4633,6 +4668,7 @@ class Manga extends DataClass implements Insertable<Manga> {
       fechaHora: serializer.fromJson<DateTime?>(json['fechaHora']),
       numCarriles: serializer.fromJson<int>(json['numCarriles']),
       estado: serializer.fromJson<String>(json['estado']),
+      pistersMangaId: serializer.fromJson<int?>(json['pistersMangaId']),
     );
   }
   @override
@@ -4645,6 +4681,7 @@ class Manga extends DataClass implements Insertable<Manga> {
       'fechaHora': serializer.toJson<DateTime?>(fechaHora),
       'numCarriles': serializer.toJson<int>(numCarriles),
       'estado': serializer.toJson<String>(estado),
+      'pistersMangaId': serializer.toJson<int?>(pistersMangaId),
     };
   }
 
@@ -4655,6 +4692,7 @@ class Manga extends DataClass implements Insertable<Manga> {
     Value<DateTime?> fechaHora = const Value.absent(),
     int? numCarriles,
     String? estado,
+    Value<int?> pistersMangaId = const Value.absent(),
   }) => Manga(
     id: id ?? this.id,
     pruebaId: pruebaId ?? this.pruebaId,
@@ -4662,6 +4700,9 @@ class Manga extends DataClass implements Insertable<Manga> {
     fechaHora: fechaHora.present ? fechaHora.value : this.fechaHora,
     numCarriles: numCarriles ?? this.numCarriles,
     estado: estado ?? this.estado,
+    pistersMangaId: pistersMangaId.present
+        ? pistersMangaId.value
+        : this.pistersMangaId,
   );
   Manga copyWithCompanion(MangasCompanion data) {
     return Manga(
@@ -4673,6 +4714,9 @@ class Manga extends DataClass implements Insertable<Manga> {
           ? data.numCarriles.value
           : this.numCarriles,
       estado: data.estado.present ? data.estado.value : this.estado,
+      pistersMangaId: data.pistersMangaId.present
+          ? data.pistersMangaId.value
+          : this.pistersMangaId,
     );
   }
 
@@ -4684,14 +4728,22 @@ class Manga extends DataClass implements Insertable<Manga> {
           ..write('nombre: $nombre, ')
           ..write('fechaHora: $fechaHora, ')
           ..write('numCarriles: $numCarriles, ')
-          ..write('estado: $estado')
+          ..write('estado: $estado, ')
+          ..write('pistersMangaId: $pistersMangaId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, pruebaId, nombre, fechaHora, numCarriles, estado);
+  int get hashCode => Object.hash(
+    id,
+    pruebaId,
+    nombre,
+    fechaHora,
+    numCarriles,
+    estado,
+    pistersMangaId,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4701,7 +4753,8 @@ class Manga extends DataClass implements Insertable<Manga> {
           other.nombre == this.nombre &&
           other.fechaHora == this.fechaHora &&
           other.numCarriles == this.numCarriles &&
-          other.estado == this.estado);
+          other.estado == this.estado &&
+          other.pistersMangaId == this.pistersMangaId);
 }
 
 class MangasCompanion extends UpdateCompanion<Manga> {
@@ -4711,6 +4764,7 @@ class MangasCompanion extends UpdateCompanion<Manga> {
   final Value<DateTime?> fechaHora;
   final Value<int> numCarriles;
   final Value<String> estado;
+  final Value<int?> pistersMangaId;
   const MangasCompanion({
     this.id = const Value.absent(),
     this.pruebaId = const Value.absent(),
@@ -4718,6 +4772,7 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     this.fechaHora = const Value.absent(),
     this.numCarriles = const Value.absent(),
     this.estado = const Value.absent(),
+    this.pistersMangaId = const Value.absent(),
   });
   MangasCompanion.insert({
     this.id = const Value.absent(),
@@ -4726,6 +4781,7 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     this.fechaHora = const Value.absent(),
     this.numCarriles = const Value.absent(),
     this.estado = const Value.absent(),
+    this.pistersMangaId = const Value.absent(),
   }) : pruebaId = Value(pruebaId),
        nombre = Value(nombre);
   static Insertable<Manga> custom({
@@ -4735,6 +4791,7 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     Expression<DateTime>? fechaHora,
     Expression<int>? numCarriles,
     Expression<String>? estado,
+    Expression<int>? pistersMangaId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4743,6 +4800,7 @@ class MangasCompanion extends UpdateCompanion<Manga> {
       if (fechaHora != null) 'fecha_hora': fechaHora,
       if (numCarriles != null) 'num_carriles': numCarriles,
       if (estado != null) 'estado': estado,
+      if (pistersMangaId != null) 'pisters_manga_id': pistersMangaId,
     });
   }
 
@@ -4753,6 +4811,7 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     Value<DateTime?>? fechaHora,
     Value<int>? numCarriles,
     Value<String>? estado,
+    Value<int?>? pistersMangaId,
   }) {
     return MangasCompanion(
       id: id ?? this.id,
@@ -4761,6 +4820,7 @@ class MangasCompanion extends UpdateCompanion<Manga> {
       fechaHora: fechaHora ?? this.fechaHora,
       numCarriles: numCarriles ?? this.numCarriles,
       estado: estado ?? this.estado,
+      pistersMangaId: pistersMangaId ?? this.pistersMangaId,
     );
   }
 
@@ -4785,6 +4845,9 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     if (estado.present) {
       map['estado'] = Variable<String>(estado.value);
     }
+    if (pistersMangaId.present) {
+      map['pisters_manga_id'] = Variable<int>(pistersMangaId.value);
+    }
     return map;
   }
 
@@ -4796,7 +4859,8 @@ class MangasCompanion extends UpdateCompanion<Manga> {
           ..write('nombre: $nombre, ')
           ..write('fechaHora: $fechaHora, ')
           ..write('numCarriles: $numCarriles, ')
-          ..write('estado: $estado')
+          ..write('estado: $estado, ')
+          ..write('pistersMangaId: $pistersMangaId')
           ..write(')'))
         .toString();
   }
@@ -7086,7 +7150,7 @@ class CatalogoCoche extends DataClass implements Insertable<CatalogoCoche> {
   final int creditosCoche;
   final bool activo;
 
-  /// JSON array de copas donde aplica este coche. Vacío "[]" = aplica a todas.
+  /// JSON array de copas donde aplica este coche. Vacío "[]" = no aplica a ninguna (no se puede usar hasta asignarle copa).
   final String copasJson;
 
   /// Nombre de archivo de la foto del coche (en la carpeta de fotos local).
@@ -12114,7 +12178,7 @@ class CatalogoBancada extends DataClass implements Insertable<CatalogoBancada> {
   final int id;
   final String nombre;
 
-  /// JSON array de copas donde aplica. Vacío "[]" = aplica a todas.
+  /// JSON array de copas donde aplica. Vacío "[]" = no aplica a ninguna (no se puede usar hasta asignarle copa).
   final String copasJson;
   final String? idExterno;
   const CatalogoBancada({
@@ -12392,7 +12456,7 @@ class CatalogoChasi extends DataClass implements Insertable<CatalogoChasi> {
   final int id;
   final String nombre;
 
-  /// JSON array de copas donde aplica. Vacío "[]" = aplica a todas.
+  /// JSON array de copas donde aplica. Vacío "[]" = no aplica a ninguna (no se puede usar hasta asignarle copa).
   final String copasJson;
   const CatalogoChasi({
     required this.id,
@@ -13467,7 +13531,7 @@ class CatalogoMotore extends DataClass implements Insertable<CatalogoMotore> {
   final int? rpm;
   final double? gauss;
 
-  /// JSON array de copas donde aplica. Vacío "[]" = aplica a todas.
+  /// JSON array de copas donde aplica. Vacío "[]" = no aplica a ninguna (no se puede usar hasta asignarle copa).
   final String copasJson;
 
   /// Identificador estable para sincronizar con Google Sheets (columna ID de
@@ -21731,6 +21795,7 @@ typedef $$MangasTableCreateCompanionBuilder =
       Value<DateTime?> fechaHora,
       Value<int> numCarriles,
       Value<String> estado,
+      Value<int?> pistersMangaId,
     });
 typedef $$MangasTableUpdateCompanionBuilder =
     MangasCompanion Function({
@@ -21740,6 +21805,7 @@ typedef $$MangasTableUpdateCompanionBuilder =
       Value<DateTime?> fechaHora,
       Value<int> numCarriles,
       Value<String> estado,
+      Value<int?> pistersMangaId,
     });
 
 final class $$MangasTableReferences
@@ -21849,6 +21915,11 @@ class $$MangasTableFilterComposer
 
   ColumnFilters<String> get estado => $composableBuilder(
     column: $table.estado,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get pistersMangaId => $composableBuilder(
+    column: $table.pistersMangaId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -21985,6 +22056,11 @@ class $$MangasTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get pistersMangaId => $composableBuilder(
+    column: $table.pistersMangaId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PruebasTableOrderingComposer get pruebaId {
     final $$PruebasTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -22034,6 +22110,11 @@ class $$MangasTableAnnotationComposer
 
   GeneratedColumn<String> get estado =>
       $composableBuilder(column: $table.estado, builder: (column) => column);
+
+  GeneratedColumn<int> get pistersMangaId => $composableBuilder(
+    column: $table.pistersMangaId,
+    builder: (column) => column,
+  );
 
   $$PruebasTableAnnotationComposer get pruebaId {
     final $$PruebasTableAnnotationComposer composer = $composerBuilder(
@@ -22173,6 +22254,7 @@ class $$MangasTableTableManager
                 Value<DateTime?> fechaHora = const Value.absent(),
                 Value<int> numCarriles = const Value.absent(),
                 Value<String> estado = const Value.absent(),
+                Value<int?> pistersMangaId = const Value.absent(),
               }) => MangasCompanion(
                 id: id,
                 pruebaId: pruebaId,
@@ -22180,6 +22262,7 @@ class $$MangasTableTableManager
                 fechaHora: fechaHora,
                 numCarriles: numCarriles,
                 estado: estado,
+                pistersMangaId: pistersMangaId,
               ),
           createCompanionCallback:
               ({
@@ -22189,6 +22272,7 @@ class $$MangasTableTableManager
                 Value<DateTime?> fechaHora = const Value.absent(),
                 Value<int> numCarriles = const Value.absent(),
                 Value<String> estado = const Value.absent(),
+                Value<int?> pistersMangaId = const Value.absent(),
               }) => MangasCompanion.insert(
                 id: id,
                 pruebaId: pruebaId,
@@ -22196,6 +22280,7 @@ class $$MangasTableTableManager
                 fechaHora: fechaHora,
                 numCarriles: numCarriles,
                 estado: estado,
+                pistersMangaId: pistersMangaId,
               ),
           withReferenceMapper: (p0) => p0
               .map(

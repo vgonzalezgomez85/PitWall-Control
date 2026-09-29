@@ -24,6 +24,8 @@ import '../equipos/repositorio_equipos.dart';
 import '../resultados/pantalla_resultados_manga.dart';
 import '../verificaciones/lista_verificaciones.dart';
 import 'editor_manga.dart';
+import 'pantalla_inscritos.dart';
+import 'repositorio_inscripciones_prueba.dart';
 import 'repositorio_pruebas.dart';
 
 class DetalleManga extends ConsumerWidget {
@@ -35,6 +37,9 @@ class DetalleManga extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mangaAsync = ref.watch(_mangaProvider(mangaId));
     final inscritosAsync = ref.watch(inscripcionesMangaProvider(mangaId));
+    final esIndividual = maxPilotosEquipo(
+            ref.watch(campeonatoActivoProvider)?.formato ?? 'PAREJAS') ==
+        1;
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -49,6 +54,12 @@ class DetalleManga extends ConsumerWidget {
                 ? const SizedBox.shrink()
                 : Row(
                     children: [
+                      if (esIndividual)
+                        IconButton(
+                          tooltip: 'Renumerar carriles',
+                          icon: const Icon(Icons.format_list_numbered),
+                          onPressed: () => _renumerar(context, ref, m),
+                        ),
                       IconButton(
                         tooltip: 'Verificaciones',
                         icon: const Icon(Icons.fact_check_outlined),
@@ -128,7 +139,7 @@ class DetalleManga extends ConsumerWidget {
                   ),
                 );
               }
-              return ListView.separated(
+              final lista = ListView.separated(
                 padding: const EdgeInsets.fromLTRB(12, 16, 12, 96),
                 itemCount: inscritos.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 4),
@@ -137,11 +148,48 @@ class DetalleManga extends ConsumerWidget {
                   manga: manga,
                 ),
               );
+              final repetidos = _carrilesRepetidos(inscritos);
+              if (manga.pistersMangaId == null && repetidos.isEmpty) {
+                return lista;
+              }
+              return Column(
+                children: [
+                  if (manga.pistersMangaId != null)
+                    _BandaPisters(mangaId: manga.pistersMangaId!),
+                  if (repetidos.isNotEmpty)
+                    _AvisoRepetidos(repetidos: repetidos),
+                  Expanded(child: lista),
+                ],
+              );
             },
           );
         },
       ),
     );
+  }
+
+  Future<void> _renumerar(
+      BuildContext context, WidgetRef ref, Manga manga) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Renumerar carriles'),
+        content: Text(
+            'Se vuelven a asignar todos los carriles de "${manga.nombre}" '
+            'por puntos, de más a menos: 1 a ${manga.numCarriles} y, si hay '
+            'más pilotos, D1, D2… Se pierden los cambios hechos a mano.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Renumerar')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await ref.read(repoInscripcionesProvider).renumerarCarriles(manga.id);
   }
 
   Future<void> _abrirInscribir(
@@ -150,6 +198,78 @@ class DetalleManga extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       builder: (_) => _HojaInscribir(manga: manga),
+    );
+  }
+}
+
+/// Carriles con más de un piloto: carril → nombres.
+Map<String, List<String>> _carrilesRepetidos(
+    List<InscripcionConEquipo> inscritos) {
+  final porCarril = <String, List<String>>{};
+  for (final i in inscritos) {
+    final c = (i.inscripcion.carrilSalida ?? '').trim().toUpperCase();
+    if (c.isEmpty) continue;
+    porCarril.putIfAbsent(c, () => []).add(i.nombreEquipo);
+  }
+  porCarril.removeWhere((_, v) => v.length < 2);
+  return porCarril;
+}
+
+class _AvisoRepetidos extends StatelessWidget {
+  const _AvisoRepetidos({required this.repetidos});
+  final Map<String, List<String>> repetidos;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      color: cs.errorContainer,
+      child: ListTile(
+        leading: Icon(Icons.warning_amber_outlined, color: cs.onErrorContainer),
+        title: Text('Carriles repetidos',
+            style: TextStyle(
+                color: cs.onErrorContainer, fontWeight: FontWeight.w600)),
+        subtitle: Text(
+            repetidos.entries
+                .map((e) => '${e.key}: ${e.value.join(', ')}')
+                .join('\n'),
+            style: TextStyle(color: cs.onErrorContainer)),
+      ),
+    );
+  }
+}
+
+/// "Pisters: pilotos de (manga)" con sus nombres (solo individuales).
+class _BandaPisters extends ConsumerWidget {
+  const _BandaPisters({required this.mangaId});
+  final int mangaId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pisters = ref.watch(_mangaProvider(mangaId)).asData?.value;
+    if (pisters == null) return const SizedBox.shrink();
+    final nombres = ref
+            .watch(inscripcionesMangaProvider(mangaId))
+            .asData
+            ?.value
+            .map((i) => i.equipo.nombre)
+            .join(', ') ??
+        '';
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      color: cs.secondaryContainer,
+      child: ListTile(
+        leading: Icon(Icons.sports_outlined, color: cs.onSecondaryContainer),
+        title: Text('Pisters: pilotos de ${pisters.nombre}',
+            style: TextStyle(
+                color: cs.onSecondaryContainer, fontWeight: FontWeight.w600)),
+        subtitle: nombres.isEmpty
+            ? null
+            : Text(nombres,
+                style: TextStyle(color: cs.onSecondaryContainer)),
+      ),
     );
   }
 }
@@ -197,6 +317,13 @@ class _TarjetaInscripcion extends ConsumerWidget {
           onSelected: (op) async {
             if (op == 'carril') {
               await _editarCarril(context, ref);
+            } else if (op == 'intercambiar') {
+              await _intercambiar(context, ref);
+            } else if (op == 'baja') {
+              if (await confirmarBajaPrueba(context, inscripcion.nombreEquipo)) {
+                await ref.read(repoInscripcionesPruebaProvider).darDeBaja(
+                    pruebaId: manga.pruebaId, equipoId: inscripcion.equipo.id);
+              }
             } else if (op == 'seed') {
               await ref.read(repoInscripcionesProvider).cambiarCarril(
                     inscripcionId: inscripcion.inscripcion.id,
@@ -229,16 +356,47 @@ class _TarjetaInscripcion extends ConsumerWidget {
           },
           itemBuilder: (_) => [
             const PopupMenuItem(value: 'carril', child: Text('Cambiar carril')),
+            const PopupMenuItem(
+                value: 'intercambiar', child: Text('Intercambiar carril con…')),
             PopupMenuItem(
               value: 'seed',
               child:
                   Text(esSeed ? 'Quitar seed directo' : 'Marcar como seed directo'),
             ),
             const PopupMenuItem(value: 'quitar', child: Text('Quitar de la manga')),
+            const PopupMenuItem(
+                value: 'baja', child: Text('Dar de baja de la prueba')),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _intercambiar(BuildContext context, WidgetRef ref) async {
+    final otros = (ref.read(inscripcionesMangaProvider(manga.id)).asData?.value ??
+            const <InscripcionConEquipo>[])
+        .where((i) => i.inscripcion.id != inscripcion.inscripcion.id)
+        .toList();
+    if (otros.isEmpty) return;
+    final elegido = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text('Intercambiar carril de "${inscripcion.nombreEquipo}" '
+            '(${inscripcion.inscripcion.carrilSalida ?? 'sin carril'}) con…'),
+        children: [
+          for (final o in otros)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, o.inscripcion.id),
+              child: Text(
+                  '${o.inscripcion.carrilSalida ?? '—'}  ·  ${o.nombreEquipo}'),
+            ),
+        ],
+      ),
+    );
+    if (elegido == null) return;
+    await ref
+        .read(repoInscripcionesProvider)
+        .intercambiarCarril(inscripcion.inscripcion.id, elegido);
   }
 
   Future<void> _editarCarril(BuildContext context, WidgetRef ref) async {

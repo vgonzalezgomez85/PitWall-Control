@@ -173,6 +173,8 @@ class Mangas extends Table {
   DateTimeColumn get fechaHora => dateTime().nullable()();
   IntColumn get numCarriles => integer().withDefault(const Constant(8))();
   TextColumn get estado => text().withDefault(const Constant('PROGRAMADA'))();
+  /// Manga cuyos pilotos hacen de pisters en esta (solo individuales).
+  IntColumn get pistersMangaId => integer().nullable()();
 }
 
 class Inscripciones extends Table {

@@ -1395,8 +1395,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                       children: [
                         _SecHead('Chasis'),
                         Consumer(builder: (context, ref, _) {
-                          final chasisAsync = ref
-                              .watch(chasisFiltradosProvider(copaEquipo));
+                          // Chasis sin copa: siempre la lista completa.
+                          final chasisAsync = ref.watch(chasisProvider);
                           return chasisAsync.when(
                             loading: () => const SizedBox.shrink(),
                             error: (e, _) => Text('Error: $e'),

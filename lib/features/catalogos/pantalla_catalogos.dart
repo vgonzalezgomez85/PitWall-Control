@@ -1309,84 +1309,24 @@ class _TabMotores extends ConsumerWidget {
 }
 
 // =====================================================
-// CHASIS (con copas, similar a bancadas)
+// CHASIS (sin copa: en la verificación se usan siempre todos)
 // =====================================================
 class _TabChasis extends ConsumerWidget {
   const _TabChasis();
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
-    return _ListaCatalogo<CatalogoChasi>(
-      datos: ref.watch(chasisCatalogoProvider),
+    return _SimpleTab(
       vacio: 'Sin chasis',
-      textoBuscable: (c) => c.nombre,
-      copasJsonDe: (c) => c.copasJson,
-      copas: copas,
-      fab: FloatingActionButton.extended(
-        onPressed: () => _editar(context, ref, null),
-        icon: const Icon(Icons.add),
-        label: const Text('Chasis'),
-      ),
-      item: (c) => Card(
-        child: ListTile(
-          title: Text(c.nombre),
-          subtitle:
-              Text('Copas: ${_resumenCopas(_decodeCopas(c.copasJson))}'),
-          trailing: PopupMenuButton<String>(
-            onSelected: (op) async {
-              if (op == 'editar') {
-                _editar(context, ref, c);
-              } else if (op == 'borrar') {
-                final ok = await _confirmarBorrar(context, c.nombre);
-                if (ok) {
-                  await ref.read(repoCatalogosProvider).borrarChasis(c.id);
-                }
-              }
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'editar', child: Text('Editar')),
-              PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
-            ],
-          ),
-        ),
-      ),
+      botonLabel: 'Chasis',
+      observar: (r) => r.watch(chasisCatalogoProvider),
+      titulo: (c) => c.nombre,
+      onCrear: (txt) => ref.read(repoCatalogosProvider).crearChasis(txt),
+      onEditar: (item, txt) =>
+          ref.read(repoCatalogosProvider).actualizarChasis(item.id, txt),
+      onBorrar: (item) =>
+          ref.read(repoCatalogosProvider).borrarChasis(item.id),
+      hint: 'Ej: INYECCIÓN PLÁSTICO NEGRO, 3D',
     );
-  }
-
-  Future<void> _editar(
-      BuildContext context, WidgetRef ref, CatalogoChasi? c) async {
-    final nombre = TextEditingController(text: c?.nombre ?? '');
-    final copasIni = c == null ? <String>{} : _decodeCopas(c.copasJson).toSet();
-    final res = await showDialog<({bool ok, Set<String> copas})>(
-      context: context,
-      builder: (_) => _DialogoCocheBancada(
-        titulo: c == null ? 'Nuevo chasis' : 'Editar chasis',
-        copasIniciales: copasIni,
-        contenidoExtra: TextField(
-          controller: nombre,
-          autofocus: true,
-          decoration: const InputDecoration(
-              labelText: 'Nombre *', helperText: 'Ej: SCALEAUTO 0,5'),
-        ),
-      ),
-    );
-    if (res == null || !res.ok || nombre.text.trim().isEmpty) return;
-    final repo = ref.read(repoCatalogosProvider);
-    final copasJson = json.encode(res.copas.toList());
-    if (c == null) {
-      await repo.crearChasis(nombre.text.trim());
-      final lista = await repo.db.select(repo.db.catalogoChasis).get();
-      final creado = lista.lastWhere((x) => x.nombre == nombre.text.trim());
-      await (repo.db.update(repo.db.catalogoChasis)
-            ..where((t) => t.id.equals(creado.id)))
-          .write(CatalogoChasisCompanion(copasJson: Value(copasJson)));
-    } else {
-      await (repo.db.update(repo.db.catalogoChasis)
-            ..where((t) => t.id.equals(c.id)))
-          .write(CatalogoChasisCompanion(
-              nombre: Value(nombre.text.trim()),
-              copasJson: Value(copasJson)));
-    }
   }
 }
 

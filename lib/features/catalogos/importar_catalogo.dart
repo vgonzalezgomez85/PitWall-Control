@@ -48,6 +48,8 @@ enum TipoCatalogo {
 class MapeoCatalogo {
   // Coches
   String? colNombre, colMarca, colModelo, colPesoMin, colCreditos, colCopa;
+  // Coches: enlace de Drive a la foto (se descarga al actualizar desde Drive)
+  String? colFoto;
   // Marcas
   String? colCodigo;
   // Llantas
@@ -341,6 +343,9 @@ class _PantallaImportarCatalogoState
           if (m.colCopa == null && _match(n, ['copa', 'copas'])) {
             m.colCopa = c;
           }
+          if (m.colFoto == null && _match(n, ['foto', 'imagen'])) {
+            m.colFoto = c;
+          }
         case TipoCatalogo.marcas:
           if (m.colCodigo == null && _match(n, ['codigo', 'cod', 'id'])) {
             m.colCodigo = c;
@@ -543,6 +548,7 @@ class _PantallaImportarCatalogoState
                 'colDiametro': _mapeo.colDiametro,
                 'colRpm': _mapeo.colRpm,
                 'colGauss': _mapeo.colGauss,
+                'colFoto': _mapeo.colFoto,
                 'colId': _mapeo.colId,
               },
             );
@@ -855,6 +861,8 @@ class _PantallaImportarCatalogoState
               (v) => setState(() => _mapeo.colCreditos = v)),
           sel('Copa(s)', _mapeo.colCopa,
               (v) => setState(() => _mapeo.colCopa = v)),
+          sel('Foto (enlace de Drive)', _mapeo.colFoto,
+              (v) => setState(() => _mapeo.colFoto = v)),
         ];
       case TipoCatalogo.marcas:
         return [
