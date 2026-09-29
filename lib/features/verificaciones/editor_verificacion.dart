@@ -62,6 +62,15 @@ List<int> _dientesDe(AsyncValue<List<CatalogoEngranaje>> async) {
   return lista.map((e) => e.dientes).toSet().toList()..sort();
 }
 
+/// Copas del campeonato (`copasJson`); lista vacía si el JSON no es válido.
+List<String> _copasDe(Campeonato c) {
+  try {
+    final raw = jsonDecode(c.copasJson);
+    if (raw is List) return raw.map((e) => e.toString()).toList();
+  } catch (_) {}
+  return const [];
+}
+
 /// Materiales homologados (listas fijas del reglamento).
 const _materialesPinon = ['PL', 'ERG', 'LAT', 'ACR', 'ALU'];
 const _materialesCorona = ['PL', 'MET'];
@@ -106,6 +115,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   String? _chasis;
   String _motorTipo = 'ORGANIZACION';
   int? _pruebaId;
+  /// Campeonato de la prueba de esta manga: de él salen el reglamento
+  /// (dientes, anchura de eje) y los créditos. No se usa el campeonato
+  /// activo porque la manga puede ser de una sesión de verificación libre.
+  Campeonato? _campeonato;
   /// Copa que corre el equipo EN esta prueba (snapshot); cae a la copa actual.
   String? _copaPrueba;
 
@@ -190,9 +203,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     final min = camp?.motorSorteoMin, max = camp?.motorSorteoMax;
     if (!mounted) return;
     if (min == null || max == null || max < min) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Configura el rango de motores en el campeonato para sortear.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(camp?.esVerificacionLibre ?? false
+              ? 'Configura el rango de motores en el reglamento de la sesión para sortear.'
+              : 'Configura el rango de motores en el campeonato para sortear.')));
       return;
     }
     // Motores ya asignados en la prueba (verificaciones de organización).
@@ -301,6 +315,16 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           ..where((t) => t.id.equals(widget.mangaId)))
         .getSingleOrNull();
     _pruebaId = manga?.pruebaId;
+    if (_pruebaId != null) {
+      final prueba = await (db.select(db.pruebas)
+            ..where((t) => t.id.equals(_pruebaId!)))
+          .getSingleOrNull();
+      if (prueba != null) {
+        _campeonato = await (db.select(db.campeonatos)
+              ..where((t) => t.id.equals(prueba.campeonatoId)))
+            .getSingleOrNull();
+      }
+    }
     _equipo = await (db.select(db.equipos)
           ..where((t) => t.id.equals(widget.equipoId)))
         .getSingle();
@@ -313,8 +337,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           .getSingleOrNull();
       _copaPrueba = ins?.copa;
     }
-    // Cargar pilotos del equipo y sus créditos en el campeonato activo
-    final activo = ref.read(campeonatoActivoProvider);
+    // Cargar pilotos del equipo y sus créditos en el campeonato de la prueba
+    final activo = _campeonato ?? ref.read(campeonatoActivoProvider);
     _piloto1 = await (db.select(db.pilotos)
           ..where((t) => t.id.equals(_equipo!.piloto1Id)))
         .getSingle();
@@ -556,7 +580,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     final pruebaId = _pruebaId;
     final equipo = _equipo;
     if (pruebaId == null || equipo == null) return;
-    final copas = ref.read(copasProvider);
+    final copas = _campeonato == null
+        ? ref.read(copasProvider)
+        : _copasDe(_campeonato!);
     String? seleccion = _copaPrueba ?? equipo.copa;
     await showDialog<void>(
       context: context,
@@ -647,7 +673,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     final llantasDelAsync = ref.watch(llantasDelFiltradasProvider(copaEquipo));
     final llantasTraAsync = ref.watch(llantasTraFiltradasProvider(copaEquipo));
     final neumaticosAsync = ref.watch(neumaticosFiltradosProvider(copaEquipo));
-    final campActivo = ref.watch(campeonatoActivoProvider);
+    final campActivo = _campeonato ?? ref.watch(campeonatoActivoProvider);
     final (anchuraEjeDelMax, anchuraEjeTraMax) =
         _anchuraEjeMax(campActivo?.anchuraEjeJson, copaEquipo);
     final reglaPinon = _rangoDientesTxt(
@@ -817,8 +843,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           );
           final res = ValidadorVerificacion.validar(datos);
 
-          final usaCreditos =
-              ref.read(campeonatoActivoProvider)?.usaCreditos ?? false;
+          final usaCreditos = campActivo?.usaCreditos ?? false;
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [

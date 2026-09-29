@@ -34,6 +34,7 @@ import '../pilotos/lista_pilotos.dart';
 import '../plantillas/pantalla_plantillas_csv.dart';
 import '../pruebas/lista_pruebas.dart';
 import '../tesoreria/pantalla_tesoreria.dart';
+import '../verificacion_libre/pantalla_verificacion_libre.dart';
 import 'pantalla_resumen.dart';
 
 /// Destino principal del shell (un icono + título en la barra lateral).
@@ -199,6 +200,12 @@ class _BarraLateral extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Divider(indent: 12, endIndent: 12),
+                          _AccionSecundaria(
+                            icono: Icons.fact_check_outlined,
+                            etiqueta: 'Verificación libre',
+                            extendida: extendida,
+                            destino: const PantallaVerificacionLibre(),
+                          ),
                           _AccionSecundaria(
                             icono: Icons.emoji_events_outlined,
                             etiqueta: 'Campeonatos',
@@ -504,6 +511,13 @@ class _Vacio extends StatelessWidget {
                 label: const Text('Crear campeonato'),
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const EditorCampeonato())),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.fact_check_outlined),
+                label: const Text('Solo verificar coches'),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const PantallaVerificacionLibre())),
               ),
             ],
           ),

@@ -297,6 +297,20 @@ class $CampeonatosTable extends Campeonatos
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _esVerificacionLibreMeta =
+      const VerificationMeta('esVerificacionLibre');
+  @override
+  late final GeneratedColumn<bool> esVerificacionLibre = GeneratedColumn<bool>(
+    'es_verificacion_libre',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("es_verificacion_libre" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _creadoEnMeta = const VerificationMeta(
     'creadoEn',
   );
@@ -335,6 +349,7 @@ class $CampeonatosTable extends Campeonatos
     anchuraEjeJson,
     marcaTitulo,
     marcaLema,
+    esVerificacionLibre,
     creadoEn,
   ];
   @override
@@ -538,6 +553,15 @@ class $CampeonatosTable extends Campeonatos
         marcaLema.isAcceptableOrUnknown(data['marca_lema']!, _marcaLemaMeta),
       );
     }
+    if (data.containsKey('es_verificacion_libre')) {
+      context.handle(
+        _esVerificacionLibreMeta,
+        esVerificacionLibre.isAcceptableOrUnknown(
+          data['es_verificacion_libre']!,
+          _esVerificacionLibreMeta,
+        ),
+      );
+    }
     if (data.containsKey('creado_en')) {
       context.handle(
         _creadoEnMeta,
@@ -649,6 +673,10 @@ class $CampeonatosTable extends Campeonatos
         DriftSqlType.string,
         data['${effectivePrefix}marca_lema'],
       ),
+      esVerificacionLibre: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}es_verificacion_libre'],
+      )!,
       creadoEn: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}creado_en'],
@@ -717,6 +745,12 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   /// pie). Si están vacíos se usa la marca global de la app.
   final String? marcaTitulo;
   final String? marcaLema;
+
+  /// Si true, no es un campeonato real sino el contenedor interno de una
+  /// sesión de "verificación libre" (carrera esporádica, control en el club…):
+  /// guarda su reglamento de verificación y no aparece en el selector ni en
+  /// ningún listado de campeonatos.
+  final bool esVerificacionLibre;
   final DateTime creadoEn;
   const Campeonato({
     required this.id,
@@ -743,6 +777,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     required this.anchuraEjeJson,
     this.marcaTitulo,
     this.marcaLema,
+    required this.esVerificacionLibre,
     required this.creadoEn,
   });
   @override
@@ -780,6 +815,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     if (!nullToAbsent || marcaLema != null) {
       map['marca_lema'] = Variable<String>(marcaLema);
     }
+    map['es_verificacion_libre'] = Variable<bool>(esVerificacionLibre);
     map['creado_en'] = Variable<DateTime>(creadoEn);
     return map;
   }
@@ -818,6 +854,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       marcaLema: marcaLema == null && nullToAbsent
           ? const Value.absent()
           : Value(marcaLema),
+      esVerificacionLibre: Value(esVerificacionLibre),
       creadoEn: Value(creadoEn),
     );
   }
@@ -852,6 +889,9 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       anchuraEjeJson: serializer.fromJson<String>(json['anchuraEjeJson']),
       marcaTitulo: serializer.fromJson<String?>(json['marcaTitulo']),
       marcaLema: serializer.fromJson<String?>(json['marcaLema']),
+      esVerificacionLibre: serializer.fromJson<bool>(
+        json['esVerificacionLibre'],
+      ),
       creadoEn: serializer.fromJson<DateTime>(json['creadoEn']),
     );
   }
@@ -883,6 +923,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       'anchuraEjeJson': serializer.toJson<String>(anchuraEjeJson),
       'marcaTitulo': serializer.toJson<String?>(marcaTitulo),
       'marcaLema': serializer.toJson<String?>(marcaLema),
+      'esVerificacionLibre': serializer.toJson<bool>(esVerificacionLibre),
       'creadoEn': serializer.toJson<DateTime>(creadoEn),
     };
   }
@@ -912,6 +953,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     String? anchuraEjeJson,
     Value<String?> marcaTitulo = const Value.absent(),
     Value<String?> marcaLema = const Value.absent(),
+    bool? esVerificacionLibre,
     DateTime? creadoEn,
   }) => Campeonato(
     id: id ?? this.id,
@@ -942,6 +984,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     anchuraEjeJson: anchuraEjeJson ?? this.anchuraEjeJson,
     marcaTitulo: marcaTitulo.present ? marcaTitulo.value : this.marcaTitulo,
     marcaLema: marcaLema.present ? marcaLema.value : this.marcaLema,
+    esVerificacionLibre: esVerificacionLibre ?? this.esVerificacionLibre,
     creadoEn: creadoEn ?? this.creadoEn,
   );
   Campeonato copyWithCompanion(CampeonatosCompanion data) {
@@ -1002,6 +1045,9 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           ? data.marcaTitulo.value
           : this.marcaTitulo,
       marcaLema: data.marcaLema.present ? data.marcaLema.value : this.marcaLema,
+      esVerificacionLibre: data.esVerificacionLibre.present
+          ? data.esVerificacionLibre.value
+          : this.esVerificacionLibre,
       creadoEn: data.creadoEn.present ? data.creadoEn.value : this.creadoEn,
     );
   }
@@ -1033,6 +1079,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           ..write('anchuraEjeJson: $anchuraEjeJson, ')
           ..write('marcaTitulo: $marcaTitulo, ')
           ..write('marcaLema: $marcaLema, ')
+          ..write('esVerificacionLibre: $esVerificacionLibre, ')
           ..write('creadoEn: $creadoEn')
           ..write(')'))
         .toString();
@@ -1064,6 +1111,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     anchuraEjeJson,
     marcaTitulo,
     marcaLema,
+    esVerificacionLibre,
     creadoEn,
   ]);
   @override
@@ -1094,6 +1142,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           other.anchuraEjeJson == this.anchuraEjeJson &&
           other.marcaTitulo == this.marcaTitulo &&
           other.marcaLema == this.marcaLema &&
+          other.esVerificacionLibre == this.esVerificacionLibre &&
           other.creadoEn == this.creadoEn);
 }
 
@@ -1122,6 +1171,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   final Value<String> anchuraEjeJson;
   final Value<String?> marcaTitulo;
   final Value<String?> marcaLema;
+  final Value<bool> esVerificacionLibre;
   final Value<DateTime> creadoEn;
   const CampeonatosCompanion({
     this.id = const Value.absent(),
@@ -1148,6 +1198,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.anchuraEjeJson = const Value.absent(),
     this.marcaTitulo = const Value.absent(),
     this.marcaLema = const Value.absent(),
+    this.esVerificacionLibre = const Value.absent(),
     this.creadoEn = const Value.absent(),
   });
   CampeonatosCompanion.insert({
@@ -1175,6 +1226,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.anchuraEjeJson = const Value.absent(),
     this.marcaTitulo = const Value.absent(),
     this.marcaLema = const Value.absent(),
+    this.esVerificacionLibre = const Value.absent(),
     this.creadoEn = const Value.absent(),
   }) : nombre = Value(nombre),
        formato = Value(formato),
@@ -1204,6 +1256,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Expression<String>? anchuraEjeJson,
     Expression<String>? marcaTitulo,
     Expression<String>? marcaLema,
+    Expression<bool>? esVerificacionLibre,
     Expression<DateTime>? creadoEn,
   }) {
     return RawValuesInsertable({
@@ -1231,6 +1284,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       if (anchuraEjeJson != null) 'anchura_eje_json': anchuraEjeJson,
       if (marcaTitulo != null) 'marca_titulo': marcaTitulo,
       if (marcaLema != null) 'marca_lema': marcaLema,
+      if (esVerificacionLibre != null)
+        'es_verificacion_libre': esVerificacionLibre,
       if (creadoEn != null) 'creado_en': creadoEn,
     });
   }
@@ -1260,6 +1315,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Value<String>? anchuraEjeJson,
     Value<String?>? marcaTitulo,
     Value<String?>? marcaLema,
+    Value<bool>? esVerificacionLibre,
     Value<DateTime>? creadoEn,
   }) {
     return CampeonatosCompanion(
@@ -1287,6 +1343,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       anchuraEjeJson: anchuraEjeJson ?? this.anchuraEjeJson,
       marcaTitulo: marcaTitulo ?? this.marcaTitulo,
       marcaLema: marcaLema ?? this.marcaLema,
+      esVerificacionLibre: esVerificacionLibre ?? this.esVerificacionLibre,
       creadoEn: creadoEn ?? this.creadoEn,
     );
   }
@@ -1366,6 +1423,9 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     if (marcaLema.present) {
       map['marca_lema'] = Variable<String>(marcaLema.value);
     }
+    if (esVerificacionLibre.present) {
+      map['es_verificacion_libre'] = Variable<bool>(esVerificacionLibre.value);
+    }
     if (creadoEn.present) {
       map['creado_en'] = Variable<DateTime>(creadoEn.value);
     }
@@ -1399,6 +1459,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
           ..write('anchuraEjeJson: $anchuraEjeJson, ')
           ..write('marcaTitulo: $marcaTitulo, ')
           ..write('marcaLema: $marcaLema, ')
+          ..write('esVerificacionLibre: $esVerificacionLibre, ')
           ..write('creadoEn: $creadoEn')
           ..write(')'))
         .toString();
@@ -15802,6 +15863,7 @@ typedef $$CampeonatosTableCreateCompanionBuilder =
       Value<String> anchuraEjeJson,
       Value<String?> marcaTitulo,
       Value<String?> marcaLema,
+      Value<bool> esVerificacionLibre,
       Value<DateTime> creadoEn,
     });
 typedef $$CampeonatosTableUpdateCompanionBuilder =
@@ -15830,6 +15892,7 @@ typedef $$CampeonatosTableUpdateCompanionBuilder =
       Value<String> anchuraEjeJson,
       Value<String?> marcaTitulo,
       Value<String?> marcaLema,
+      Value<bool> esVerificacionLibre,
       Value<DateTime> creadoEn,
     });
 
@@ -16149,6 +16212,11 @@ class $$CampeonatosTableFilterComposer
 
   ColumnFilters<String> get marcaLema => $composableBuilder(
     column: $table.marcaLema,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get esVerificacionLibre => $composableBuilder(
+    column: $table.esVerificacionLibre,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16487,6 +16555,11 @@ class $$CampeonatosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get esVerificacionLibre => $composableBuilder(
+    column: $table.esVerificacionLibre,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get creadoEn => $composableBuilder(
     column: $table.creadoEn,
     builder: (column) => ColumnOrderings(column),
@@ -16605,6 +16678,11 @@ class $$CampeonatosTableAnnotationComposer
 
   GeneratedColumn<String> get marcaLema =>
       $composableBuilder(column: $table.marcaLema, builder: (column) => column);
+
+  GeneratedColumn<bool> get esVerificacionLibre => $composableBuilder(
+    column: $table.esVerificacionLibre,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get creadoEn =>
       $composableBuilder(column: $table.creadoEn, builder: (column) => column);
@@ -16874,6 +16952,7 @@ class $$CampeonatosTableTableManager
                 Value<String> anchuraEjeJson = const Value.absent(),
                 Value<String?> marcaTitulo = const Value.absent(),
                 Value<String?> marcaLema = const Value.absent(),
+                Value<bool> esVerificacionLibre = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
               }) => CampeonatosCompanion(
                 id: id,
@@ -16900,6 +16979,7 @@ class $$CampeonatosTableTableManager
                 anchuraEjeJson: anchuraEjeJson,
                 marcaTitulo: marcaTitulo,
                 marcaLema: marcaLema,
+                esVerificacionLibre: esVerificacionLibre,
                 creadoEn: creadoEn,
               ),
           createCompanionCallback:
@@ -16928,6 +17008,7 @@ class $$CampeonatosTableTableManager
                 Value<String> anchuraEjeJson = const Value.absent(),
                 Value<String?> marcaTitulo = const Value.absent(),
                 Value<String?> marcaLema = const Value.absent(),
+                Value<bool> esVerificacionLibre = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
               }) => CampeonatosCompanion.insert(
                 id: id,
@@ -16954,6 +17035,7 @@ class $$CampeonatosTableTableManager
                 anchuraEjeJson: anchuraEjeJson,
                 marcaTitulo: marcaTitulo,
                 marcaLema: marcaLema,
+                esVerificacionLibre: esVerificacionLibre,
                 creadoEn: creadoEn,
               ),
           withReferenceMapper: (p0) => p0

@@ -65,6 +65,12 @@ class Campeonatos extends Table {
   /// pie). Si están vacíos se usa la marca global de la app.
   TextColumn get marcaTitulo => text().nullable()();
   TextColumn get marcaLema => text().nullable()();
+  /// Si true, no es un campeonato real sino el contenedor interno de una
+  /// sesión de "verificación libre" (carrera esporádica, control en el club…):
+  /// guarda su reglamento de verificación y no aparece en el selector ni en
+  /// ningún listado de campeonatos.
+  BoolColumn get esVerificacionLibre =>
+      boolean().withDefault(const Constant(false))();
   DateTimeColumn get creadoEn => dateTime().withDefault(currentDateAndTime)();
 }
 

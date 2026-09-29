@@ -14,6 +14,17 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.13.0] — 2026-09-29
+
+### Añadido
+- **Verificación libre: verificar coches sin campeonato ni prueba.** Para una carrera esporádica, un control en el club o cualquier otro sitio. Se abre desde **"Verificación libre"** en el menú lateral (y desde la pantalla de inicio aunque aún no haya campeonatos).
+  - Cada **sesión** tiene nombre, lugar y fecha, y su propio **reglamento**: copas, anchura de eje por copa, dientes de piñón y corona y rango de motores para el sorteo. Una sesión nueva copia el reglamento de la anterior.
+  - **Añadir participante**: piloto (con autocompletado de los pilotos ya existentes), segundo piloto y equipo opcionales, y copa. Se abre directamente su verificación, que es la misma de siempre (autoguardado, fotos, sorteo de motor, validación por copa). Mantén pulsado un participante para quitarlo.
+  - **Exportar a PDF** las verificaciones de la sesión. No usa créditos ni tesorería, no se envía a PitWall Manager y las sesiones no aparecen en los campeonatos.
+
+### Mejorado
+- La verificación toma el reglamento y los créditos del campeonato de la prueba verificada, en vez del campeonato activo.
+
 ## [1.12.0] — 2026-09-26
 
 ### Añadido

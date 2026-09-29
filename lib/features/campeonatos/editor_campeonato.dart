@@ -17,7 +17,7 @@
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:convert';
 
-import 'package:drift/drift.dart' show Value, OrderingTerm;
+import 'package:drift/drift.dart' show BooleanExpressionOperators, OrderingTerm, Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -38,7 +38,8 @@ final _campeonatosFinalizadosProvider =
     FutureProvider<List<Campeonato>>((ref) async {
   final db = ref.watch(dbProvider);
   return (db.select(db.campeonatos)
-        ..where((t) => t.finalizado.equals(true))
+        ..where((t) =>
+            t.finalizado.equals(true) & t.esVerificacionLibre.equals(false))
         ..orderBy([(t) => OrderingTerm.desc(t.anio)]))
       .get();
 });
@@ -800,7 +801,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
-            _RangoDientes(
+            RangoDientes(
               etiqueta: 'Piñón',
               fijo: _pinonFijo,
               min: _pinonMin,
@@ -808,7 +809,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               onFijo: (v) => setState(() => _pinonFijo = v),
             ),
             const SizedBox(height: 8),
-            _RangoDientes(
+            RangoDientes(
               etiqueta: 'Corona',
               fijo: _coronaFijo,
               min: _coronaMin,
@@ -885,8 +886,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
 
 /// Configurador del rango de dientes (piñón o corona): interruptor "Tamaño
 /// fijo" (un campo) o rango mín-máx (dos campos).
-class _RangoDientes extends StatelessWidget {
-  const _RangoDientes({
+class RangoDientes extends StatelessWidget {
+  const RangoDientes({
+    super.key,
     required this.etiqueta,
     required this.fijo,
     required this.min,

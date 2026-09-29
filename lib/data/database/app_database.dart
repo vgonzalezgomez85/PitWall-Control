@@ -64,7 +64,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 42;
+  int get schemaVersion => 43;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -451,6 +451,12 @@ class AppDatabase extends _$AppDatabase {
             // de pisters en esta.
             await _aplicar(() => customStatement(
                 'ALTER TABLE mangas ADD COLUMN pisters_manga_id INTEGER'));
+          }
+          if (from < 43) {
+            // Verificación libre: campeonatos internos que solo contienen
+            // una sesión de verificación (ocultos en toda la app).
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN es_verificacion_libre INTEGER NOT NULL DEFAULT 0'));
           }
         },
       );

@@ -22,9 +22,32 @@ import 'editor_verificacion.dart';
 import 'repositorio_verificaciones.dart';
 
 class PantallaVerificaciones extends ConsumerWidget {
-  const PantallaVerificaciones({super.key, required this.mangaId});
+  const PantallaVerificaciones({
+    super.key,
+    required this.mangaId,
+    this.titulo = 'Verificaciones',
+    this.subtitulo,
+    this.acciones = const [],
+    this.botonFlotante,
+    this.vacioTitulo = 'Aún no hay equipos en esta manga',
+    this.vacioTexto =
+        'Inscribe equipos en la manga para poder hacerles la verificación.',
+    this.onQuitar,
+  });
 
   final int mangaId;
+
+  // Personalización para reutilizar la lista fuera de una prueba (sesiones
+  // de verificación libre).
+  final String titulo;
+  final String? subtitulo;
+  final List<Widget> acciones;
+  final Widget? botonFlotante;
+  final String vacioTitulo;
+  final String vacioTexto;
+
+  /// Si no es null, mantener pulsada una tarjeta ofrece quitar el equipo.
+  final Future<void> Function(VerificacionConEquipo fila)? onQuitar;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,7 +55,21 @@ class PantallaVerificaciones extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Verificaciones')),
+      appBar: AppBar(
+        title: subtitulo == null
+            ? Text(titulo)
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(titulo),
+                  Text(subtitulo!,
+                      style: Theme.of(context).textTheme.labelMedium),
+                ],
+              ),
+        actions: acciones,
+      ),
+      floatingActionButton: botonFlotante,
       body: lista.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -47,11 +84,11 @@ class PantallaVerificaciones extends ConsumerWidget {
                     Icon(Icons.fact_check_outlined,
                         size: 96, color: cs.outline),
                     const SizedBox(height: 16),
-                    Text('Aún no hay equipos en esta manga',
+                    Text(vacioTitulo,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     Text(
-                      'Inscribe equipos en la manga para poder hacerles la verificación.',
+                      vacioTexto,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -65,7 +102,9 @@ class PantallaVerificaciones extends ConsumerWidget {
           final validadas = filas.where((f) => f.validada).length;
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+            // Hueco abajo para que el botón flotante no tape la última tarjeta.
+            padding: EdgeInsets.fromLTRB(
+                12, 12, 12, botonFlotante == null ? 24 : 96),
             children: [
               Card(
                 color: cs.surfaceContainer,
@@ -106,12 +145,39 @@ class PantallaVerificaciones extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    onLongPress:
+                        onQuitar == null ? null : () => _confirmarQuitar(context, f),
                   )),
             ],
           );
         },
       ),
     );
+  }
+}
+
+extension on PantallaVerificaciones {
+  Future<void> _confirmarQuitar(
+      BuildContext context, VerificacionConEquipo fila) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Quitar participante'),
+        content: Text(fila.tieneVerificacion
+            ? 'Se quitará "${fila.equipo.nombre}" y se borrará su verificación. '
+                '¿Continuar?'
+            : 'Se quitará "${fila.equipo.nombre}". ¿Continuar?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Quitar')),
+        ],
+      ),
+    );
+    if (ok == true) await onQuitar!(fila);
   }
 }
 
@@ -145,10 +211,12 @@ class _Pildora extends StatelessWidget {
 }
 
 class _TarjetaVerificacion extends StatelessWidget {
-  const _TarjetaVerificacion({required this.fila, required this.onTap});
+  const _TarjetaVerificacion(
+      {required this.fila, required this.onTap, this.onLongPress});
 
   final VerificacionConEquipo fila;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -191,6 +259,7 @@ class _TarjetaVerificacion extends StatelessWidget {
                   color: color, fontWeight: FontWeight.w600, fontSize: 12)),
         ),
         onTap: onTap,
+        onLongPress: onLongPress,
       ),
     );
   }

@@ -27,10 +27,13 @@ final dbProvider = Provider<AppDatabase>((ref) {
   return db;
 });
 
-/// Lista de campeonatos disponibles.
+/// Lista de campeonatos disponibles. Excluye los contenedores internos de
+/// las sesiones de verificación libre, que no son campeonatos reales.
 final campeonatosProvider = StreamProvider<List<Campeonato>>((ref) {
   final db = ref.watch(dbProvider);
-  return db.select(db.campeonatos).watch();
+  return (db.select(db.campeonatos)
+        ..where((t) => t.esVerificacionLibre.equals(false)))
+      .watch();
 });
 
 /// Campeonato activo (seleccionado por el usuario).

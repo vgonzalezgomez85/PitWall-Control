@@ -72,7 +72,7 @@ final verificacionesMangaProvider = StreamProvider.autoDispose
       .watch();
   final insPruebaStream = db.select(db.inscripcionesPrueba).watch();
 
-  return _ticksDeCualquiera([insStream, verStream, insPruebaStream])
+  return ticksDeCualquiera([insStream, verStream, insPruebaStream])
       .asyncMap((_) async {
     final inscritos = await (db.select(db.inscripciones)
           ..where((t) => t.mangaId.equals(mangaId)))
@@ -128,7 +128,7 @@ final verificacionesMangaProvider = StreamProvider.autoDispose
 });
 
 /// Emite un primer tick y luego uno cada vez que cualquiera de [streams] emite.
-Stream<void> _ticksDeCualquiera(List<Stream> streams) {
+Stream<void> ticksDeCualquiera(List<Stream> streams) {
   final ctrl = StreamController<void>();
   final subs = <StreamSubscription>[];
   ctrl.onListen = () {
