@@ -3,7 +3,10 @@
 ; Requiere que "flutter build windows --release" se haya ejecutado antes.
 
 #define MyAppName "PitWall Control"
-#define MyAppVersion "1.0.0"
+; Pasar la versión de pubspec.yaml con: iscc /DMyAppVersion=X.Y.Z ...
+#ifndef MyAppVersion
+  #define MyAppVersion "1.4.0"
+#endif
 #define MyAppPublisher "com.pitwallcontrol"
 #define MyAppExeName "pitwall_control.exe"
 #define MyReleaseDir "..\..\build\windows\x64\runner\Release"
