@@ -31,8 +31,10 @@ import '../../core/widgets/selector_buscable.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/validador_verificacion.dart';
 import '../../services/fotos_verificacion.dart';
+import '../campeonatos/selector_marcas_permitidas.dart';
 import '../equipos/repositorio_equipos.dart';
 import '../pruebas/repositorio_inscripciones_prueba.dart';
+import 'frecuencias_verificacion.dart';
 import 'repositorio_verificaciones.dart';
 
 /// "12" si min==max (fijo), "24–30" si es rango.
@@ -665,6 +667,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     }
 
     final marcasAsync = ref.watch(marcasCodigosProvider);
+    // Los desplegables ponen primero lo más elegido en verificaciones previas.
+    final uso = ref.watch(frecuenciasVerificacionProvider).asData?.value ??
+        FrecuenciasVerificacion.vacia;
     // ignore: unused_local_variable
     final bancadasAsync = ref.watch(bancadasProvider);
     // Filtramos coches, bancadas, motores, neumáticos y llantas por la copa del equipo
@@ -676,10 +681,22 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     final campActivo = _campeonato ?? ref.watch(campeonatoActivoProvider);
     final (anchuraEjeDelMax, anchuraEjeTraMax) =
         _anchuraEjeMax(campActivo?.anchuraEjeJson, copaEquipo);
-    final reglaPinon = _rangoDientesTxt(
-        campActivo?.pinonDientesMin ?? 12, campActivo?.pinonDientesMax ?? 12);
-    final reglaCorona = _rangoDientesTxt(
-        campActivo?.coronaDientesMin ?? 24, campActivo?.coronaDientesMax ?? 30);
+    // Rango de dientes: solo en verificación libre. En los campeonatos los
+    // dientes ya vienen limitados por el catálogo de engranajes de la copa.
+    final rangoDientes = campActivo?.esVerificacionLibre ?? false;
+    final reglaPinon = rangoDientes
+        ? 'Regla: ${_rangoDientesTxt(campActivo!.pinonDientesMin, campActivo.pinonDientesMax)}'
+        : null;
+    // Limitar fabricante: los desplegables de marca solo ofrecen las
+    // permitidas por el campeonato (vacío = todas las del catálogo).
+    final marcasPermitidas =
+        marcasPermitidasDe(campActivo?.marcasPermitidasJson);
+    final marcasSelAsync = marcasPermitidas.isEmpty
+        ? marcasAsync
+        : marcasAsync.whenData((_) => marcasPermitidas);
+    final reglaCorona = rangoDientes
+        ? 'Regla: ${_rangoDientesTxt(campActivo!.coronaDientesMin, campActivo.coronaDientesMax)}'
+        : null;
     final cochesAsync = ref.watch(
         cochesFiltradosProvider(copaEquipo));
     final bancadasFiltAsync = ref.watch(bancadasFiltradasProvider(copaEquipo));
@@ -813,10 +830,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             pinonDientes: _pinonDientes,
             coronaMarca: _coronaMarca,
             coronaDientes: _coronaDientes,
-            pinonDientesMin: campActivo?.pinonDientesMin ?? 12,
-            pinonDientesMax: campActivo?.pinonDientesMax ?? 12,
-            coronaDientesMin: campActivo?.coronaDientesMin ?? 24,
-            coronaDientesMax: campActivo?.coronaDientesMax ?? 30,
+            pinonDientesMin: rangoDientes ? campActivo!.pinonDientesMin : null,
+            pinonDientesMax: rangoDientes ? campActivo!.pinonDientesMax : null,
+            coronaDientesMin: rangoDientes ? campActivo!.coronaDientesMin : null,
+            coronaDientesMax: rangoDientes ? campActivo!.coronaDientesMax : null,
             llantaDelMarca: _llantaDelMarca,
             llantaDelDimension: _llantaDelDim,
             llantaTraMarca: _llantaTraMarca,
@@ -828,6 +845,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             neumatico: _neumatico,
             marcasValidas:
                 marcasAsync.maybeWhen(data: (d) => d, orElse: () => {}),
+            marcasPermitidas: marcasPermitidas,
             llantasDelValidas: llantasDelAsync.maybeWhen(
                 data: (d) => d.map((l) => l.dimension).toSet(),
                 orElse: () => {}),
@@ -842,6 +860,62 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                 orElse: () => {}),
           );
           final res = ValidadorVerificacion.validar(datos);
+
+          // Qué le falta a cada bloque, para marcarlo y no saltarse nada.
+          bool lleno(TextEditingController c) => c.text.trim().isNotEmpty;
+          bool hay(Object? v) => v != null && '$v'.isNotEmpty;
+          final bloques = <String, _InfoBloque>{
+            'Coche': _InfoBloque.de(res, [_cocheId != null], const []),
+            'Peso (gramos)': _InfoBloque.de(
+                res, [lleno(_pesoIni)], const ['pesoInicial', 'pesoFinal']),
+            'Estética':
+                _InfoBloque.de(res, [_carroceriaConforme != null], const []),
+            'Motor': _InfoBloque.de(
+              res,
+              [
+                lleno(_motor),
+                if (_motorTipo == 'PROPIO') ...[
+                  lleno(_motorRpm),
+                  lleno(_motorUms),
+                ],
+                _alturaMotorConforme != null,
+              ],
+              const ['motor', 'motorRpm', 'motorUms', 'alturaMotorConforme'],
+            ),
+            // Solo cuenta el lado con máximo configurado para la copa.
+            'Anchura de eje (mm)': _InfoBloque.de(
+              res,
+              [
+                if (anchuraEjeDelMax != null) lleno(_anchuraEjeDel),
+                if (anchuraEjeTraMax != null) lleno(_anchuraEjeTra),
+              ],
+              const ['anchuraEjeDel', 'anchuraEjeTra'],
+            ),
+            'Llanta delantera': _InfoBloque.de(
+                res,
+                [hay(_llantaDelMarca), hay(_llantaDelDim)],
+                const ['llantaDelMarca', 'llantaDelDimension']),
+            'Llanta trasera': _InfoBloque.de(
+                res,
+                [hay(_llantaTraMarca), hay(_llantaTraDim)],
+                const ['llantaTraMarca', 'llantaTraDimension']),
+            'Piñón': _InfoBloque.de(
+                res,
+                [hay(_pinonMarca), hay(_pinonDientes), hay(_pinonMaterial)],
+                const ['pinonMarca', 'pinonDientes']),
+            'Corona': _InfoBloque.de(
+                res,
+                [hay(_coronaMarca), hay(_coronaDientes), hay(_coronaMaterial)],
+                const ['coronaMarca', 'coronaDientes']),
+            'Bancada': _InfoBloque.de(res, [hay(_bancada)], const ['bancada']),
+            'Chasis': _InfoBloque.de(res, [hay(_chasis)], const []),
+            'Peso coche entero (gramos)':
+                _InfoBloque.de(res, [lleno(_pesoIniCoche)], const []),
+            'Otros': _InfoBloque.de(
+                res,
+                [hay(_neumatico), hay(_trencilla), lleno(_suspension)],
+                const ['neumatico', 'trencilla']),
+          };
 
           final usaCreditos = campActivo?.usaCreditos ?? false;
           return ListView(
@@ -860,30 +934,37 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               if (usaCreditos && _piloto1 != null)
                 const SizedBox(height: 12),
               _Resumen(resultado: res),
+              const SizedBox(height: 12),
+              _ProgresoBloques(bloques: bloques),
               const SizedBox(height: 16),
 
-              _SecHead('Coche'),
-              SelectorBuscable<CatalogoCoche>(
-                etiqueta: 'Modelo de coche',
-                titulo: 'Elegir coche',
-                icono: Icons.directions_car_outlined,
-                helper: coches.isEmpty && copaEquipo != null
-                    ? 'No hay coches con la copa $copaEquipo en el catálogo'
-                    : 'Se muestran peso mínimo y créditos del coche al elegirlo',
-                valor: coches.where((c) => c.id == _cocheId).firstOrNull,
-                opciones: coches,
-                etiquetaOpcion: (c) => c.nombre,
-                subtituloOpcion: (c) =>
-                    '${c.pesoMin.toStringAsFixed(2)}g · ${c.creditosCoche >= 0 ? "+" : ""}${c.creditosCoche} créd',
-                onCambio: (c) => _cambiar(() => _cocheId = c?.id),
+              _Bloque(
+                titulo: 'Coche',
+                info: bloques['Coche'],
+                children: [
+                SelectorBuscable<CatalogoCoche>(
+                  etiqueta: 'Modelo de coche',
+                  titulo: 'Elegir coche',
+                  icono: Icons.directions_car_outlined,
+                  helper: coches.isEmpty && copaEquipo != null
+                      ? 'No hay coches con la copa $copaEquipo en el catálogo'
+                      : 'Se muestran peso mínimo y créditos del coche al elegirlo',
+                  valor: coches.where((c) => c.id == _cocheId).firstOrNull,
+                  opciones: uso.ordenar('coche', coches, (c) => c.id),
+                  etiquetaOpcion: (c) => c.nombre,
+                  subtituloOpcion: (c) =>
+                      '${c.pesoMin.toStringAsFixed(2)}g · ${c.creditosCoche >= 0 ? "+" : ""}${c.creditosCoche} créd',
+                  onCambio: (c) => _cambiar(() => _cocheId = c?.id),
+                ),
+                if (cocheSel.id >= 0) ...[
+                  const SizedBox(height: 8),
+                  if (cocheSel.fotoPath != null)
+                    _FotoCocheReferencia(fotoPath: cocheSel.fotoPath!)
+                  else
+                    const _SinFotoCoche(),
+                ],
+                ],
               ),
-              if (cocheSel.id >= 0) ...[
-                const SizedBox(height: 8),
-                if (cocheSel.fotoPath != null)
-                  _FotoCocheReferencia(fotoPath: cocheSel.fotoPath!)
-                else
-                  const _SinFotoCoche(),
-              ],
               const SizedBox(height: 16),
 
               _SecHead('Carrocería'),
@@ -891,10 +972,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: _Bloque(
+                      titulo: 'Peso (gramos)',
+                      info: bloques['Peso (gramos)'],
                       children: [
-                        _SecHead('Peso (gramos)'),
                         TextField(
                           controller: _pesoIni,
                           decoration: InputDecoration(
@@ -913,10 +994,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: _Bloque(
+                      titulo: 'Estética',
+                      info: bloques['Estética'],
                       children: [
-                        _SecHead('Estética'),
                         SegmentedButton<bool?>(
                           segments: const [
                             ButtonSegment(
@@ -965,10 +1046,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: _Bloque(
+                      titulo: 'Motor',
+                      info: bloques['Motor'],
                       children: [
-                        _SecHead('Motor'),
                         SegmentedButton<String>(
                           segments: const [
                             ButtonSegment(
@@ -1019,7 +1100,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                 ? 'Motores homologados para la copa $copaEquipo'
                                 : 'Ref: ${motorSel.rpm ?? "—"} RPM · ${motorSel.gauss ?? "—"} gauss',
                             valor: motorSel,
-                            opciones: motores,
+                            opciones: uso.ordenar('motor', motores, (m) => m.nombre),
                             etiquetaOpcion: (m) => m.nombre,
                             subtituloOpcion: (m) =>
                                 '${m.rpm ?? "—"} RPM · ${m.gauss ?? "—"} gauss',
@@ -1113,10 +1194,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: _Bloque(
+                      titulo: 'Anchura de eje (mm)',
+                      info: bloques['Anchura de eje (mm)'],
                       children: [
-                        _SecHead('Anchura de eje (mm)'),
                         Row(
                           children: [
                             Expanded(
@@ -1176,20 +1257,20 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: _Bloque(
+                      titulo: 'Llanta delantera',
+                      info: bloques['Llanta delantera'],
                       children: [
-                        _SecHead('Llanta delantera'),
                         Row(
                           children: [
                             Expanded(
-                              child: marcasAsync.when(
+                              child: marcasSelAsync.when(
                                 loading: () => const SizedBox.shrink(),
                                 error: (e, _) => Text('Error: $e'),
                                 data: (marcas) => _MarcaSelector(
                                   label: 'Marca',
                                   valor: _llantaDelMarca,
-                                  marcas: marcas,
+                                  marcas: uso.ordenar('llantaDelMarca', marcas.toList()..sort()),
                                   onChange: (v) =>
                                       _cambiar(() => _llantaDelMarca = v),
                                 ),
@@ -1204,8 +1285,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                 data: (lls) => _DimensionSelector(
                                   label: 'Dimensión',
                                   valor: _llantaDelDim,
-                                  opciones:
-                                      lls.map((l) => l.dimension).toList(),
+                                  opciones: uso.ordenar('llantaDelDimension',
+                                      lls.map((l) => l.dimension)),
                                   onChange: (v) =>
                                       _cambiar(() => _llantaDelDim = v),
                                 ),
@@ -1218,20 +1299,20 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: _Bloque(
+                      titulo: 'Llanta trasera',
+                      info: bloques['Llanta trasera'],
                       children: [
-                        _SecHead('Llanta trasera'),
                         Row(
                           children: [
                             Expanded(
-                              child: marcasAsync.when(
+                              child: marcasSelAsync.when(
                                 loading: () => const SizedBox.shrink(),
                                 error: (e, _) => Text('Error: $e'),
                                 data: (marcas) => _MarcaSelector(
                                   label: 'Marca',
                                   valor: _llantaTraMarca,
-                                  marcas: marcas,
+                                  marcas: uso.ordenar('llantaTraMarca', marcas.toList()..sort()),
                                   onChange: (v) =>
                                       _cambiar(() => _llantaTraMarca = v),
                                 ),
@@ -1246,8 +1327,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                 data: (lls) => _DimensionSelector(
                                   label: 'Dimensión',
                                   valor: _llantaTraDim,
-                                  opciones:
-                                      lls.map((l) => l.dimension).toList(),
+                                  opciones: uso.ordenar('llantaTraDimension',
+                                      lls.map((l) => l.dimension)),
                                   onChange: (v) =>
                                       _cambiar(() => _llantaTraDim = v),
                                 ),
@@ -1267,21 +1348,21 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: _Bloque(
+                      titulo: 'Piñón',
+                      info: bloques['Piñón'],
                       children: [
-                        _SecHead('Piñón'),
                         Row(
                           children: [
                             Expanded(
                               flex: 3,
-                              child: marcasAsync.when(
+                              child: marcasSelAsync.when(
                                 loading: () => const SizedBox.shrink(),
                                 error: (e, _) => Text('Error: $e'),
                                 data: (marcas) => _MarcaSelector(
                                   label: 'Marca',
                                   valor: _pinonMarca,
-                                  marcas: marcas,
+                                  marcas: uso.ordenar('pinonMarca', marcas.toList()..sort()),
                                   onChange: (v) =>
                                       _cambiar(() => _pinonMarca = v),
                                 ),
@@ -1292,9 +1373,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               flex: 2,
                               child: _DientesSelector(
                                 label: 'Dientes',
-                                helper: 'Regla: $reglaPinon',
+                                helper: reglaPinon,
                                 valor: _pinonDientes,
-                                opciones: _dientesDe(pinonesAsync),
+                                opciones: uso.ordenar(
+                                    'pinonDientes', _dientesDe(pinonesAsync)),
                                 onChange: (v) =>
                                     _cambiar(() => _pinonDientes = v),
                               ),
@@ -1316,7 +1398,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               child: _DimensionSelector(
                                 label: 'Material',
                                 valor: _pinonMaterial,
-                                opciones: _materialesPinon,
+                                opciones: uso.ordenar('pinonMaterial', _materialesPinon),
                                 onChange: (v) =>
                                     _cambiar(() => _pinonMaterial = v),
                               ),
@@ -1328,21 +1410,21 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: _Bloque(
+                      titulo: 'Corona',
+                      info: bloques['Corona'],
                       children: [
-                        _SecHead('Corona'),
                         Row(
                           children: [
                             Expanded(
                               flex: 3,
-                              child: marcasAsync.when(
+                              child: marcasSelAsync.when(
                                 loading: () => const SizedBox.shrink(),
                                 error: (e, _) => Text('Error: $e'),
                                 data: (marcas) => _MarcaSelector(
                                   label: 'Marca',
                                   valor: _coronaMarca,
-                                  marcas: marcas,
+                                  marcas: uso.ordenar('coronaMarca', marcas.toList()..sort()),
                                   onChange: (v) =>
                                       _cambiar(() => _coronaMarca = v),
                                 ),
@@ -1355,7 +1437,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                 label: 'Dientes',
                                 helper: reglaCorona,
                                 valor: _coronaDientes,
-                                opciones: _dientesDe(coronasAsync),
+                                opciones: uso.ordenar(
+                                    'coronaDientes', _dientesDe(coronasAsync)),
                                 onChange: (v) =>
                                     _cambiar(() => _coronaDientes = v),
                               ),
@@ -1377,7 +1460,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               child: _DimensionSelector(
                                 label: 'Material',
                                 valor: _coronaMaterial,
-                                opciones: _materialesCorona,
+                                opciones: uso.ordenar('coronaMaterial', _materialesCorona),
                                 onChange: (v) =>
                                     _cambiar(() => _coronaMaterial = v),
                               ),
@@ -1396,17 +1479,17 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: _Bloque(
+                      titulo: 'Bancada',
+                      info: bloques['Bancada'],
                       children: [
-                        _SecHead('Bancada'),
                         bancadasFiltAsync.when(
                           loading: () => const SizedBox.shrink(),
                           error: (e, _) => Text('Error: $e'),
                           data: (bs) => _DimensionSelector(
                             label: 'Bancada',
                             valor: _bancada,
-                            opciones: bs.map((b) => b.nombre).toList(),
+                            opciones: uso.ordenar('bancada', bs.map((b) => b.nombre)),
                             onChange: (v) => _cambiar(() => _bancada = v),
                           ),
                         ),
@@ -1415,10 +1498,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: _Bloque(
+                      titulo: 'Chasis',
+                      info: bloques['Chasis'],
                       children: [
-                        _SecHead('Chasis'),
                         Consumer(builder: (context, ref, _) {
                           // Chasis sin copa: siempre la lista completa.
                           final chasisAsync = ref.watch(chasisProvider);
@@ -1428,7 +1511,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             data: (cs) => _DimensionSelector(
                               label: 'Chasis',
                               valor: _chasis,
-                              opciones: cs.map((c) => c.nombre).toList(),
+                              opciones: uso.ordenar('chasis', cs.map((c) => c.nombre)),
                               onChange: (v) => _cambiar(() => _chasis = v),
                             ),
                           );
@@ -1441,94 +1524,114 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               const SizedBox(height: 16),
 
               // 5) Peso coche entero
-              _SecHead('Peso coche entero (gramos)'),
-              Row(
+              _Bloque(
+                titulo: 'Peso coche entero (gramos)',
+                info: bloques['Peso coche entero (gramos)'],
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _pesoIniCoche,
-                      decoration: const InputDecoration(
-                        labelText: 'Inicial',
-                        helperText: 'Coche entero',
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _pesoIniCoche,
+                        decoration: const InputDecoration(
+                          labelText: 'Inicial',
+                          helperText: 'Coche entero',
+                        ),
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
                       ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _pesoFinCoche,
-                      decoration: const InputDecoration(labelText: 'Final'),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _pesoFinCoche,
+                        decoration: const InputDecoration(labelText: 'Final'),
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                      ),
                     ),
-                  ),
+                  ],
+                ),
                 ],
               ),
               const SizedBox(height: 16),
 
               // 6) Otros: neumático + trencilla + suspensión (campos menores)
-              _SecHead('Otros'),
-              Row(
+              _Bloque(
+                titulo: 'Otros',
+                info: bloques['Otros'],
                 children: [
-                  Expanded(
-                    child: neumaticosAsync.when(
-                      loading: () => const SizedBox.shrink(),
-                      error: (e, _) => Text('Error: $e'),
-                      data: (ns) => _DimensionSelector(
-                        label: 'Neumático',
-                        valor: _neumatico,
-                        opciones: ns.map((n) => n.nombre).toList(),
-                        onChange: (v) => _cambiar(() => _neumatico = v),
+                Row(
+                  children: [
+                    Expanded(
+                      child: neumaticosAsync.when(
+                        loading: () => const SizedBox.shrink(),
+                        error: (e, _) => Text('Error: $e'),
+                        data: (ns) => _DimensionSelector(
+                          label: 'Neumático',
+                          valor: _neumatico,
+                          opciones: uso.ordenar('neumatico', ns.map((n) => n.nombre)),
+                          onChange: (v) => _cambiar(() => _neumatico = v),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: marcasAsync.when(
-                      loading: () => const SizedBox.shrink(),
-                      error: (e, _) => Text('Error: $e'),
-                      data: (marcas) => _DimensionSelector(
-                        label: 'Trencilla',
-                        valor: _trencilla,
-                        opciones: marcas.toList()..sort(),
-                        onChange: (v) => _cambiar(() => _trencilla = v),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: marcasSelAsync.when(
+                        loading: () => const SizedBox.shrink(),
+                        error: (e, _) => Text('Error: $e'),
+                        data: (marcas) => _DimensionSelector(
+                          label: 'Trencilla',
+                          valor: _trencilla,
+                          opciones: uso.ordenar('trencilla', marcas.toList()..sort()),
+                          onChange: (v) => _cambiar(() => _trencilla = v),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _suspension,
-                      decoration:
-                          const InputDecoration(labelText: 'Suspensión'),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _suspension,
+                        decoration:
+                            const InputDecoration(labelText: 'Suspensión'),
+                      ),
                     ),
-                  ),
+                  ],
+                ),
                 ],
               ),
               const SizedBox(height: 16),
 
               // 7) Observaciones
-              _SecHead('Observaciones'),
-              TextField(
-                controller: _observaciones,
-                decoration: const InputDecoration(
-                  labelText: 'Notas o avisos',
-                  alignLabelWithHint: true,
+              _Bloque(
+                titulo: 'Observaciones',
+                info: bloques['Observaciones'],
+                children: [
+                TextField(
+                  controller: _observaciones,
+                  decoration: const InputDecoration(
+                    labelText: 'Notas o avisos',
+                    alignLabelWithHint: true,
+                  ),
+                  minLines: 2,
+                  maxLines: 5,
                 ),
-                minLines: 2,
-                maxLines: 5,
+                ],
               ),
               const SizedBox(height: 16),
 
               // 8) Fotos
-              _SecHead('Fotos (hasta 4)'),
-              _GridFotos(
-                fotos: _fotos,
-                onAnadirCamara: () => _anadirFoto(ImageSource.camera),
-                onAnadirGaleria: () => _anadirFoto(ImageSource.gallery),
-                onEliminar: _eliminarFoto,
+              _Bloque(
+                titulo: 'Fotos (hasta 4)',
+                info: bloques['Fotos (hasta 4)'],
+                children: [
+                _GridFotos(
+                  fotos: _fotos,
+                  onAnadirCamara: () => _anadirFoto(ImageSource.camera),
+                  onAnadirGaleria: () => _anadirFoto(ImageSource.gallery),
+                  onEliminar: _eliminarFoto,
+                ),
+                ],
               ),
               const SizedBox(height: 24),
 
@@ -1799,6 +1902,161 @@ Widget? _iconoCumpleMotor(ColorScheme cs, num? medido, num? referencia,
 
 // ----- Mini-componentes reutilizables -----
 
+enum _EstadoBloque { neutro, pendiente, hecho, infraccion }
+
+/// Lo que lleva rellenado un bloque de la verificación y si tiene algún
+/// dato fuera de reglamento.
+class _InfoBloque {
+  const _InfoBloque(this.hechos, this.total, this.infraccion);
+
+  /// [campos]: un bool por dato que hay que rellenar en el bloque.
+  /// [claves]: campos del validador que pertenecen al bloque.
+  factory _InfoBloque.de(
+      ResultadoValidacion res, List<bool> campos, List<String> claves) {
+    final infraccion = res.hallazgos.any((h) =>
+        h.nivel == NivelValidacion.infraccion && claves.contains(h.campo));
+    return _InfoBloque(
+        campos.where((c) => c).length, campos.length, infraccion);
+  }
+
+  final int hechos;
+  final int total;
+  final bool infraccion;
+
+  _EstadoBloque get estado {
+    if (infraccion) return _EstadoBloque.infraccion;
+    if (total == 0) return _EstadoBloque.neutro;
+    return hechos >= total ? _EstadoBloque.hecho : _EstadoBloque.pendiente;
+  }
+}
+
+/// Bloque de la verificación sombreado y con su estado (pendiente, hecho o
+/// fuera de reglamento), para no saltarse nada al verificar. Sin [info] es
+/// un bloque opcional (observaciones, fotos): sombreado pero sin estado.
+class _Bloque extends StatelessWidget {
+  const _Bloque({
+    required this.titulo,
+    required this.info,
+    required this.children,
+  });
+  final String titulo;
+  final _InfoBloque? info;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final oscuro = Theme.of(context).brightness == Brightness.dark;
+    final estado = info?.estado ?? _EstadoBloque.neutro;
+    final ambar = oscuro ? Colors.amber.shade400 : Colors.amber.shade800;
+    final verde = oscuro ? Colors.green.shade400 : Colors.green.shade700;
+    final (Color color, IconData? icono, String? etiqueta) = switch (estado) {
+      _EstadoBloque.pendiente => (
+          ambar,
+          Icons.radio_button_unchecked,
+          'Pendiente ${info!.hechos}/${info!.total}',
+        ),
+      _EstadoBloque.hecho => (verde, Icons.check_circle, 'Hecho'),
+      _EstadoBloque.infraccion => (cs.error, Icons.error, 'Revisar'),
+      _EstadoBloque.neutro => (cs.outlineVariant, null, null),
+    };
+    final fondo = estado == _EstadoBloque.neutro
+        ? cs.surfaceContainerLow
+        : Color.alphaBlend(
+            color.withValues(alpha: oscuro ? 0.10 : 0.07),
+            cs.surfaceContainerLow);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+      decoration: BoxDecoration(
+        color: fondo,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: estado == _EstadoBloque.neutro
+              ? cs.outlineVariant
+              : color.withValues(alpha: 0.8),
+          width: estado == _EstadoBloque.pendiente ? 2 : 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(titulo,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: cs.primary, fontWeight: FontWeight.w700)),
+                ),
+                if (etiqueta != null) ...[
+                  Icon(icono, size: 18, color: color),
+                  const SizedBox(width: 4),
+                  Text(etiqueta,
+                      style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13)),
+                ],
+              ],
+            ),
+          ),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+/// Barra de progreso de la verificación: bloques completos y cuáles faltan.
+class _ProgresoBloques extends StatelessWidget {
+  const _ProgresoBloques({required this.bloques});
+  final Map<String, _InfoBloque> bloques;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final cuentan =
+        bloques.entries.where((e) => e.value.total > 0).toList();
+    final hechos =
+        cuentan.where((e) => e.value.estado == _EstadoBloque.hecho).length;
+    final faltan = cuentan
+        .where((e) => e.value.estado == _EstadoBloque.pendiente)
+        .map((e) => e.key.replaceAll(RegExp(r' \(.*\)'), ''))
+        .toList();
+    final completo = cuentan.isNotEmpty && faltan.isEmpty;
+    final color = completo ? Colors.green.shade600 : Colors.amber.shade700;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Text('Bloques completos: $hechos de ${cuentan.length}',
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: cuentan.isEmpty ? 0 : hechos / cuentan.length,
+            minHeight: 8,
+            color: color,
+            backgroundColor: cs.surfaceContainerHighest,
+          ),
+        ),
+        if (faltan.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text('Falta: ${faltan.join(' · ')}',
+              style: TextStyle(color: cs.outline, fontSize: 13)),
+        ],
+      ],
+    );
+  }
+}
+
 class _SecHead extends StatelessWidget {
   const _SecHead(this.text);
   final String text;
@@ -1824,12 +2082,13 @@ class _MarcaSelector extends StatelessWidget {
 
   final String label;
   final String? valor;
-  final Set<String> marcas;
+  /// Marcas en el orden en que se muestran (más usadas primero).
+  final List<String> marcas;
   final ValueChanged<String?> onChange;
 
   @override
   Widget build(BuildContext context) {
-    final lista = marcas.toList()..sort();
+    final lista = marcas.toSet().toList();
     // Tolerar valores guardados que no están en el catálogo (datos
     // importados/antiguos): se muestran como opción extra en vez de fallar.
     final desconocido = valor != null && !lista.contains(valor);
@@ -1841,7 +2100,7 @@ class _MarcaSelector extends StatelessWidget {
         const DropdownMenuItem(value: null, child: Text('— sin asignar —')),
         if (desconocido)
           DropdownMenuItem(
-              value: valor, child: Text('$valor (no catalogado)')),
+              value: valor, child: Text('$valor (fuera de la lista)')),
         ...lista.map((m) => DropdownMenuItem(value: m, child: Text(m))),
       ],
       onChanged: onChange,

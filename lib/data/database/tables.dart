@@ -61,6 +61,12 @@ class Campeonatos extends Table {
   /// {"GT": {"del": 65.0, "tra": 63.0}, "F1": {...}}. Una copa ausente del
   /// mapa, o un lado sin valor, no se comprueba.
   TextColumn get anchuraEjeJson => text().withDefault(const Constant('{}'))();
+  /// Fabricantes permitidos en la verificación (JSON array de códigos del
+  /// catálogo de marcas, p. ej. ["SIT"]). Vacío "[]" = sin limitación. Si hay
+  /// alguno, los desplegables de marca de la verificación solo muestran esos
+  /// y cualquier otra marca es infracción.
+  TextColumn get marcasPermitidasJson =>
+      text().withDefault(const Constant('[]'))();
   /// Marca propia del campeonato en los PDF (título de cabecera y lema del
   /// pie). Si están vacíos se usa la marca global de la app.
   TextColumn get marcaTitulo => text().nullable()();
@@ -203,6 +209,10 @@ class InscripcionesPrueba extends Table {
   BoolColumn get asignada => boolean().withDefault(const Constant(false))();
   /// Si true, el equipo participa como invitado / wildcard y no paga.
   BoolColumn get wildcard => boolean().withDefault(const Constant(false))();
+  /// Si true, el equipo no paga esta prueba por ser de coordinadora
+  /// (marcado a mano desde la tesorería con "Coord. total").
+  BoolColumn get exentoCoordinadora =>
+      boolean().withDefault(const Constant(false))();
   /// Copa en la que el equipo compitió en ESTA prueba. Permite cambiar de copa
   /// a mitad de campeonato sin perder los puntos de las pruebas anteriores.
   /// Si es null, se usa la copa actual del equipo.

@@ -26,6 +26,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/proveedores.dart';
 import '../data/database/app_database.dart';
+import '../data/database/copas_en_prueba.dart';
 
 class GeneradorTandaJson {
   GeneradorTandaJson(this.ref);
@@ -70,6 +71,7 @@ class GeneradorTandaJson {
           ..orderBy([(t) => d.OrderingTerm.asc(t.id)]))
         .get();
 
+    final copasPrueba = await db.copasEnPrueba(pruebaId);
     var maxCarril = 0;
     var maxNumCarriles = 0;
     final tandas = <Map<String, dynamic>>[];
@@ -97,7 +99,7 @@ class GeneradorTandaJson {
 
         equipos.add({
           'nombre': eq.nombre,
-          'copa': eq.copa,
+          'copa': copasPrueba[eq.id] ?? eq.copa,
           if (!pole) 'carril_salida': carril ?? 0, // 0 = descanso
           if (!pole) 'descanso': ?descanso,
           'pilotos': pilotos,

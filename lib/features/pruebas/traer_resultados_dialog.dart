@@ -22,11 +22,8 @@
 // y al aplicar se escribe la posición por manga con asignarPosicionEquipo
 // (los puntos los calcula Control con SU TablaPuntos).
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:nsd/nsd.dart';
 
 import '../../core/proveedores.dart';
 import '../../services/almacen_local.dart';
@@ -34,9 +31,9 @@ import '../../services/traer_resultados_service.dart';
 import '../resultados/pantalla_resultados_prueba.dart'
     show mangaPorEquipoEnPrueba;
 import '../resultados/repositorio_resultados.dart';
+import 'selector_pitwall.dart';
 
 const _kHostKey = 'pitwall_host';
-const _serviceType = '_pitwall-manager._tcp';
 
 Future<void> mostrarTraerResultados(
     BuildContext context, WidgetRef ref, int pruebaId) async {
@@ -68,8 +65,6 @@ class _TraerResultadosDialog extends StatefulWidget {
 
 class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
   final _hostCtrl = TextEditingController();
-  Discovery? _disc;
-  bool _buscando = true;
   bool _trabajando = false;
 
   int _paso = 0; // 0 = elegir PitWall, 1 = elegir carrera, 2 = preview
@@ -82,48 +77,12 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
     super.initState();
     final almacen = widget.ref.read(almacenSyncProvider);
     _hostCtrl.text = almacen.readSync(key: _kHostKey) ?? '';
-    _iniciarDescubrimiento();
-  }
-
-  Future<void> _iniciarDescubrimiento() async {
-    try {
-      final d =
-          await startDiscovery(_serviceType, ipLookupType: IpLookupType.v4);
-      if (!mounted) {
-        await stopDiscovery(d);
-        return;
-      }
-      d.addListener(() {
-        if (mounted) setState(() {});
-      });
-      setState(() {
-        _disc = d;
-        _buscando = false;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _buscando = false);
-    }
   }
 
   @override
   void dispose() {
-    final d = _disc;
-    if (d != null) stopDiscovery(d).catchError((_) {});
     _hostCtrl.dispose();
     super.dispose();
-  }
-
-  String _hostDe(Service s) {
-    final addrs = s.addresses;
-    String host = s.host ?? '';
-    if (addrs != null && addrs.isNotEmpty) {
-      final v4 = addrs.firstWhere(
-        (a) => a.type == InternetAddressType.IPv4,
-        orElse: () => addrs.first,
-      );
-      host = v4.address;
-    }
-    return '$host:${s.port ?? 3000}';
   }
 
   void _snack(String msg) =>
@@ -283,53 +242,11 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
   }
 
   Widget _pasoHost() {
-    final servicios = _disc?.services ?? const <Service>[];
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Text('PitWall en la red',
-                style: TextStyle(fontWeight: FontWeight.w600)),
-            const Spacer(),
-            if (_buscando)
-              const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2)),
-          ],
-        ),
-        const SizedBox(height: 6),
-        if (servicios.isEmpty && !_buscando)
-          const Text(
-              'No se ha encontrado ningún PitWall. Escribe su dirección abajo.',
-              style: TextStyle(fontSize: 12, color: Colors.grey))
-        else
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 160),
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                for (final s in servicios)
-                  ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.dns_outlined),
-                    title: Text(s.name ?? 'PitWall'),
-                    subtitle: Text(_hostDe(s)),
-                    onTap: () => setState(() => _hostCtrl.text = _hostDe(s)),
-                  ),
-              ],
-            ),
-          ),
-        const Divider(),
-        TextField(
-          controller: _hostCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Dirección (IP:puerto)',
-            hintText: '192.168.1.50:3000',
-          ),
-        ),
+        SelectorPitwall(hostCtrl: _hostCtrl),
       ],
     );
   }

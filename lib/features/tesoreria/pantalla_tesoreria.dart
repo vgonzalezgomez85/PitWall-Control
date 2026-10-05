@@ -37,7 +37,17 @@ class PantallaTesoreria extends ConsumerWidget {
     final eur = NumberFormat.currency(locale: 'es_ES', symbol: '€');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tesorería')),
+      appBar: AppBar(
+        title: const Text('Tesorería'),
+        actions: [
+          if (activo != null)
+            TextButton.icon(
+              icon: const Icon(Icons.pie_chart_outline),
+              label: const Text('Reparto'),
+              onPressed: () => _editarReparto(context, ref, activo),
+            ),
+        ],
+      ),
       floatingActionButton: activo == null
           ? null
           : FloatingActionButton.extended(
@@ -70,6 +80,8 @@ class PantallaTesoreria extends ConsumerWidget {
           }
 
           final totalPagos = lista.fold<double>(0, (s, r) => s + r.sumaTotal);
+          final eurSin = NumberFormat.currency(
+              locale: 'es_ES', symbol: '€', decimalDigits: 2);
           final totalPagat =
               lista.fold<double>(0, (s, r) => s + r.sumaPagat);
           final totalCoord =
@@ -88,6 +100,16 @@ class PantallaTesoreria extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
             children: [
+              if (activo != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'Cuota por prueba: ${eurSin.format(activo.cuotaPagat)} '
+                    '(coordinadora ${eurSin.format(activo.cuotaCoordinadora)}'
+                    ' · club ${eurSin.format(activo.cuotaClub)})',
+                    style: TextStyle(color: cs.outline, fontSize: 13),
+                  ),
+                ),
               _ResumenGlobal(
                 total: balance,
                 pagat: totalPagat,
@@ -116,6 +138,157 @@ class PantallaTesoreria extends ConsumerWidget {
         },
       ),
     );
+  }
+}
+
+/// Diálogo para cambiar la cuota del campeonato y cuánto de ella va a la
+/// coordinadora y cuánto al club. Coordinadora + club siempre suman el Pagat:
+/// al tocar uno, el otro se ajusta solo.
+Future<void> _editarReparto(
+    BuildContext context, WidgetRef ref, Campeonato camp) async {
+  String f(double n) => n.toStringAsFixed(n % 1 == 0 ? 0 : 2);
+  double p(TextEditingController c) =>
+      double.tryParse(c.text.trim().replaceAll(',', '.')) ?? 0;
+  final pagat = TextEditingController(text: f(camp.cuotaPagat));
+  final coord = TextEditingController(text: f(camp.cuotaCoordinadora));
+  final club = TextEditingController(text: f(camp.cuotaClub));
+  var recalcular = false;
+  final formato = [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))];
+
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(builder: (ctx, setS) {
+      final total = p(pagat);
+      final c = p(coord);
+      final cl = p(club);
+      final cuadra = total > 0 && (c + cl - total).abs() < 0.01 && c >= 0 && cl >= 0;
+      String pct(double v) =>
+          total > 0 ? '${(v / total * 100).toStringAsFixed(0)} %' : '';
+      return AlertDialog(
+        title: const Text('Reparto de la cuota'),
+        content: SizedBox(
+          width: 440,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Lo que paga cada equipo por prueba y a dónde va. '
+                'Al cambiar coordinadora o club, el otro se ajusta para '
+                'que sumen el Pagat.',
+                style: Theme.of(ctx).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: pagat,
+                autofocus: true,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: formato,
+                decoration: const InputDecoration(
+                  labelText: 'Pagat (cuota total) €',
+                  prefixIcon: Icon(Icons.payments_outlined),
+                ),
+                // Mantener la parte de coordinadora; el club absorbe el cambio.
+                onChanged: (_) => setS(() {
+                  final resto = p(pagat) - p(coord);
+                  club.text = f(resto < 0 ? 0 : resto);
+                }),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: coord,
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      inputFormatters: formato,
+                      decoration: InputDecoration(
+                        labelText: 'Coordinadora €',
+                        suffixText: pct(c),
+                      ),
+                      onChanged: (_) => setS(() {
+                        final resto = p(pagat) - p(coord);
+                        club.text = f(resto < 0 ? 0 : resto);
+                      }),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: club,
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      inputFormatters: formato,
+                      decoration: InputDecoration(
+                        labelText: 'Club €',
+                        suffixText: pct(cl),
+                      ),
+                      onChanged: (_) => setS(() {
+                        final resto = p(pagat) - p(club);
+                        coord.text = f(resto < 0 ? 0 : resto);
+                      }),
+                    ),
+                  ),
+                ],
+              ),
+              if (!cuadra) ...[
+                const SizedBox(height: 8),
+                Text(
+                  total <= 0
+                      ? 'El Pagat tiene que ser mayor que 0.'
+                      : 'Coordinadora + club tienen que sumar el Pagat.',
+                  style: TextStyle(
+                      color: Theme.of(ctx).colorScheme.error, fontSize: 12),
+                ),
+              ],
+              const SizedBox(height: 8),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: recalcular,
+                onChanged: (v) => setS(() => recalcular = v ?? false),
+                title: const Text('Aplicar también a los pagos ya cobrados'),
+                subtitle: const Text(
+                    'Vuelve a repartir lo que pagó cada equipo con la nueva '
+                    'proporción. Lo cobrado no cambia.'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: cuadra ? () => Navigator.pop(ctx, true) : null,
+            child: const Text('Guardar'),
+          ),
+        ],
+      );
+    }),
+  );
+  if (ok != true) return;
+  final db = ref.read(dbProvider);
+  final n = await ref.read(repoTesoreriaProvider).guardarReparto(
+        campeonatoId: camp.id,
+        pagat: p(pagat),
+        coordinadora: p(coord),
+        club: p(club),
+        recalcularPagos: recalcular,
+      );
+  // El campeonato activo es una copia en memoria: refrescarla.
+  final actualizado = await (db.select(db.campeonatos)
+        ..where((t) => t.id.equals(camp.id)))
+      .getSingle();
+  ref.read(campeonatoActivoProvider.notifier).seleccionar(actualizado);
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(recalcular
+          ? 'Reparto guardado. $n pago(s) recalculado(s).'
+          : 'Reparto guardado. Se aplicará a los próximos pagos.'),
+    ));
   }
 }
 
@@ -416,9 +589,13 @@ class _TarjetaPrueba extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final p = resumen.prueba;
+    // Los exentos (wildcard / coordinadora) no cuentan como pendientes.
+    final aPagar = resumen.totalEquipos - resumen.exentos;
     final progreso = resumen.totalEquipos == 0
         ? 0.0
-        : resumen.pagados / resumen.totalEquipos;
+        : aPagar <= 0
+            ? 1.0
+            : resumen.pagados / aPagar;
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -462,7 +639,8 @@ class _TarjetaPrueba extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    '${resumen.pagados} / ${resumen.totalEquipos} pagados',
+                    '${resumen.pagados} / $aPagar pagados'
+                    '${resumen.exentos > 0 ? ' · ${resumen.exentos} no pagan' : ''}',
                     style: TextStyle(color: cs.outline, fontSize: 13),
                   ),
                   const SizedBox(width: 12),

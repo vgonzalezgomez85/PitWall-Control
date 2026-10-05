@@ -25,6 +25,7 @@ import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/seeds.dart';
 import '../creditos/repositorio_creditos.dart';
+import 'selector_marcas_permitidas.dart';
 
 /// Provider con todas las copas del catálogo global (para sugerirlas).
 final _catalogoCopasProvider = FutureProvider<List<String>>((ref) async {
@@ -64,12 +65,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   final _cuotaClub = TextEditingController(text: '14');
   final _motorMin = TextEditingController();
   final _motorMax = TextEditingController();
-  final _pinonMin = TextEditingController(text: '12');
-  final _pinonMax = TextEditingController(text: '12');
-  final _coronaMin = TextEditingController(text: '24');
-  final _coronaMax = TextEditingController(text: '30');
-  bool _pinonFijo = true;
-  bool _coronaFijo = false;
+  /// Limitar fabricante: códigos de marca permitidos en la verificación.
+  bool _limitarMarcas = false;
+  Set<String> _marcasPermitidas = {};
   final _marcaTitulo = TextEditingController();
   final _marcaLema = TextEditingController();
 
@@ -117,12 +115,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
         c.cuotaClub.toStringAsFixed(c.cuotaClub % 1 == 0 ? 0 : 2);
     _motorMin.text = c.motorSorteoMin?.toString() ?? '';
     _motorMax.text = c.motorSorteoMax?.toString() ?? '';
-    _pinonMin.text = c.pinonDientesMin.toString();
-    _pinonMax.text = c.pinonDientesMax.toString();
-    _coronaMin.text = c.coronaDientesMin.toString();
-    _coronaMax.text = c.coronaDientesMax.toString();
-    _pinonFijo = c.pinonDientesMin == c.pinonDientesMax;
-    _coronaFijo = c.coronaDientesMin == c.coronaDientesMax;
+    _marcasPermitidas = {...marcasPermitidasDe(c.marcasPermitidasJson)};
+    _limitarMarcas = _marcasPermitidas.isNotEmpty;
     _marcaTitulo.text = c.marcaTitulo ?? '';
     _marcaLema.text = c.marcaLema ?? '';
     _formato = c.formato;
@@ -167,10 +161,6 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
     _cuotaClub.dispose();
     _motorMin.dispose();
     _motorMax.dispose();
-    _pinonMin.dispose();
-    _pinonMax.dispose();
-    _coronaMin.dispose();
-    _coronaMax.dispose();
     for (final c in _anchuraEjeCtrl.values) {
       c.dispose();
     }
@@ -240,6 +230,10 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       _aviso('Selecciona al menos una copa / categoría.');
       return;
     }
+    if (_limitarMarcas && _marcasPermitidas.isEmpty) {
+      _aviso('Limitar fabricante: elige al menos una marca o desactívalo.');
+      return;
+    }
     setState(() => _guardando = true);
     final db = ref.read(dbProvider);
     try {
@@ -266,16 +260,21 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       final cuotaP = parseD(_cuotaPagat, 25);
       final cuotaC = parseD(_cuotaCoord, 11);
       final cuotaCl = parseD(_cuotaClub, 14);
+      // El desglose tiene que cuadrar con la cuota, o la tesorería no suma.
+      if (_usaTesoreria && (cuotaC + cuotaCl - cuotaP).abs() >= 0.01) {
+        _aviso('Tesorería: Coordinadora + Club deben sumar el Pagat '
+            '(${(cuotaC + cuotaCl).toStringAsFixed(2)} ≠ '
+            '${cuotaP.toStringAsFixed(2)}).');
+        setState(() => _guardando = false);
+        return;
+      }
       final motorMin = int.tryParse(_motorMin.text.trim());
       final motorMax = int.tryParse(_motorMax.text.trim());
-      // Piñón/corona: si es "tamaño fijo", máx = mín.
-      final pinMin = int.tryParse(_pinonMin.text.trim()) ?? 12;
-      final pinMax = _pinonFijo ? pinMin : (int.tryParse(_pinonMax.text.trim()) ?? pinMin);
-      final corMin = int.tryParse(_coronaMin.text.trim()) ?? 24;
-      final corMax = _coronaFijo ? corMin : (int.tryParse(_coronaMax.text.trim()) ?? corMin);
       // Marca propia del campeonato en los PDF (vacío = valor por defecto).
       final mTitulo = _marcaTitulo.text.trim();
       final mLema = _marcaLema.text.trim();
+      final marcasJson =
+          marcasPermitidasAJson(_limitarMarcas ? _marcasPermitidas : {});
 
       if (widget.campeonatoId == null) {
         final id = await Seeds.crearCampeonato(
@@ -298,10 +297,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
             cuotaClub: Value(cuotaCl),
             motorSorteoMin: Value(motorMin),
             motorSorteoMax: Value(motorMax),
-            pinonDientesMin: Value(pinMin),
-            pinonDientesMax: Value(pinMax),
-            coronaDientesMin: Value(corMin),
-            coronaDientesMax: Value(corMax),
+            marcasPermitidasJson: Value(marcasJson),
             marcaTitulo: Value(mTitulo.isEmpty ? null : mTitulo),
             marcaLema: Value(mLema.isEmpty ? null : mLema),
           ),
@@ -338,10 +334,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
           cuotaClub: Value(cuotaCl),
           motorSorteoMin: Value(motorMin),
           motorSorteoMax: Value(motorMax),
-          pinonDientesMin: Value(pinMin),
-          pinonDientesMax: Value(pinMax),
-          coronaDientesMin: Value(corMin),
-          coronaDientesMax: Value(corMax),
+          marcasPermitidasJson: Value(marcasJson),
           marcaTitulo: Value(mTitulo.isEmpty ? null : mTitulo),
           marcaLema: Value(mLema.isEmpty ? null : mLema),
         ));
@@ -788,33 +781,16 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               ],
             ),
             const SizedBox(height: 28),
-            Text('Transmisión (verificación)',
+            Text('Fabricante (verificación)',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: cs.primary,
                       fontWeight: FontWeight.w700,
                     )),
-            const SizedBox(height: 4),
-            Text(
-              'Dientes permitidos en piñón y corona. En la verificación, fuera '
-              'de este rango salta infracción. Activa "Tamaño fijo" si solo se '
-              'permite un valor.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
-            RangoDientes(
-              etiqueta: 'Piñón',
-              fijo: _pinonFijo,
-              min: _pinonMin,
-              max: _pinonMax,
-              onFijo: (v) => setState(() => _pinonFijo = v),
-            ),
-            const SizedBox(height: 8),
-            RangoDientes(
-              etiqueta: 'Corona',
-              fijo: _coronaFijo,
-              min: _coronaMin,
-              max: _coronaMax,
-              onFijo: (v) => setState(() => _coronaFijo = v),
+            SelectorMarcasPermitidas(
+              activo: _limitarMarcas,
+              seleccion: _marcasPermitidas,
+              onActivo: (v) => setState(() => _limitarMarcas = v),
+              onCambio: (sel) => setState(() => _marcasPermitidas = sel),
             ),
             const SizedBox(height: 28),
             Text('Marca en los PDF (opcional)',

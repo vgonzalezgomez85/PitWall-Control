@@ -22,14 +22,12 @@
 // la Manga dentro de la Prueba, ordenada por id), para que Manager pueda casar
 // una verificación con la tanda correspondiente si la tiene.
 
-import 'dart:convert';
-
 import 'package:drift/drift.dart' as d;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/proveedores.dart';
 import '../data/database/app_database.dart';
-import 'fotos_verificacion.dart';
+import '../data/database/copas_en_prueba.dart';
 
 class GeneradorVerificacionesJson {
   GeneradorVerificacionesJson(this.ref);
@@ -40,13 +38,14 @@ class GeneradorVerificacionesJson {
   /// Construye el mapa JSON `pitwall.verificaciones/v1` de la prueba.
   ///
   /// Incluye la copa/pilotos del equipo (Manager no comparte catálogos con
-  /// Control) y, si [incluirFotos], las fotos de cada verificación en base64.
+  /// Control). Las fotos NO se envían: con muchas verificaciones el envío
+  /// se hacía demasiado pesado y lento por la Wi‑Fi (se ven en Control).
   ///
   /// [raceId] liga el envío a una carrera concreta de Manager (la que el
   /// usuario eligió en el diálogo). Si no se indica, cae en el
   /// `managerRaceId` guardado de un envío anterior de esta prueba, si lo hay.
   Future<Map<String, dynamic>> generar(
-      {required int pruebaId, int? raceId, bool incluirFotos = true}) async {
+      {required int pruebaId, int? raceId}) async {
     final db = ref.read(dbProvider);
     final prueba = await (db.select(db.pruebas)
           ..where((t) => t.id.equals(pruebaId)))
@@ -60,6 +59,7 @@ class GeneradorVerificacionesJson {
           ..orderBy([(t) => d.OrderingTerm.asc(t.id)]))
         .get();
 
+    final copasPrueba = await db.copasEnPrueba(pruebaId);
     final verificaciones = <Map<String, dynamic>>[];
     for (var mi = 0; mi < mangas.length; mi++) {
       final manga = mangas[mi];
@@ -78,14 +78,11 @@ class GeneradorVerificacionesJson {
                 ..where((t) => t.id.equals(v.cocheCatalogoId!)))
               .getSingleOrNull();
         }
-        final fotos =
-            incluirFotos ? await _fotosBase64(v.fotosJson) : const [];
-
         verificaciones.add({
           'manga': mi + 1,
           'equipo': {
             'nombre': eq.nombre,
-            'copa': eq.copa,
+            'copa': copasPrueba[eq.id] ?? eq.copa,
             'pilotos': pilotos,
           },
           if (coche != null) 'coche': coche.nombre,
@@ -125,7 +122,6 @@ class GeneradorVerificacionesJson {
           'chasis': v.chasis,
           'neumatico': v.neumatico,
           'observaciones': v.observaciones,
-          if (fotos.isNotEmpty) 'fotos': fotos,
         });
       }
     }
@@ -163,29 +159,6 @@ class GeneradorVerificacionesJson {
       if (p != null) nombres.add(p.nombre);
     }
     return nombres;
-  }
-
-  // Fotos de la verificación codificadas en base64 (solo las que existan en
-  // este dispositivo; una foto borrada u otro dispositivo no la revienta).
-  Future<List<Map<String, String>>> _fotosBase64(String fotosJson) async {
-    List<String> nombres;
-    try {
-      final raw = jsonDecode(fotosJson);
-      nombres = raw is List ? raw.map((e) => e.toString()).toList() : [];
-    } catch (_) {
-      nombres = [];
-    }
-    final out = <Map<String, String>>[];
-    for (final n in nombres) {
-      final f = await FotosVerificacion.resolver(n);
-      if (!await f.exists()) continue;
-      final bytes = await f.readAsBytes();
-      out.add({
-        'nombre': FotosVerificacion.nombreParaBd(n),
-        'datos_base64': base64Encode(bytes),
-      });
-    }
-    return out;
   }
 }
 

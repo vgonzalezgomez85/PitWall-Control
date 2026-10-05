@@ -282,12 +282,18 @@ class RepositorioInscripciones {
   RepositorioInscripciones(this.db);
   final AppDatabase db;
 
+  /// Inscribe al equipo en la manga y, si aún no lo estaba, también en la
+  /// prueba (tesorería, verificaciones e inscritos leen la de la prueba).
   Future<int> inscribir({
     required int mangaId,
     required int equipoId,
     String? carrilSalida,
     bool seedDirecto = false,
-  }) {
+  }) async {
+    final manga = await (db.select(db.mangas)
+          ..where((t) => t.id.equals(mangaId)))
+        .getSingle();
+    await _asegurarInscripcionPrueba(manga.pruebaId, equipoId);
     return db.into(db.inscripciones).insert(
           InscripcionesCompanion.insert(
             mangaId: mangaId,
@@ -296,6 +302,39 @@ class RepositorioInscripciones {
             seedDirecto: Value(seedDirecto),
           ),
         );
+  }
+
+  Future<void> _asegurarInscripcionPrueba(int pruebaId, int equipoId) async {
+    final existente = await (db.select(db.inscripcionesPrueba)
+          ..where((t) =>
+              t.pruebaId.equals(pruebaId) & t.equipoId.equals(equipoId)))
+        .getSingleOrNull();
+    if (existente != null) return;
+    await db.into(db.inscripcionesPrueba).insert(
+          InscripcionesPruebaCompanion.insert(
+            pruebaId: pruebaId,
+            equipoId: equipoId,
+          ),
+        );
+  }
+
+  /// Repara equipos que están en una manga sin estar inscritos en su prueba
+  /// (inscritos a mano desde la manga antes de la 1.15.2). Idempotente.
+  Future<int> repararInscripcionesPrueba() async {
+    final huerfanas = await db.customSelect('''
+      SELECT DISTINCT m.prueba_id AS prueba_id, i.equipo_id AS equipo_id
+      FROM inscripciones i
+      JOIN mangas m ON m.id = i.manga_id
+      WHERE NOT EXISTS (
+        SELECT 1 FROM inscripciones_prueba ip
+        WHERE ip.prueba_id = m.prueba_id AND ip.equipo_id = i.equipo_id
+      )
+    ''').get();
+    for (final r in huerfanas) {
+      await _asegurarInscripcionPrueba(
+          r.read<int>('prueba_id'), r.read<int>('equipo_id'));
+    }
+    return huerfanas.length;
   }
 
   Future<void> cambiarCarril({

@@ -38,6 +38,7 @@ import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../equipos/repositorio_equipos.dart';
 import '../verificaciones/repositorio_verificaciones.dart';
+import 'importador_participantes.dart';
 
 /// Nombre fijo del campeonato contenedor (sale en la cabecera del PDF).
 const nombreContenedorVerificacionLibre = 'Verificación libre';
@@ -56,6 +57,7 @@ class DatosSesionLibre {
     this.coronaDientesMax = 30,
     this.motorSorteoMin,
     this.motorSorteoMax,
+    this.marcasPermitidasJson = '[]',
   });
 
   final String nombre;
@@ -70,6 +72,9 @@ class DatosSesionLibre {
   final int? motorSorteoMin;
   final int? motorSorteoMax;
 
+  /// Limitar fabricante (códigos de marca); "[]" = sin limitación.
+  final String marcasPermitidasJson;
+
   CampeonatosCompanion _reglamento() => CampeonatosCompanion(
         copasJson: Value(json.encode(copas)),
         anchuraEjeJson: Value(anchuraEjeJson),
@@ -79,6 +84,7 @@ class DatosSesionLibre {
         coronaDientesMax: Value(coronaDientesMax),
         motorSorteoMin: Value(motorSorteoMin),
         motorSorteoMax: Value(motorSorteoMax),
+        marcasPermitidasJson: Value(marcasPermitidasJson),
       );
 }
 
@@ -231,6 +237,7 @@ class RepositorioVerificacionLibre {
       coronaDientesMax: ultima.coronaDientesMax,
       motorSorteoMin: ultima.motorSorteoMin,
       motorSorteoMax: ultima.motorSorteoMax,
+      marcasPermitidasJson: ultima.marcasPermitidasJson,
     );
   }
 
@@ -338,10 +345,7 @@ class RepositorioVerificacionLibre {
       final p2 = (piloto2 == null || piloto2.trim().isEmpty)
           ? null
           : await _pilotoPorNombre(piloto2);
-      final nombreEquipo = (equipo == null || equipo.trim().isEmpty)
-          ? [piloto1.trim(), if (piloto2 != null && piloto2.trim().isNotEmpty) piloto2.trim()]
-              .join(' / ')
-          : equipo.trim();
+      final nombreEquipo = nombreEquipoParticipante(piloto1, piloto2, equipo);
       final equipoId = await RepositorioEquipos(db).crearN(
         campeonatoId: sesion.reglamento.id,
         nombre: nombreEquipo,
@@ -361,6 +365,34 @@ class RepositorioVerificacionLibre {
                 mangaId: sesion.mangaId, equipoId: equipoId),
           );
       return equipoId;
+    });
+  }
+
+  /// Nombres de equipo ya inscritos en la sesión (para marcar duplicados).
+  Future<List<String>> nombresEquipos(SesionLibre sesion) async {
+    final equipos = await (db.select(db.equipos)
+          ..where((t) => t.campeonatoId.equals(sesion.reglamento.id)))
+        .get();
+    return equipos.map((e) => e.nombre).toList();
+  }
+
+  /// Da de alta, en una sola transacción, las filas marcadas para importar.
+  /// Devuelve cuántas se han añadido.
+  Future<int> importarParticipantes(
+      SesionLibre sesion, List<ParticipanteImportado> filas) {
+    return db.transaction(() async {
+      var n = 0;
+      for (final f in filas.where((f) => f.importar)) {
+        await anadirParticipante(
+          sesion: sesion,
+          piloto1: f.piloto1,
+          piloto2: f.piloto2,
+          equipo: f.equipo,
+          copa: f.copa,
+        );
+        n++;
+      }
+      return n;
     });
   }
 

@@ -21,6 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../data/database/copas_en_prueba.dart';
 import 'pantalla_importar_resultados_prueba.dart';
 import 'repositorio_resultados.dart';
 
@@ -67,6 +68,7 @@ final resultadosPruebaProvider = StreamProvider.autoDispose
       .watch();
 
   return mangasStream.asyncMap((mangas) async {
+    final copasPrueba = await db.copasEnPrueba(pruebaId);
     final out = <ResultadoPrueba>[];
     for (final m in mangas) {
       final inscritos = await (db.select(db.inscripciones)
@@ -93,7 +95,7 @@ final resultadosPruebaProvider = StreamProvider.autoDispose
         out.add(ResultadoPrueba(
           equipoId: eq.id,
           nombreEquipo: eq.nombre,
-          copa: eq.copa,
+          copa: copasPrueba[eq.id] ?? eq.copa,
           piloto1: p1, piloto2: p2,
           mangaId: m.id,
           nombreManga: m.nombre,

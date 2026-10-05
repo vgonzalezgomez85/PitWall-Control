@@ -15,10 +15,8 @@
 //
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
-import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -142,34 +140,15 @@ class _PantallaCreditosState extends ConsumerState<PantallaCreditos> {
             tooltip: 'Exportar PDF',
             icon: const Icon(Icons.picture_as_pdf_outlined),
             onPressed: () async {
-              final messenger = ScaffoldMessenger.of(context);
               final idi = await elegirIdiomaExport(context, ref);
-              if (idi == null) return;
-              try {
-                final destino = await getSaveLocation(
-                  acceptedTypeGroups: [
-                    XTypeGroup(label: 'PDF', extensions: ['pdf']),
-                  ],
-                  suggestedName:
-                      'creditos-${activo.nombre.replaceAll(' ', '_')}.pdf',
-                );
-                if (destino == null) return;
-                messenger.showSnackBar(const SnackBar(
-                    content: Text('Generando PDF…'),
-                    duration: Duration(seconds: 2)));
-                final bytes = await ref
+              if (idi == null || !context.mounted) return;
+              await guardarPdf(
+                context,
+                sugerido: 'creditos-${slugArchivo(activo.nombre)}.pdf',
+                generar: () => ref
                     .read(generadorPdfCreditosProvider)
-                    .generar(idioma: idi);
-                var ruta = destino.path;
-                if (!ruta.toLowerCase().endsWith('.pdf')) ruta = '$ruta.pdf';
-                await File(ruta).writeAsBytes(bytes);
-                messenger.showSnackBar(SnackBar(
-                    content: Text('PDF guardado en $ruta'),
-                    duration: const Duration(seconds: 3)));
-              } catch (e) {
-                messenger.showSnackBar(
-                    SnackBar(content: Text('Error al generar PDF: $e')));
-              }
+                    .generar(idioma: idi),
+              );
             },
           ),
         ],
@@ -271,25 +250,11 @@ Future<void> _aplicarBonificacionCierre(
 /// Exporta el estado de créditos del campeonato a un CSV.
 Future<void> _exportarCsv(
     BuildContext context, WidgetRef ref, Campeonato activo) async {
-  final messenger = ScaffoldMessenger.of(context);
-  try {
-    final destino = await getSaveLocation(
-      acceptedTypeGroups: [
-        XTypeGroup(label: 'CSV', extensions: ['csv']),
-      ],
-      suggestedName: 'creditos-${activo.nombre.replaceAll(' ', '_')}.csv',
-    );
-    if (destino == null) return;
-    final csv = await ref.read(repoCreditosProvider).exportarCsv(activo.id);
-    var ruta = destino.path;
-    if (!ruta.toLowerCase().endsWith('.csv')) ruta = '$ruta.csv';
-    // BOM para que Excel reconozca UTF-8.
-    await File(ruta).writeAsString('﻿$csv');
-    messenger.showSnackBar(
-        SnackBar(content: Text('CSV guardado en $ruta')));
-  } catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
-  }
+  await guardarCsv(
+    context,
+    sugerido: 'creditos-${slugArchivo(activo.nombre)}.csv',
+    generar: () => ref.read(repoCreditosProvider).exportarCsv(activo.id),
+  );
 }
 
 class _TarjetaPiloto extends StatelessWidget {

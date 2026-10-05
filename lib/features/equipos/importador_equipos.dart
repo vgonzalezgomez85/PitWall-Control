@@ -93,24 +93,29 @@ class MapeoColumnasEquipo {
 
 class ImportadorEquipos {
   /// Lee CSV o XLSX y devuelve (cabeceras, filas como mapas).
+  ///
+  /// [minCeldasCabecera]: celdas llenas que debe tener la fila de cabecera
+  /// (ver [normalizarFilas]).
   static Future<({List<String> columnas, List<Map<String, String>> filas})>
-      leerArchivo(String path) async {
+      leerArchivo(String path, {int minCeldasCabecera = 2}) async {
     final ext = path.toLowerCase().split('.').last;
-    if (ext == 'csv') return _leerCsv(path);
-    if (ext == 'xlsx' || ext == 'xls') return _leerExcel(path);
+    if (ext == 'csv') return _leerCsv(path, minCeldasCabecera);
+    if (ext == 'xlsx' || ext == 'xls') {
+      return _leerExcel(path, minCeldasCabecera);
+    }
     throw Exception('Formato no soportado: $ext. Usa .csv o .xlsx');
   }
 
   static Future<({List<String> columnas, List<Map<String, String>> filas})>
-      _leerCsv(String path) async {
+      _leerCsv(String path, int minCeldasCabecera) async {
     final contenido = await File(path).readAsString(encoding: utf8);
     final csvDec = Csv(skipEmptyLines: true);
     final filas = csvDec.decode(contenido);
-    return _normalizar(filas);
+    return normalizarFilas(filas, minCeldasCabecera: minCeldasCabecera);
   }
 
   static Future<({List<String> columnas, List<Map<String, String>> filas})>
-      _leerExcel(String path) async {
+      _leerExcel(String path, int minCeldasCabecera) async {
     final bytes = await File(path).readAsBytes();
     final libro = Excel.decodeBytes(bytes);
     if (libro.tables.isEmpty) {
@@ -120,16 +125,19 @@ class ImportadorEquipos {
     final filas = hoja.rows.map((fila) {
       return fila.map((celda) => (celda?.value?.toString() ?? '')).toList();
     }).toList();
-    return _normalizar(filas);
+    return normalizarFilas(filas, minCeldasCabecera: minCeldasCabecera);
   }
 
+  /// Busca la fila de cabecera (la primera con [minCeldasCabecera]+ celdas
+  /// llenas, para saltar títulos sueltos encima de la tabla) y convierte las
+  /// siguientes en mapas columna → valor, saltando las vacías.
   static ({List<String> columnas, List<Map<String, String>> filas})
-      _normalizar(List<List<dynamic>> filas) {
+      normalizarFilas(List<List<dynamic>> filas, {int minCeldasCabecera = 2}) {
     int idxCabecera = -1;
     for (var i = 0; i < filas.length; i++) {
       final celdas = filas[i].map((c) => c?.toString().trim() ?? '').toList();
       final llenas = celdas.where((c) => c.isNotEmpty).length;
-      if (llenas >= 2) {
+      if (llenas >= minCeldasCabecera) {
         idxCabecera = i;
         break;
       }
@@ -160,22 +168,22 @@ class ImportadorEquipos {
   static MapeoColumnasEquipo detectarMapeo(List<String> columnas) {
     final m = MapeoColumnasEquipo();
     for (final col in columnas) {
-      final n = _norm(col);
+      final n = normalizarCabecera(col);
 
       // Equipo
       if (m.colEquipo == null &&
-          _match(n, ['nombre equipo', 'equipo', 'team', 'nombre del equipo'])) {
+          coincideCabecera(n, ['nombre equipo', 'equipo', 'team', 'nombre del equipo'])) {
         m.colEquipo = col;
         continue;
       }
-      if (m.colCopa == null && _match(n, ['copa', 'categoria equipo', 'cat equipo', 'class'])) {
+      if (m.colCopa == null && coincideCabecera(n, ['copa', 'categoria equipo', 'cat equipo', 'class'])) {
         m.colCopa = col;
         continue;
       }
 
       // Piloto 1 — buscar primero campos específicos
       if (m.colP1Email == null &&
-          _match(n, [
+          coincideCabecera(n, [
             'piloto 1 email', 'piloto1 email', 'p1 email', 'email piloto 1',
             'correo piloto 1', 'email 1',
           ])) {
@@ -183,7 +191,7 @@ class ImportadorEquipos {
         continue;
       }
       if (m.colP1Telefono == null &&
-          _match(n, [
+          coincideCabecera(n, [
             'piloto 1 telefono', 'p1 telefono', 'telefono piloto 1',
             'movil piloto 1', 'tel 1',
           ])) {
@@ -191,7 +199,7 @@ class ImportadorEquipos {
         continue;
       }
       if (m.colP1Categoria == null &&
-          _match(n, [
+          coincideCabecera(n, [
             'piloto 1 categoria', 'p1 categoria', 'metal piloto 1',
             'categoria piloto 1', 'nivel piloto 1',
           ])) {
@@ -199,14 +207,14 @@ class ImportadorEquipos {
         continue;
       }
       if (m.colP1Palmares == null &&
-          _match(n, [
+          coincideCabecera(n, [
             'piloto 1 palmares', 'palmares piloto 1', 'p1 palmares',
           ])) {
         m.colP1Palmares = col;
         continue;
       }
       if (m.colP1Nombre == null &&
-          _match(n, [
+          coincideCabecera(n, [
             'piloto 1', 'piloto1', 'pilot 1', 'p1', 'piloto a',
             'nombre piloto 1', 'piloto 1 nombre', 'driver 1',
           ])) {
@@ -216,7 +224,7 @@ class ImportadorEquipos {
 
       // Piloto 2 — análogo
       if (m.colP2Email == null &&
-          _match(n, [
+          coincideCabecera(n, [
             'piloto 2 email', 'piloto2 email', 'p2 email', 'email piloto 2',
             'correo piloto 2', 'email 2',
           ])) {
@@ -224,7 +232,7 @@ class ImportadorEquipos {
         continue;
       }
       if (m.colP2Telefono == null &&
-          _match(n, [
+          coincideCabecera(n, [
             'piloto 2 telefono', 'p2 telefono', 'telefono piloto 2',
             'movil piloto 2', 'tel 2',
           ])) {
@@ -232,7 +240,7 @@ class ImportadorEquipos {
         continue;
       }
       if (m.colP2Categoria == null &&
-          _match(n, [
+          coincideCabecera(n, [
             'piloto 2 categoria', 'p2 categoria', 'metal piloto 2',
             'categoria piloto 2', 'nivel piloto 2',
           ])) {
@@ -240,14 +248,14 @@ class ImportadorEquipos {
         continue;
       }
       if (m.colP2Palmares == null &&
-          _match(n, [
+          coincideCabecera(n, [
             'piloto 2 palmares', 'palmares piloto 2', 'p2 palmares',
           ])) {
         m.colP2Palmares = col;
         continue;
       }
       if (m.colP2Nombre == null &&
-          _match(n, [
+          coincideCabecera(n, [
             'piloto 2', 'piloto2', 'pilot 2', 'p2', 'piloto b',
             'nombre piloto 2', 'piloto 2 nombre', 'driver 2',
           ])) {
@@ -259,9 +267,9 @@ class ImportadorEquipos {
     // Pilotos 3+ (resistencia): solo nombre.
     final extra = <int, String>{};
     for (final col in columnas) {
-      final n = _norm(col);
+      final n = normalizarCabecera(col);
       for (var k = 3; k <= 6; k++) {
-        if (_match(n, ['piloto $k', 'piloto$k', 'p$k', 'pilot $k', 'driver $k'])) {
+        if (coincideCabecera(n, ['piloto $k', 'piloto$k', 'p$k', 'pilot $k', 'driver $k'])) {
           extra.putIfAbsent(k, () => col);
         }
       }
@@ -271,7 +279,8 @@ class ImportadorEquipos {
     return m;
   }
 
-  static String _norm(String s) {
+  /// Cabecera en minúsculas, sin tildes ni signos, para comparar.
+  static String normalizarCabecera(String s) {
     return s
         .toLowerCase()
         .replaceAll(RegExp(r'[áàä]'), 'a')
@@ -284,7 +293,9 @@ class ImportadorEquipos {
         .trim();
   }
 
-  static bool _match(String n, List<String> alts) {
+  /// True si la cabecera normalizada [n] es, empieza, acaba o contiene como
+  /// palabra alguna de las alternativas [alts].
+  static bool coincideCabecera(String n, List<String> alts) {
     for (final a in alts) {
       if (n == a) return true;
       if (n.startsWith('$a ') || n.endsWith(' $a') || n.contains(' $a ')) {

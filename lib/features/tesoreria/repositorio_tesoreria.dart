@@ -48,6 +48,8 @@ class PagoEquipo {
   Pago? pago;
   /// El equipo es wildcard (invitado) en esta prueba.
   final bool wildcard;
+  /// Marcado a mano como "Coord. total" en esta prueba: no paga.
+  final bool exentoCoordinadora;
   /// Manga en la que corre el equipo (null si aún no está asignado).
   final String? mangaNombre;
 
@@ -59,6 +61,7 @@ class PagoEquipo {
     this.piloto2,
     this.pago,
     this.wildcard = false,
+    this.exentoCoordinadora = false,
     this.mangaNombre,
   });
 
@@ -73,9 +76,13 @@ class PagoEquipo {
 
   int get totalPilotos => piloto2 == null ? 1 : 2;
 
-  /// Equipo totalmente exento (wildcard, o TODOS sus pilotos son coordinadora).
-  bool get exento =>
-      wildcard || (coordinadorasCount > 0 && coordinadorasCount == totalPilotos);
+  /// TODOS los pilotos del equipo tienen la marca de coordinadora en su ficha.
+  bool get todosCoordinadora =>
+      coordinadorasCount > 0 && coordinadorasCount == totalPilotos;
+
+  /// Equipo totalmente exento: wildcard, marcado "Coord. total" en esta
+  /// prueba, o TODOS sus pilotos son coordinadora.
+  bool get exento => wildcard || exentoCoordinadora || todosCoordinadora;
 
   /// Paga la mitad (un piloto es coordinadora, otro no).
   bool get pagaMitad =>
@@ -91,7 +98,7 @@ class PagoEquipo {
 
   String? get motivoExencion {
     if (wildcard) return 'Wildcard';
-    if (coordinadorasCount > 0 && coordinadorasCount == totalPilotos) {
+    if (exentoCoordinadora || todosCoordinadora) {
       return 'Pilotos de coordinadora';
     }
     return null;
@@ -104,16 +111,23 @@ class PagoEquipo {
   }
 
   /// Total = PAGAT (los campos coordinadora y club son el desglose de PAGAT).
-  double get total => pago?.pagat ?? 0;
+  /// Un equipo exento no aporta nada aunque le quede un pago antiguo.
+  double get total => exento ? 0 : (pago?.pagat ?? 0);
 
   bool get hayPago => pago != null && total > 0;
+
+  /// Ya no se le debe nada: ha pagado o está exento.
+  bool get saldado => exento || hayPago;
 }
 
 /// Resumen por prueba con totales.
 class ResumenPruebaPagos {
   final Prueba prueba;
   final int totalEquipos;
+  /// Equipos que han pagado (los exentos van aparte).
   final int pagados;
+  /// Equipos que no pagan (wildcard o coordinadora).
+  final int exentos;
   final double sumaTotal;
   final double sumaPagat;
   final double sumaCoordinadora;
@@ -123,6 +137,7 @@ class ResumenPruebaPagos {
     required this.prueba,
     required this.totalEquipos,
     required this.pagados,
+    required this.exentos,
     required this.sumaTotal,
     required this.sumaPagat,
     required this.sumaCoordinadora,
@@ -148,19 +163,21 @@ final tesoreriaCampeonatoProvider =
       final inscritos = await (db.select(db.inscripcionesPrueba)
             ..where((t) => t.pruebaId.equals(p.id)))
           .get();
-      final pagos = await (db.select(db.pagos)
-            ..where((t) => t.pruebaId.equals(p.id)))
-          .get();
+      // Mismo cálculo que la pantalla de la prueba: solo cuentan los pagos
+      // de equipos inscritos y que no estén exentos.
+      final lista = await _construir(db, p.id, inscritos);
       double pagat = 0, coord = 0, club = 0;
-      for (final pg in pagos) {
-        pagat += pg.pagat;
-        coord += pg.coordinadora;
-        club += pg.club;
+      for (final pe in lista) {
+        if (pe.exento || pe.pago == null) continue;
+        pagat += pe.pago!.pagat;
+        coord += pe.pago!.coordinadora;
+        club += pe.pago!.club;
       }
       out.add(ResumenPruebaPagos(
         prueba: p,
-        totalEquipos: inscritos.length,
-        pagados: pagos.where((pg) => pg.pagat > 0).length,
+        totalEquipos: lista.length,
+        pagados: lista.where((pe) => pe.hayPago).length,
+        exentos: lista.where((pe) => pe.exento).length,
         sumaTotal: pagat,
         sumaPagat: pagat,
         sumaCoordinadora: coord,
@@ -177,6 +194,8 @@ final tesoreriaCampeonatoProvider =
         .watch(),
     db.select(db.pagos).watch(),
     db.select(db.inscripcionesPrueba).watch(),
+    // Exención por pilotos de coordinadora.
+    db.select(db.pilotos).watch(),
   ]);
 
   late StreamController<List<ResumenPruebaPagos>> ctrl;
@@ -291,11 +310,12 @@ Future<List<PagoEquipo>> _construir(AppDatabase db, int pruebaId,
       out.add(PagoEquipo(
         equipoId: eq.id,
         nombreEquipo: eq.nombre,
-        copa: eq.copa,
+        copa: i.copa ?? eq.copa,
         piloto1: p1,
         piloto2: p2,
         pago: pago,
         wildcard: i.wildcard,
+        exentoCoordinadora: i.exentoCoordinadora,
         mangaNombre: manga?.nombre,
       ));
     }
@@ -389,6 +409,14 @@ class RepositorioTesoreria {
     await (db.delete(db.pagos)..where((t) => t.id.equals(id))).go();
   }
 
+  /// Borra el pago de un equipo en una prueba, si lo hay.
+  Future<void> borrarDe({required int pruebaId, required int equipoId}) async {
+    await (db.delete(db.pagos)
+          ..where((t) =>
+              t.pruebaId.equals(pruebaId) & t.equipoId.equals(equipoId)))
+        .go();
+  }
+
   /// Marca un equipo como wildcard (no paga) en una prueba.
   Future<void> marcarWildcard({
     required int pruebaId,
@@ -408,6 +436,87 @@ class RepositorioTesoreria {
           .go();
     }
   }
+
+  /// Marca un equipo como "Coord. total" (no paga) en una prueba.
+  Future<void> marcarCoordinadora({
+    required int pruebaId,
+    required int equipoId,
+    required bool exento,
+  }) async {
+    await (db.update(db.inscripcionesPrueba)
+          ..where((t) =>
+              t.pruebaId.equals(pruebaId) & t.equipoId.equals(equipoId)))
+        .write(InscripcionesPruebaCompanion(
+            exentoCoordinadora: Value(exento)));
+    // Igual que el wildcard: si pasa a exento, fuera el pago que hubiera.
+    if (exento) {
+      await (db.delete(db.pagos)
+            ..where((t) =>
+                t.pruebaId.equals(pruebaId) & t.equipoId.equals(equipoId)))
+          .go();
+    }
+  }
+
+  /// Cambia el reparto de la cuota de un campeonato (PAGAT y su desglose
+  /// coordinadora/club). Si [recalcularPagos], los pagos ya registrados en
+  /// sus pruebas se vuelven a desglosar con la nueva proporción (se respeta
+  /// lo que pagó cada equipo; solo cambia cuánto va a cada lado).
+  /// Devuelve cuántos pagos se recalcularon.
+  Future<int> guardarReparto({
+    required int campeonatoId,
+    required double pagat,
+    required double coordinadora,
+    required double club,
+    bool recalcularPagos = false,
+  }) async {
+    return db.transaction(() async {
+      await (db.update(db.campeonatos)
+            ..where((t) => t.id.equals(campeonatoId)))
+          .write(CampeonatosCompanion(
+        cuotaPagat: Value(pagat),
+        cuotaCoordinadora: Value(coordinadora),
+        cuotaClub: Value(club),
+      ));
+      if (!recalcularPagos) return 0;
+      final idsPruebas = await (db.selectOnly(db.pruebas)
+            ..addColumns([db.pruebas.id])
+            ..where(db.pruebas.campeonatoId.equals(campeonatoId)))
+          .map((r) => r.read(db.pruebas.id)!)
+          .get();
+      if (idsPruebas.isEmpty) return 0;
+      final pagos = await (db.select(db.pagos)
+            ..where((t) => t.pruebaId.isIn(idsPruebas)))
+          .get();
+      var n = 0;
+      for (final pg in pagos) {
+        if (pg.pagat <= 0) continue;
+        final (c, cl) = repartir(pg.pagat,
+            cuotaCoordinadora: coordinadora, cuotaClub: club);
+        if (c == pg.coordinadora && cl == pg.club) continue;
+        await (db.update(db.pagos)..where((t) => t.id.equals(pg.id))).write(
+            PagosCompanion(coordinadora: Value(c), club: Value(cl)));
+        n++;
+      }
+      return n;
+    });
+  }
+}
+
+/// Reparte un importe pagado entre coordinadora y club con la misma
+/// proporción que la cuota del campeonato. Redondea a céntimos y deja el
+/// resto en el club para que la suma cuadre siempre con [importe].
+(double, double) repartir(
+  double importe, {
+  required double cuotaCoordinadora,
+  required double cuotaClub,
+}) {
+  final base = cuotaCoordinadora + cuotaClub;
+  if (importe <= 0) return (0, 0);
+  // Sin reparto configurado: todo al club.
+  if (base <= 0) return (0, importe);
+  final coord = (importe * cuotaCoordinadora / base * 100).round() / 100;
+  final club = ((importe - coord) * 100).round() / 100;
+  return (coord, club);
 }
 
 final repoTesoreriaProvider = Provider<RepositorioTesoreria>((ref) {

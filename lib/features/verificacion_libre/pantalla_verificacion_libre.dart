@@ -25,6 +25,7 @@ import '../../services/generador_pdf_verificaciones.dart';
 import '../verificaciones/editor_verificacion.dart';
 import '../verificaciones/lista_verificaciones.dart';
 import 'editor_sesion_libre.dart';
+import 'pantalla_importar_participantes.dart';
 import 'repositorio_verificacion_libre.dart';
 
 /// Listado de sesiones de verificación libre (sin campeonato ni prueba).
@@ -149,7 +150,9 @@ class PantallaSesionLibre extends ConsumerWidget {
           titulo: s.nombre,
           subtitulo: descripcion.isEmpty ? null : descripcion,
           vacioTitulo: 'Aún no hay participantes',
-          vacioTexto: 'Pulsa "Añadir participante" para verificar su coche.',
+          vacioTexto: 'Pulsa "Añadir participante" para verificar su coche, '
+              'o impórtalos desde un archivo o Google Sheets con el botón '
+              'de importar de arriba.',
           botonFlotante: FloatingActionButton.extended(
             onPressed: () => _anadirParticipante(context, ref, s),
             icon: const Icon(Icons.person_add_alt_1),
@@ -159,6 +162,29 @@ class PantallaSesionLibre extends ConsumerWidget {
               .read(repoVerificacionLibreProvider)
               .quitarParticipante(sesion: s, equipoId: fila.equipo.id),
           acciones: [
+            PopupMenuButton<OrigenParticipantes>(
+              tooltip: 'Importar participantes',
+              icon: const Icon(Icons.group_add_outlined),
+              onSelected: (origen) => _importar(context, s, origen),
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: OrigenParticipantes.archivo,
+                  child: ListTile(
+                    leading: Icon(Icons.upload_file),
+                    title: Text('Desde archivo (CSV / Excel)'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                PopupMenuItem(
+                  value: OrigenParticipantes.sheets,
+                  child: ListTile(
+                    leading: Icon(Icons.cloud_outlined),
+                    title: Text('Desde Google Sheets'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
             IconButton(
               tooltip: 'Reglamento y datos de la sesión',
               icon: const Icon(Icons.tune),
@@ -193,6 +219,24 @@ class PantallaSesionLibre extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<void> _importar(BuildContext context, SesionLibre s,
+      OrigenParticipantes origen) async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (s.copas.isEmpty) {
+      messenger.showSnackBar(const SnackBar(
+          content: Text('Configura antes las copas en el reglamento de la '
+              'sesión.')));
+      return;
+    }
+    final n = await Navigator.of(context).push<int>(MaterialPageRoute(
+      builder: (_) => PantallaImportarParticipantes(sesion: s, origen: origen),
+    ));
+    if (n != null) {
+      messenger.showSnackBar(
+          SnackBar(content: Text('Añadidos $n participantes.')));
+    }
   }
 
   Future<void> _borrar(

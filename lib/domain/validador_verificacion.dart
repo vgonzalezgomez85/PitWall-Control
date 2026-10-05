@@ -87,10 +87,12 @@ class DatosVerificacion {
   final String? neumatico;
 
   /// Rango de dientes permitido (inclusive). Tamaño fijo = min == max.
-  final int pinonDientesMin;
-  final int pinonDientesMax;
-  final int coronaDientesMin;
-  final int coronaDientesMax;
+  /// Null = sin regla: en los campeonatos los dientes ya se limitan con el
+  /// catálogo de engranajes de la copa; solo la verificación libre lo usa.
+  final int? pinonDientesMin;
+  final int? pinonDientesMax;
+  final int? coronaDientesMin;
+  final int? coronaDientesMax;
 
   /// Conjuntos válidos cargados de los catálogos.
   final Set<String> marcasValidas;
@@ -98,6 +100,10 @@ class DatosVerificacion {
   final Set<String> llantasTraValidas;
   final Set<String> bancadasValidas;
   final Set<String> neumaticosValidos;
+
+  /// Fabricantes permitidos por el campeonato (códigos de marca). Vacío =
+  /// sin limitación.
+  final Set<String> marcasPermitidas;
 
   DatosVerificacion({
     this.pesoInicial,
@@ -121,10 +127,10 @@ class DatosVerificacion {
     this.pinonDientes,
     this.coronaMarca,
     this.coronaDientes,
-    this.pinonDientesMin = 12,
-    this.pinonDientesMax = 12,
-    this.coronaDientesMin = 24,
-    this.coronaDientesMax = 30,
+    this.pinonDientesMin,
+    this.pinonDientesMax,
+    this.coronaDientesMin,
+    this.coronaDientesMax,
     this.llantaDelMarca,
     this.llantaDelDimension,
     this.llantaTraMarca,
@@ -139,6 +145,7 @@ class DatosVerificacion {
     this.llantasTraValidas = const {},
     this.bancadasValidas = const {},
     this.neumaticosValidos = const {},
+    this.marcasPermitidas = const {},
   });
 }
 
@@ -228,35 +235,28 @@ class ValidadorVerificacion {
       ));
     }
 
-    // PIÑÓN — rango (o tamaño fijo) configurado en el campeonato.
-    if (d.pinonDientes != null &&
-        (d.pinonDientes! < d.pinonDientesMin ||
-            d.pinonDientes! > d.pinonDientesMax)) {
-      hallazgos.add(HallazgoValidacion(
-        'pinonDientes',
-        NivelValidacion.infraccion,
-        'Piñón fuera de ${_rangoTexto(d.pinonDientesMin, d.pinonDientesMax)} '
-        'dientes. Actual: ${d.pinonDientes}.',
-      ));
-    }
-
-    // CORONA — rango (o tamaño fijo) configurado en el campeonato.
-    if (d.coronaDientes != null &&
-        (d.coronaDientes! < d.coronaDientesMin ||
-            d.coronaDientes! > d.coronaDientesMax)) {
-      hallazgos.add(HallazgoValidacion(
-        'coronaDientes',
-        NivelValidacion.infraccion,
-        'Corona fuera de ${_rangoTexto(d.coronaDientesMin, d.coronaDientesMax)} '
-        'dientes. Actual: ${d.coronaDientes}.',
-      ));
-    }
+    // PIÑÓN / CORONA — rango (o tamaño fijo) de la verificación libre.
+    _verDientes(hallazgos, 'pinonDientes', 'Piñón', d.pinonDientes,
+        d.pinonDientesMin, d.pinonDientesMax);
+    _verDientes(hallazgos, 'coronaDientes', 'Corona', d.coronaDientes,
+        d.coronaDientesMin, d.coronaDientesMax);
 
     // Marcas en catálogo
     _verMarca(hallazgos, 'pinonMarca', d.pinonMarca, d.marcasValidas);
     _verMarca(hallazgos, 'coronaMarca', d.coronaMarca, d.marcasValidas);
     _verMarca(hallazgos, 'llantaDelMarca', d.llantaDelMarca, d.marcasValidas);
     _verMarca(hallazgos, 'llantaTraMarca', d.llantaTraMarca, d.marcasValidas);
+
+    // Fabricante limitado por el campeonato
+    for (final (campo, valor) in [
+      ('pinonMarca', d.pinonMarca),
+      ('coronaMarca', d.coronaMarca),
+      ('llantaDelMarca', d.llantaDelMarca),
+      ('llantaTraMarca', d.llantaTraMarca),
+      ('trencilla', d.trencilla),
+    ]) {
+      _verFabricante(hallazgos, campo, valor, d.marcasPermitidas);
+    }
 
     // Llantas en catálogo
     _verCatalogo(hallazgos, 'llantaDelDimension', d.llantaDelDimension,
@@ -286,6 +286,30 @@ class ValidadorVerificacion {
   /// "12" si min==max (tamaño fijo), "24-30" si es un rango.
   static String _rangoTexto(int min, int max) =>
       min == max ? '$min' : '$min-$max';
+
+  static void _verDientes(List<HallazgoValidacion> out, String campo,
+      String nombre, int? dientes, int? min, int? max) {
+    if (dientes == null || min == null || max == null) return;
+    if (dientes < min || dientes > max) {
+      out.add(HallazgoValidacion(
+        campo,
+        NivelValidacion.infraccion,
+        '$nombre fuera de ${_rangoTexto(min, max)} dientes. Actual: $dientes.',
+      ));
+    }
+  }
+
+  static void _verFabricante(List<HallazgoValidacion> out, String campo,
+      String? valor, Set<String> permitidas) {
+    if (valor == null || valor.isEmpty || permitidas.isEmpty) return;
+    if (!permitidas.contains(valor)) {
+      out.add(HallazgoValidacion(
+        campo,
+        NivelValidacion.infraccion,
+        'Marca "$valor" no permitida (solo ${(permitidas.toList()..sort()).join(", ")}).',
+      ));
+    }
+  }
 
   static void _verMarca(List<HallazgoValidacion> out, String campo, String? valor,
       Set<String> validas) {

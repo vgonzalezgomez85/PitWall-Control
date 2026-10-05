@@ -35,6 +35,7 @@ import '../plantillas/pantalla_plantillas_csv.dart';
 import '../pruebas/lista_pruebas.dart';
 import '../tesoreria/pantalla_tesoreria.dart';
 import '../verificacion_libre/pantalla_verificacion_libre.dart';
+import '../verificaciones/pantalla_rejilla_verificaciones.dart';
 import 'pantalla_resumen.dart';
 
 /// Destino principal del shell (un icono + título en la barra lateral).
@@ -52,6 +53,8 @@ const _destinos = <_Destino>[
       PantallaPilotos()),
   _Destino(Icons.groups_outlined, Icons.groups, 'Equipos', PantallaEquipos()),
   _Destino(Icons.event_outlined, Icons.event, 'Pruebas', PantallaPruebas()),
+  _Destino(Icons.table_chart_outlined, Icons.table_chart, 'Resum. Verifi.',
+      PantallaRejillaVerificaciones()),
   _Destino(Icons.leaderboard_outlined, Icons.leaderboard, 'Clasificación',
       PantallaClasificacion()),
   _Destino(Icons.payments_outlined, Icons.payments, 'Tesorería',

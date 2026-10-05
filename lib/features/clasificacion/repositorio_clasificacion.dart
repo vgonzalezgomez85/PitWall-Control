@@ -167,6 +167,20 @@ final clasificacionProvider =
     final pilotos = await db.select(db.pilotos).get();
     final nombrePorId = {for (final p in pilotos) p.id: p.nombre};
 
+    // Copa a mostrar en la general: la de la última prueba (por orden) que ha
+    // corrido el equipo según su inscripción; si no la fijó, la del equipo.
+    final ordenPrueba = {for (final p in pruebas) p.id: p.orden};
+    final copaGeneral = <int, (int, String)>{};
+    for (final ins in inscripcionesPrueba) {
+      final c = ins.copa;
+      if (c == null || c.isEmpty) continue;
+      final orden = ordenPrueba[ins.pruebaId] ?? 0;
+      final previa = copaGeneral[ins.equipoId];
+      if (previa == null || orden >= previa.$1) {
+        copaGeneral[ins.equipoId] = (orden, c);
+      }
+    }
+
     final bases = <dynamic>[];
     for (final pf in perfiles) {
       final eq = equipoPorPiloto[pf.pilotoId];
@@ -179,7 +193,7 @@ final clasificacionProvider =
         nombre: nombrePorId[pf.pilotoId] ?? 'Piloto ${pf.pilotoId}',
         equipoId: eq.id,
         equipoNombre: eq.nombre,
-        copa: eq.copa,
+        copa: copaGeneral[eq.id]?.$2 ?? eq.copa,
         categoria: pf.categoria,
         creditosIniciales: pf.creditosIniciales,
         creditosActuales: pf.creditosActuales,
@@ -289,7 +303,21 @@ final clasificacionProvider =
         disputadasCopa.add(o.pruebaId);
       }
       if (miembros.isEmpty) continue;
-      final pilotosCopa = bases.where((b) => miembros.contains(b.pilotoId as int)).toList();
+      // En la pestaña de una copa, la columna Copa es esa copa (el piloto puede
+      // haber corrido otras pruebas en otra copa).
+      final pilotosCopa = bases
+          .where((b) => miembros.contains(b.pilotoId as int))
+          .map((b) => PilotoBase(
+                pilotoId: b.pilotoId as int,
+                nombre: b.nombre as String,
+                equipoId: b.equipoId as int,
+                equipoNombre: b.equipoNombre as String,
+                copa: copa,
+                categoria: b.categoria as String,
+                creditosIniciales: b.creditosIniciales as int,
+                creditosActuales: b.creditosActuales as int,
+              ))
+          .toList();
       porCopa[copa] = CalculoClasificacion.calcular(
         pilotos: pilotosCopa.cast(),
         resultadosPorPiloto: byCopa,

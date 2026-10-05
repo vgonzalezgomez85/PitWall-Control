@@ -23,6 +23,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/proveedores.dart';
 import '../campeonatos/editor_campeonato.dart' show RangoDientes;
+import '../campeonatos/selector_marcas_permitidas.dart';
 import 'repositorio_verificacion_libre.dart';
 
 final _catalogoCopasProvider =
@@ -58,6 +59,8 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
   final _coronaMax = TextEditingController();
   bool _pinonFijo = true;
   bool _coronaFijo = false;
+  bool _limitarMarcas = false;
+  Set<String> _marcasPermitidas = {};
   DateTime? _fecha;
   final Set<String> _copasSel = {};
   final Map<String, TextEditingController> _anchuraEjeCtrl = {};
@@ -109,6 +112,7 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
         coronaDientesMax: c.coronaDientesMax,
         motorSorteoMin: c.motorSorteoMin,
         motorSorteoMax: c.motorSorteoMax,
+        marcasPermitidasJson: c.marcasPermitidasJson,
       );
     }
     _nombre.text = d.nombre;
@@ -123,6 +127,8 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
     _coronaFijo = d.coronaDientesMin == d.coronaDientesMax;
     _motorMin.text = d.motorSorteoMin?.toString() ?? '';
     _motorMax.text = d.motorSorteoMax?.toString() ?? '';
+    _marcasPermitidas = {...marcasPermitidasDe(d.marcasPermitidasJson)};
+    _limitarMarcas = _marcasPermitidas.isNotEmpty;
     try {
       final raw = json.decode(d.anchuraEjeJson);
       if (raw is Map) {
@@ -159,6 +165,12 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
           content: Text('Selecciona al menos una copa / categoría.')));
       return;
     }
+    if (_limitarMarcas && _marcasPermitidas.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Limitar fabricante: elige al menos una marca o desactívalo.')));
+      return;
+    }
     setState(() => _guardando = true);
     // Anchura máxima de eje por copa y lado: vacío = no se comprueba.
     final anchuraEjeMap = <String, Map<String, double>>{};
@@ -190,6 +202,8 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
       coronaDientesMax: corMax,
       motorSorteoMin: int.tryParse(_motorMin.text.trim()),
       motorSorteoMax: int.tryParse(_motorMax.text.trim()),
+      marcasPermitidasJson:
+          marcasPermitidasAJson(_limitarMarcas ? _marcasPermitidas : {}),
     );
     final repo = ref.read(repoVerificacionLibreProvider);
     try {
@@ -358,6 +372,16 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
               min: _coronaMin,
               max: _coronaMax,
               onFijo: (v) => setState(() => _coronaFijo = v),
+            ),
+
+            seccion('Fabricante',
+                'Para sesiones monomarca: limita las marcas que se pueden '
+                'elegir en la verificación.'),
+            SelectorMarcasPermitidas(
+              activo: _limitarMarcas,
+              seleccion: _marcasPermitidas,
+              onActivo: (v) => setState(() => _limitarMarcas = v),
+              onCambio: (sel) => setState(() => _marcasPermitidas = sel),
             ),
 
             seccion('Sorteo de motores (organización)',

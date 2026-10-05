@@ -25,6 +25,7 @@ import '../../data/database/app_database.dart';
 import '../../services/exportar_pdf.dart';
 import '../../services/generador_pdf_verificaciones.dart';
 import 'lista_verificaciones.dart';
+import 'pantalla_rejilla_verificaciones.dart';
 
 /// Cada fila: una manga del campeonato activo con totales de verificación.
 class MangaResumen {
@@ -108,6 +109,13 @@ class PantallaResumenVerificaciones extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Verificaciones'),
         actions: [
+          IconButton(
+            tooltip: 'Resum. Verifi. (rejilla)',
+            icon: const Icon(Icons.table_chart_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => PantallaRejillaVerificaciones(pruebaId: pruebaId),
+            )),
+          ),
           if (pruebasConVerif.isNotEmpty)
             PopupMenuButton<int>(
               tooltip: 'Exportar verificaciones (PDF)',

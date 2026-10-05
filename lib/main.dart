@@ -25,6 +25,7 @@ import 'core/proveedores.dart';
 import 'core/tema.dart';
 import 'data/database/seeds.dart';
 import 'features/home/app_shell.dart';
+import 'features/pruebas/repositorio_pruebas.dart';
 import 'features/verificaciones/repositorio_verificaciones.dart';
 import 'services/almacen_local.dart';
 
@@ -64,6 +65,9 @@ class _AppPitWallState extends ConsumerState<AppPitWall> {
     await Seeds.sembrar(db);
     // Repara verificaciones duplicadas creadas antes de garantizar unicidad.
     await ref.read(repoVerificacionesProvider).limpiarDuplicados();
+    // Equipos inscritos en una manga pero no en su prueba (salían fuera de
+    // tesorería).
+    await ref.read(repoInscripcionesProvider).repararInscripcionesPrueba();
     if (mounted) setState(() => _semillaLista = true);
   }
 

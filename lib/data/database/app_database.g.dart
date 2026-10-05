@@ -275,6 +275,18 @@ class $CampeonatosTable extends Campeonatos
     requiredDuringInsert: false,
     defaultValue: const Constant('{}'),
   );
+  static const VerificationMeta _marcasPermitidasJsonMeta =
+      const VerificationMeta('marcasPermitidasJson');
+  @override
+  late final GeneratedColumn<String> marcasPermitidasJson =
+      GeneratedColumn<String>(
+        'marcas_permitidas_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
   static const VerificationMeta _marcaTituloMeta = const VerificationMeta(
     'marcaTitulo',
   );
@@ -347,6 +359,7 @@ class $CampeonatosTable extends Campeonatos
     coronaDientesMin,
     coronaDientesMax,
     anchuraEjeJson,
+    marcasPermitidasJson,
     marcaTitulo,
     marcaLema,
     esVerificacionLibre,
@@ -538,6 +551,15 @@ class $CampeonatosTable extends Campeonatos
         ),
       );
     }
+    if (data.containsKey('marcas_permitidas_json')) {
+      context.handle(
+        _marcasPermitidasJsonMeta,
+        marcasPermitidasJson.isAcceptableOrUnknown(
+          data['marcas_permitidas_json']!,
+          _marcasPermitidasJsonMeta,
+        ),
+      );
+    }
     if (data.containsKey('marca_titulo')) {
       context.handle(
         _marcaTituloMeta,
@@ -665,6 +687,10 @@ class $CampeonatosTable extends Campeonatos
         DriftSqlType.string,
         data['${effectivePrefix}anchura_eje_json'],
       )!,
+      marcasPermitidasJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}marcas_permitidas_json'],
+      )!,
       marcaTitulo: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}marca_titulo'],
@@ -741,6 +767,12 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   /// mapa, o un lado sin valor, no se comprueba.
   final String anchuraEjeJson;
 
+  /// Fabricantes permitidos en la verificación (JSON array de códigos del
+  /// catálogo de marcas, p. ej. ["SIT"]). Vacío "[]" = sin limitación. Si hay
+  /// alguno, los desplegables de marca de la verificación solo muestran esos
+  /// y cualquier otra marca es infracción.
+  final String marcasPermitidasJson;
+
   /// Marca propia del campeonato en los PDF (título de cabecera y lema del
   /// pie). Si están vacíos se usa la marca global de la app.
   final String? marcaTitulo;
@@ -775,6 +807,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     required this.coronaDientesMin,
     required this.coronaDientesMax,
     required this.anchuraEjeJson,
+    required this.marcasPermitidasJson,
     this.marcaTitulo,
     this.marcaLema,
     required this.esVerificacionLibre,
@@ -809,6 +842,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     map['corona_dientes_min'] = Variable<int>(coronaDientesMin);
     map['corona_dientes_max'] = Variable<int>(coronaDientesMax);
     map['anchura_eje_json'] = Variable<String>(anchuraEjeJson);
+    map['marcas_permitidas_json'] = Variable<String>(marcasPermitidasJson);
     if (!nullToAbsent || marcaTitulo != null) {
       map['marca_titulo'] = Variable<String>(marcaTitulo);
     }
@@ -848,6 +882,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       coronaDientesMin: Value(coronaDientesMin),
       coronaDientesMax: Value(coronaDientesMax),
       anchuraEjeJson: Value(anchuraEjeJson),
+      marcasPermitidasJson: Value(marcasPermitidasJson),
       marcaTitulo: marcaTitulo == null && nullToAbsent
           ? const Value.absent()
           : Value(marcaTitulo),
@@ -887,6 +922,9 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       coronaDientesMin: serializer.fromJson<int>(json['coronaDientesMin']),
       coronaDientesMax: serializer.fromJson<int>(json['coronaDientesMax']),
       anchuraEjeJson: serializer.fromJson<String>(json['anchuraEjeJson']),
+      marcasPermitidasJson: serializer.fromJson<String>(
+        json['marcasPermitidasJson'],
+      ),
       marcaTitulo: serializer.fromJson<String?>(json['marcaTitulo']),
       marcaLema: serializer.fromJson<String?>(json['marcaLema']),
       esVerificacionLibre: serializer.fromJson<bool>(
@@ -921,6 +959,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       'coronaDientesMin': serializer.toJson<int>(coronaDientesMin),
       'coronaDientesMax': serializer.toJson<int>(coronaDientesMax),
       'anchuraEjeJson': serializer.toJson<String>(anchuraEjeJson),
+      'marcasPermitidasJson': serializer.toJson<String>(marcasPermitidasJson),
       'marcaTitulo': serializer.toJson<String?>(marcaTitulo),
       'marcaLema': serializer.toJson<String?>(marcaLema),
       'esVerificacionLibre': serializer.toJson<bool>(esVerificacionLibre),
@@ -951,6 +990,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     int? coronaDientesMin,
     int? coronaDientesMax,
     String? anchuraEjeJson,
+    String? marcasPermitidasJson,
     Value<String?> marcaTitulo = const Value.absent(),
     Value<String?> marcaLema = const Value.absent(),
     bool? esVerificacionLibre,
@@ -982,6 +1022,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     coronaDientesMin: coronaDientesMin ?? this.coronaDientesMin,
     coronaDientesMax: coronaDientesMax ?? this.coronaDientesMax,
     anchuraEjeJson: anchuraEjeJson ?? this.anchuraEjeJson,
+    marcasPermitidasJson: marcasPermitidasJson ?? this.marcasPermitidasJson,
     marcaTitulo: marcaTitulo.present ? marcaTitulo.value : this.marcaTitulo,
     marcaLema: marcaLema.present ? marcaLema.value : this.marcaLema,
     esVerificacionLibre: esVerificacionLibre ?? this.esVerificacionLibre,
@@ -1041,6 +1082,9 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       anchuraEjeJson: data.anchuraEjeJson.present
           ? data.anchuraEjeJson.value
           : this.anchuraEjeJson,
+      marcasPermitidasJson: data.marcasPermitidasJson.present
+          ? data.marcasPermitidasJson.value
+          : this.marcasPermitidasJson,
       marcaTitulo: data.marcaTitulo.present
           ? data.marcaTitulo.value
           : this.marcaTitulo,
@@ -1077,6 +1121,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           ..write('coronaDientesMin: $coronaDientesMin, ')
           ..write('coronaDientesMax: $coronaDientesMax, ')
           ..write('anchuraEjeJson: $anchuraEjeJson, ')
+          ..write('marcasPermitidasJson: $marcasPermitidasJson, ')
           ..write('marcaTitulo: $marcaTitulo, ')
           ..write('marcaLema: $marcaLema, ')
           ..write('esVerificacionLibre: $esVerificacionLibre, ')
@@ -1109,6 +1154,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     coronaDientesMin,
     coronaDientesMax,
     anchuraEjeJson,
+    marcasPermitidasJson,
     marcaTitulo,
     marcaLema,
     esVerificacionLibre,
@@ -1140,6 +1186,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           other.coronaDientesMin == this.coronaDientesMin &&
           other.coronaDientesMax == this.coronaDientesMax &&
           other.anchuraEjeJson == this.anchuraEjeJson &&
+          other.marcasPermitidasJson == this.marcasPermitidasJson &&
           other.marcaTitulo == this.marcaTitulo &&
           other.marcaLema == this.marcaLema &&
           other.esVerificacionLibre == this.esVerificacionLibre &&
@@ -1169,6 +1216,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   final Value<int> coronaDientesMin;
   final Value<int> coronaDientesMax;
   final Value<String> anchuraEjeJson;
+  final Value<String> marcasPermitidasJson;
   final Value<String?> marcaTitulo;
   final Value<String?> marcaLema;
   final Value<bool> esVerificacionLibre;
@@ -1196,6 +1244,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.coronaDientesMin = const Value.absent(),
     this.coronaDientesMax = const Value.absent(),
     this.anchuraEjeJson = const Value.absent(),
+    this.marcasPermitidasJson = const Value.absent(),
     this.marcaTitulo = const Value.absent(),
     this.marcaLema = const Value.absent(),
     this.esVerificacionLibre = const Value.absent(),
@@ -1224,6 +1273,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.coronaDientesMin = const Value.absent(),
     this.coronaDientesMax = const Value.absent(),
     this.anchuraEjeJson = const Value.absent(),
+    this.marcasPermitidasJson = const Value.absent(),
     this.marcaTitulo = const Value.absent(),
     this.marcaLema = const Value.absent(),
     this.esVerificacionLibre = const Value.absent(),
@@ -1254,6 +1304,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Expression<int>? coronaDientesMin,
     Expression<int>? coronaDientesMax,
     Expression<String>? anchuraEjeJson,
+    Expression<String>? marcasPermitidasJson,
     Expression<String>? marcaTitulo,
     Expression<String>? marcaLema,
     Expression<bool>? esVerificacionLibre,
@@ -1282,6 +1333,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       if (coronaDientesMin != null) 'corona_dientes_min': coronaDientesMin,
       if (coronaDientesMax != null) 'corona_dientes_max': coronaDientesMax,
       if (anchuraEjeJson != null) 'anchura_eje_json': anchuraEjeJson,
+      if (marcasPermitidasJson != null)
+        'marcas_permitidas_json': marcasPermitidasJson,
       if (marcaTitulo != null) 'marca_titulo': marcaTitulo,
       if (marcaLema != null) 'marca_lema': marcaLema,
       if (esVerificacionLibre != null)
@@ -1313,6 +1366,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Value<int>? coronaDientesMin,
     Value<int>? coronaDientesMax,
     Value<String>? anchuraEjeJson,
+    Value<String>? marcasPermitidasJson,
     Value<String?>? marcaTitulo,
     Value<String?>? marcaLema,
     Value<bool>? esVerificacionLibre,
@@ -1341,6 +1395,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       coronaDientesMin: coronaDientesMin ?? this.coronaDientesMin,
       coronaDientesMax: coronaDientesMax ?? this.coronaDientesMax,
       anchuraEjeJson: anchuraEjeJson ?? this.anchuraEjeJson,
+      marcasPermitidasJson: marcasPermitidasJson ?? this.marcasPermitidasJson,
       marcaTitulo: marcaTitulo ?? this.marcaTitulo,
       marcaLema: marcaLema ?? this.marcaLema,
       esVerificacionLibre: esVerificacionLibre ?? this.esVerificacionLibre,
@@ -1417,6 +1472,11 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     if (anchuraEjeJson.present) {
       map['anchura_eje_json'] = Variable<String>(anchuraEjeJson.value);
     }
+    if (marcasPermitidasJson.present) {
+      map['marcas_permitidas_json'] = Variable<String>(
+        marcasPermitidasJson.value,
+      );
+    }
     if (marcaTitulo.present) {
       map['marca_titulo'] = Variable<String>(marcaTitulo.value);
     }
@@ -1457,6 +1517,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
           ..write('coronaDientesMin: $coronaDientesMin, ')
           ..write('coronaDientesMax: $coronaDientesMax, ')
           ..write('anchuraEjeJson: $anchuraEjeJson, ')
+          ..write('marcasPermitidasJson: $marcasPermitidasJson, ')
           ..write('marcaTitulo: $marcaTitulo, ')
           ..write('marcaLema: $marcaLema, ')
           ..write('esVerificacionLibre: $esVerificacionLibre, ')
@@ -5408,6 +5469,20 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _exentoCoordinadoraMeta =
+      const VerificationMeta('exentoCoordinadora');
+  @override
+  late final GeneratedColumn<bool> exentoCoordinadora = GeneratedColumn<bool>(
+    'exento_coordinadora',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("exento_coordinadora" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _copaMeta = const VerificationMeta('copa');
   @override
   late final GeneratedColumn<String> copa = GeneratedColumn<String>(
@@ -5427,6 +5502,7 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
     notas,
     asignada,
     wildcard,
+    exentoCoordinadora,
     copa,
   ];
   @override
@@ -5496,6 +5572,15 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
         wildcard.isAcceptableOrUnknown(data['wildcard']!, _wildcardMeta),
       );
     }
+    if (data.containsKey('exento_coordinadora')) {
+      context.handle(
+        _exentoCoordinadoraMeta,
+        exentoCoordinadora.isAcceptableOrUnknown(
+          data['exento_coordinadora']!,
+          _exentoCoordinadoraMeta,
+        ),
+      );
+    }
     if (data.containsKey('copa')) {
       context.handle(
         _copaMeta,
@@ -5546,6 +5631,10 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
         DriftSqlType.bool,
         data['${effectivePrefix}wildcard'],
       )!,
+      exentoCoordinadora: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}exento_coordinadora'],
+      )!,
       copa: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}copa'],
@@ -5572,6 +5661,10 @@ class InscripcionesPruebaData extends DataClass
   /// Si true, el equipo participa como invitado / wildcard y no paga.
   final bool wildcard;
 
+  /// Si true, el equipo no paga esta prueba por ser de coordinadora
+  /// (marcado a mano desde la tesorería con "Coord. total").
+  final bool exentoCoordinadora;
+
   /// Copa en la que el equipo compitió en ESTA prueba. Permite cambiar de copa
   /// a mitad de campeonato sin perder los puntos de las pruebas anteriores.
   /// Si es null, se usa la copa actual del equipo.
@@ -5585,6 +5678,7 @@ class InscripcionesPruebaData extends DataClass
     this.notas,
     required this.asignada,
     required this.wildcard,
+    required this.exentoCoordinadora,
     this.copa,
   });
   @override
@@ -5602,6 +5696,7 @@ class InscripcionesPruebaData extends DataClass
     }
     map['asignada'] = Variable<bool>(asignada);
     map['wildcard'] = Variable<bool>(wildcard);
+    map['exento_coordinadora'] = Variable<bool>(exentoCoordinadora);
     if (!nullToAbsent || copa != null) {
       map['copa'] = Variable<String>(copa);
     }
@@ -5622,6 +5717,7 @@ class InscripcionesPruebaData extends DataClass
           : Value(notas),
       asignada: Value(asignada),
       wildcard: Value(wildcard),
+      exentoCoordinadora: Value(exentoCoordinadora),
       copa: copa == null && nullToAbsent ? const Value.absent() : Value(copa),
     );
   }
@@ -5640,6 +5736,7 @@ class InscripcionesPruebaData extends DataClass
       notas: serializer.fromJson<String?>(json['notas']),
       asignada: serializer.fromJson<bool>(json['asignada']),
       wildcard: serializer.fromJson<bool>(json['wildcard']),
+      exentoCoordinadora: serializer.fromJson<bool>(json['exentoCoordinadora']),
       copa: serializer.fromJson<String?>(json['copa']),
     );
   }
@@ -5655,6 +5752,7 @@ class InscripcionesPruebaData extends DataClass
       'notas': serializer.toJson<String?>(notas),
       'asignada': serializer.toJson<bool>(asignada),
       'wildcard': serializer.toJson<bool>(wildcard),
+      'exentoCoordinadora': serializer.toJson<bool>(exentoCoordinadora),
       'copa': serializer.toJson<String?>(copa),
     };
   }
@@ -5668,6 +5766,7 @@ class InscripcionesPruebaData extends DataClass
     Value<String?> notas = const Value.absent(),
     bool? asignada,
     bool? wildcard,
+    bool? exentoCoordinadora,
     Value<String?> copa = const Value.absent(),
   }) => InscripcionesPruebaData(
     id: id ?? this.id,
@@ -5680,6 +5779,7 @@ class InscripcionesPruebaData extends DataClass
     notas: notas.present ? notas.value : this.notas,
     asignada: asignada ?? this.asignada,
     wildcard: wildcard ?? this.wildcard,
+    exentoCoordinadora: exentoCoordinadora ?? this.exentoCoordinadora,
     copa: copa.present ? copa.value : this.copa,
   );
   InscripcionesPruebaData copyWithCompanion(InscripcionesPruebaCompanion data) {
@@ -5696,6 +5796,9 @@ class InscripcionesPruebaData extends DataClass
       notas: data.notas.present ? data.notas.value : this.notas,
       asignada: data.asignada.present ? data.asignada.value : this.asignada,
       wildcard: data.wildcard.present ? data.wildcard.value : this.wildcard,
+      exentoCoordinadora: data.exentoCoordinadora.present
+          ? data.exentoCoordinadora.value
+          : this.exentoCoordinadora,
       copa: data.copa.present ? data.copa.value : this.copa,
     );
   }
@@ -5711,6 +5814,7 @@ class InscripcionesPruebaData extends DataClass
           ..write('notas: $notas, ')
           ..write('asignada: $asignada, ')
           ..write('wildcard: $wildcard, ')
+          ..write('exentoCoordinadora: $exentoCoordinadora, ')
           ..write('copa: $copa')
           ..write(')'))
         .toString();
@@ -5726,6 +5830,7 @@ class InscripcionesPruebaData extends DataClass
     notas,
     asignada,
     wildcard,
+    exentoCoordinadora,
     copa,
   );
   @override
@@ -5740,6 +5845,7 @@ class InscripcionesPruebaData extends DataClass
           other.notas == this.notas &&
           other.asignada == this.asignada &&
           other.wildcard == this.wildcard &&
+          other.exentoCoordinadora == this.exentoCoordinadora &&
           other.copa == this.copa);
 }
 
@@ -5753,6 +5859,7 @@ class InscripcionesPruebaCompanion
   final Value<String?> notas;
   final Value<bool> asignada;
   final Value<bool> wildcard;
+  final Value<bool> exentoCoordinadora;
   final Value<String?> copa;
   const InscripcionesPruebaCompanion({
     this.id = const Value.absent(),
@@ -5763,6 +5870,7 @@ class InscripcionesPruebaCompanion
     this.notas = const Value.absent(),
     this.asignada = const Value.absent(),
     this.wildcard = const Value.absent(),
+    this.exentoCoordinadora = const Value.absent(),
     this.copa = const Value.absent(),
   });
   InscripcionesPruebaCompanion.insert({
@@ -5774,6 +5882,7 @@ class InscripcionesPruebaCompanion
     this.notas = const Value.absent(),
     this.asignada = const Value.absent(),
     this.wildcard = const Value.absent(),
+    this.exentoCoordinadora = const Value.absent(),
     this.copa = const Value.absent(),
   }) : pruebaId = Value(pruebaId),
        equipoId = Value(equipoId);
@@ -5786,6 +5895,7 @@ class InscripcionesPruebaCompanion
     Expression<String>? notas,
     Expression<bool>? asignada,
     Expression<bool>? wildcard,
+    Expression<bool>? exentoCoordinadora,
     Expression<String>? copa,
   }) {
     return RawValuesInsertable({
@@ -5797,6 +5907,7 @@ class InscripcionesPruebaCompanion
       if (notas != null) 'notas': notas,
       if (asignada != null) 'asignada': asignada,
       if (wildcard != null) 'wildcard': wildcard,
+      if (exentoCoordinadora != null) 'exento_coordinadora': exentoCoordinadora,
       if (copa != null) 'copa': copa,
     });
   }
@@ -5810,6 +5921,7 @@ class InscripcionesPruebaCompanion
     Value<String?>? notas,
     Value<bool>? asignada,
     Value<bool>? wildcard,
+    Value<bool>? exentoCoordinadora,
     Value<String?>? copa,
   }) {
     return InscripcionesPruebaCompanion(
@@ -5821,6 +5933,7 @@ class InscripcionesPruebaCompanion
       notas: notas ?? this.notas,
       asignada: asignada ?? this.asignada,
       wildcard: wildcard ?? this.wildcard,
+      exentoCoordinadora: exentoCoordinadora ?? this.exentoCoordinadora,
       copa: copa ?? this.copa,
     );
   }
@@ -5852,6 +5965,9 @@ class InscripcionesPruebaCompanion
     if (wildcard.present) {
       map['wildcard'] = Variable<bool>(wildcard.value);
     }
+    if (exentoCoordinadora.present) {
+      map['exento_coordinadora'] = Variable<bool>(exentoCoordinadora.value);
+    }
     if (copa.present) {
       map['copa'] = Variable<String>(copa.value);
     }
@@ -5869,6 +5985,7 @@ class InscripcionesPruebaCompanion
           ..write('notas: $notas, ')
           ..write('asignada: $asignada, ')
           ..write('wildcard: $wildcard, ')
+          ..write('exentoCoordinadora: $exentoCoordinadora, ')
           ..write('copa: $copa')
           ..write(')'))
         .toString();
@@ -15861,6 +15978,7 @@ typedef $$CampeonatosTableCreateCompanionBuilder =
       Value<int> coronaDientesMin,
       Value<int> coronaDientesMax,
       Value<String> anchuraEjeJson,
+      Value<String> marcasPermitidasJson,
       Value<String?> marcaTitulo,
       Value<String?> marcaLema,
       Value<bool> esVerificacionLibre,
@@ -15890,6 +16008,7 @@ typedef $$CampeonatosTableUpdateCompanionBuilder =
       Value<int> coronaDientesMin,
       Value<int> coronaDientesMax,
       Value<String> anchuraEjeJson,
+      Value<String> marcasPermitidasJson,
       Value<String?> marcaTitulo,
       Value<String?> marcaLema,
       Value<bool> esVerificacionLibre,
@@ -16202,6 +16321,11 @@ class $$CampeonatosTableFilterComposer
 
   ColumnFilters<String> get anchuraEjeJson => $composableBuilder(
     column: $table.anchuraEjeJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get marcasPermitidasJson => $composableBuilder(
+    column: $table.marcasPermitidasJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16545,6 +16669,11 @@ class $$CampeonatosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get marcasPermitidasJson => $composableBuilder(
+    column: $table.marcasPermitidasJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get marcaTitulo => $composableBuilder(
     column: $table.marcaTitulo,
     builder: (column) => ColumnOrderings(column),
@@ -16668,6 +16797,11 @@ class $$CampeonatosTableAnnotationComposer
 
   GeneratedColumn<String> get anchuraEjeJson => $composableBuilder(
     column: $table.anchuraEjeJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get marcasPermitidasJson => $composableBuilder(
+    column: $table.marcasPermitidasJson,
     builder: (column) => column,
   );
 
@@ -16950,6 +17084,7 @@ class $$CampeonatosTableTableManager
                 Value<int> coronaDientesMin = const Value.absent(),
                 Value<int> coronaDientesMax = const Value.absent(),
                 Value<String> anchuraEjeJson = const Value.absent(),
+                Value<String> marcasPermitidasJson = const Value.absent(),
                 Value<String?> marcaTitulo = const Value.absent(),
                 Value<String?> marcaLema = const Value.absent(),
                 Value<bool> esVerificacionLibre = const Value.absent(),
@@ -16977,6 +17112,7 @@ class $$CampeonatosTableTableManager
                 coronaDientesMin: coronaDientesMin,
                 coronaDientesMax: coronaDientesMax,
                 anchuraEjeJson: anchuraEjeJson,
+                marcasPermitidasJson: marcasPermitidasJson,
                 marcaTitulo: marcaTitulo,
                 marcaLema: marcaLema,
                 esVerificacionLibre: esVerificacionLibre,
@@ -17006,6 +17142,7 @@ class $$CampeonatosTableTableManager
                 Value<int> coronaDientesMin = const Value.absent(),
                 Value<int> coronaDientesMax = const Value.absent(),
                 Value<String> anchuraEjeJson = const Value.absent(),
+                Value<String> marcasPermitidasJson = const Value.absent(),
                 Value<String?> marcaTitulo = const Value.absent(),
                 Value<String?> marcaLema = const Value.absent(),
                 Value<bool> esVerificacionLibre = const Value.absent(),
@@ -17033,6 +17170,7 @@ class $$CampeonatosTableTableManager
                 coronaDientesMin: coronaDientesMin,
                 coronaDientesMax: coronaDientesMax,
                 anchuraEjeJson: anchuraEjeJson,
+                marcasPermitidasJson: marcasPermitidasJson,
                 marcaTitulo: marcaTitulo,
                 marcaLema: marcaLema,
                 esVerificacionLibre: esVerificacionLibre,
@@ -22926,6 +23064,7 @@ typedef $$InscripcionesPruebaTableCreateCompanionBuilder =
       Value<String?> notas,
       Value<bool> asignada,
       Value<bool> wildcard,
+      Value<bool> exentoCoordinadora,
       Value<String?> copa,
     });
 typedef $$InscripcionesPruebaTableUpdateCompanionBuilder =
@@ -22938,6 +23077,7 @@ typedef $$InscripcionesPruebaTableUpdateCompanionBuilder =
       Value<String?> notas,
       Value<bool> asignada,
       Value<bool> wildcard,
+      Value<bool> exentoCoordinadora,
       Value<String?> copa,
     });
 
@@ -23032,6 +23172,11 @@ class $$InscripcionesPruebaTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<bool> get exentoCoordinadora => $composableBuilder(
+    column: $table.exentoCoordinadora,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get copa => $composableBuilder(
     column: $table.copa,
     builder: (column) => ColumnFilters(column),
@@ -23123,6 +23268,11 @@ class $$InscripcionesPruebaTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get exentoCoordinadora => $composableBuilder(
+    column: $table.exentoCoordinadora,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get copa => $composableBuilder(
     column: $table.copa,
     builder: (column) => ColumnOrderings(column),
@@ -23205,6 +23355,11 @@ class $$InscripcionesPruebaTableAnnotationComposer
 
   GeneratedColumn<bool> get wildcard =>
       $composableBuilder(column: $table.wildcard, builder: (column) => column);
+
+  GeneratedColumn<bool> get exentoCoordinadora => $composableBuilder(
+    column: $table.exentoCoordinadora,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get copa =>
       $composableBuilder(column: $table.copa, builder: (column) => column);
@@ -23300,6 +23455,7 @@ class $$InscripcionesPruebaTableTableManager
                 Value<String?> notas = const Value.absent(),
                 Value<bool> asignada = const Value.absent(),
                 Value<bool> wildcard = const Value.absent(),
+                Value<bool> exentoCoordinadora = const Value.absent(),
                 Value<String?> copa = const Value.absent(),
               }) => InscripcionesPruebaCompanion(
                 id: id,
@@ -23310,6 +23466,7 @@ class $$InscripcionesPruebaTableTableManager
                 notas: notas,
                 asignada: asignada,
                 wildcard: wildcard,
+                exentoCoordinadora: exentoCoordinadora,
                 copa: copa,
               ),
           createCompanionCallback:
@@ -23322,6 +23479,7 @@ class $$InscripcionesPruebaTableTableManager
                 Value<String?> notas = const Value.absent(),
                 Value<bool> asignada = const Value.absent(),
                 Value<bool> wildcard = const Value.absent(),
+                Value<bool> exentoCoordinadora = const Value.absent(),
                 Value<String?> copa = const Value.absent(),
               }) => InscripcionesPruebaCompanion.insert(
                 id: id,
@@ -23332,6 +23490,7 @@ class $$InscripcionesPruebaTableTableManager
                 notas: notas,
                 asignada: asignada,
                 wildcard: wildcard,
+                exentoCoordinadora: exentoCoordinadora,
                 copa: copa,
               ),
           withReferenceMapper: (p0) => p0

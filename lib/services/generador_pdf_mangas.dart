@@ -25,6 +25,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../core/proveedores.dart';
 import '../data/database/app_database.dart';
+import '../data/database/copas_en_prueba.dart';
 import '../features/pruebas/repositorio_pruebas.dart';
 import 'exportar_config.dart';
 import 'pdf_marca.dart';
@@ -96,6 +97,7 @@ class GeneradorPdfMangas {
           ..orderBy([(t) => d.OrderingTerm.asc(t.id)]))
         .get();
 
+    final copasPrueba = await db.copasEnPrueba(pruebaId);
     final mangasPdf = <_MangaPdf>[];
     for (final m in mangas) {
       final inscritos = await (db.select(db.inscripciones)
@@ -122,7 +124,7 @@ class GeneradorPdfMangas {
         filas.add(_FilaEquipo(
           posicion: 0, // se calcula tras ordenar
           nombreEquipo: eq.nombre,
-          copa: eq.copa,
+          copa: copasPrueba[eq.id] ?? eq.copa,
           carril: ins.carrilSalida,
           piloto1Nombre: p1.nombre,
           piloto1Puntos: p1Pts,

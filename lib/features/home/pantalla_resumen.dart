@@ -206,6 +206,8 @@ class PantallaResumen extends ConsumerWidget {
                 (Icons.people_alt_outlined, 'Pilotos', 'Pilotos'),
                 (Icons.groups_outlined, 'Equipos', 'Equipos'),
                 (Icons.event_outlined, 'Pruebas y mangas', 'Pruebas'),
+                (Icons.table_chart_outlined, 'Resum. Verifi.',
+                    'Resum. Verifi.'),
                 (Icons.leaderboard_outlined, 'Clasificación', 'Clasificación'),
                 (Icons.payments_outlined, 'Tesorería', 'Tesorería'),
                 (Icons.savings_outlined, 'Créditos', 'Créditos'),
@@ -284,7 +286,8 @@ class _TarjetaProxima extends ConsumerWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => ref.read(shellIndiceProvider.notifier).ir(3),
+        onTap: () => ref.read(shellIndiceProvider.notifier).ir(
+            indiceDestinoVisible('Pruebas', ref.read(campeonatoActivoProvider))),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -346,7 +349,8 @@ class _TarjetaLider extends ConsumerWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => ref.read(shellIndiceProvider.notifier).ir(5),
+        onTap: () => ref.read(shellIndiceProvider.notifier).ir(
+            indiceDestinoVisible('Tesorería', ref.read(campeonatoActivoProvider))),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(

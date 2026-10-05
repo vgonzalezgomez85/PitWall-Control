@@ -97,6 +97,12 @@ class PantallaInscritos extends ConsumerWidget {
               orElse: () => const SizedBox.shrink(),
             );
           }),
+          // Siempre visible: con inscritos, el FAB pasa a "Generar mangas".
+          IconButton(
+            tooltip: esIndividual ? 'Añadir piloto' : 'Añadir equipo',
+            icon: const Icon(Icons.person_add_alt_1_outlined),
+            onPressed: () => _abrirAnadirManual(context, ref),
+          ),
           PopupMenuButton<String>(
             tooltip: 'Importar',
             icon: const Icon(Icons.file_upload_outlined),

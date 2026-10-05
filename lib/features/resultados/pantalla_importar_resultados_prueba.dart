@@ -21,6 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../pruebas/repositorio_pruebas.dart';
 import 'importador_resultados.dart';
 import 'pantalla_resultados_prueba.dart';
 import 'repositorio_resultados.dart';
@@ -130,7 +131,6 @@ class _PantallaImportarResultadosPruebaState
 
   Future<void> _importar() async {
     final activo = ref.read(campeonatoActivoProvider)!;
-    final db = ref.read(dbProvider);
     final repoRes = ref.read(repoResultadosProvider);
     setState(() => _trabajando = true);
     int ok = 0, saltados = 0, inscritosAuto = 0;
@@ -157,11 +157,9 @@ class _PantallaImportarResultadosPruebaState
             continue;
           }
           // Inscribirlo en la manga fallback
-          await db.into(db.inscripciones).insert(
-                InscripcionesCompanion.insert(
-                  mangaId: mangaFallback,
-                  equipoId: f.equipoIdCoincidente!,
-                ),
+          await ref.read(repoInscripcionesProvider).inscribir(
+                mangaId: mangaFallback,
+                equipoId: f.equipoIdCoincidente!,
               );
           mangaId = mangaFallback;
           _mangaPorEquipo[f.equipoIdCoincidente!] = mangaId;

@@ -27,6 +27,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../core/proveedores.dart';
 import '../data/database/app_database.dart';
+import '../data/database/copas_en_prueba.dart';
 import 'exportar_config.dart';
 import 'fotos_verificacion.dart';
 import 'pdf_marca.dart';
@@ -146,6 +147,8 @@ class GeneradorPdfVerificaciones {
         : await (db.select(db.verificaciones)
               ..where((t) => t.mangaId.isIn(mangaIds)))
             .get();
+    // Copa de cada equipo EN ESTA prueba (la de la inscripción manda).
+    final copasPrueba = await db.copasEnPrueba(pruebaId);
     final verifPorEquipo = <int, Verificacione>{};
     for (final v in verifs) {
       verifPorEquipo[v.equipoId] ??= v;
@@ -158,6 +161,7 @@ class GeneradorPdfVerificaciones {
       final eq = await (db.select(db.equipos)
             ..where((t) => t.id.equals(v.equipoId)))
           .getSingle();
+      final copa = copasPrueba[eq.id] ?? eq.copa;
       // Todos los miembros del equipo (unión; cae a piloto1/2 si vacía).
       final union = await (db.select(db.equipoPilotos)
             ..where((t) => t.equipoId.equals(eq.id))
@@ -200,7 +204,7 @@ class GeneradorPdfVerificaciones {
       } catch (_) {}
 
       final (anchuraEjeDelMax, anchuraEjeTraMax) =
-          _anchuraEjeMax(campeonato?.anchuraEjeJson, eq.copa);
+          _anchuraEjeMax(campeonato?.anchuraEjeJson, copa);
 
       String motor = '-';
       if (v.motorTipo == 'PROPIO') {
@@ -234,7 +238,7 @@ class GeneradorPdfVerificaciones {
 
       lista.add(_VerifData(
         equipo: eq.nombre,
-        copa: eq.copa,
+        copa: copa,
         pilotos: nombresMiembros.join(' + '),
         coche: coche?.nombre,
         filas: [

@@ -16,13 +16,10 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
@@ -32,6 +29,7 @@ import '../../services/generador_tanda_json.dart';
 import '../../services/generador_pdf_verificaciones.dart';
 import '../resultados/pantalla_resultados_prueba.dart';
 import '../tesoreria/pantalla_tesoreria_prueba.dart';
+import '../verificaciones/pantalla_rejilla_verificaciones.dart';
 import '../verificaciones/pantalla_resumen_verificaciones.dart';
 import '../verificaciones/pantalla_sorteo_motores.dart';
 import 'detalle_manga.dart';
@@ -60,42 +58,22 @@ class DetallePrueba extends ConsumerWidget {
       await _exportarTanda(context, ref);
       return;
     }
-    final messenger = ScaffoldMessenger.of(context);
     final idi = await elegirIdiomaExport(context, ref);
-    if (idi == null) return;
-    try {
-      final sugerido = op == 'mangas'
-          ? 'mangas-${DateTime.now().millisecondsSinceEpoch}.pdf'
-          : 'verificaciones-${DateTime.now().millisecondsSinceEpoch}.pdf';
-      final destino = await getSaveLocation(
-        acceptedTypeGroups: [
-          XTypeGroup(label: 'PDF', extensions: ['pdf']),
-        ],
-        suggestedName: sugerido,
-      );
-      if (destino == null) return;
-
-      messenger.showSnackBar(const SnackBar(
-          content: Text('Generando PDF…'), duration: Duration(seconds: 2)));
-
-      final bytes = op == 'mangas'
-          ? await ref
+    if (idi == null || !context.mounted) return;
+    final sugerido = op == 'mangas'
+        ? 'mangas-${DateTime.now().millisecondsSinceEpoch}.pdf'
+        : 'verificaciones-${DateTime.now().millisecondsSinceEpoch}.pdf';
+    await guardarPdf(
+      context,
+      sugerido: sugerido,
+      generar: () => op == 'mangas'
+          ? ref
               .read(generadorPdfMangasProvider)
               .generar(pruebaId: pruebaId, idioma: idi)
-          : await ref
+          : ref
               .read(generadorPdfVerificacionesProvider)
-              .generar(pruebaId: pruebaId, idioma: idi);
-
-      var ruta = destino.path;
-      if (!ruta.toLowerCase().endsWith('.pdf')) {
-        ruta = '$ruta.pdf';
-      }
-      await File(ruta).writeAsBytes(bytes);
-
-      messenger.showSnackBar(SnackBar(content: Text('PDF guardado en $ruta')));
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
+              .generar(pruebaId: pruebaId, idioma: idi),
+    );
   }
 
   // Exporta la tanda como JSON `pitwall.tanda/v1` para importar en PitWall
@@ -145,25 +123,15 @@ class DetallePrueba extends ConsumerWidget {
           ((data['prueba'] as Map?)?['nombre'] ?? 'tanda').toString();
       final sugerido = 'tanda-${slugArchivo(nombre)}.json';
 
-      if (Platform.isAndroid || Platform.isIOS) {
-        final dir = await getApplicationDocumentsDirectory();
-        final ruta = '${dir.path}/$sugerido';
-        await File(ruta).writeAsBytes(bytes);
-        messenger.showSnackBar(SnackBar(content: Text('JSON guardado en $ruta')));
-        return;
-      }
-
-      final destino = await getSaveLocation(
-        acceptedTypeGroups: [
-          const XTypeGroup(label: 'JSON', extensions: ['json']),
-        ],
-        suggestedName: sugerido,
+      if (!context.mounted) return;
+      await guardarArchivo(
+        context,
+        sugerido: sugerido,
+        etiqueta: 'JSON',
+        extension: 'json',
+        mime: 'application/json',
+        generar: () async => bytes,
       );
-      if (destino == null) return;
-      var ruta = destino.path;
-      if (!ruta.toLowerCase().endsWith('.json')) ruta = '$ruta.json';
-      await File(ruta).writeAsBytes(bytes);
-      messenger.showSnackBar(SnackBar(content: Text('Tanda exportada en $ruta')));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
     }
@@ -375,6 +343,12 @@ class _PanelPrueba extends StatelessWidget {
               title: const Text('Verificaciones'),
               onTap: () =>
                   abrir(PantallaResumenVerificaciones(pruebaId: pruebaId)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.table_chart_outlined),
+              title: const Text('Resum. Verifi.'),
+              onTap: () =>
+                  abrir(PantallaRejillaVerificaciones(pruebaId: pruebaId)),
             ),
             ListTile(
               leading: const Icon(Icons.swap_horiz),

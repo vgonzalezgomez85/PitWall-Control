@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../data/database/copas_en_prueba.dart';
 
 /// Resultado enriquecido para pintar en la pantalla.
 class ResultadoEquipo {
@@ -62,6 +63,12 @@ final resultadosMangaProvider = StreamProvider.autoDispose
         ..where((t) => t.mangaId.equals(mangaId)))
       .watch()
       .asyncMap((inscritos) async {
+    final manga = await (db.select(db.mangas)
+          ..where((t) => t.id.equals(mangaId)))
+        .getSingleOrNull();
+    final copasPrueba = manga == null
+        ? const <int, String>{}
+        : await db.copasEnPrueba(manga.pruebaId);
     final out = <ResultadoEquipo>[];
     for (final i in inscritos) {
       final eq = await (db.select(db.equipos)
@@ -92,7 +99,7 @@ final resultadosMangaProvider = StreamProvider.autoDispose
       out.add(ResultadoEquipo(
         equipoId: eq.id,
         nombreEquipo: eq.nombre,
-        copa: eq.copa,
+        copa: copasPrueba[eq.id] ?? eq.copa,
         piloto1: p1,
         piloto2: p2,
         carril: i.carrilSalida,

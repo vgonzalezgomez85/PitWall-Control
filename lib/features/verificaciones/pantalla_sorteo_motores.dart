@@ -115,6 +115,14 @@ final sorteoMotoresProvider =
               ..where((t) => t.mangaId.isIn(mangaIds)))
             .get();
 
+    // Copa que corre cada equipo EN esta prueba (fijada en la verificación).
+    final copaPrueba = {
+      for (final i in await (db.select(db.inscripcionesPrueba)
+            ..where((t) => t.pruebaId.equals(pruebaId)))
+          .get())
+        if (i.copa != null) i.equipoId: i.copa!,
+    };
+
     final filas = <FilaSorteo>[];
     final asignados = <int>{};
     for (final ins in inscritos) {
@@ -142,7 +150,7 @@ final sorteoMotoresProvider =
         equipoId: eq.id,
         equipoNombre: eq.nombre,
         pilotoNombre: p1?.nombre ?? '',
-        copa: eq.copa,
+        copa: copaPrueba[eq.id] ?? eq.copa,
         mangaNombre: mangaNombre[ins.mangaId] ?? '',
         motor: motor,
       ));

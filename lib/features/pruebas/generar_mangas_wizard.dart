@@ -52,8 +52,9 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
   bool _sustituir = true;
   bool _trabajando = false;
   /// Solo individuales: carril de salida 1..N / D1.. por puntos, y pisters
-  /// entre mangas del mismo día.
-  bool _asignarCarriles = false;
+  /// entre mangas del mismo día. Los carriles vienen activados: es lo
+  /// habitual y, si no, las mangas se crean sin carril.
+  bool _asignarCarriles = true;
   bool _asignarPisters = false;
 
   bool get _esIndividual =>
@@ -623,7 +624,9 @@ class _MangaPreview extends StatelessWidget {
                             color: cs.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Text(carriles?[e.key] ?? '${e.key + 1}',
+                          // Sin carriles asignados no se pinta número: antes
+                          // salía 1, 2, 3… y parecía que sí se guardaban.
+                          child: Text(carriles?[e.key] ?? '—',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: cs.onSurface,

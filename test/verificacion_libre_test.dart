@@ -20,6 +20,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pitwall/core/proveedores.dart';
 import 'package:pitwall/data/database/app_database.dart';
+import 'package:pitwall/features/equipos/importador_equipos.dart';
+import 'package:pitwall/features/verificacion_libre/importador_participantes.dart';
 import 'package:pitwall/features/verificacion_libre/repositorio_verificacion_libre.dart';
 
 void main() {
@@ -43,6 +45,7 @@ void main() {
       pinonDientesMax: 11,
       motorSorteoMin: 1,
       motorSorteoMax: 20,
+      marcasPermitidasJson: '["SIT"]',
     ));
 
     final container = ProviderContainer(
@@ -65,6 +68,7 @@ void main() {
     final plantilla = await repo.plantillaNueva();
     expect(plantilla.copas, ['GT', 'LMP']);
     expect(plantilla.motorSorteoMax, 20);
+    expect(plantilla.marcasPermitidasJson, '["SIT"]');
   });
 
   test('participantes: reutiliza pilotos por nombre y se pueden quitar',
@@ -126,5 +130,85 @@ void main() {
     expect(await db.select(db.inscripciones).get(), isEmpty);
     expect(await db.select(db.verificaciones).get(), isEmpty);
     expect(await db.select(db.pilotos).get(), hasLength(1));
+  });
+
+  group('importar participantes', () {
+    test('detecta columnas, incluida la de piloto genérico', () {
+      var m = ImportadorParticipantes.detectarMapeo(
+          ['Nombre', 'Piloto 2', 'Escudería', 'Categoría', 'Email']);
+      expect(m.colPiloto1, 'Nombre');
+      expect(m.colPiloto2, 'Piloto 2');
+      expect(m.colEquipo, 'Escudería');
+      expect(m.colCopa, 'Categoría');
+
+      m = ImportadorParticipantes.detectarMapeo(
+          ['Piloto 1', 'Piloto 2', 'Equipo', 'Copa']);
+      expect(m.colPiloto1, 'Piloto 1');
+      expect(m.colPiloto2, 'Piloto 2');
+
+      m = ImportadorParticipantes.detectarMapeo(['Corredores']);
+      expect(m.colPiloto1, 'Corredores');
+    });
+
+    test('lista de una columna se lee con cabecera de una celda', () {
+      final t = ImportadorEquipos.normalizarFilas([
+        ['Piloto'],
+        ['Ana'],
+        ['Luis'],
+      ], minCeldasCabecera: 1);
+      expect(t.columnas, ['Piloto']);
+      expect(t.filas.map((f) => f['Piloto']), ['Ana', 'Luis']);
+    });
+
+    test('copa, duplicados y filas sin piloto', () {
+      final m = MapeoParticipantes()
+        ..colPiloto1 = 'P1'
+        ..colPiloto2 = 'P2'
+        ..colEquipo = 'Eq'
+        ..colCopa = 'Copa';
+      final filas = ImportadorParticipantes.transformar(
+        [
+          {'P1': 'Ana', 'Copa': 'lmp-2'},
+          {'P1': 'Luis', 'P2': 'Eva', 'Copa': 'F1'},
+          {'P1': 'Juan', 'Eq': 'Rojos', 'Copa': ''},
+          {'P1': 'ana'}, // repetido en la tabla
+          {'P1': 'Marc'}, // ya en la sesión
+          {'P1': '', 'Eq': 'Sin piloto'},
+        ],
+        m,
+        copasSesion: ['GT', 'LMP2'],
+        copaPorDefecto: 'GT',
+        equiposEnSesion: ['MARC'],
+      );
+      expect(filas.map((f) => f.nombreEquipo),
+          ['Ana', 'Luis / Eva', 'Rojos', 'ana', 'Marc']);
+      expect(filas.map((f) => f.copa), ['LMP2', 'GT', 'GT', 'GT', 'GT']);
+      expect(filas[1].aviso, contains('F1'));
+      expect(filas[2].aviso, isNull);
+      expect(filas.map((f) => f.importar), [true, true, true, false, false]);
+    });
+
+    test('importa solo las filas marcadas', () async {
+      final pruebaId = await repo
+          .crearSesion(DatosSesionLibre(nombre: 'Import', copas: ['GT']));
+      final s = (await repo.cargar(pruebaId))!;
+      final filas = ImportadorParticipantes.transformar(
+        [
+          {'P': 'Ana'},
+          {'P': 'Luis'},
+          {'P': 'Eva'},
+        ],
+        MapeoParticipantes()..colPiloto1 = 'P',
+        copasSesion: s.copas,
+        copaPorDefecto: 'GT',
+        equiposEnSesion: await repo.nombresEquipos(s),
+      );
+      filas[1].importar = false;
+      expect(await repo.importarParticipantes(s, filas), 2);
+      final despues = (await repo.cargar(pruebaId))!;
+      expect(despues.participantes, 2);
+      expect(await repo.nombresEquipos(despues),
+          unorderedEquals(['Ana', 'Eva']));
+    });
   });
 }

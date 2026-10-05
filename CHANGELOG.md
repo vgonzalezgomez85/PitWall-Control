@@ -14,6 +14,123 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.18.0] — 2026-10-05
+
+### Añadido
+- **Los desplegables de la verificación ponen primero lo más usado.** Coche, motor del catálogo, marca y dientes de piñón y corona, materiales, llantas (marca y dimensión), bancada, chasis, neumático y trencilla se ordenan según cuántas veces se ha elegido cada opción en las verificaciones guardadas; lo que nunca se ha usado queda detrás, en el orden de siempre. Cada desplegable cuenta por separado (la marca del piñón no influye en la de la corona) y el orden se actualiza solo al guardar.
+
+## [1.17.8] — 2026-10-05
+
+### Mejorado
+- **El campeonato ya no pide «Transmisión (verificación)».** Los dientes de piñón y corona ya se eligen en la verificación del catálogo de engranajes de la copa/categoría del equipo, así que el rango del campeonato sobraba (y era el mismo para todas las copas). Se quita del formulario de crear/editar campeonato y ya no salta infracción ni aviso en la rejilla por ese rango. La **verificación libre** mantiene su propio rango de dientes.
+
+## [1.17.7] — 2026-10-04
+
+### Corregido
+- **Generar mangas (individual): los carriles de la vista previa no se guardaban.** El interruptor «Asignar carril automáticamente» venía apagado, pero la vista previa numeraba 1, 2, 3… igualmente, así que parecía que las mangas se creaban con carril. Ahora viene encendido y, si lo apagas, la vista previa muestra «—» en vez de un número.
+
+### Mejorado
+- **Asignar carriles a mano, más rápido.** En el detalle de la manga, toca un equipo (o «Cambiar carril» en su menú) y sale una **cuadrícula con todos los carriles**: los libres se ven vacíos y los ocupados con el nombre de quien está. Toca uno libre para moverlo ahí, o uno ocupado para **intercambiarlos**. Sin teclado, y sin poder repetir carril ni poner uno que no existe («Escribir a mano…» sigue disponible para casos especiales).
+- **La manga muestra los carriles libres** («Libre») entre los ocupados, para ver la parrilla de un vistazo. Toca uno para elegir qué equipo sale ahí. Los equipos sin carril aparecen al final, en su propio apartado.
+
+## [1.17.6] — 2026-10-04
+
+### Mejorado
+- **"Enviar verificaciones a PitWall" ya no envía las fotos**, solo los datos de cada verificación (pesos, motor, piñón, corona, llantas, observaciones…). El envío es mucho más rápido y ligero y ya no falla por tamaño con muchas verificaciones. Las fotos siguen en Control (editor y PDF).
+
+## [1.17.5] — 2026-10-04
+
+### Corregido
+- **"Enviar verificaciones a PitWall" daba error 500** cuando había muchas verificaciones con fotos: el envío pesaba demasiado. Ahora las fotos se reducen a 1280 px en JPEG al enviarlas (las de la app no se tocan) y se espera hasta 2 minutos a que acabe. Necesita PitWall Manager 1.42.1 o posterior para envíos grandes.
+
+## [1.17.4] — 2026-10-04
+
+### Corregido
+- **Android no podía hablar con PitWall.** En tablets y móviles Android, "Enviar a PitWall", "Ver carreras" (enviar verificaciones) y "Traer resultados" fallaban aunque PitWall apareciera en la lista: Android bloquea por defecto las conexiones `http://` sin cifrar, que es como funciona PitWall Manager en la red local. Ahora se permiten.
+
+### Mejorado
+- **Búsqueda de PitWall más fiable.** Si Android falla al resolver el PitWall anunciado en la red, se reintenta en vez de perderlo. Y además de la búsqueda Bonjour/mDNS se prueba la red local directamente, así que PitWall aparece aunque el router bloquee los anuncios de red.
+
+## [1.17.3] — 2026-10-04
+
+### Corregido
+- **Autodescubrir PitWall en Android.** En tablets y móviles Android salía "La búsqueda automática no está disponible": faltaba el permiso para escuchar anuncios de red local (multicast) por Wi‑Fi. Ahora los PitWall de la red aparecen en la lista.
+
+## [1.17.2] — 2026-10-04
+
+### Corregido
+- **Autodescubrir PitWall en macOS.** "Enviar a PitWall", "Enviar verificaciones a PitWall" y "Traer resultados de PitWall" no encontraban PitWall Manager en la red: la app declaraba a macOS el servicio Bonjour antiguo (`_voltrace-manager`) y el sistema bloqueaba la búsqueda. Ahora aparece en la lista sin tener que escribir la IP.
+
+### Mejorado
+- **Selector de PitWall** común a los tres diálogos: se ve "Buscando…" unos segundos en vez de decir al instante que no hay nada, hay botón **"Buscar de nuevo"**, se marca el PitWall elegido y, si no has escrito la dirección a mano, se rellena sola con el PitWall encontrado (también si la IP guardada de la otra vez ha cambiado). Se sigue pudiendo escribir IP:puerto a mano.
+
+## [1.17.1] — 2026-10-03
+
+### Corregido
+- **Copa equivocada en PDFs y clasificación.** La copa elegida para una prueba (en la inscripción o en la verificación) no salía en varios sitios, que mostraban la copa por defecto del equipo (p. ej. un GT3 RESISBARNA salía como LMP). Ahora usan la copa de la prueba: PDF de verificaciones (y el máximo de anchura de eje que se aplica), PDF de mangas, resultados de la prueba y de cada manga, tesorería de la prueba y los JSON que se envían a PitWall Manager. En la **clasificación general** la columna Copa muestra la copa con la que el piloto corrió su última prueba, y en la **pestaña de cada copa** (HYP, GT3…) muestra esa copa en vez de LMP.
+
+## [1.17.0] — 2026-10-02
+
+### Añadido
+- **Tesorería: reparto de la cuota personalizable.** Botón **"Reparto"** arriba en Tesorería para cambiar el Pagat y cuánto va a la **coordinadora** y cuánto al **club** (al tocar uno, el otro se ajusta para que sumen el Pagat; se ve el % de cada parte). Opción para **aplicarlo también a los pagos ya cobrados**: se vuelve a repartir lo que pagó cada equipo con la nueva proporción, sin cambiar lo cobrado. La cuota actual se muestra encima del balance.
+
+### Mejorado
+- **Tesorería de la prueba:** si escribes solo el Pagat a mano, coordinadora y club se rellenan solos con la proporción del campeonato. Si el desglose no suma el Pagat sale un aviso con botón **"Repartir"**.
+- **Equipos que no pagan** (wildcard o coordinadora) ya no cuentan como pendientes: el contador muestra "X / Y pagados · N no pagan" y la barra llega al 100 %.
+- El editor del campeonato no deja guardar una cuota cuyo desglose (coordinadora + club) no sume el Pagat.
+
+### Corregido
+- **Tesorería: "Coord. total" no se guardaba.** Se apuntaba un pago de 0 € y el equipo seguía saliendo como pendiente. Ahora queda marcado como exento en esa prueba (como el wildcard), con botón para quitarlo.
+- Los totales del campeonato contaban pagos de equipos ya no inscritos en la prueba o exentos, y no cuadraban con la pantalla de la prueba. Ahora usan el mismo cálculo.
+- Los campos de un pago se actualizan si cambia lo guardado (al limpiar, recalcular el reparto…), y "Limpiar" borra bien un pago recién creado.
+
+## [1.16.0] — 2026-10-02
+
+### Añadido
+- **Verificación: bloques marcados para no saltarse nada.** Cada bloque (coche, peso, estética, motor, ejes, llantas, piñón, corona, bancada, chasis, peso del coche entero y otros) va en un recuadro sombreado con su estado: **ámbar "Pendiente 1/3"** si le falta algún dato, **verde "Hecho"** cuando está completo y **rojo "Revisar"** si algo está fuera de reglamento. Arriba, una barra con los bloques completos y la lista de los que faltan. Anchura de eje solo cuenta si la copa tiene máximo configurado; observaciones y fotos son opcionales.
+- **Tesorería de la prueba: buscador** fijo arriba para encontrar rápido a un piloto o equipo (por nombre, piloto o copa; no distingue acentos).
+- **Resumen de verificaciones en rejilla**: nuevo apartado **"Resum. Verifi."** en el menú lateral (y en los accesos de Inicio). Muestra las verificaciones de una prueba en una tabla tipo hoja de cálculo, sin fotos, para echar un vistazo rápido. Es solo de consulta: no se edita nada.
+  - Una fila por inscrito: estado (validada / borrador / sin verificar), copa, coche, pesos, motor, altura de motor, ejes, piñón, corona, llantas, trencilla, suspensión, bancada, chasis, neumático, carrocería y observaciones.
+  - Lo que está **fuera de reglamento sale en rojo** (peso bajo el mínimo, eje por encima del máximo, dientes fuera de rango, marca no permitida, motor que toca, faltan piezas); al pasar el ratón se ve el motivo.
+  - Selector de prueba, buscador y filtros: con infracción, sin verificar y en borrador.
+  - La cabecera y la columna del piloto se quedan fijas al desplazarte.
+  - También se abre desde la propia prueba: opción **"Resum. Verifi."** en el menú de la prueba y botón de rejilla en la pantalla **Verificaciones** (ya con esa prueba elegida).
+  - **Exportar a PDF y a Excel** (botón de descarga arriba a la derecha). Exporta lo que se ve: la prueba elegida con el filtro y la búsqueda aplicados. El PDF cabe en una hoja; el Excel marca en rojo las celdas fuera de reglamento y añade una columna con los motivos.
+
+### Corregido
+- **Exportaciones en Android**: los PDF de **mangas**, de **verificaciones de la prueba** y de **créditos**, el CSV de créditos y las **plantillas CSV** daban error en el móvil (abrían un "guardar como" que Android no tiene). Ahora abren la hoja de compartir del sistema, igual que el resto. El Excel de catálogos y el JSON de la tanda, que en el móvil se guardaban en una carpeta interna inaccesible, también se comparten ahora.
+
+## [1.15.2] — 2026-10-02
+
+### Mejorado
+- **Inscritos a la prueba: botón para añadir a mano siempre visible** (icono de persona con "+" arriba a la derecha). Antes solo aparecía con la lista vacía.
+
+### Corregido
+- **Tesorería: no salían los equipos inscritos a mano desde una manga.** Inscribir desde la manga (o al importar resultados) no los apuntaba a la prueba, que es de donde tira la tesorería. Ahora sí, y al abrir la app se reparan solos los que ya estaban en ese caso.
+
+## [1.15.1] — 2026-10-02
+
+### Corregido
+- **Copia de seguridad en Google Drive desde Android**: fallaba con `SocketException: Broken pipe` cuando la copia (con las fotos de las verificaciones) superaba unos 5 MB. Ahora se sube por trozos con reintentos.
+
+## [1.15.0] — 2026-09-29
+
+### Añadido
+- **Limitar fabricante** en el campeonato y en el reglamento de las sesiones de verificación libre. Activa el interruptor y elige las marcas permitidas (p. ej. solo SLOT.IT):
+  - En la verificación, los desplegables de marca de **piñón, corona, llantas delantera y trasera y trencilla** solo muestran esas marcas.
+  - Una marca distinta ya guardada se marca como **infracción** ("no permitida").
+  - Una sesión libre nueva copia la limitación de la anterior, como el resto del reglamento.
+
+## [1.14.0] — 2026-09-29
+
+### Añadido
+- **Verificación libre: importar participantes desde un archivo o Google Sheets.** Botón de importar en la sesión:
+  - **Desde archivo** (CSV o Excel) o **desde Google Sheets** (eliges hoja y pestaña).
+  - Reconoce solas las columnas Piloto 1 (o Piloto / Nombre), Piloto 2, Equipo y Copa; se pueden cambiar a mano. Vale también una lista de una sola columna con los nombres.
+  - **Copa por defecto** para las filas sin copa o con una copa que no está en la sesión (se avisa en la vista previa).
+  - Vista previa para desmarcar filas; los que ya están en la sesión o se repiten en la tabla se saltan.
+  - Nueva plantilla **"Participantes de verificación libre"** en Plantillas CSV.
+
 ## [1.13.0] — 2026-09-29
 
 ### Añadido

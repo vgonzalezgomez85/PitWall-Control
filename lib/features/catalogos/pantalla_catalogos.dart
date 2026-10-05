@@ -24,11 +24,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../services/excel_catalogos.dart';
+import '../../services/exportar_pdf.dart';
 import '../../services/fotos_verificacion.dart';
 import '../google/actualizador_drive.dart';
 import '../google/repositorio_hojas_vinculadas.dart';
@@ -262,38 +262,12 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
 
   /// Exporta los 10 catálogos a un .xlsx (una pestaña por catálogo) para
   /// editarlo cómodamente en Excel y devolverlo con «Importar Excel».
-  Future<void> _exportarExcel() async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      messenger.showSnackBar(const SnackBar(
-          content: Text('Generando Excel…'), duration: Duration(seconds: 2)));
-      final bytes = await exportarCatalogosExcel(ref.read(dbProvider));
-      final sugerido =
-          'catalogos-pitwall-${DateTime.now().toIso8601String().substring(0, 10)}.xlsx';
-
-      if (Platform.isAndroid || Platform.isIOS) {
-        final dir = await getApplicationDocumentsDirectory();
-        final ruta = p.join(dir.path, sugerido);
-        await File(ruta).writeAsBytes(bytes);
-        messenger.showSnackBar(SnackBar(content: Text('Excel guardado en $ruta')));
-        return;
-      }
-
-      final destino = await getSaveLocation(
-        acceptedTypeGroups: [
-          const XTypeGroup(label: 'Excel', extensions: ['xlsx']),
-        ],
-        suggestedName: sugerido,
+  Future<void> _exportarExcel() => guardarExcel(
+        context,
+        sugerido:
+            'catalogos-pitwall-${DateTime.now().toIso8601String().substring(0, 10)}.xlsx',
+        generar: () => exportarCatalogosExcel(ref.read(dbProvider)),
       );
-      if (destino == null) return;
-      var ruta = destino.path;
-      if (!ruta.toLowerCase().endsWith('.xlsx')) ruta = '$ruta.xlsx';
-      await File(ruta).writeAsBytes(bytes);
-      messenger.showSnackBar(SnackBar(content: Text('Catálogos exportados en $ruta')));
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Error al exportar: $e')));
-    }
-  }
 
   /// Reimporta el .xlsx editado: actualiza las filas con ID y crea las que no
   /// lo tienen. Nunca borra: lo que quites de la hoja se queda en la app.

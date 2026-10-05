@@ -20,21 +20,88 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/proveedores.dart';
+import '../../data/database/app_database.dart';
 import 'repositorio_tesoreria.dart';
 
-class PantallaTesoreriaPrueba extends ConsumerWidget {
+/// Minúsculas y sin acentos, para buscar "diaz" y encontrar "Díaz".
+String _normalizar(String s) => s
+    .toLowerCase()
+    .replaceAll(RegExp('[áàä]'), 'a')
+    .replaceAll(RegExp('[éèë]'), 'e')
+    .replaceAll(RegExp('[íìï]'), 'i')
+    .replaceAll(RegExp('[óòö]'), 'o')
+    .replaceAll(RegExp('[úùü]'), 'u');
+
+class PantallaTesoreriaPrueba extends ConsumerStatefulWidget {
   const PantallaTesoreriaPrueba({super.key, required this.pruebaId});
 
   final int pruebaId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PantallaTesoreriaPrueba> createState() =>
+      _PantallaTesoreriaPruebaState();
+}
+
+class _PantallaTesoreriaPruebaState
+    extends ConsumerState<PantallaTesoreriaPrueba> {
+  final _buscador = TextEditingController();
+  String _busqueda = '';
+
+  int get pruebaId => widget.pruebaId;
+
+  @override
+  void dispose() {
+    _buscador.dispose();
+    super.dispose();
+  }
+
+  bool _coincide(PagoEquipo p) {
+    if (_busqueda.isEmpty) return true;
+    return _normalizar([
+      p.nombreEquipo,
+      p.piloto1.nombre,
+      p.piloto2?.nombre ?? '',
+      p.copa,
+    ].join(' '))
+        .contains(_busqueda);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final dataAsync = ref.watch(pagosPruebaProvider(pruebaId));
     final eur = NumberFormat.currency(locale: 'es_ES', symbol: '€');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tesorería de la prueba')),
+      appBar: AppBar(
+        title: const Text('Tesorería de la prueba'),
+        // Buscador fijo arriba: localizar rápido quién va a pagar.
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(64),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: TextField(
+              controller: _buscador,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'Buscar piloto o equipo…',
+                suffixIcon: _busqueda.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Borrar',
+                        icon: const Icon(Icons.close),
+                        onPressed: () => setState(() {
+                          _buscador.clear();
+                          _busqueda = '';
+                        }),
+                      ),
+              ),
+              onChanged: (v) =>
+                  setState(() => _busqueda = _normalizar(v.trim())),
+            ),
+          ),
+        ),
+      ),
       body: dataAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -64,6 +131,9 @@ class PantallaTesoreriaPrueba extends ConsumerWidget {
           final totalRecaudado =
               lista.fold<double>(0, (s, p) => s + p.total);
           final pagados = lista.where((p) => p.hayPago).length;
+          final exentos = lista.where((p) => p.exento).length;
+          final aPagar = lista.length - exentos;
+          final visibles = lista.where(_coincide).toList();
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
@@ -88,14 +158,35 @@ class PantallaTesoreriaPrueba extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      Text('$pagados / ${lista.length} pagados',
-                          style: TextStyle(color: cs.outline)),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text('$pagados / $aPagar pagados',
+                              style: TextStyle(
+                                  color: pagados >= aPagar
+                                      ? Colors.green.shade700
+                                      : cs.outline)),
+                          if (exentos > 0)
+                            Text('$exentos no pagan',
+                                style: TextStyle(
+                                    color: cs.outline, fontSize: 12)),
+                        ],
+                      ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 12),
-              ...lista.map((p) => _FilaPago(
+              if (visibles.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Text('Nadie coincide con "${_buscador.text.trim()}".',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: cs.outline)),
+                ),
+              // Con clave: al filtrar, cada fila conserva su propio estado.
+              ...visibles.map((p) => _FilaPago(
+                    key: ValueKey(p.equipoId),
                     pruebaId: pruebaId,
                     pago: p,
                     eur: eur,
@@ -110,6 +201,7 @@ class PantallaTesoreriaPrueba extends ConsumerWidget {
 
 class _FilaPago extends ConsumerStatefulWidget {
   const _FilaPago({
+    super.key,
     required this.pruebaId,
     required this.pago,
     required this.eur,
@@ -131,10 +223,26 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
   @override
   void initState() {
     super.initState();
-    _pagat = TextEditingController(text: _v(widget.pago.pago?.pagat));
-    _coord = TextEditingController(text: _v(widget.pago.pago?.coordinadora));
-    _club = TextEditingController(text: _v(widget.pago.pago?.club));
-    _obs = TextEditingController(text: widget.pago.pago?.observaciones ?? '');
+    _pagat = TextEditingController();
+    _coord = TextEditingController();
+    _club = TextEditingController();
+    _obs = TextEditingController();
+    _cargarDe(widget.pago.pago);
+  }
+
+  void _cargarDe(Pago? pago) {
+    _pagat.text = _v(pago?.pagat);
+    _coord.text = _v(pago?.coordinadora);
+    _club.text = _v(pago?.club);
+    _obs.text = pago?.observaciones ?? '';
+  }
+
+  // Si el pago cambia en la base de datos (se guarda, se borra, se recalcula
+  // el reparto…), los campos reflejan lo guardado.
+  @override
+  void didUpdateWidget(covariant _FilaPago old) {
+    super.didUpdateWidget(old);
+    if (old.pago.pago != widget.pago.pago) _cargarDe(widget.pago.pago);
   }
 
   String _v(double? n) => (n == null || n == 0) ? '' : n.toStringAsFixed(2);
@@ -142,6 +250,16 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
       double.tryParse(c.text.trim().replaceAll(',', '.')) ?? 0;
 
   Future<void> _guardar() async {
+    // Pagat escrito a mano sin desglose: se reparte solo con la proporción
+    // de la cuota del campeonato.
+    final pagat = _p(_pagat);
+    if (pagat > 0 && _p(_coord) == 0 && _p(_club) == 0) {
+      final (c, cl) = repartir(pagat,
+          cuotaCoordinadora: _cuotaCoord, cuotaClub: _cuotaClub);
+      _coord.text = c.toStringAsFixed(2);
+      _club.text = cl.toStringAsFixed(2);
+    }
+    if (mounted) setState(() {});
     await ref.read(repoTesoreriaProvider).guardarPago(
           id: widget.pago.pago?.id,
           pruebaId: widget.pruebaId,
@@ -166,6 +284,13 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
     _guardar();
   }
 
+  /// Guarda al salir del campo y le quita el foco (si no, cada clic fuera
+  /// volvería a guardar).
+  void _salir() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    _guardar();
+  }
+
   // Cuotas del campeonato activo (configurables por campeonato).
   double get _cuotaPagat =>
       ref.read(campeonatoActivoProvider)?.cuotaPagat ?? 25.0;
@@ -186,10 +311,17 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    // Reconstruir si cambia el reparto de la cuota.
+    ref.watch(campeonatoActivoProvider);
     final p = widget.pago;
     // Total = pagat (coord y club son desglose interno)
     final total = _p(_pagat);
+    final descuadre = total > 0 &&
+        ((_p(_coord) + _p(_club)) - total).abs() >= 0.01;
     if (p.exento) {
+      // Qué se puede deshacer desde aquí: wildcard y "Coord. total". Si es
+      // por la ficha de los pilotos, se cambia allí.
+      final quitable = p.wildcard || p.exentoCoordinadora;
       return Card(
         color: cs.surfaceContainer,
         child: ListTile(
@@ -205,15 +337,32 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
           ),
           isThreeLine: true,
           trailing: IconButton(
-            tooltip: 'Quitar wildcard',
-            icon: const Icon(Icons.close),
-            onPressed: p.wildcard
-                ? () => ref.read(repoTesoreriaProvider).marcarWildcard(
-                      pruebaId: widget.pruebaId,
-                      equipoId: p.equipoId,
-                      wildcard: false,
-                    )
-                : null,
+            tooltip: p.wildcard
+                ? 'Quitar wildcard'
+                : p.exentoCoordinadora
+                    ? 'Quitar "Coord. total" (vuelve a pagar)'
+                    : 'Los pilotos están marcados como coordinadora en su '
+                        'ficha; cámbialo allí',
+            icon: Icon(quitable ? Icons.close : Icons.info_outline),
+            onPressed: !quitable
+                ? null
+                : () async {
+                    final repo = ref.read(repoTesoreriaProvider);
+                    if (p.wildcard) {
+                      await repo.marcarWildcard(
+                        pruebaId: widget.pruebaId,
+                        equipoId: p.equipoId,
+                        wildcard: false,
+                      );
+                    }
+                    if (p.exentoCoordinadora) {
+                      await repo.marcarCoordinadora(
+                        pruebaId: widget.pruebaId,
+                        equipoId: p.equipoId,
+                        exento: false,
+                      );
+                    }
+                  },
           ),
         ),
       );
@@ -290,7 +439,7 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
                         decimal: true),
-                    onTapOutside: (_) => _guardar(),
+                    onTapOutside: (_) => _salir(),
                     onSubmitted: (_) => _guardar(),
                   ),
                 ),
@@ -305,7 +454,7 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
                         decimal: true),
-                    onTapOutside: (_) => _guardar(),
+                    onTapOutside: (_) => _salir(),
                     onSubmitted: (_) => _guardar(),
                   ),
                 ),
@@ -320,7 +469,7 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
                         decimal: true),
-                    onTapOutside: (_) => _guardar(),
+                    onTapOutside: (_) => _salir(),
                     onSubmitted: (_) => _guardar(),
                   ),
                 ),
@@ -333,9 +482,38 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
                 labelText: 'Observaciones (opcional)',
                 isDense: true,
               ),
-              onTapOutside: (_) => _guardar(),
+              onTapOutside: (_) => _salir(),
               onSubmitted: (_) => _guardar(),
             ),
+            if (descuadre) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded,
+                      size: 16, color: cs.error),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Coordinadora + Club '
+                      '(${widget.eur.format(_p(_coord) + _p(_club))}) '
+                      'no suma el Pagat (${widget.eur.format(total)}).',
+                      style: TextStyle(color: cs.error, fontSize: 12),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      final (c, cl) = repartir(total,
+                          cuotaCoordinadora: _cuotaCoord,
+                          cuotaClub: _cuotaClub);
+                      _coord.text = c.toStringAsFixed(2);
+                      _club.text = cl.toStringAsFixed(2);
+                      _guardar();
+                    },
+                    child: const Text('Repartir'),
+                  ),
+                ],
+              ),
+            ],
             if (p.pagaMitad) ...[
               const SizedBox(height: 8),
               Container(
@@ -404,12 +582,15 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
                         label: const Text('Coord. total'),
                         tooltip:
                             'Todos los pilotos son de coordinadora: no paga',
-                        onPressed: () => _rellenarRapido(
-                          0,
-                          0,
-                          0,
-                          observacion: 'Pilotos de coordinadora — no paga',
-                        ),
+                        // Se guarda como exención de la prueba (igual que el
+                        // wildcard), no como un pago de 0 €.
+                        onPressed: () => ref
+                            .read(repoTesoreriaProvider)
+                            .marcarCoordinadora(
+                              pruebaId: widget.pruebaId,
+                              equipoId: p.equipoId,
+                              exento: true,
+                            ),
                       ),
                       ActionChip(
                         label: const Text('Limpiar'),
@@ -420,11 +601,12 @@ class _FilaPagoState extends ConsumerState<_FilaPago> {
                             _club.clear();
                             _obs.clear();
                           });
-                          if (p.pago != null) {
-                            ref
-                                .read(repoTesoreriaProvider)
-                                .borrar(p.pago!.id);
-                          }
+                          // Por (prueba, equipo): el pago puede haberse
+                          // creado hace un instante y aún no estar en p.pago.
+                          ref.read(repoTesoreriaProvider).borrarDe(
+                                pruebaId: widget.pruebaId,
+                                equipoId: p.equipoId,
+                              );
                         },
                       ),
                     ],

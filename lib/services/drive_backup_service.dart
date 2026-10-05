@@ -147,7 +147,14 @@ class DriveBackupService {
       try {
         final api = drive.DriveApi(cli);
         final existente = await obtenerBackup();
-        final media = drive.Media(stream, zipped.length);
+        final media = drive.Media(stream, zipped.length,
+            contentType: 'application/zip');
+        // Subida reanudable por trozos: la subida simple solo admite ~5 MB y,
+        // con fotos, Drive corta la conexión a mitad (broken pipe en Android).
+        final opciones = drive.ResumableUploadOptions(
+          chunkSize: 4 * 1024 * 1024,
+          numberOfAttempts: 5,
+        );
         if (existente == null || existente.nombre != _nombreArchivo) {
           // No hay un backup con el nombre actual: creamos uno (los legacy
           // se quedan donde estaban).
@@ -157,12 +164,14 @@ class DriveBackupService {
               ..description =
                   'Copia de PitWall (BD + fotos de verificaciones).',
             uploadMedia: media,
+            uploadOptions: opciones,
           );
         } else {
           await api.files.update(
             drive.File()..name = _nombreArchivo,
             existente.id,
             uploadMedia: media,
+            uploadOptions: opciones,
           );
         }
       } finally {

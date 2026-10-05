@@ -21,20 +21,17 @@
 // elegir uno o teclear la IP a mano, pide el PIN de emparejamiento y POSTea la
 // tanda. Manager autocrea la carrera.
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:nsd/nsd.dart';
 
 import '../../services/almacen_local.dart';
 import '../../services/enviar_tanda_service.dart';
 import '../../services/generador_tanda_json.dart';
 import 'repositorio_pruebas.dart';
+import 'selector_pitwall.dart';
 
 const _kHostKey = 'pitwall_host';
 const _kPinKey = 'pitwall_pin';
-const _serviceType = '_pitwall-manager._tcp';
 
 Future<void> mostrarEnviarTanda(
     BuildContext context, WidgetRef ref, int pruebaId) async {
@@ -56,8 +53,6 @@ class _EnviarTandaDialog extends StatefulWidget {
 class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
   final _hostCtrl = TextEditingController();
   final _pinCtrl = TextEditingController();
-  Discovery? _disc;
-  bool _buscando = true;
   bool _enviando = false;
   bool _pole = false; // ¿la carrera tiene pole? → PitWall crea la sesión
 
@@ -67,54 +62,13 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
     final almacen = widget.ref.read(almacenSyncProvider);
     _hostCtrl.text = almacen.readSync(key: _kHostKey) ?? '';
     _pinCtrl.text = almacen.readSync(key: _kPinKey) ?? '';
-    _iniciarDescubrimiento();
-  }
-
-  Future<void> _iniciarDescubrimiento() async {
-    try {
-      final d = await startDiscovery(_serviceType, ipLookupType: IpLookupType.v4);
-      if (!mounted) {
-        await stopDiscovery(d);
-        return;
-      }
-      d.addListener(() {
-        if (mounted) setState(() {});
-      });
-      setState(() {
-        _disc = d;
-        _buscando = false;
-      });
-    } catch (_) {
-      // mDNS no disponible (permiso de red local, plataforma…): queda la IP manual.
-      if (mounted) setState(() => _buscando = false);
-    }
   }
 
   @override
   void dispose() {
-    final d = _disc;
-    if (d != null) {
-      // stopDiscovery es async; se lanza sin esperar (el diálogo ya se cierra).
-      stopDiscovery(d).catchError((_) {});
-    }
     _hostCtrl.dispose();
     _pinCtrl.dispose();
     super.dispose();
-  }
-
-  // "ip:puerto" de un servicio descubierto (IPv4 preferida).
-  String _hostDe(Service s) {
-    final addrs = s.addresses;
-    String host = s.host ?? '';
-    if (addrs != null && addrs.isNotEmpty) {
-      final v4 = addrs.firstWhere(
-        (a) => a.type == InternetAddressType.IPv4,
-        orElse: () => addrs.first,
-      );
-      host = v4.address;
-    }
-    final port = s.port ?? 3000;
-    return '$host:$port';
   }
 
   Future<void> _enviar() async {
@@ -170,7 +124,6 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final servicios = _disc?.services ?? const <Service>[];
     return AlertDialog(
       title: const Text('Enviar a PitWall'),
       content: SizedBox(
@@ -179,48 +132,7 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Text('PitWall en la red',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-                const Spacer(),
-                if (_buscando)
-                  const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2)),
-              ],
-            ),
-            const SizedBox(height: 6),
-            if (servicios.isEmpty && !_buscando)
-              const Text('No se ha encontrado ningún PitWall. Escribe su dirección abajo.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey))
-            else
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 160),
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    for (final s in servicios)
-                      ListTile(
-                        dense: true,
-                        leading: const Icon(Icons.dns_outlined),
-                        title: Text(s.name ?? 'PitWall'),
-                        subtitle: Text(_hostDe(s)),
-                        onTap: () =>
-                            setState(() => _hostCtrl.text = _hostDe(s)),
-                      ),
-                  ],
-                ),
-              ),
-            const Divider(),
-            TextField(
-              controller: _hostCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Dirección (IP:puerto)',
-                hintText: '192.168.1.50:3000',
-              ),
-            ),
+            SelectorPitwall(hostCtrl: _hostCtrl),
             const SizedBox(height: 8),
             TextField(
               controller: _pinCtrl,

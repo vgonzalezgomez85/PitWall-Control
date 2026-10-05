@@ -15,10 +15,10 @@
 //
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
-import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+
+import '../../services/exportar_pdf.dart';
 
 /// Una plantilla CSV descargable para usar luego en un importador.
 class _Plantilla {
@@ -81,6 +81,15 @@ const _plantillas = <_Plantilla>[
     ejemplo: ['EQUIPO EJEMPLO', 'Viernes', ''],
   ),
   _Plantilla(
+    titulo: 'Participantes de verificación libre',
+    descripcion: 'Participantes de una sesión de verificación libre. Piloto 2 '
+        'y Equipo son opcionales; si la copa va vacía se elige al importar.',
+    icono: Icons.fact_check_outlined,
+    archivo: 'plantilla-participantes-verificacion.csv',
+    cabeceras: ['Piloto 1', 'Piloto 2', 'Equipo', 'Copa'],
+    ejemplo: ['Juan Ejemplo', '', '', 'GT'],
+  ),
+  _Plantilla(
     titulo: 'Catálogo · Coches',
     descripcion: 'Modelos de coche del catálogo.',
     icono: Icons.directions_car_outlined,
@@ -135,24 +144,11 @@ class PantallaPlantillasCsv extends StatelessWidget {
   }
 
   Future<void> _descargar(BuildContext context, _Plantilla p) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final destino = await getSaveLocation(
-        acceptedTypeGroups: [
-          const XTypeGroup(label: 'CSV', extensions: ['csv']),
-        ],
-        suggestedName: p.archivo,
-      );
-      if (destino == null) return;
-      var ruta = destino.path;
-      if (!ruta.toLowerCase().endsWith('.csv')) ruta = '$ruta.csv';
-      // BOM UTF-8 para que Excel reconozca los acentos.
-      await File(ruta).writeAsString('﻿${_construirCsv(p)}');
-      messenger.showSnackBar(
-          SnackBar(content: Text('Plantilla guardada en $ruta')));
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
+    await guardarCsv(
+      context,
+      sugerido: p.archivo,
+      generar: () async => _construirCsv(p),
+    );
   }
 
   @override
