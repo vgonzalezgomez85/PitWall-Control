@@ -43,12 +43,16 @@ void main() {
         [foto, Uint8List.fromList([1, 2, 3])],
         [],
       ],
+      // Solo la segunda fila tiene foto de catálogo.
+      fotoReferencia: [null, foto],
+      tituloReferencia: 'Foto catálogo',
     ));
 
     final zip = ZipDecoder().decodeBytes(bytes);
     final nombres = zip.files.map((f) => f.name).toSet();
     expect(nombres, contains('xl/media/foto1.jpeg'));
-    expect(nombres, isNot(contains('xl/media/foto2.jpeg')));
+    expect(nombres, contains('xl/media/foto2.jpeg'));
+    expect(nombres, isNot(contains('xl/media/foto3.jpeg')));
     expect(nombres, contains('xl/drawings/drawing1.xml'));
     // La foto se reduce a 800 px de lado mayor.
     final media = zip.findFile('xl/media/foto1.jpeg')!.content as List<int>;
@@ -59,14 +63,37 @@ void main() {
     final hoja = libro.tables.values.single;
     expect(libro.tables.keys.single, 'Control club jueves');
     expect(hoja.rows[0].map((c) => c?.value.toString()),
-        ['Piloto', 'Peso', 'Foto 1', 'Foto 2']);
+        ['Piloto', 'Peso', 'Foto catálogo', 'Foto 1', 'Foto 2']);
     expect(hoja.rows[1][0]?.value.toString(), 'Ana & Bea');
-    expect(hoja.rows[1][3]?.value.toString(), '(foto no compatible)');
+    expect(hoja.rows[1][4]?.value.toString(), '(foto no compatible)');
+    // La foto de catálogo va en su columna (C) de la fila de Carlos.
+    final dibujo = utf8.decode(
+        zip.findFile('xl/drawings/drawing1.xml')!.content as List<int>);
+    expect(dibujo, contains('<xdr:col>2</xdr:col><xdr:colOff>76200</xdr:colOff>'
+        '<xdr:row>2</xdr:row>'));
+    // Anclaje desde-hasta (el único que entienden los visores de móvil).
+    expect(dibujo, isNot(contains('oneCellAnchor')));
+    expect('<xdr:twoCellAnchor'.allMatches(dibujo).length, 2);
     expect(hoja.rows[2][0]?.value.toString(), 'Carlos <C>');
 
     final dir = Platform.environment['XLSX_SALIDA'];
     if (dir != null) File('$dir/prueba_fotos.xlsx').writeAsBytesSync(bytes);
     expect(utf8.decode(zip.findFile('xl/workbook.xml')!.content as List<int>),
         contains('Control club jueves'));
+  });
+
+  test('sin fotos de referencia no se añade su columna', () {
+    final bytes = generarXlsxConFotos(HojaConFotos(
+      nombre: 'S',
+      cabecera: ['Piloto'],
+      anchos: [20],
+      filas: [
+        [const CeldaXlsx('Ana')],
+      ],
+      fotos: [[]],
+      fotoReferencia: [null],
+    ));
+    final hoja = Excel.decodeBytes(bytes).tables.values.single;
+    expect(hoja.rows[0].map((c) => c?.value.toString()), ['Piloto']);
   });
 }

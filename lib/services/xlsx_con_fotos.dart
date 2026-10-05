@@ -38,7 +38,10 @@ class HojaConFotos {
     required this.anchos,
     required this.filas,
     required this.fotos,
-  }) : assert(filas.length == fotos.length);
+    this.fotoReferencia,
+    this.tituloReferencia = 'Foto referencia',
+  })  : assert(filas.length == fotos.length),
+        assert(fotoReferencia == null || fotoReferencia.length == filas.length);
 
   /// Nombre de la pestaña (se sanea al generar).
   final String nombre;
@@ -51,6 +54,11 @@ class HojaConFotos {
   /// Bytes originales de las fotos de cada fila (cualquier formato que sepa
   /// leer el paquete `image`; las que no, salen como texto).
   final List<List<Uint8List>> fotos;
+
+  /// Foto opcional por fila en su propia columna, antes de [fotos] (p. ej.
+  /// la del catálogo del coche); null en una fila = sin foto.
+  final List<Uint8List?>? fotoReferencia;
+  final String tituloReferencia;
 }
 
 /// Lado mayor (px) de las fotos incrustadas: se ven como miniatura en la
@@ -59,8 +67,22 @@ const _ladoFoto = 800;
 
 /// Alto de una fila con fotos (puntos) y de la miniatura (px).
 const _altoFilaPt = 100.0;
-const _altoMiniPx = 125;
+const _altoFilaDefPt = 15.0;
+const _altoMiniPx = 115;
 const _anchoColFotoCar = 25.0;
+
+/// Margen (px) de la miniatura dentro de su celda. Generoso a propósito: deja
+/// holgura para los visores que la colocan por su posición absoluta.
+const _margenX = 8;
+const _margenY = 9;
+
+/// Visores de Apple (Quick Look/Numbers en macOS e iOS): colocan las fotos
+/// por `a:off` (posición absoluta), no por el ancla, y miden las columnas a
+/// ~8,11 px por carácter (Excel usa 7). Además dibujan la rejilla ~11 px
+/// desplazada respecto a las imágenes; se compensa la mitad, por si en el
+/// móvil no lo hacen. Medido con Quick Look (oct 2026).
+const _pxPorCaracterApple = 8.11;
+const _desfaseApplePx = 5.5;
 
 /// Genera el .xlsx a mano (es un zip de XML): el paquete `excel` no sabe
 /// incrustar imágenes. Es CPU pura (decodifica y recomprime las fotos):
@@ -72,19 +94,51 @@ Uint8List generarXlsxConFotos(HojaConFotos h) {
   void xml(String ruta, String contenido) =>
       fichero(ruta, Uint8List.fromList(_utf8(contenido)));
 
+  // Huecos de foto de cada fila: [referencia?] + fotos; null = celda vacía.
+  final hayReferencia = h.fotoReferencia?.any((f) => f != null) ?? false;
+  final huecos = [
+    for (var y = 0; y < h.fotos.length; y++)
+      <Uint8List?>[if (hayReferencia) h.fotoReferencia![y], ...h.fotos[y]],
+  ];
   final maxFotos =
       h.fotos.fold<int>(0, (m, l) => l.length > m ? l.length : m);
-  final nCols = h.cabecera.length + maxFotos;
+  final nCols = h.cabecera.length + (hayReferencia ? 1 : 0) + maxFotos;
   final colPrimeraFoto = h.cabecera.length;
+  final titulosFoto = [
+    if (hayReferencia) h.tituloReferencia,
+    for (var i = 1; i <= maxFotos; i++) 'Foto $i',
+  ];
 
   // --- Fotos: a JPEG reducido; la que no se pueda leer queda como texto.
   final medios = <Uint8List>[];
   final anclas = StringBuffer();
   final textosFoto = <(int, int), String>{};
   final anchoColPx = (_anchoColFotoCar * 7 + 5).round();
-  for (var y = 0; y < h.fotos.length; y++) {
-    for (var i = 0; i < h.fotos[y].length; i++) {
-      final foto = _reducir(h.fotos[y][i]);
+  // Posición absoluta (EMU) de cada columna y fila: algunos visores (Quick
+  // Look/Numbers en iOS y macOS) colocan la foto por `a:off` y no por el
+  // ancla; con 0,0 las apilan todas en A1.
+  final xCol = <int>[_emu(_desfaseApplePx.round())];
+  for (var x = 0; x < nCols; x++) {
+    final w = x < h.anchos.length ? h.anchos[x] : _anchoColFotoCar;
+    xCol.add(xCol.last + _emu((w * _pxPorCaracterApple).round()));
+  }
+  // Con fotos, todas las filas de datos miden lo mismo (fijo): si una fila
+  // sin fotos creciera por su texto, desplazaría las fotos de debajo.
+  final altoDatosPt = huecos.any((f) => f.any((x) => x != null))
+      ? _altoFilaPt
+      : null;
+  final yFila = <int>[
+    _emu(_desfaseApplePx.round()),
+    _emu(_desfaseApplePx.round()) + _pt(_altoFilaDefPt),
+  ];
+  for (var y = 0; y < huecos.length; y++) {
+    yFila.add(yFila.last + _pt(altoDatosPt ?? _altoFilaDefPt));
+  }
+  for (var y = 0; y < huecos.length; y++) {
+    for (var i = 0; i < huecos[y].length; i++) {
+      final original = huecos[y][i];
+      if (original == null) continue;
+      final foto = _reducir(original);
       if (foto == null) {
         textosFoto[(y, i)] = '(foto no compatible)';
         continue;
@@ -94,25 +148,35 @@ Uint8List generarXlsxConFotos(HojaConFotos h) {
       // Miniatura: alto fijo, ancho según proporción (sin pasar de la celda).
       var alto = _altoMiniPx;
       var ancho = (foto.ancho * alto / foto.alto).round();
-      if (ancho > anchoColPx - 6) {
-        ancho = anchoColPx - 6;
+      if (ancho > anchoColPx - 2 * _margenX) {
+        ancho = anchoColPx - 2 * _margenX;
         alto = (foto.alto * ancho / foto.ancho).round();
       }
-      anclas.write('<xdr:oneCellAnchor>'
-          '<xdr:from><xdr:col>${colPrimeraFoto + i}</xdr:col>'
-          '<xdr:colOff>${_emu(3)}</xdr:colOff>'
-          '<xdr:row>${y + 1}</xdr:row><xdr:rowOff>${_emu(4)}</xdr:rowOff>'
+      // twoCellAnchor (desde-hasta dentro de la misma celda), como lo guarda
+      // Excel: los visores de móvil (Quick Look/Numbers en iOS, etc.) no
+      // entienden oneCellAnchor y apilan todas las fotos en A1.
+      final col = colPrimeraFoto + i, fila = y + 1;
+      anclas.write('<xdr:twoCellAnchor editAs="oneCell">'
+          '<xdr:from><xdr:col>$col</xdr:col>'
+          '<xdr:colOff>${_emu(_margenX)}</xdr:colOff>'
+          '<xdr:row>$fila</xdr:row><xdr:rowOff>${_emu(_margenY)}</xdr:rowOff>'
           '</xdr:from>'
-          '<xdr:ext cx="${_emu(ancho)}" cy="${_emu(alto)}"/>'
+          '<xdr:to><xdr:col>$col</xdr:col>'
+          '<xdr:colOff>${_emu(_margenX + ancho)}</xdr:colOff>'
+          '<xdr:row>$fila</xdr:row>'
+          '<xdr:rowOff>${_emu(_margenY + alto)}</xdr:rowOff>'
+          '</xdr:to>'
           '<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${n + 1}" name="Foto $n"/>'
           '<xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr>'
           '</xdr:nvPicPr>'
           '<xdr:blipFill><a:blip r:embed="rId$n"/>'
           '<a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'
-          '<xdr:spPr><a:xfrm><a:off x="0" y="0"/>'
+          '<xdr:spPr><a:xfrm>'
+          '<a:off x="${xCol[col] + _emu(_margenX)}" '
+          'y="${yFila[fila] + _emu(_margenY)}"/>'
           '<a:ext cx="${_emu(ancho)}" cy="${_emu(alto)}"/></a:xfrm>'
           '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr>'
-          '</xdr:pic><xdr:clientData/></xdr:oneCellAnchor>');
+          '</xdr:pic><xdr:clientData/></xdr:twoCellAnchor>');
     }
   }
   final hayFotos = medios.isNotEmpty;
@@ -122,25 +186,26 @@ Uint8List generarXlsxConFotos(HojaConFotos h) {
   String celda(int x, int y, String texto, int estilo) =>
       '<c r="${_col(x)}${y + 1}" t="inlineStr" s="$estilo">'
       '<is><t xml:space="preserve">${_esc(texto)}</t></is></c>';
-  sd.write('<row r="1">');
+  // Alto fijo también en la cabecera: sin él, Apple le da otro alto y
+  // descuadra la posición absoluta de las fotos.
+  sd.write('<row r="1" ht="$_altoFilaDefPt" customHeight="1">');
   for (var x = 0; x < nCols; x++) {
     final t = x < h.cabecera.length
         ? h.cabecera[x]
-        : 'Foto ${x - h.cabecera.length + 1}';
+        : titulosFoto[x - h.cabecera.length];
     sd.write(celda(x, 0, t, 1));
   }
   sd.write('</row>');
   for (var y = 0; y < h.filas.length; y++) {
-    final conFotos = h.fotos[y].isNotEmpty;
     sd.write('<row r="${y + 2}"'
-        '${conFotos ? ' ht="$_altoFilaPt" customHeight="1"' : ''}>');
+        '${altoDatosPt != null ? ' ht="$altoDatosPt" customHeight="1"' : ''}>');
     final fila = h.filas[y];
     for (var x = 0; x < fila.length; x++) {
       final c = fila[x];
       if (c.texto.isEmpty && !c.mal) continue;
       sd.write(celda(x, y + 1, c.texto, c.mal ? 2 : 3));
     }
-    for (var i = 0; i < h.fotos[y].length; i++) {
+    for (var i = 0; i < huecos[y].length; i++) {
       final t = textosFoto[(y, i)];
       if (t != null) sd.write(celda(colPrimeraFoto + i, y + 1, t, 3));
     }
@@ -157,7 +222,7 @@ Uint8List generarXlsxConFotos(HojaConFotos h) {
       '<sheetViews><sheetView workbookViewId="0">'
       '<pane xSplit="1" ySplit="1" topLeftCell="B2" activePane="bottomRight" state="frozen"/>'
       '</sheetView></sheetViews>'
-      '<sheetFormatPr defaultRowHeight="15"/>'
+      '<sheetFormatPr defaultRowHeight="$_altoFilaDefPt"/>'
       '<cols>$cols</cols>'
       '<sheetData>$sd</sheetData>'
       '${hayFotos ? '<drawing r:id="rId1"/>' : ''}'
@@ -274,6 +339,7 @@ const _nsPkgRel = 'http://schemas.openxmlformats.org/package/2006/relationships'
 const _tipoRel = _nsRel;
 
 int _emu(int px) => px * 9525;
+int _pt(double pt) => (pt * 12700).round();
 
 /// Letra(s) de columna: 0 → A, 25 → Z, 26 → AA.
 String _col(int x) {

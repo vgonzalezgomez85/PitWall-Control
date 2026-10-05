@@ -27,15 +27,21 @@ import 'repositorio_verificacion_libre.dart';
 
 /// Excel (.xlsx) de una sesión de verificación libre: una fila por
 /// participante con las columnas del resumen de verificaciones (fuera de
-/// reglamento en rojo, más una columna con los motivos) y sus fotos
-/// incrustadas al final de la fila.
+/// reglamento en rojo, más una columna con los motivos), la foto del coche
+/// en el catálogo y las fotos de la verificación incrustadas al final.
 Future<Uint8List> generarExcelSesionLibre(
     AppDatabase db, SesionLibre sesion) async {
   final camp = sesion.reglamento;
   final filas = await cargarRejilla(db, camp, sesion.prueba.id);
+  // Foto de referencia del catálogo de cada coche (por id).
+  final fotoCoche = {
+    for (final c in await db.select(db.catalogoCoches).get())
+      if (c.fotoPath != null) c.id: c.fotoPath!,
+  };
 
   final celdas = <List<CeldaXlsx>>[];
   final fotos = <List<Uint8List>>[];
+  final fotosCatalogo = <Uint8List?>[];
   for (final f in filas) {
     final motivos = <String>[];
     final fila = <CeldaXlsx>[CeldaXlsx(nombreFilaRejilla(f))];
@@ -47,6 +53,8 @@ Future<Uint8List> generarExcelSesionLibre(
     fila.add(CeldaXlsx(motivos.join('; '), mal: motivos.isNotEmpty));
     celdas.add(fila);
     fotos.add(await _fotosDe(f.v));
+    final ruta = fotoCoche[f.v?.cocheCatalogoId];
+    fotosCatalogo.add(ruta == null ? null : await _leer(ruta));
   }
 
   final hoja = HojaConFotos(
@@ -60,6 +68,8 @@ Future<Uint8List> generarExcelSesionLibre(
     anchos: [32, for (final c in columnasRejilla) c.ancho / 7, 50],
     filas: celdas,
     fotos: fotos,
+    fotoReferencia: fotosCatalogo,
+    tituloReferencia: 'Foto catálogo',
   );
   return _enOtroHilo(hoja);
 }
@@ -79,9 +89,19 @@ Future<List<Uint8List>> _fotosDe(Verificacione? v) async {
     final raw = jsonDecode(v.fotosJson);
     if (raw is! List) return const [];
     for (final e in raw) {
-      final f = await FotosVerificacion.resolver(e.toString());
-      if (await f.exists()) out.add(await f.readAsBytes());
+      final bytes = await _leer(e.toString());
+      if (bytes != null) out.add(bytes);
     }
   } catch (_) {}
   return out;
+}
+
+/// Bytes de una foto guardada (verificación o catálogo); null si ya no está.
+Future<Uint8List?> _leer(String entrada) async {
+  try {
+    final f = await FotosVerificacion.resolver(entrada);
+    return await f.exists() ? await f.readAsBytes() : null;
+  } catch (_) {
+    return null;
+  }
 }

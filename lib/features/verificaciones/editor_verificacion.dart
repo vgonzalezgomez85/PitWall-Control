@@ -24,6 +24,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
 import '../../core/proveedores.dart';
@@ -34,6 +35,8 @@ import '../../services/fotos_verificacion.dart';
 import '../campeonatos/selector_marcas_permitidas.dart';
 import '../equipos/repositorio_equipos.dart';
 import '../pruebas/repositorio_inscripciones_prueba.dart';
+import '../tesoreria/fila_pago_equipo.dart';
+import '../tesoreria/repositorio_tesoreria.dart';
 import 'frecuencias_verificacion.dart';
 import 'repositorio_verificaciones.dart';
 
@@ -927,6 +930,24 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               const SizedBox(height: 12),
               _ProgresoBloques(bloques: bloques),
               const SizedBox(height: 16),
+
+              // Cobrar la cuota aquí mismo, sin salir a la tesorería.
+              if (_pruebaId != null &&
+                  (campActivo?.usaTesoreria ?? false) &&
+                  !(campActivo?.esVerificacionLibre ?? false)) ...[
+                _Bloque(
+                  titulo: 'Tesorería',
+                  info: null,
+                  children: [
+                    _PagoEnVerificacion(
+                      pruebaId: _pruebaId!,
+                      equipoId: widget.equipoId,
+                      campeonato: campActivo!,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
 
               _Bloque(
                 titulo: 'Coche',
@@ -1925,6 +1946,46 @@ class _InfoBloque {
 /// Bloque de la verificación sombreado y con su estado (pendiente, hecho o
 /// fuera de reglamento), para no saltarse nada al verificar. Sin [info] es
 /// un bloque opcional (observaciones, fotos): sombreado pero sin estado.
+/// Pago del equipo en la prueba (el mismo de la tesorería de la prueba).
+class _PagoEnVerificacion extends ConsumerWidget {
+  const _PagoEnVerificacion({
+    required this.pruebaId,
+    required this.equipoId,
+    required this.campeonato,
+  });
+  final int pruebaId;
+  final int equipoId;
+  final Campeonato campeonato;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final eur = NumberFormat.currency(locale: 'es_ES', symbol: '€');
+    return ref.watch(pagosPruebaProvider(pruebaId)).when(
+          loading: () => const LinearProgressIndicator(),
+          error: (e, _) => Text('Error: $e'),
+          data: (lista) {
+            final pago =
+                lista.where((p) => p.equipoId == equipoId).firstOrNull;
+            if (pago == null) {
+              return Text(
+                'El equipo no está inscrito en la prueba: inscríbelo para '
+                'poder cobrarle.',
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.outline),
+              );
+            }
+            return FilaPagoEquipo(
+              key: ValueKey(equipoId),
+              pruebaId: pruebaId,
+              pago: pago,
+              eur: eur,
+              campeonato: campeonato,
+            );
+          },
+        );
+  }
+}
+
 class _Bloque extends StatelessWidget {
   const _Bloque({
     required this.titulo,

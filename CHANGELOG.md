@@ -14,6 +14,21 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.21.2] — 2026-10-05
+
+### Corregido
+- **Excel con fotos: en el móvil las fotos no salían en su sitio.** En iPhone/iPad (y en la vista previa y Numbers del Mac) todas las fotos se amontonaban arriba a la izquierda. Esos visores colocan las imágenes por su posición absoluta y miden las columnas de otra forma que Excel; ahora el archivo la incluye calculada a su medida, y cada foto cae en su fila y su columna. En Excel y LibreOffice se sigue viendo igual.
+
+## [1.21.1] — 2026-10-05
+
+### Mejorado
+- **Excel de la verificación libre: incluye la foto del catálogo del coche.** Nueva columna «Foto catálogo» justo antes de las fotos de la verificación, para comparar de un vistazo el coche de referencia con el que se ha verificado. Si ningún coche de la sesión tiene foto en el catálogo, la columna no aparece.
+
+## [1.21.0] — 2026-10-05
+
+### Añadido
+- **Cobrar desde la verificación.** Si el campeonato gestiona tesorería, la verificación de cada equipo tiene un bloque **Tesorería** con el mismo formulario que la tesorería de la prueba: Pagat / Coordinadora / Club, observaciones, pago rápido, «Coord. + piloto», «Coord. total», wildcard y limpiar. Se guarda al momento y se ve igual desde la tesorería de la prueba (y al revés), así que no hace falta salir de la verificación para cobrar. No aparece en la verificación libre ni en campeonatos sin tesorería.
+
 ## [1.20.0] — 2026-10-05
 
 ### Añadido
