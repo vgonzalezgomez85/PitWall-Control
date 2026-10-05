@@ -86,14 +86,6 @@ class DatosVerificacion {
   final String? chasis;
   final String? neumatico;
 
-  /// Rango de dientes permitido (inclusive). Tamaño fijo = min == max.
-  /// Null = sin regla: en los campeonatos los dientes ya se limitan con el
-  /// catálogo de engranajes de la copa; solo la verificación libre lo usa.
-  final int? pinonDientesMin;
-  final int? pinonDientesMax;
-  final int? coronaDientesMin;
-  final int? coronaDientesMax;
-
   /// Conjuntos válidos cargados de los catálogos.
   final Set<String> marcasValidas;
   final Set<String> llantasDelValidas;
@@ -127,10 +119,6 @@ class DatosVerificacion {
     this.pinonDientes,
     this.coronaMarca,
     this.coronaDientes,
-    this.pinonDientesMin,
-    this.pinonDientesMax,
-    this.coronaDientesMin,
-    this.coronaDientesMax,
     this.llantaDelMarca,
     this.llantaDelDimension,
     this.llantaTraMarca,
@@ -235,12 +223,6 @@ class ValidadorVerificacion {
       ));
     }
 
-    // PIÑÓN / CORONA — rango (o tamaño fijo) de la verificación libre.
-    _verDientes(hallazgos, 'pinonDientes', 'Piñón', d.pinonDientes,
-        d.pinonDientesMin, d.pinonDientesMax);
-    _verDientes(hallazgos, 'coronaDientes', 'Corona', d.coronaDientes,
-        d.coronaDientesMin, d.coronaDientesMax);
-
     // Marcas en catálogo
     _verMarca(hallazgos, 'pinonMarca', d.pinonMarca, d.marcasValidas);
     _verMarca(hallazgos, 'coronaMarca', d.coronaMarca, d.marcasValidas);
@@ -284,21 +266,6 @@ class ValidadorVerificacion {
   }
 
   /// "12" si min==max (tamaño fijo), "24-30" si es un rango.
-  static String _rangoTexto(int min, int max) =>
-      min == max ? '$min' : '$min-$max';
-
-  static void _verDientes(List<HallazgoValidacion> out, String campo,
-      String nombre, int? dientes, int? min, int? max) {
-    if (dientes == null || min == null || max == null) return;
-    if (dientes < min || dientes > max) {
-      out.add(HallazgoValidacion(
-        campo,
-        NivelValidacion.infraccion,
-        '$nombre fuera de ${_rangoTexto(min, max)} dientes. Actual: $dientes.',
-      ));
-    }
-  }
-
   static void _verFabricante(List<HallazgoValidacion> out, String campo,
       String? valor, Set<String> permitidas) {
     if (valor == null || valor.isEmpty || permitidas.isEmpty) return;

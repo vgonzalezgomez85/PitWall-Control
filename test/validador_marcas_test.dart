@@ -45,30 +45,6 @@ void main() {
         isEmpty);
   });
 
-  test('dientes: sin rango no hay regla (campeonatos usan el catálogo)', () {
-    final r = ValidadorVerificacion.validar(DatosVerificacion(
-      pinonDientes: 9,
-      coronaDientes: 40,
-    ));
-    expect(r.hallazgos.where((h) => h.mensaje.contains('dientes')), isEmpty);
-  });
-
-  test('dientes: con rango (verificación libre) fuera es infracción', () {
-    final r = ValidadorVerificacion.validar(DatosVerificacion(
-      pinonDientes: 11,
-      coronaDientes: 31,
-      pinonDientesMin: 12,
-      pinonDientesMax: 12,
-      coronaDientesMin: 24,
-      coronaDientesMax: 30,
-    ));
-    final dientes =
-        r.hallazgos.where((h) => h.mensaje.contains('dientes')).toList();
-    expect(dientes.map((h) => h.campo), ['pinonDientes', 'coronaDientes']);
-    expect(dientes.every((h) => h.nivel == NivelValidacion.infraccion),
-        isTrue);
-  });
-
   test('json de marcas permitidas', () {
     expect(marcasPermitidasDe('["SIT","NSR"]'), {'SIT', 'NSR'});
     expect(marcasPermitidasDe('[]'), isEmpty);

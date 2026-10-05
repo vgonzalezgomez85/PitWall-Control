@@ -215,6 +215,17 @@ class $CampeonatosTable extends Campeonatos
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _tipoMotorMeta = const VerificationMeta(
+    'tipoMotor',
+  );
+  @override
+  late final GeneratedColumn<String> tipoMotor = GeneratedColumn<String>(
+    'tipo_motor',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _pinonDientesMinMeta = const VerificationMeta(
     'pinonDientesMin',
   );
@@ -354,6 +365,7 @@ class $CampeonatosTable extends Campeonatos
     cuotaClub,
     motorSorteoMin,
     motorSorteoMax,
+    tipoMotor,
     pinonDientesMin,
     pinonDientesMax,
     coronaDientesMin,
@@ -504,6 +516,12 @@ class $CampeonatosTable extends Campeonatos
           data['motor_sorteo_max']!,
           _motorSorteoMaxMeta,
         ),
+      );
+    }
+    if (data.containsKey('tipo_motor')) {
+      context.handle(
+        _tipoMotorMeta,
+        tipoMotor.isAcceptableOrUnknown(data['tipo_motor']!, _tipoMotorMeta),
       );
     }
     if (data.containsKey('pinon_dientes_min')) {
@@ -667,6 +685,10 @@ class $CampeonatosTable extends Campeonatos
         DriftSqlType.int,
         data['${effectivePrefix}motor_sorteo_max'],
       ),
+      tipoMotor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tipo_motor'],
+      ),
       pinonDientesMin: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}pinon_dientes_min'],
@@ -754,8 +776,13 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   final int? motorSorteoMin;
   final int? motorSorteoMax;
 
-  /// Rango de dientes permitido en la verificación (inclusive). Por defecto,
-  /// valores habituales: piñón 12 fijo, corona 24-30.
+  /// Tipo de motor del campeonato: 'ORGANIZACION' (sorteo) o 'PROPIO'. Null =
+  /// mixto: se elige en cada verificación.
+  final String? tipoMotor;
+
+  /// Rango de dientes de piñón/corona. YA NO SE USA (desde 1.19.1 los dientes
+  /// los limita el catálogo de engranajes de la copa); se conserva la columna
+  /// para no hacer una migración destructiva.
   final int pinonDientesMin;
   final int pinonDientesMax;
   final int coronaDientesMin;
@@ -802,6 +829,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     required this.cuotaClub,
     this.motorSorteoMin,
     this.motorSorteoMax,
+    this.tipoMotor,
     required this.pinonDientesMin,
     required this.pinonDientesMax,
     required this.coronaDientesMin,
@@ -836,6 +864,9 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     }
     if (!nullToAbsent || motorSorteoMax != null) {
       map['motor_sorteo_max'] = Variable<int>(motorSorteoMax);
+    }
+    if (!nullToAbsent || tipoMotor != null) {
+      map['tipo_motor'] = Variable<String>(tipoMotor);
     }
     map['pinon_dientes_min'] = Variable<int>(pinonDientesMin);
     map['pinon_dientes_max'] = Variable<int>(pinonDientesMax);
@@ -877,6 +908,9 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       motorSorteoMax: motorSorteoMax == null && nullToAbsent
           ? const Value.absent()
           : Value(motorSorteoMax),
+      tipoMotor: tipoMotor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tipoMotor),
       pinonDientesMin: Value(pinonDientesMin),
       pinonDientesMax: Value(pinonDientesMax),
       coronaDientesMin: Value(coronaDientesMin),
@@ -917,6 +951,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       cuotaClub: serializer.fromJson<double>(json['cuotaClub']),
       motorSorteoMin: serializer.fromJson<int?>(json['motorSorteoMin']),
       motorSorteoMax: serializer.fromJson<int?>(json['motorSorteoMax']),
+      tipoMotor: serializer.fromJson<String?>(json['tipoMotor']),
       pinonDientesMin: serializer.fromJson<int>(json['pinonDientesMin']),
       pinonDientesMax: serializer.fromJson<int>(json['pinonDientesMax']),
       coronaDientesMin: serializer.fromJson<int>(json['coronaDientesMin']),
@@ -954,6 +989,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       'cuotaClub': serializer.toJson<double>(cuotaClub),
       'motorSorteoMin': serializer.toJson<int?>(motorSorteoMin),
       'motorSorteoMax': serializer.toJson<int?>(motorSorteoMax),
+      'tipoMotor': serializer.toJson<String?>(tipoMotor),
       'pinonDientesMin': serializer.toJson<int>(pinonDientesMin),
       'pinonDientesMax': serializer.toJson<int>(pinonDientesMax),
       'coronaDientesMin': serializer.toJson<int>(coronaDientesMin),
@@ -985,6 +1021,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     double? cuotaClub,
     Value<int?> motorSorteoMin = const Value.absent(),
     Value<int?> motorSorteoMax = const Value.absent(),
+    Value<String?> tipoMotor = const Value.absent(),
     int? pinonDientesMin,
     int? pinonDientesMax,
     int? coronaDientesMin,
@@ -1017,6 +1054,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     motorSorteoMax: motorSorteoMax.present
         ? motorSorteoMax.value
         : this.motorSorteoMax,
+    tipoMotor: tipoMotor.present ? tipoMotor.value : this.tipoMotor,
     pinonDientesMin: pinonDientesMin ?? this.pinonDientesMin,
     pinonDientesMax: pinonDientesMax ?? this.pinonDientesMax,
     coronaDientesMin: coronaDientesMin ?? this.coronaDientesMin,
@@ -1067,6 +1105,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       motorSorteoMax: data.motorSorteoMax.present
           ? data.motorSorteoMax.value
           : this.motorSorteoMax,
+      tipoMotor: data.tipoMotor.present ? data.tipoMotor.value : this.tipoMotor,
       pinonDientesMin: data.pinonDientesMin.present
           ? data.pinonDientesMin.value
           : this.pinonDientesMin,
@@ -1116,6 +1155,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           ..write('cuotaClub: $cuotaClub, ')
           ..write('motorSorteoMin: $motorSorteoMin, ')
           ..write('motorSorteoMax: $motorSorteoMax, ')
+          ..write('tipoMotor: $tipoMotor, ')
           ..write('pinonDientesMin: $pinonDientesMin, ')
           ..write('pinonDientesMax: $pinonDientesMax, ')
           ..write('coronaDientesMin: $coronaDientesMin, ')
@@ -1149,6 +1189,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     cuotaClub,
     motorSorteoMin,
     motorSorteoMax,
+    tipoMotor,
     pinonDientesMin,
     pinonDientesMax,
     coronaDientesMin,
@@ -1181,6 +1222,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           other.cuotaClub == this.cuotaClub &&
           other.motorSorteoMin == this.motorSorteoMin &&
           other.motorSorteoMax == this.motorSorteoMax &&
+          other.tipoMotor == this.tipoMotor &&
           other.pinonDientesMin == this.pinonDientesMin &&
           other.pinonDientesMax == this.pinonDientesMax &&
           other.coronaDientesMin == this.coronaDientesMin &&
@@ -1211,6 +1253,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   final Value<double> cuotaClub;
   final Value<int?> motorSorteoMin;
   final Value<int?> motorSorteoMax;
+  final Value<String?> tipoMotor;
   final Value<int> pinonDientesMin;
   final Value<int> pinonDientesMax;
   final Value<int> coronaDientesMin;
@@ -1239,6 +1282,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.cuotaClub = const Value.absent(),
     this.motorSorteoMin = const Value.absent(),
     this.motorSorteoMax = const Value.absent(),
+    this.tipoMotor = const Value.absent(),
     this.pinonDientesMin = const Value.absent(),
     this.pinonDientesMax = const Value.absent(),
     this.coronaDientesMin = const Value.absent(),
@@ -1268,6 +1312,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.cuotaClub = const Value.absent(),
     this.motorSorteoMin = const Value.absent(),
     this.motorSorteoMax = const Value.absent(),
+    this.tipoMotor = const Value.absent(),
     this.pinonDientesMin = const Value.absent(),
     this.pinonDientesMax = const Value.absent(),
     this.coronaDientesMin = const Value.absent(),
@@ -1299,6 +1344,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Expression<double>? cuotaClub,
     Expression<int>? motorSorteoMin,
     Expression<int>? motorSorteoMax,
+    Expression<String>? tipoMotor,
     Expression<int>? pinonDientesMin,
     Expression<int>? pinonDientesMax,
     Expression<int>? coronaDientesMin,
@@ -1328,6 +1374,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       if (cuotaClub != null) 'cuota_club': cuotaClub,
       if (motorSorteoMin != null) 'motor_sorteo_min': motorSorteoMin,
       if (motorSorteoMax != null) 'motor_sorteo_max': motorSorteoMax,
+      if (tipoMotor != null) 'tipo_motor': tipoMotor,
       if (pinonDientesMin != null) 'pinon_dientes_min': pinonDientesMin,
       if (pinonDientesMax != null) 'pinon_dientes_max': pinonDientesMax,
       if (coronaDientesMin != null) 'corona_dientes_min': coronaDientesMin,
@@ -1361,6 +1408,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Value<double>? cuotaClub,
     Value<int?>? motorSorteoMin,
     Value<int?>? motorSorteoMax,
+    Value<String?>? tipoMotor,
     Value<int>? pinonDientesMin,
     Value<int>? pinonDientesMax,
     Value<int>? coronaDientesMin,
@@ -1390,6 +1438,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       cuotaClub: cuotaClub ?? this.cuotaClub,
       motorSorteoMin: motorSorteoMin ?? this.motorSorteoMin,
       motorSorteoMax: motorSorteoMax ?? this.motorSorteoMax,
+      tipoMotor: tipoMotor ?? this.tipoMotor,
       pinonDientesMin: pinonDientesMin ?? this.pinonDientesMin,
       pinonDientesMax: pinonDientesMax ?? this.pinonDientesMax,
       coronaDientesMin: coronaDientesMin ?? this.coronaDientesMin,
@@ -1457,6 +1506,9 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     if (motorSorteoMax.present) {
       map['motor_sorteo_max'] = Variable<int>(motorSorteoMax.value);
     }
+    if (tipoMotor.present) {
+      map['tipo_motor'] = Variable<String>(tipoMotor.value);
+    }
     if (pinonDientesMin.present) {
       map['pinon_dientes_min'] = Variable<int>(pinonDientesMin.value);
     }
@@ -1512,6 +1564,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
           ..write('cuotaClub: $cuotaClub, ')
           ..write('motorSorteoMin: $motorSorteoMin, ')
           ..write('motorSorteoMax: $motorSorteoMax, ')
+          ..write('tipoMotor: $tipoMotor, ')
           ..write('pinonDientesMin: $pinonDientesMin, ')
           ..write('pinonDientesMax: $pinonDientesMax, ')
           ..write('coronaDientesMin: $coronaDientesMin, ')
@@ -15973,6 +16026,7 @@ typedef $$CampeonatosTableCreateCompanionBuilder =
       Value<double> cuotaClub,
       Value<int?> motorSorteoMin,
       Value<int?> motorSorteoMax,
+      Value<String?> tipoMotor,
       Value<int> pinonDientesMin,
       Value<int> pinonDientesMax,
       Value<int> coronaDientesMin,
@@ -16003,6 +16057,7 @@ typedef $$CampeonatosTableUpdateCompanionBuilder =
       Value<double> cuotaClub,
       Value<int?> motorSorteoMin,
       Value<int?> motorSorteoMax,
+      Value<String?> tipoMotor,
       Value<int> pinonDientesMin,
       Value<int> pinonDientesMax,
       Value<int> coronaDientesMin,
@@ -16296,6 +16351,11 @@ class $$CampeonatosTableFilterComposer
 
   ColumnFilters<int> get motorSorteoMax => $composableBuilder(
     column: $table.motorSorteoMax,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tipoMotor => $composableBuilder(
+    column: $table.tipoMotor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16644,6 +16704,11 @@ class $$CampeonatosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get tipoMotor => $composableBuilder(
+    column: $table.tipoMotor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get pinonDientesMin => $composableBuilder(
     column: $table.pinonDientesMin,
     builder: (column) => ColumnOrderings(column),
@@ -16774,6 +16839,9 @@ class $$CampeonatosTableAnnotationComposer
     column: $table.motorSorteoMax,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get tipoMotor =>
+      $composableBuilder(column: $table.tipoMotor, builder: (column) => column);
 
   GeneratedColumn<int> get pinonDientesMin => $composableBuilder(
     column: $table.pinonDientesMin,
@@ -17079,6 +17147,7 @@ class $$CampeonatosTableTableManager
                 Value<double> cuotaClub = const Value.absent(),
                 Value<int?> motorSorteoMin = const Value.absent(),
                 Value<int?> motorSorteoMax = const Value.absent(),
+                Value<String?> tipoMotor = const Value.absent(),
                 Value<int> pinonDientesMin = const Value.absent(),
                 Value<int> pinonDientesMax = const Value.absent(),
                 Value<int> coronaDientesMin = const Value.absent(),
@@ -17107,6 +17176,7 @@ class $$CampeonatosTableTableManager
                 cuotaClub: cuotaClub,
                 motorSorteoMin: motorSorteoMin,
                 motorSorteoMax: motorSorteoMax,
+                tipoMotor: tipoMotor,
                 pinonDientesMin: pinonDientesMin,
                 pinonDientesMax: pinonDientesMax,
                 coronaDientesMin: coronaDientesMin,
@@ -17137,6 +17207,7 @@ class $$CampeonatosTableTableManager
                 Value<double> cuotaClub = const Value.absent(),
                 Value<int?> motorSorteoMin = const Value.absent(),
                 Value<int?> motorSorteoMax = const Value.absent(),
+                Value<String?> tipoMotor = const Value.absent(),
                 Value<int> pinonDientesMin = const Value.absent(),
                 Value<int> pinonDientesMax = const Value.absent(),
                 Value<int> coronaDientesMin = const Value.absent(),
@@ -17165,6 +17236,7 @@ class $$CampeonatosTableTableManager
                 cuotaClub: cuotaClub,
                 motorSorteoMin: motorSorteoMin,
                 motorSorteoMax: motorSorteoMax,
+                tipoMotor: tipoMotor,
                 pinonDientesMin: pinonDientesMin,
                 pinonDientesMax: pinonDientesMax,
                 coronaDientesMin: coronaDientesMin,

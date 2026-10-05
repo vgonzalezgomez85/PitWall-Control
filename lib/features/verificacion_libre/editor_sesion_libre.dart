@@ -22,8 +22,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/proveedores.dart';
-import '../campeonatos/editor_campeonato.dart' show RangoDientes;
 import '../campeonatos/selector_marcas_permitidas.dart';
+import '../campeonatos/selector_tipo_motor.dart';
 import 'repositorio_verificacion_libre.dart';
 
 final _catalogoCopasProvider =
@@ -53,12 +53,8 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
   final _sede = TextEditingController();
   final _motorMin = TextEditingController();
   final _motorMax = TextEditingController();
-  final _pinonMin = TextEditingController();
-  final _pinonMax = TextEditingController();
-  final _coronaMin = TextEditingController();
-  final _coronaMax = TextEditingController();
-  bool _pinonFijo = true;
-  bool _coronaFijo = false;
+  /// 'ORGANIZACION', 'PROPIO' o 'MIXTO'; null = sin elegir (sesión nueva).
+  String? _tipoMotor;
   bool _limitarMarcas = false;
   Set<String> _marcasPermitidas = {};
   DateTime? _fecha;
@@ -80,7 +76,6 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
   void dispose() {
     for (final c in [
       _nombre, _sede, _motorMin, _motorMax,
-      _pinonMin, _pinonMax, _coronaMin, _coronaMax,
       ..._anchuraEjeCtrl.values,
     ]) {
       c.dispose();
@@ -106,10 +101,7 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
         fecha: s.prueba.fecha,
         copas: s.copas,
         anchuraEjeJson: c.anchuraEjeJson,
-        pinonDientesMin: c.pinonDientesMin,
-        pinonDientesMax: c.pinonDientesMax,
-        coronaDientesMin: c.coronaDientesMin,
-        coronaDientesMax: c.coronaDientesMax,
+        tipoMotor: c.tipoMotor,
         motorSorteoMin: c.motorSorteoMin,
         motorSorteoMax: c.motorSorteoMax,
         marcasPermitidasJson: c.marcasPermitidasJson,
@@ -119,12 +111,8 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
     _sede.text = d.sede ?? '';
     _fecha = d.fecha;
     _copasSel.addAll(d.copas);
-    _pinonMin.text = '${d.pinonDientesMin}';
-    _pinonMax.text = '${d.pinonDientesMax}';
-    _coronaMin.text = '${d.coronaDientesMin}';
-    _coronaMax.text = '${d.coronaDientesMax}';
-    _pinonFijo = d.pinonDientesMin == d.pinonDientesMax;
-    _coronaFijo = d.coronaDientesMin == d.coronaDientesMax;
+    // Sesión nueva: sin elegir; existente sin tipo guardado = mixto.
+    if (widget.pruebaId != null) _tipoMotor = tipoMotorDeBd(d.tipoMotor);
     _motorMin.text = d.motorSorteoMin?.toString() ?? '';
     _motorMax.text = d.motorSorteoMax?.toString() ?? '';
     _marcasPermitidas = {...marcasPermitidasDe(d.marcasPermitidasJson)};
@@ -165,6 +153,11 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
           content: Text('Selecciona al menos una copa / categoría.')));
       return;
     }
+    if (_tipoMotor == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Motor: elige si es de sorteo, propio o mixto.')));
+      return;
+    }
     if (_limitarMarcas && _marcasPermitidas.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(
@@ -183,12 +176,8 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
         anchuraEjeMap[copa] = {'del': ?del, 'tra': ?tra};
       }
     }
-    final pinMin = int.tryParse(_pinonMin.text.trim()) ?? 12;
-    final pinMax =
-        _pinonFijo ? pinMin : (int.tryParse(_pinonMax.text.trim()) ?? pinMin);
-    final corMin = int.tryParse(_coronaMin.text.trim()) ?? 24;
-    final corMax =
-        _coronaFijo ? corMin : (int.tryParse(_coronaMax.text.trim()) ?? corMin);
+    // Con motor propio no hay sorteo: el rango no aplica.
+    final conSorteo = tipoMotorConSorteo(_tipoMotor);
     final sede = _sede.text.trim();
     final datos = DatosSesionLibre(
       nombre: _nombre.text.trim(),
@@ -196,12 +185,9 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
       fecha: _fecha,
       copas: _copasSel.toList()..sort(),
       anchuraEjeJson: json.encode(anchuraEjeMap),
-      pinonDientesMin: pinMin,
-      pinonDientesMax: pinMax,
-      coronaDientesMin: corMin,
-      coronaDientesMax: corMax,
-      motorSorteoMin: int.tryParse(_motorMin.text.trim()),
-      motorSorteoMax: int.tryParse(_motorMax.text.trim()),
+      tipoMotor: tipoMotorABd(_tipoMotor),
+      motorSorteoMin: conSorteo ? int.tryParse(_motorMin.text.trim()) : null,
+      motorSorteoMax: conSorteo ? int.tryParse(_motorMax.text.trim()) : null,
       marcasPermitidasJson:
           marcasPermitidasAJson(_limitarMarcas ? _marcasPermitidas : {}),
     );
@@ -240,8 +226,10 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
               Text(titulo,
                   style: tt.titleMedium?.copyWith(
                       color: cs.primary, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              Text(ayuda, style: tt.bodySmall),
+              if (ayuda.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(ayuda, style: tt.bodySmall),
+              ],
             ],
           ),
         );
@@ -355,25 +343,6 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
               ],
             ],
 
-            seccion('Transmisión',
-                'Dientes permitidos en piñón y corona. Fuera de este rango '
-                'salta infracción.'),
-            RangoDientes(
-              etiqueta: 'Piñón',
-              fijo: _pinonFijo,
-              min: _pinonMin,
-              max: _pinonMax,
-              onFijo: (v) => setState(() => _pinonFijo = v),
-            ),
-            const SizedBox(height: 12),
-            RangoDientes(
-              etiqueta: 'Corona',
-              fijo: _coronaFijo,
-              min: _coronaMin,
-              max: _coronaMax,
-              onFijo: (v) => setState(() => _coronaFijo = v),
-            ),
-
             seccion('Fabricante',
                 'Para sesiones monomarca: limita las marcas que se pueden '
                 'elegir en la verificación.'),
@@ -384,9 +353,18 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
               onCambio: (sel) => setState(() => _marcasPermitidas = sel),
             ),
 
-            seccion('Sorteo de motores (organización)',
+            seccion('Motor', ''),
+            SelectorTipoMotor(
+              valor: _tipoMotor,
+              onCambio: (v) => setState(() => _tipoMotor = v),
+            ),
+            if (tipoMotorConSorteo(_tipoMotor)) ...[
+            const SizedBox(height: 16),
+            Text(
                 'Rango de números de motor para sortear desde la '
-                'verificación. Déjalo vacío si no hay sorteo.'),
+                'verificación. Déjalo vacío si no hay sorteo.',
+                style: tt.bodySmall),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -417,6 +395,7 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
                 ),
               ],
             ),
+            ],
             const SizedBox(height: 32),
             FilledButton.icon(
               onPressed: _guardando ? null : _guardar,

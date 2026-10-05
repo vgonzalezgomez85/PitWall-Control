@@ -229,25 +229,12 @@ CeldaRejilla _dientes(
   String? marca,
   int? dientes,
   String? material,
-  int? min,
-  int? max,
   Set<String> permitidas,
 ) {
-  final base = _marca(marca, permitidas, [
+  return _marca(marca, permitidas, [
     dientes == null ? null : '${dientes}d',
     material,
   ]);
-  if (base.infraccion != null) return base;
-  if (dientes != null &&
-      min != null &&
-      max != null &&
-      (dientes < min || dientes > max)) {
-    return CeldaRejilla(
-      base.texto,
-      min == max ? 'Debe ser de $min dientes' : 'Fuera de rango ($min-$max)',
-    );
-  }
-  return base;
 }
 
 CeldaRejilla _eje(double? medida, double? maximo) {
@@ -326,9 +313,6 @@ final columnasRejilla = <ColumnaRejilla>[
       v?.pinonMarca,
       v?.pinonDientes,
       v?.pinonMaterial,
-      // Rango solo en verificación libre; en campeonatos manda el catálogo.
-      c.esVerificacionLibre ? c.pinonDientesMin : null,
-      c.esVerificacionLibre ? c.pinonDientesMax : null,
       marcasPermitidasDe(c.marcasPermitidasJson),
     );
   }),
@@ -338,8 +322,6 @@ final columnasRejilla = <ColumnaRejilla>[
       v?.coronaMarca,
       v?.coronaDientes,
       v?.coronaMaterial,
-      c.esVerificacionLibre ? c.coronaDientesMin : null,
-      c.esVerificacionLibre ? c.coronaDientesMax : null,
       marcasPermitidasDe(c.marcasPermitidasJson),
     );
   }),

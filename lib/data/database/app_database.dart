@@ -64,7 +64,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 45;
+  int get schemaVersion => 46;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -467,6 +467,11 @@ class AppDatabase extends _$AppDatabase {
             // Tesorería: equipo exento por ser de coordinadora en una prueba.
             await _aplicar(() => customStatement(
                 'ALTER TABLE inscripciones_prueba ADD COLUMN exento_coordinadora INTEGER NOT NULL DEFAULT 0'));
+          }
+          if (from < 46) {
+            // Tipo de motor fijado en el campeonato (null = mixto).
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN tipo_motor TEXT'));
           }
         },
       );

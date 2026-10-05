@@ -38,7 +38,6 @@ import 'frecuencias_verificacion.dart';
 import 'repositorio_verificaciones.dart';
 
 /// "12" si min==max (fijo), "24–30" si es rango.
-String _rangoDientesTxt(int min, int max) => min == max ? '$min' : '$min–$max';
 
 /// Anchura máxima de eje (mm) configurada para [copa] en el JSON
 /// `{"GT": {"del": 65.0, "tra": 63.0}, ...}` del campeonato: (delantero,
@@ -413,6 +412,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
         }
       } catch (_) {}
     }
+    // Si el campeonato fija el tipo de motor, manda sobre lo guardado.
+    final tipoFijo =
+        (_campeonato ?? ref.read(campeonatoActivoProvider))?.tipoMotor;
+    if (tipoFijo != null) _motorTipo = tipoFijo;
     if (mounted) setState(() => _cargando = false);
   }
 
@@ -681,12 +684,6 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     final campActivo = _campeonato ?? ref.watch(campeonatoActivoProvider);
     final (anchuraEjeDelMax, anchuraEjeTraMax) =
         _anchuraEjeMax(campActivo?.anchuraEjeJson, copaEquipo);
-    // Rango de dientes: solo en verificación libre. En los campeonatos los
-    // dientes ya vienen limitados por el catálogo de engranajes de la copa.
-    final rangoDientes = campActivo?.esVerificacionLibre ?? false;
-    final reglaPinon = rangoDientes
-        ? 'Regla: ${_rangoDientesTxt(campActivo!.pinonDientesMin, campActivo.pinonDientesMax)}'
-        : null;
     // Limitar fabricante: los desplegables de marca solo ofrecen las
     // permitidas por el campeonato (vacío = todas las del catálogo).
     final marcasPermitidas =
@@ -694,9 +691,6 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     final marcasSelAsync = marcasPermitidas.isEmpty
         ? marcasAsync
         : marcasAsync.whenData((_) => marcasPermitidas);
-    final reglaCorona = rangoDientes
-        ? 'Regla: ${_rangoDientesTxt(campActivo!.coronaDientesMin, campActivo.coronaDientesMax)}'
-        : null;
     final cochesAsync = ref.watch(
         cochesFiltradosProvider(copaEquipo));
     final bancadasFiltAsync = ref.watch(bancadasFiltradasProvider(copaEquipo));
@@ -830,10 +824,6 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             pinonDientes: _pinonDientes,
             coronaMarca: _coronaMarca,
             coronaDientes: _coronaDientes,
-            pinonDientesMin: rangoDientes ? campActivo!.pinonDientesMin : null,
-            pinonDientesMax: rangoDientes ? campActivo!.pinonDientesMax : null,
-            coronaDientesMin: rangoDientes ? campActivo!.coronaDientesMin : null,
-            coronaDientesMax: rangoDientes ? campActivo!.coronaDientesMax : null,
             llantaDelMarca: _llantaDelMarca,
             llantaDelDimension: _llantaDelDim,
             llantaTraMarca: _llantaTraMarca,
@@ -1050,6 +1040,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                       titulo: 'Motor',
                       info: bloques['Motor'],
                       children: [
+                        // El campeonato puede fijar el tipo; solo en los
+                        // mixtos se elige aquí.
+                        if (campActivo?.tipoMotor == null)
                         SegmentedButton<String>(
                           segments: const [
                             ButtonSegment(
@@ -1068,7 +1061,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             _cambiar(() => _motorTipo = s.first);
                           },
                         ),
-                        const SizedBox(height: 8),
+                        if (campActivo?.tipoMotor == null)
+                          const SizedBox(height: 8),
                         if (_motorTipo == 'ORGANIZACION')
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1373,7 +1367,6 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               flex: 2,
                               child: _DientesSelector(
                                 label: 'Dientes',
-                                helper: reglaPinon,
                                 valor: _pinonDientes,
                                 opciones: uso.ordenar(
                                     'pinonDientes', _dientesDe(pinonesAsync)),
@@ -1435,7 +1428,6 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               flex: 2,
                               child: _DientesSelector(
                                 label: 'Dientes',
-                                helper: reglaCorona,
                                 valor: _coronaDientes,
                                 opciones: uso.ordenar(
                                     'coronaDientes', _dientesDe(coronasAsync)),
@@ -2117,14 +2109,12 @@ class _DientesSelector extends StatelessWidget {
     required this.valor,
     required this.opciones,
     required this.onChange,
-    this.helper,
   });
 
   final String label;
   final int? valor;
   final List<int> opciones;
   final ValueChanged<int?> onChange;
-  final String? helper;
 
   @override
   Widget build(BuildContext context) {
@@ -2136,7 +2126,7 @@ class _DientesSelector extends StatelessWidget {
     return DropdownButtonFormField<int?>(
       initialValue: valor,
       isExpanded: true,
-      decoration: InputDecoration(labelText: label, helperText: helper),
+      decoration: InputDecoration(labelText: label),
       items: [
         const DropdownMenuItem(value: null, child: Text('—')),
         if (desconocido)

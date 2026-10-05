@@ -14,6 +14,29 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.19.1] — 2026-10-05
+
+### Mejorado
+- **Nueva sesión de verificación libre, igual que un campeonato nuevo.**
+  - Empieza **en blanco**: ya no copia copas, anchuras, fabricantes ni sorteo de la sesión anterior.
+  - Nuevo apartado **Motor** con **Sorteo / Propio / Mixto**: con Sorteo o Propio, la verificación no pregunta el tipo de motor. Las sesiones que ya existían quedan como Mixto.
+  - Se quita **Transmisión**: los dientes de piñón y corona salen del catálogo de engranajes de la copa, igual que en los campeonatos. El rango de dientes deja de comprobarse también en las sesiones libres.
+
+## [1.19.0] — 2026-10-05
+
+### Añadido
+- **El tipo de motor se elige al crear el campeonato.** Nuevo apartado «Motor (verificación)» con tres opciones: **Sorteo** (motores de la organización), **Propio** (cada equipo trae el suyo) o **Mixto** (se marca en cada verificación, como hasta ahora). Con Sorteo o Propio, la verificación ya no muestra el selector «Organización / Propio»: usa directamente el del campeonato. El rango del sorteo solo aparece con Sorteo o Mixto. Los campeonatos que ya existían quedan como Mixto.
+
+## [1.18.2] — 2026-10-05
+
+### Mejorado
+- **Nuevo campeonato con las cuotas de tesorería en blanco.** Pagat, Coordinadora y Club ya no vienen rellenos con 25 / 11 / 14. Si el campeonato gestiona tesorería, el Pagat es obligatorio; Coordinadora o Club vacíos cuentan como 0 (y siguen teniendo que sumar el Pagat).
+
+## [1.18.1] — 2026-10-05
+
+### Mejorado
+- **Nuevo campeonato sin copas marcadas de serie.** Antes venían marcadas GT, GT2 y Copa Slot.it; ahora el formulario empieza sin ninguna y eliges las del campeonato (sigue haciendo falta al menos una para guardar).
+
 ## [1.18.0] — 2026-10-05
 
 ### Añadido

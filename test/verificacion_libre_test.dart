@@ -41,8 +41,7 @@ void main() {
       nombre: 'Control club',
       sede: 'El Sot',
       copas: ['GT', 'LMP'],
-      pinonDientesMin: 11,
-      pinonDientesMax: 11,
+      tipoMotor: 'ORGANIZACION',
       motorSorteoMin: 1,
       motorSorteoMax: 20,
       marcasPermitidasJson: '["SIT"]',
@@ -61,14 +60,14 @@ void main() {
     expect(s.copas, ['GT', 'LMP']);
     expect(s.reglamento.esVerificacionLibre, isTrue);
     expect(s.reglamento.usaCreditos, isFalse);
-    expect(s.reglamento.pinonDientesMin, 11);
+    expect(s.reglamento.tipoMotor, 'ORGANIZACION');
     expect(s.participantes, 0);
 
-    // La siguiente sesión parte del mismo reglamento.
+    // La siguiente sesión empieza en blanco (como un campeonato nuevo).
     final plantilla = await repo.plantillaNueva();
-    expect(plantilla.copas, ['GT', 'LMP']);
-    expect(plantilla.motorSorteoMax, 20);
-    expect(plantilla.marcasPermitidasJson, '["SIT"]');
+    expect(plantilla.copas, isEmpty);
+    expect(plantilla.tipoMotor, isNull);
+    expect(plantilla.motorSorteoMax, isNull);
   });
 
   test('participantes: reutiliza pilotos por nombre y se pueden quitar',

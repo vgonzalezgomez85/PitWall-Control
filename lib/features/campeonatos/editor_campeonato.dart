@@ -26,6 +26,7 @@ import '../../data/database/app_database.dart';
 import '../../data/database/seeds.dart';
 import '../creditos/repositorio_creditos.dart';
 import 'selector_marcas_permitidas.dart';
+import 'selector_tipo_motor.dart';
 
 /// Provider con todas las copas del catálogo global (para sugerirlas).
 final _catalogoCopasProvider = FutureProvider<List<String>>((ref) async {
@@ -60,9 +61,10 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   final _descartes = TextEditingController(text: '1');
   final _tope = TextEditingController(text: '28');
   final _nuevaCopa = TextEditingController();
-  final _cuotaPagat = TextEditingController(text: '25');
-  final _cuotaCoord = TextEditingController(text: '11');
-  final _cuotaClub = TextEditingController(text: '14');
+  // Cuotas en blanco al crear: cada campeonato pone las suyas.
+  final _cuotaPagat = TextEditingController();
+  final _cuotaCoord = TextEditingController();
+  final _cuotaClub = TextEditingController();
   final _motorMin = TextEditingController();
   final _motorMax = TextEditingController();
   /// Limitar fabricante: códigos de marca permitidos en la verificación.
@@ -79,6 +81,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   bool _finalizadoOriginal = false;
   int? _importarDesdeId;
   Set<String> _copasSel = {};
+  /// Tipo de motor: 'ORGANIZACION', 'PROPIO' o 'MIXTO' (en BD, null). Al
+  /// crear empieza sin elegir y hay que marcar uno para guardar.
+  String? _tipoMotor;
   /// Un controlador de "anchura máxima de eje (mm)" por copa y lado
   /// (delantero/trasero), creado bajo demanda (las copas son dinámicas: se
   /// pueden añadir/quitar). Clave: "copa|del" o "copa|tra".
@@ -96,7 +101,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
 
   Future<void> _cargar() async {
     if (widget.campeonatoId == null) {
-      _copasSel = {'GT', 'GT2', 'Copa Slot.it'};
+      // Sin copas marcadas: el usuario elige las suyas (guardar exige una).
       setState(() => _cargando = false);
       return;
     }
@@ -115,6 +120,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
         c.cuotaClub.toStringAsFixed(c.cuotaClub % 1 == 0 ? 0 : 2);
     _motorMin.text = c.motorSorteoMin?.toString() ?? '';
     _motorMax.text = c.motorSorteoMax?.toString() ?? '';
+    _tipoMotor = tipoMotorDeBd(c.tipoMotor);
     _marcasPermitidas = {...marcasPermitidasDe(c.marcasPermitidasJson)};
     _limitarMarcas = _marcasPermitidas.isNotEmpty;
     _marcaTitulo.text = c.marcaTitulo ?? '';
@@ -230,6 +236,10 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       _aviso('Selecciona al menos una copa / categoría.');
       return;
     }
+    if (_tipoMotor == null) {
+      _aviso('Motor: elige si es de sorteo, propio o mixto.');
+      return;
+    }
     if (_limitarMarcas && _marcasPermitidas.isEmpty) {
       _aviso('Limitar fabricante: elige al menos una marca o desactívalo.');
       return;
@@ -257,9 +267,10 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
         }
       }
       final anchuraEjeJson = json.encode(anchuraEjeMap);
-      final cuotaP = parseD(_cuotaPagat, 25);
-      final cuotaC = parseD(_cuotaCoord, 11);
-      final cuotaCl = parseD(_cuotaClub, 14);
+      // Vacío = 0 (el Pagat ya se exige en el formulario si hay tesorería).
+      final cuotaP = parseD(_cuotaPagat, 0);
+      final cuotaC = parseD(_cuotaCoord, 0);
+      final cuotaCl = parseD(_cuotaClub, 0);
       // El desglose tiene que cuadrar con la cuota, o la tesorería no suma.
       if (_usaTesoreria && (cuotaC + cuotaCl - cuotaP).abs() >= 0.01) {
         _aviso('Tesorería: Coordinadora + Club deben sumar el Pagat '
@@ -268,8 +279,11 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
         setState(() => _guardando = false);
         return;
       }
-      final motorMin = int.tryParse(_motorMin.text.trim());
-      final motorMax = int.tryParse(_motorMax.text.trim());
+      // Con motor propio no hay sorteo: el rango no aplica.
+      final sinSorteo = _tipoMotor == 'PROPIO';
+      final motorMin = sinSorteo ? null : int.tryParse(_motorMin.text.trim());
+      final motorMax = sinSorteo ? null : int.tryParse(_motorMax.text.trim());
+      final tipoMotor = tipoMotorABd(_tipoMotor);
       // Marca propia del campeonato en los PDF (vacío = valor por defecto).
       final mTitulo = _marcaTitulo.text.trim();
       final mLema = _marcaLema.text.trim();
@@ -297,6 +311,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
             cuotaClub: Value(cuotaCl),
             motorSorteoMin: Value(motorMin),
             motorSorteoMax: Value(motorMax),
+            tipoMotor: Value(tipoMotor),
             marcasPermitidasJson: Value(marcasJson),
             marcaTitulo: Value(mTitulo.isEmpty ? null : mTitulo),
             marcaLema: Value(mLema.isEmpty ? null : mLema),
@@ -334,6 +349,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
           cuotaClub: Value(cuotaCl),
           motorSorteoMin: Value(motorMin),
           motorSorteoMax: Value(motorMax),
+          tipoMotor: Value(tipoMotor),
           marcasPermitidasJson: Value(marcasJson),
           marcaTitulo: Value(mTitulo.isEmpty ? null : mTitulo),
           marcaLema: Value(mLema.isEmpty ? null : mLema),
@@ -684,6 +700,14 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                         labelText: 'Pagat (€) *',
                         prefixIcon: Icon(Icons.payments_outlined),
                       ),
+                      validator: (v) {
+                        final t = v?.trim() ?? '';
+                        if (t.isEmpty) return 'Indica la cuota';
+                        if (double.tryParse(t.replaceAll(',', '.')) == null) {
+                          return 'Número no válido';
+                        }
+                        return null;
+                      },
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                     ),
@@ -734,12 +758,18 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               },
             ),
             const SizedBox(height: 28),
-            Text('Sorteo de motores (organización)',
+            Text('Motor (verificación)',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: cs.primary,
                       fontWeight: FontWeight.w700,
                     )),
             const SizedBox(height: 4),
+            SelectorTipoMotor(
+              valor: _tipoMotor,
+              onCambio: (v) => setState(() => _tipoMotor = v),
+            ),
+            if (tipoMotorConSorteo(_tipoMotor)) ...[
+            const SizedBox(height: 16),
             Text(
               'Rango de números de motor que la organización sortea entre los '
               'equipos en cada prueba. Déjalo vacío si no usáis sorteo.',
@@ -780,6 +810,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 ),
               ],
             ),
+            ],
             const SizedBox(height: 28),
             Text('Fabricante (verificación)',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -860,72 +891,3 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   }
 }
 
-/// Configurador del rango de dientes (piñón o corona): interruptor "Tamaño
-/// fijo" (un campo) o rango mín-máx (dos campos).
-class RangoDientes extends StatelessWidget {
-  const RangoDientes({
-    super.key,
-    required this.etiqueta,
-    required this.fijo,
-    required this.min,
-    required this.max,
-    required this.onFijo,
-  });
-
-  final String etiqueta;
-  final bool fijo;
-  final TextEditingController min;
-  final TextEditingController max;
-  final ValueChanged<bool> onFijo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: TextFormField(
-            controller: min,
-            decoration: InputDecoration(
-              labelText: fijo ? '$etiqueta · dientes' : '$etiqueta · mín',
-              prefixIcon: const Icon(Icons.settings_outlined),
-            ),
-            keyboardType: TextInputType.number,
-            validator: (v) {
-              final n = int.tryParse(v?.trim() ?? '');
-              if (n == null || n < 1) return 'Nº positivo';
-              if (!fijo) {
-                final mx = int.tryParse(max.text.trim());
-                if (mx != null && mx < n) return 'máx ≥ mín';
-              }
-              return null;
-            },
-          ),
-        ),
-        if (!fijo) ...[
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextFormField(
-              controller: max,
-              decoration: InputDecoration(labelText: '$etiqueta · máx'),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                final n = int.tryParse(v?.trim() ?? '');
-                if (n == null || n < 1) return 'Nº positivo';
-                return null;
-              },
-            ),
-          ),
-        ],
-        const SizedBox(width: 8),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Fijo', style: TextStyle(fontSize: 11)),
-            Switch(value: fijo, onChanged: onFijo),
-          ],
-        ),
-      ],
-    );
-  }
-}

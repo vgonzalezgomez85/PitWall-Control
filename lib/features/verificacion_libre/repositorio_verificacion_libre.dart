@@ -51,10 +51,7 @@ class DatosSesionLibre {
     this.fecha,
     required this.copas,
     this.anchuraEjeJson = '{}',
-    this.pinonDientesMin = 12,
-    this.pinonDientesMax = 12,
-    this.coronaDientesMin = 24,
-    this.coronaDientesMax = 30,
+    this.tipoMotor,
     this.motorSorteoMin,
     this.motorSorteoMax,
     this.marcasPermitidasJson = '[]',
@@ -65,10 +62,10 @@ class DatosSesionLibre {
   final DateTime? fecha;
   final List<String> copas;
   final String anchuraEjeJson;
-  final int pinonDientesMin;
-  final int pinonDientesMax;
-  final int coronaDientesMin;
-  final int coronaDientesMax;
+
+  /// 'ORGANIZACION' (sorteo), 'PROPIO' o null (mixto: se elige en cada
+  /// verificación).
+  final String? tipoMotor;
   final int? motorSorteoMin;
   final int? motorSorteoMax;
 
@@ -78,10 +75,7 @@ class DatosSesionLibre {
   CampeonatosCompanion _reglamento() => CampeonatosCompanion(
         copasJson: Value(json.encode(copas)),
         anchuraEjeJson: Value(anchuraEjeJson),
-        pinonDientesMin: Value(pinonDientesMin),
-        pinonDientesMax: Value(pinonDientesMax),
-        coronaDientesMin: Value(coronaDientesMin),
-        coronaDientesMax: Value(coronaDientesMax),
+        tipoMotor: Value(tipoMotor),
         motorSorteoMin: Value(motorSorteoMin),
         motorSorteoMax: Value(motorSorteoMax),
         marcasPermitidasJson: Value(marcasPermitidasJson),
@@ -212,33 +206,12 @@ class RepositorioVerificacionLibre {
     );
   }
 
-  /// Valores de partida para una sesión nueva: copia el reglamento de la
-  /// última sesión creada (lo habitual es verificar siempre igual); si no
-  /// hay ninguna, los valores por defecto de un campeonato.
+  /// Valores de partida para una sesión nueva: en blanco (como al crear un
+  /// campeonato), solo con la fecha de hoy.
   Future<DatosSesionLibre> plantillaNueva() async {
-    final ultima = await (db.select(db.campeonatos)
-          ..where((t) => t.esVerificacionLibre.equals(true))
-          ..orderBy([(t) => OrderingTerm.desc(t.id)])
-          ..limit(1))
-        .getSingleOrNull();
     final hoy = DateTime.now();
-    final fecha = DateTime(hoy.year, hoy.month, hoy.day);
-    if (ultima == null) {
-      return DatosSesionLibre(nombre: '', fecha: fecha, copas: const []);
-    }
     return DatosSesionLibre(
-      nombre: '',
-      fecha: fecha,
-      copas: copasDeJson(ultima.copasJson),
-      anchuraEjeJson: ultima.anchuraEjeJson,
-      pinonDientesMin: ultima.pinonDientesMin,
-      pinonDientesMax: ultima.pinonDientesMax,
-      coronaDientesMin: ultima.coronaDientesMin,
-      coronaDientesMax: ultima.coronaDientesMax,
-      motorSorteoMin: ultima.motorSorteoMin,
-      motorSorteoMax: ultima.motorSorteoMax,
-      marcasPermitidasJson: ultima.marcasPermitidasJson,
-    );
+        nombre: '', fecha: DateTime(hoy.year, hoy.month, hoy.day), copas: const []);
   }
 
   /// Crea la sesión (contenedor + prueba + manga). Devuelve el id de la prueba.

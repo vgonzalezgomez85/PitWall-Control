@@ -50,8 +50,12 @@ class Campeonatos extends Table {
   /// Si están a null, el sorteo de motores no está configurado.
   IntColumn get motorSorteoMin => integer().nullable()();
   IntColumn get motorSorteoMax => integer().nullable()();
-  /// Rango de dientes permitido en la verificación (inclusive). Por defecto,
-  /// valores habituales: piñón 12 fijo, corona 24-30.
+  /// Tipo de motor del campeonato: 'ORGANIZACION' (sorteo) o 'PROPIO'. Null =
+  /// mixto: se elige en cada verificación.
+  TextColumn get tipoMotor => text().nullable()();
+  /// Rango de dientes de piñón/corona. YA NO SE USA (desde 1.19.1 los dientes
+  /// los limita el catálogo de engranajes de la copa); se conserva la columna
+  /// para no hacer una migración destructiva.
   IntColumn get pinonDientesMin => integer().withDefault(const Constant(12))();
   IntColumn get pinonDientesMax => integer().withDefault(const Constant(12))();
   IntColumn get coronaDientesMin => integer().withDefault(const Constant(24))();
