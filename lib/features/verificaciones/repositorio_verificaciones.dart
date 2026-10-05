@@ -23,6 +23,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../sincronizacion/dispositivo_sync.dart';
 
 /// Verificación enriquecida (con datos del equipo y coche).
 class VerificacionConEquipo {
@@ -530,6 +531,21 @@ class RepositorioVerificaciones {
     return (p1: aplicarP1, p2: aplicarP2, insuficiente: insuf);
   }
 
+  /// Revierte y vuelve a aplicar los créditos de la verificación según su
+  /// estado actual. Lo usa la sincronización al recibir cambios de otro
+  /// Control: cada dispositivo calcula sus propios movimientos.
+  Future<void> recalcularCreditos(int verificacionId) =>
+      _reaplicarCreditos(verificacionId);
+
+  /// Quita la marca de "borrada" de (manga, equipo): la verificación vuelve
+  /// a existir y no hay que propagar el borrado.
+  Future<void> _olvidarBorrado(int mangaId, int equipoId) async {
+    await (db.delete(db.borradosSync)
+          ..where((t) =>
+              t.mangaId.equals(mangaId) & t.equipoId.equals(equipoId)))
+        .go();
+  }
+
   Future<int> guardar({
     int? id,
     required int mangaId,
@@ -624,8 +640,11 @@ class RepositorioVerificaciones {
               validado: Value(validado),
               fotosJson:
                   fotosJson == null ? const Value.absent() : Value(fotosJson),
+              modificadoMs: Value(ahoraMsSync()),
+              modificadoPor: Value(DispositivoSync.nombre),
             ),
           );
+      await _olvidarBorrado(mangaId, equipoId);
       if (recalcularCreditos) await _reaplicarCreditos(nuevoId);
       return nuevoId;
     }
@@ -669,6 +688,8 @@ class RepositorioVerificaciones {
         validado: Value(validado),
         fotosJson:
             fotosJson == null ? const Value.absent() : Value(fotosJson),
+        modificadoMs: Value(ahoraMsSync()),
+        modificadoPor: Value(DispositivoSync.nombre),
       ),
     );
     if (recalcularCreditos) await _reaplicarCreditos(idActual);
@@ -692,7 +713,9 @@ class RepositorioVerificaciones {
         return a.id.compareTo(b.id);
       });
       for (final v in grupo.skip(1)) {
-        await borrar(v.id); // borrar() revierte créditos si los tuviera
+        // borrar() revierte créditos si los tuviera. No se propaga: la
+        // verificación de (manga, equipo) que queda sigue existiendo.
+        await borrar(v.id, registrarBorrado: false);
         eliminadas++;
       }
     }
@@ -718,14 +741,19 @@ class RepositorioVerificaciones {
               equipoId: equipoId,
               motor: Value(motor),
               motorTipo: const Value('ORGANIZACION'),
+              modificadoMs: Value(ahoraMsSync()),
+              modificadoPor: Value(DispositivoSync.nombre),
             ),
           );
+      await _olvidarBorrado(mangaId, equipoId);
     } else {
       await (db.update(db.verificaciones)
             ..where((t) => t.id.equals(existente.id)))
           .write(VerificacionesCompanion(
         motor: Value(motor),
         motorTipo: const Value('ORGANIZACION'),
+        modificadoMs: Value(ahoraMsSync()),
+        modificadoPor: Value(DispositivoSync.nombre),
       ));
     }
   }
@@ -742,10 +770,23 @@ class RepositorioVerificaciones {
         .getSingleOrNull();
     if (existente == null) return;
     await (db.update(db.verificaciones)..where((t) => t.id.equals(existente.id)))
-        .write(const VerificacionesCompanion(motor: Value(null)));
+        .write(VerificacionesCompanion(
+          motor: const Value(null),
+          modificadoMs: Value(ahoraMsSync()),
+          modificadoPor: Value(DispositivoSync.nombre),
+        ));
   }
 
-  Future<void> borrar(int id) async {
+  /// Borra la verificación devolviendo sus créditos. Con [registrarBorrado]
+  /// queda apuntado para que el borrado llegue a los demás Controls al
+  /// sincronizar (o, con [borradoMs]/[borradoPor], se copia el borrado que
+  /// llegó de otro Control).
+  Future<void> borrar(
+    int id, {
+    bool registrarBorrado = true,
+    int? borradoMs,
+    String? borradoPor,
+  }) async {
     // Devolver créditos aplicados antes de borrar.
     final ver = await (db.select(db.verificaciones)
           ..where((t) => t.id.equals(id)))
@@ -773,6 +814,15 @@ class RepositorioVerificaciones {
               motivo: 'Reversión (verificación eliminada)');
         }
       }
+    }
+    if (ver != null && registrarBorrado) {
+      await _olvidarBorrado(ver.mangaId, ver.equipoId);
+      await db.into(db.borradosSync).insert(BorradosSyncCompanion.insert(
+            mangaId: ver.mangaId,
+            equipoId: ver.equipoId,
+            borradoMs: borradoMs ?? ahoraMsSync(),
+            borradoPor: Value(borradoPor ?? DispositivoSync.nombre),
+          ));
     }
     await (db.delete(db.verificaciones)..where((t) => t.id.equals(id))).go();
   }

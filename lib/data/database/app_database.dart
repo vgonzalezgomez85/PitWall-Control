@@ -55,6 +55,7 @@ part 'app_database.g.dart';
     CatalogoClubs,
     HojasVinculadas,
     SyncCola,
+    BorradosSync,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -64,7 +65,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 46;
+  int get schemaVersion => 47;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -472,6 +473,18 @@ class AppDatabase extends _$AppDatabase {
             // Tipo de motor fijado en el campeonato (null = mixto).
             await _aplicar(() => customStatement(
                 'ALTER TABLE campeonatos ADD COLUMN tipo_motor TEXT'));
+          }
+          if (from < 47) {
+            // Sincronización por wifi entre Controls (verificaciones).
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN modificado_ms INTEGER'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN modificado_por TEXT'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE inscripciones_prueba ADD COLUMN copa_modificada_ms INTEGER'));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE inscripciones_prueba ADD COLUMN tesoreria_modificada_ms INTEGER'));
+            await _aplicar(() => m.createTable(borradosSync));
           }
         },
       );

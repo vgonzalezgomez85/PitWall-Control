@@ -5545,6 +5545,27 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _copaModificadaMsMeta = const VerificationMeta(
+    'copaModificadaMs',
+  );
+  @override
+  late final GeneratedColumn<int> copaModificadaMs = GeneratedColumn<int>(
+    'copa_modificada_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tesoreriaModificadaMsMeta =
+      const VerificationMeta('tesoreriaModificadaMs');
+  @override
+  late final GeneratedColumn<int> tesoreriaModificadaMs = GeneratedColumn<int>(
+    'tesoreria_modificada_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -5557,6 +5578,8 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
     wildcard,
     exentoCoordinadora,
     copa,
+    copaModificadaMs,
+    tesoreriaModificadaMs,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5640,6 +5663,24 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
         copa.isAcceptableOrUnknown(data['copa']!, _copaMeta),
       );
     }
+    if (data.containsKey('copa_modificada_ms')) {
+      context.handle(
+        _copaModificadaMsMeta,
+        copaModificadaMs.isAcceptableOrUnknown(
+          data['copa_modificada_ms']!,
+          _copaModificadaMsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tesoreria_modificada_ms')) {
+      context.handle(
+        _tesoreriaModificadaMsMeta,
+        tesoreriaModificadaMs.isAcceptableOrUnknown(
+          data['tesoreria_modificada_ms']!,
+          _tesoreriaModificadaMsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -5692,6 +5733,14 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
         DriftSqlType.string,
         data['${effectivePrefix}copa'],
       ),
+      copaModificadaMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}copa_modificada_ms'],
+      ),
+      tesoreriaModificadaMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tesoreria_modificada_ms'],
+      ),
     );
   }
 
@@ -5722,6 +5771,12 @@ class InscripcionesPruebaData extends DataClass
   /// a mitad de campeonato sin perder los puntos de las pruebas anteriores.
   /// Si es null, se usa la copa actual del equipo.
   final String? copa;
+
+  /// Sincronización por wifi entre Controls: cuándo (ms desde epoch) se
+  /// cambió por última vez la copa de esta prueba y la tesorería del equipo
+  /// (pago, wildcard, "Coord. total"). null = nunca desde que existe la sync.
+  final int? copaModificadaMs;
+  final int? tesoreriaModificadaMs;
   const InscripcionesPruebaData({
     required this.id,
     required this.pruebaId,
@@ -5733,6 +5788,8 @@ class InscripcionesPruebaData extends DataClass
     required this.wildcard,
     required this.exentoCoordinadora,
     this.copa,
+    this.copaModificadaMs,
+    this.tesoreriaModificadaMs,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5753,6 +5810,12 @@ class InscripcionesPruebaData extends DataClass
     if (!nullToAbsent || copa != null) {
       map['copa'] = Variable<String>(copa);
     }
+    if (!nullToAbsent || copaModificadaMs != null) {
+      map['copa_modificada_ms'] = Variable<int>(copaModificadaMs);
+    }
+    if (!nullToAbsent || tesoreriaModificadaMs != null) {
+      map['tesoreria_modificada_ms'] = Variable<int>(tesoreriaModificadaMs);
+    }
     return map;
   }
 
@@ -5772,6 +5835,12 @@ class InscripcionesPruebaData extends DataClass
       wildcard: Value(wildcard),
       exentoCoordinadora: Value(exentoCoordinadora),
       copa: copa == null && nullToAbsent ? const Value.absent() : Value(copa),
+      copaModificadaMs: copaModificadaMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(copaModificadaMs),
+      tesoreriaModificadaMs: tesoreriaModificadaMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tesoreriaModificadaMs),
     );
   }
 
@@ -5791,6 +5860,10 @@ class InscripcionesPruebaData extends DataClass
       wildcard: serializer.fromJson<bool>(json['wildcard']),
       exentoCoordinadora: serializer.fromJson<bool>(json['exentoCoordinadora']),
       copa: serializer.fromJson<String?>(json['copa']),
+      copaModificadaMs: serializer.fromJson<int?>(json['copaModificadaMs']),
+      tesoreriaModificadaMs: serializer.fromJson<int?>(
+        json['tesoreriaModificadaMs'],
+      ),
     );
   }
   @override
@@ -5807,6 +5880,8 @@ class InscripcionesPruebaData extends DataClass
       'wildcard': serializer.toJson<bool>(wildcard),
       'exentoCoordinadora': serializer.toJson<bool>(exentoCoordinadora),
       'copa': serializer.toJson<String?>(copa),
+      'copaModificadaMs': serializer.toJson<int?>(copaModificadaMs),
+      'tesoreriaModificadaMs': serializer.toJson<int?>(tesoreriaModificadaMs),
     };
   }
 
@@ -5821,6 +5896,8 @@ class InscripcionesPruebaData extends DataClass
     bool? wildcard,
     bool? exentoCoordinadora,
     Value<String?> copa = const Value.absent(),
+    Value<int?> copaModificadaMs = const Value.absent(),
+    Value<int?> tesoreriaModificadaMs = const Value.absent(),
   }) => InscripcionesPruebaData(
     id: id ?? this.id,
     pruebaId: pruebaId ?? this.pruebaId,
@@ -5834,6 +5911,12 @@ class InscripcionesPruebaData extends DataClass
     wildcard: wildcard ?? this.wildcard,
     exentoCoordinadora: exentoCoordinadora ?? this.exentoCoordinadora,
     copa: copa.present ? copa.value : this.copa,
+    copaModificadaMs: copaModificadaMs.present
+        ? copaModificadaMs.value
+        : this.copaModificadaMs,
+    tesoreriaModificadaMs: tesoreriaModificadaMs.present
+        ? tesoreriaModificadaMs.value
+        : this.tesoreriaModificadaMs,
   );
   InscripcionesPruebaData copyWithCompanion(InscripcionesPruebaCompanion data) {
     return InscripcionesPruebaData(
@@ -5853,6 +5936,12 @@ class InscripcionesPruebaData extends DataClass
           ? data.exentoCoordinadora.value
           : this.exentoCoordinadora,
       copa: data.copa.present ? data.copa.value : this.copa,
+      copaModificadaMs: data.copaModificadaMs.present
+          ? data.copaModificadaMs.value
+          : this.copaModificadaMs,
+      tesoreriaModificadaMs: data.tesoreriaModificadaMs.present
+          ? data.tesoreriaModificadaMs.value
+          : this.tesoreriaModificadaMs,
     );
   }
 
@@ -5868,7 +5957,9 @@ class InscripcionesPruebaData extends DataClass
           ..write('asignada: $asignada, ')
           ..write('wildcard: $wildcard, ')
           ..write('exentoCoordinadora: $exentoCoordinadora, ')
-          ..write('copa: $copa')
+          ..write('copa: $copa, ')
+          ..write('copaModificadaMs: $copaModificadaMs, ')
+          ..write('tesoreriaModificadaMs: $tesoreriaModificadaMs')
           ..write(')'))
         .toString();
   }
@@ -5885,6 +5976,8 @@ class InscripcionesPruebaData extends DataClass
     wildcard,
     exentoCoordinadora,
     copa,
+    copaModificadaMs,
+    tesoreriaModificadaMs,
   );
   @override
   bool operator ==(Object other) =>
@@ -5899,7 +5992,9 @@ class InscripcionesPruebaData extends DataClass
           other.asignada == this.asignada &&
           other.wildcard == this.wildcard &&
           other.exentoCoordinadora == this.exentoCoordinadora &&
-          other.copa == this.copa);
+          other.copa == this.copa &&
+          other.copaModificadaMs == this.copaModificadaMs &&
+          other.tesoreriaModificadaMs == this.tesoreriaModificadaMs);
 }
 
 class InscripcionesPruebaCompanion
@@ -5914,6 +6009,8 @@ class InscripcionesPruebaCompanion
   final Value<bool> wildcard;
   final Value<bool> exentoCoordinadora;
   final Value<String?> copa;
+  final Value<int?> copaModificadaMs;
+  final Value<int?> tesoreriaModificadaMs;
   const InscripcionesPruebaCompanion({
     this.id = const Value.absent(),
     this.pruebaId = const Value.absent(),
@@ -5925,6 +6022,8 @@ class InscripcionesPruebaCompanion
     this.wildcard = const Value.absent(),
     this.exentoCoordinadora = const Value.absent(),
     this.copa = const Value.absent(),
+    this.copaModificadaMs = const Value.absent(),
+    this.tesoreriaModificadaMs = const Value.absent(),
   });
   InscripcionesPruebaCompanion.insert({
     this.id = const Value.absent(),
@@ -5937,6 +6036,8 @@ class InscripcionesPruebaCompanion
     this.wildcard = const Value.absent(),
     this.exentoCoordinadora = const Value.absent(),
     this.copa = const Value.absent(),
+    this.copaModificadaMs = const Value.absent(),
+    this.tesoreriaModificadaMs = const Value.absent(),
   }) : pruebaId = Value(pruebaId),
        equipoId = Value(equipoId);
   static Insertable<InscripcionesPruebaData> custom({
@@ -5950,6 +6051,8 @@ class InscripcionesPruebaCompanion
     Expression<bool>? wildcard,
     Expression<bool>? exentoCoordinadora,
     Expression<String>? copa,
+    Expression<int>? copaModificadaMs,
+    Expression<int>? tesoreriaModificadaMs,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -5962,6 +6065,9 @@ class InscripcionesPruebaCompanion
       if (wildcard != null) 'wildcard': wildcard,
       if (exentoCoordinadora != null) 'exento_coordinadora': exentoCoordinadora,
       if (copa != null) 'copa': copa,
+      if (copaModificadaMs != null) 'copa_modificada_ms': copaModificadaMs,
+      if (tesoreriaModificadaMs != null)
+        'tesoreria_modificada_ms': tesoreriaModificadaMs,
     });
   }
 
@@ -5976,6 +6082,8 @@ class InscripcionesPruebaCompanion
     Value<bool>? wildcard,
     Value<bool>? exentoCoordinadora,
     Value<String?>? copa,
+    Value<int?>? copaModificadaMs,
+    Value<int?>? tesoreriaModificadaMs,
   }) {
     return InscripcionesPruebaCompanion(
       id: id ?? this.id,
@@ -5988,6 +6096,9 @@ class InscripcionesPruebaCompanion
       wildcard: wildcard ?? this.wildcard,
       exentoCoordinadora: exentoCoordinadora ?? this.exentoCoordinadora,
       copa: copa ?? this.copa,
+      copaModificadaMs: copaModificadaMs ?? this.copaModificadaMs,
+      tesoreriaModificadaMs:
+          tesoreriaModificadaMs ?? this.tesoreriaModificadaMs,
     );
   }
 
@@ -6024,6 +6135,14 @@ class InscripcionesPruebaCompanion
     if (copa.present) {
       map['copa'] = Variable<String>(copa.value);
     }
+    if (copaModificadaMs.present) {
+      map['copa_modificada_ms'] = Variable<int>(copaModificadaMs.value);
+    }
+    if (tesoreriaModificadaMs.present) {
+      map['tesoreria_modificada_ms'] = Variable<int>(
+        tesoreriaModificadaMs.value,
+      );
+    }
     return map;
   }
 
@@ -6039,7 +6158,9 @@ class InscripcionesPruebaCompanion
           ..write('asignada: $asignada, ')
           ..write('wildcard: $wildcard, ')
           ..write('exentoCoordinadora: $exentoCoordinadora, ')
-          ..write('copa: $copa')
+          ..write('copa: $copa, ')
+          ..write('copaModificadaMs: $copaModificadaMs, ')
+          ..write('tesoreriaModificadaMs: $tesoreriaModificadaMs')
           ..write(')'))
         .toString();
   }
@@ -8182,6 +8303,28 @@ class $VerificacionesTable extends Verificaciones
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _modificadoMsMeta = const VerificationMeta(
+    'modificadoMs',
+  );
+  @override
+  late final GeneratedColumn<int> modificadoMs = GeneratedColumn<int>(
+    'modificado_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modificadoPorMeta = const VerificationMeta(
+    'modificadoPor',
+  );
+  @override
+  late final GeneratedColumn<String> modificadoPor = GeneratedColumn<String>(
+    'modificado_por',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -8225,6 +8368,8 @@ class $VerificacionesTable extends Verificaciones
     fecha,
     credAplicadoP1,
     credAplicadoP2,
+    modificadoMs,
+    modificadoPor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -8554,6 +8699,24 @@ class $VerificacionesTable extends Verificaciones
         ),
       );
     }
+    if (data.containsKey('modificado_ms')) {
+      context.handle(
+        _modificadoMsMeta,
+        modificadoMs.isAcceptableOrUnknown(
+          data['modificado_ms']!,
+          _modificadoMsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('modificado_por')) {
+      context.handle(
+        _modificadoPorMeta,
+        modificadoPor.isAcceptableOrUnknown(
+          data['modificado_por']!,
+          _modificadoPorMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -8727,6 +8890,14 @@ class $VerificacionesTable extends Verificaciones
         DriftSqlType.int,
         data['${effectivePrefix}cred_aplicado_p2'],
       )!,
+      modificadoMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}modificado_ms'],
+      ),
+      modificadoPor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}modificado_por'],
+      ),
     );
   }
 
@@ -8817,6 +8988,11 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
   /// si la verificación se desvalida, se cambia de coche o se borra.
   final int credAplicadoP1;
   final int credAplicadoP2;
+
+  /// Sincronización por wifi entre Controls: última modificación (ms desde
+  /// epoch) y nombre del dispositivo que la hizo. Gana la más reciente.
+  final int? modificadoMs;
+  final String? modificadoPor;
   const Verificacione({
     required this.id,
     required this.mangaId,
@@ -8859,6 +9035,8 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     required this.fecha,
     required this.credAplicadoP1,
     required this.credAplicadoP2,
+    this.modificadoMs,
+    this.modificadoPor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -8970,6 +9148,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     map['fecha'] = Variable<DateTime>(fecha);
     map['cred_aplicado_p1'] = Variable<int>(credAplicadoP1);
     map['cred_aplicado_p2'] = Variable<int>(credAplicadoP2);
+    if (!nullToAbsent || modificadoMs != null) {
+      map['modificado_ms'] = Variable<int>(modificadoMs);
+    }
+    if (!nullToAbsent || modificadoPor != null) {
+      map['modificado_por'] = Variable<String>(modificadoPor);
+    }
     return map;
   }
 
@@ -9081,6 +9265,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       fecha: Value(fecha),
       credAplicadoP1: Value(credAplicadoP1),
       credAplicadoP2: Value(credAplicadoP2),
+      modificadoMs: modificadoMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modificadoMs),
+      modificadoPor: modificadoPor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modificadoPor),
     );
   }
 
@@ -9141,6 +9331,8 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       fecha: serializer.fromJson<DateTime>(json['fecha']),
       credAplicadoP1: serializer.fromJson<int>(json['credAplicadoP1']),
       credAplicadoP2: serializer.fromJson<int>(json['credAplicadoP2']),
+      modificadoMs: serializer.fromJson<int?>(json['modificadoMs']),
+      modificadoPor: serializer.fromJson<String?>(json['modificadoPor']),
     );
   }
   @override
@@ -9190,6 +9382,8 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       'fecha': serializer.toJson<DateTime>(fecha),
       'credAplicadoP1': serializer.toJson<int>(credAplicadoP1),
       'credAplicadoP2': serializer.toJson<int>(credAplicadoP2),
+      'modificadoMs': serializer.toJson<int?>(modificadoMs),
+      'modificadoPor': serializer.toJson<String?>(modificadoPor),
     };
   }
 
@@ -9235,6 +9429,8 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     DateTime? fecha,
     int? credAplicadoP1,
     int? credAplicadoP2,
+    Value<int?> modificadoMs = const Value.absent(),
+    Value<String?> modificadoPor = const Value.absent(),
   }) => Verificacione(
     id: id ?? this.id,
     mangaId: mangaId ?? this.mangaId,
@@ -9313,6 +9509,10 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     fecha: fecha ?? this.fecha,
     credAplicadoP1: credAplicadoP1 ?? this.credAplicadoP1,
     credAplicadoP2: credAplicadoP2 ?? this.credAplicadoP2,
+    modificadoMs: modificadoMs.present ? modificadoMs.value : this.modificadoMs,
+    modificadoPor: modificadoPor.present
+        ? modificadoPor.value
+        : this.modificadoPor,
   );
   Verificacione copyWithCompanion(VerificacionesCompanion data) {
     return Verificacione(
@@ -9407,6 +9607,12 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
       credAplicadoP2: data.credAplicadoP2.present
           ? data.credAplicadoP2.value
           : this.credAplicadoP2,
+      modificadoMs: data.modificadoMs.present
+          ? data.modificadoMs.value
+          : this.modificadoMs,
+      modificadoPor: data.modificadoPor.present
+          ? data.modificadoPor.value
+          : this.modificadoPor,
     );
   }
 
@@ -9453,7 +9659,9 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
           ..write('fotosJson: $fotosJson, ')
           ..write('fecha: $fecha, ')
           ..write('credAplicadoP1: $credAplicadoP1, ')
-          ..write('credAplicadoP2: $credAplicadoP2')
+          ..write('credAplicadoP2: $credAplicadoP2, ')
+          ..write('modificadoMs: $modificadoMs, ')
+          ..write('modificadoPor: $modificadoPor')
           ..write(')'))
         .toString();
   }
@@ -9501,6 +9709,8 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
     fecha,
     credAplicadoP1,
     credAplicadoP2,
+    modificadoMs,
+    modificadoPor,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -9546,7 +9756,9 @@ class Verificacione extends DataClass implements Insertable<Verificacione> {
           other.fotosJson == this.fotosJson &&
           other.fecha == this.fecha &&
           other.credAplicadoP1 == this.credAplicadoP1 &&
-          other.credAplicadoP2 == this.credAplicadoP2);
+          other.credAplicadoP2 == this.credAplicadoP2 &&
+          other.modificadoMs == this.modificadoMs &&
+          other.modificadoPor == this.modificadoPor);
 }
 
 class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
@@ -9591,6 +9803,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
   final Value<DateTime> fecha;
   final Value<int> credAplicadoP1;
   final Value<int> credAplicadoP2;
+  final Value<int?> modificadoMs;
+  final Value<String?> modificadoPor;
   const VerificacionesCompanion({
     this.id = const Value.absent(),
     this.mangaId = const Value.absent(),
@@ -9633,6 +9847,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     this.fecha = const Value.absent(),
     this.credAplicadoP1 = const Value.absent(),
     this.credAplicadoP2 = const Value.absent(),
+    this.modificadoMs = const Value.absent(),
+    this.modificadoPor = const Value.absent(),
   });
   VerificacionesCompanion.insert({
     this.id = const Value.absent(),
@@ -9676,6 +9892,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     this.fecha = const Value.absent(),
     this.credAplicadoP1 = const Value.absent(),
     this.credAplicadoP2 = const Value.absent(),
+    this.modificadoMs = const Value.absent(),
+    this.modificadoPor = const Value.absent(),
   }) : mangaId = Value(mangaId),
        equipoId = Value(equipoId);
   static Insertable<Verificacione> custom({
@@ -9720,6 +9938,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     Expression<DateTime>? fecha,
     Expression<int>? credAplicadoP1,
     Expression<int>? credAplicadoP2,
+    Expression<int>? modificadoMs,
+    Expression<String>? modificadoPor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -9767,6 +9987,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
       if (fecha != null) 'fecha': fecha,
       if (credAplicadoP1 != null) 'cred_aplicado_p1': credAplicadoP1,
       if (credAplicadoP2 != null) 'cred_aplicado_p2': credAplicadoP2,
+      if (modificadoMs != null) 'modificado_ms': modificadoMs,
+      if (modificadoPor != null) 'modificado_por': modificadoPor,
     });
   }
 
@@ -9812,6 +10034,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     Value<DateTime>? fecha,
     Value<int>? credAplicadoP1,
     Value<int>? credAplicadoP2,
+    Value<int?>? modificadoMs,
+    Value<String?>? modificadoPor,
   }) {
     return VerificacionesCompanion(
       id: id ?? this.id,
@@ -9856,6 +10080,8 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
       fecha: fecha ?? this.fecha,
       credAplicadoP1: credAplicadoP1 ?? this.credAplicadoP1,
       credAplicadoP2: credAplicadoP2 ?? this.credAplicadoP2,
+      modificadoMs: modificadoMs ?? this.modificadoMs,
+      modificadoPor: modificadoPor ?? this.modificadoPor,
     );
   }
 
@@ -9987,6 +10213,12 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
     if (credAplicadoP2.present) {
       map['cred_aplicado_p2'] = Variable<int>(credAplicadoP2.value);
     }
+    if (modificadoMs.present) {
+      map['modificado_ms'] = Variable<int>(modificadoMs.value);
+    }
+    if (modificadoPor.present) {
+      map['modificado_por'] = Variable<String>(modificadoPor.value);
+    }
     return map;
   }
 
@@ -10033,7 +10265,9 @@ class VerificacionesCompanion extends UpdateCompanion<Verificacione> {
           ..write('fotosJson: $fotosJson, ')
           ..write('fecha: $fecha, ')
           ..write('credAplicadoP1: $credAplicadoP1, ')
-          ..write('credAplicadoP2: $credAplicadoP2')
+          ..write('credAplicadoP2: $credAplicadoP2, ')
+          ..write('modificadoMs: $modificadoMs, ')
+          ..write('modificadoPor: $modificadoPor')
           ..write(')'))
         .toString();
   }
@@ -15914,6 +16148,368 @@ class SyncColaCompanion extends UpdateCompanion<SyncColaData> {
   }
 }
 
+class $BorradosSyncTable extends BorradosSync
+    with TableInfo<$BorradosSyncTable, BorradosSyncData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BorradosSyncTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _mangaIdMeta = const VerificationMeta(
+    'mangaId',
+  );
+  @override
+  late final GeneratedColumn<int> mangaId = GeneratedColumn<int>(
+    'manga_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES mangas (id)',
+    ),
+  );
+  static const VerificationMeta _equipoIdMeta = const VerificationMeta(
+    'equipoId',
+  );
+  @override
+  late final GeneratedColumn<int> equipoId = GeneratedColumn<int>(
+    'equipo_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES equipos (id)',
+    ),
+  );
+  static const VerificationMeta _borradoMsMeta = const VerificationMeta(
+    'borradoMs',
+  );
+  @override
+  late final GeneratedColumn<int> borradoMs = GeneratedColumn<int>(
+    'borrado_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _borradoPorMeta = const VerificationMeta(
+    'borradoPor',
+  );
+  @override
+  late final GeneratedColumn<String> borradoPor = GeneratedColumn<String>(
+    'borrado_por',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    mangaId,
+    equipoId,
+    borradoMs,
+    borradoPor,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'borrados_sync';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BorradosSyncData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('manga_id')) {
+      context.handle(
+        _mangaIdMeta,
+        mangaId.isAcceptableOrUnknown(data['manga_id']!, _mangaIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mangaIdMeta);
+    }
+    if (data.containsKey('equipo_id')) {
+      context.handle(
+        _equipoIdMeta,
+        equipoId.isAcceptableOrUnknown(data['equipo_id']!, _equipoIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_equipoIdMeta);
+    }
+    if (data.containsKey('borrado_ms')) {
+      context.handle(
+        _borradoMsMeta,
+        borradoMs.isAcceptableOrUnknown(data['borrado_ms']!, _borradoMsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_borradoMsMeta);
+    }
+    if (data.containsKey('borrado_por')) {
+      context.handle(
+        _borradoPorMeta,
+        borradoPor.isAcceptableOrUnknown(data['borrado_por']!, _borradoPorMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BorradosSyncData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BorradosSyncData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      mangaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}manga_id'],
+      )!,
+      equipoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}equipo_id'],
+      )!,
+      borradoMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}borrado_ms'],
+      )!,
+      borradoPor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}borrado_por'],
+      ),
+    );
+  }
+
+  @override
+  $BorradosSyncTable createAlias(String alias) {
+    return $BorradosSyncTable(attachedDatabase, alias);
+  }
+}
+
+class BorradosSyncData extends DataClass
+    implements Insertable<BorradosSyncData> {
+  final int id;
+  final int mangaId;
+  final int equipoId;
+  final int borradoMs;
+  final String? borradoPor;
+  const BorradosSyncData({
+    required this.id,
+    required this.mangaId,
+    required this.equipoId,
+    required this.borradoMs,
+    this.borradoPor,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['manga_id'] = Variable<int>(mangaId);
+    map['equipo_id'] = Variable<int>(equipoId);
+    map['borrado_ms'] = Variable<int>(borradoMs);
+    if (!nullToAbsent || borradoPor != null) {
+      map['borrado_por'] = Variable<String>(borradoPor);
+    }
+    return map;
+  }
+
+  BorradosSyncCompanion toCompanion(bool nullToAbsent) {
+    return BorradosSyncCompanion(
+      id: Value(id),
+      mangaId: Value(mangaId),
+      equipoId: Value(equipoId),
+      borradoMs: Value(borradoMs),
+      borradoPor: borradoPor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(borradoPor),
+    );
+  }
+
+  factory BorradosSyncData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BorradosSyncData(
+      id: serializer.fromJson<int>(json['id']),
+      mangaId: serializer.fromJson<int>(json['mangaId']),
+      equipoId: serializer.fromJson<int>(json['equipoId']),
+      borradoMs: serializer.fromJson<int>(json['borradoMs']),
+      borradoPor: serializer.fromJson<String?>(json['borradoPor']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'mangaId': serializer.toJson<int>(mangaId),
+      'equipoId': serializer.toJson<int>(equipoId),
+      'borradoMs': serializer.toJson<int>(borradoMs),
+      'borradoPor': serializer.toJson<String?>(borradoPor),
+    };
+  }
+
+  BorradosSyncData copyWith({
+    int? id,
+    int? mangaId,
+    int? equipoId,
+    int? borradoMs,
+    Value<String?> borradoPor = const Value.absent(),
+  }) => BorradosSyncData(
+    id: id ?? this.id,
+    mangaId: mangaId ?? this.mangaId,
+    equipoId: equipoId ?? this.equipoId,
+    borradoMs: borradoMs ?? this.borradoMs,
+    borradoPor: borradoPor.present ? borradoPor.value : this.borradoPor,
+  );
+  BorradosSyncData copyWithCompanion(BorradosSyncCompanion data) {
+    return BorradosSyncData(
+      id: data.id.present ? data.id.value : this.id,
+      mangaId: data.mangaId.present ? data.mangaId.value : this.mangaId,
+      equipoId: data.equipoId.present ? data.equipoId.value : this.equipoId,
+      borradoMs: data.borradoMs.present ? data.borradoMs.value : this.borradoMs,
+      borradoPor: data.borradoPor.present
+          ? data.borradoPor.value
+          : this.borradoPor,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BorradosSyncData(')
+          ..write('id: $id, ')
+          ..write('mangaId: $mangaId, ')
+          ..write('equipoId: $equipoId, ')
+          ..write('borradoMs: $borradoMs, ')
+          ..write('borradoPor: $borradoPor')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, mangaId, equipoId, borradoMs, borradoPor);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BorradosSyncData &&
+          other.id == this.id &&
+          other.mangaId == this.mangaId &&
+          other.equipoId == this.equipoId &&
+          other.borradoMs == this.borradoMs &&
+          other.borradoPor == this.borradoPor);
+}
+
+class BorradosSyncCompanion extends UpdateCompanion<BorradosSyncData> {
+  final Value<int> id;
+  final Value<int> mangaId;
+  final Value<int> equipoId;
+  final Value<int> borradoMs;
+  final Value<String?> borradoPor;
+  const BorradosSyncCompanion({
+    this.id = const Value.absent(),
+    this.mangaId = const Value.absent(),
+    this.equipoId = const Value.absent(),
+    this.borradoMs = const Value.absent(),
+    this.borradoPor = const Value.absent(),
+  });
+  BorradosSyncCompanion.insert({
+    this.id = const Value.absent(),
+    required int mangaId,
+    required int equipoId,
+    required int borradoMs,
+    this.borradoPor = const Value.absent(),
+  }) : mangaId = Value(mangaId),
+       equipoId = Value(equipoId),
+       borradoMs = Value(borradoMs);
+  static Insertable<BorradosSyncData> custom({
+    Expression<int>? id,
+    Expression<int>? mangaId,
+    Expression<int>? equipoId,
+    Expression<int>? borradoMs,
+    Expression<String>? borradoPor,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (mangaId != null) 'manga_id': mangaId,
+      if (equipoId != null) 'equipo_id': equipoId,
+      if (borradoMs != null) 'borrado_ms': borradoMs,
+      if (borradoPor != null) 'borrado_por': borradoPor,
+    });
+  }
+
+  BorradosSyncCompanion copyWith({
+    Value<int>? id,
+    Value<int>? mangaId,
+    Value<int>? equipoId,
+    Value<int>? borradoMs,
+    Value<String?>? borradoPor,
+  }) {
+    return BorradosSyncCompanion(
+      id: id ?? this.id,
+      mangaId: mangaId ?? this.mangaId,
+      equipoId: equipoId ?? this.equipoId,
+      borradoMs: borradoMs ?? this.borradoMs,
+      borradoPor: borradoPor ?? this.borradoPor,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (mangaId.present) {
+      map['manga_id'] = Variable<int>(mangaId.value);
+    }
+    if (equipoId.present) {
+      map['equipo_id'] = Variable<int>(equipoId.value);
+    }
+    if (borradoMs.present) {
+      map['borrado_ms'] = Variable<int>(borradoMs.value);
+    }
+    if (borradoPor.present) {
+      map['borrado_por'] = Variable<String>(borradoPor.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BorradosSyncCompanion(')
+          ..write('id: $id, ')
+          ..write('mangaId: $mangaId, ')
+          ..write('equipoId: $equipoId, ')
+          ..write('borradoMs: $borradoMs, ')
+          ..write('borradoPor: $borradoPor')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -15968,6 +16564,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $SyncColaTable syncCola = $SyncColaTable(this);
+  late final $BorradosSyncTable borradosSync = $BorradosSyncTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -16004,6 +16601,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     catalogoClubs,
     hojasVinculadas,
     syncCola,
+    borradosSync,
   ];
 }
 
@@ -19671,6 +20269,24 @@ final class $$EquiposTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$BorradosSyncTable, List<BorradosSyncData>>
+  _borradosSyncRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.borradosSync,
+    aliasName: $_aliasNameGenerator(db.equipos.id, db.borradosSync.equipoId),
+  );
+
+  $$BorradosSyncTableProcessedTableManager get borradosSyncRefs {
+    final manager = $$BorradosSyncTableTableManager(
+      $_db,
+      $_db.borradosSync,
+    ).filter((f) => f.equipoId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_borradosSyncRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$EquiposTableFilterComposer
@@ -19937,6 +20553,31 @@ class $$EquiposTableFilterComposer
           }) => $$MovimientosCreditosTableFilterComposer(
             $db: $db,
             $table: $db.movimientosCreditos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> borradosSyncRefs(
+    Expression<bool> Function($$BorradosSyncTableFilterComposer f) f,
+  ) {
+    final $$BorradosSyncTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.borradosSync,
+      getReferencedColumn: (t) => t.equipoId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BorradosSyncTableFilterComposer(
+            $db: $db,
+            $table: $db.borradosSync,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -20312,6 +20953,31 @@ class $$EquiposTableAnnotationComposer
         );
     return f(composer);
   }
+
+  Expression<T> borradosSyncRefs<T extends Object>(
+    Expression<T> Function($$BorradosSyncTableAnnotationComposer a) f,
+  ) {
+    final $$BorradosSyncTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.borradosSync,
+      getReferencedColumn: (t) => t.equipoId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BorradosSyncTableAnnotationComposer(
+            $db: $db,
+            $table: $db.borradosSync,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$EquiposTableTableManager
@@ -20338,6 +21004,7 @@ class $$EquiposTableTableManager
             bool verificacionesRefs,
             bool pagosRefs,
             bool movimientosCreditosRefs,
+            bool borradosSyncRefs,
           })
         > {
   $$EquiposTableTableManager(_$AppDatabase db, $EquiposTable table)
@@ -20407,6 +21074,7 @@ class $$EquiposTableTableManager
                 verificacionesRefs = false,
                 pagosRefs = false,
                 movimientosCreditosRefs = false,
+                borradosSyncRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -20418,6 +21086,7 @@ class $$EquiposTableTableManager
                     if (verificacionesRefs) db.verificaciones,
                     if (pagosRefs) db.pagos,
                     if (movimientosCreditosRefs) db.movimientosCreditos,
+                    if (borradosSyncRefs) db.borradosSync,
                   ],
                   addJoins:
                       <
@@ -20618,6 +21287,27 @@ class $$EquiposTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (borradosSyncRefs)
+                        await $_getPrefetchedData<
+                          Equipo,
+                          $EquiposTable,
+                          BorradosSyncData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$EquiposTableReferences
+                              ._borradosSyncRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$EquiposTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).borradosSyncRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.equipoId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -20649,6 +21339,7 @@ typedef $$EquiposTableProcessedTableManager =
         bool verificacionesRefs,
         bool pagosRefs,
         bool movimientosCreditosRefs,
+        bool borradosSyncRefs,
       })
     >;
 typedef $$EquipoPilotosTableCreateCompanionBuilder =
@@ -22174,6 +22865,24 @@ final class $$MangasTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$BorradosSyncTable, List<BorradosSyncData>>
+  _borradosSyncRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.borradosSync,
+    aliasName: $_aliasNameGenerator(db.mangas.id, db.borradosSync.mangaId),
+  );
+
+  $$BorradosSyncTableProcessedTableManager get borradosSyncRefs {
+    final manager = $$BorradosSyncTableTableManager(
+      $_db,
+      $_db.borradosSync,
+    ).filter((f) => f.mangaId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_borradosSyncRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$MangasTableFilterComposer
@@ -22304,6 +23013,31 @@ class $$MangasTableFilterComposer
           }) => $$VerificacionesTableFilterComposer(
             $db: $db,
             $table: $db.verificaciones,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> borradosSyncRefs(
+    Expression<bool> Function($$BorradosSyncTableFilterComposer f) f,
+  ) {
+    final $$BorradosSyncTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.borradosSync,
+      getReferencedColumn: (t) => t.mangaId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BorradosSyncTableFilterComposer(
+            $db: $db,
+            $table: $db.borradosSync,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -22505,6 +23239,31 @@ class $$MangasTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> borradosSyncRefs<T extends Object>(
+    Expression<T> Function($$BorradosSyncTableAnnotationComposer a) f,
+  ) {
+    final $$BorradosSyncTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.borradosSync,
+      getReferencedColumn: (t) => t.mangaId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BorradosSyncTableAnnotationComposer(
+            $db: $db,
+            $table: $db.borradosSync,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$MangasTableTableManager
@@ -22525,6 +23284,7 @@ class $$MangasTableTableManager
             bool inscripcionesRefs,
             bool resultadosRefs,
             bool verificacionesRefs,
+            bool borradosSyncRefs,
           })
         > {
   $$MangasTableTableManager(_$AppDatabase db, $MangasTable table)
@@ -22586,6 +23346,7 @@ class $$MangasTableTableManager
                 inscripcionesRefs = false,
                 resultadosRefs = false,
                 verificacionesRefs = false,
+                borradosSyncRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -22593,6 +23354,7 @@ class $$MangasTableTableManager
                     if (inscripcionesRefs) db.inscripciones,
                     if (resultadosRefs) db.resultados,
                     if (verificacionesRefs) db.verificaciones,
+                    if (borradosSyncRefs) db.borradosSync,
                   ],
                   addJoins:
                       <
@@ -22691,6 +23453,27 @@ class $$MangasTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (borradosSyncRefs)
+                        await $_getPrefetchedData<
+                          Manga,
+                          $MangasTable,
+                          BorradosSyncData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$MangasTableReferences
+                              ._borradosSyncRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$MangasTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).borradosSyncRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.mangaId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -22716,6 +23499,7 @@ typedef $$MangasTableProcessedTableManager =
         bool inscripcionesRefs,
         bool resultadosRefs,
         bool verificacionesRefs,
+        bool borradosSyncRefs,
       })
     >;
 typedef $$InscripcionesTableCreateCompanionBuilder =
@@ -23138,6 +23922,8 @@ typedef $$InscripcionesPruebaTableCreateCompanionBuilder =
       Value<bool> wildcard,
       Value<bool> exentoCoordinadora,
       Value<String?> copa,
+      Value<int?> copaModificadaMs,
+      Value<int?> tesoreriaModificadaMs,
     });
 typedef $$InscripcionesPruebaTableUpdateCompanionBuilder =
     InscripcionesPruebaCompanion Function({
@@ -23151,6 +23937,8 @@ typedef $$InscripcionesPruebaTableUpdateCompanionBuilder =
       Value<bool> wildcard,
       Value<bool> exentoCoordinadora,
       Value<String?> copa,
+      Value<int?> copaModificadaMs,
+      Value<int?> tesoreriaModificadaMs,
     });
 
 final class $$InscripcionesPruebaTableReferences
@@ -23254,6 +24042,16 @@ class $$InscripcionesPruebaTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get copaModificadaMs => $composableBuilder(
+    column: $table.copaModificadaMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get tesoreriaModificadaMs => $composableBuilder(
+    column: $table.tesoreriaModificadaMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$PruebasTableFilterComposer get pruebaId {
     final $$PruebasTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -23350,6 +24148,16 @@ class $$InscripcionesPruebaTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get copaModificadaMs => $composableBuilder(
+    column: $table.copaModificadaMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get tesoreriaModificadaMs => $composableBuilder(
+    column: $table.tesoreriaModificadaMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PruebasTableOrderingComposer get pruebaId {
     final $$PruebasTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -23435,6 +24243,16 @@ class $$InscripcionesPruebaTableAnnotationComposer
 
   GeneratedColumn<String> get copa =>
       $composableBuilder(column: $table.copa, builder: (column) => column);
+
+  GeneratedColumn<int> get copaModificadaMs => $composableBuilder(
+    column: $table.copaModificadaMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get tesoreriaModificadaMs => $composableBuilder(
+    column: $table.tesoreriaModificadaMs,
+    builder: (column) => column,
+  );
 
   $$PruebasTableAnnotationComposer get pruebaId {
     final $$PruebasTableAnnotationComposer composer = $composerBuilder(
@@ -23529,6 +24347,8 @@ class $$InscripcionesPruebaTableTableManager
                 Value<bool> wildcard = const Value.absent(),
                 Value<bool> exentoCoordinadora = const Value.absent(),
                 Value<String?> copa = const Value.absent(),
+                Value<int?> copaModificadaMs = const Value.absent(),
+                Value<int?> tesoreriaModificadaMs = const Value.absent(),
               }) => InscripcionesPruebaCompanion(
                 id: id,
                 pruebaId: pruebaId,
@@ -23540,6 +24360,8 @@ class $$InscripcionesPruebaTableTableManager
                 wildcard: wildcard,
                 exentoCoordinadora: exentoCoordinadora,
                 copa: copa,
+                copaModificadaMs: copaModificadaMs,
+                tesoreriaModificadaMs: tesoreriaModificadaMs,
               ),
           createCompanionCallback:
               ({
@@ -23553,6 +24375,8 @@ class $$InscripcionesPruebaTableTableManager
                 Value<bool> wildcard = const Value.absent(),
                 Value<bool> exentoCoordinadora = const Value.absent(),
                 Value<String?> copa = const Value.absent(),
+                Value<int?> copaModificadaMs = const Value.absent(),
+                Value<int?> tesoreriaModificadaMs = const Value.absent(),
               }) => InscripcionesPruebaCompanion.insert(
                 id: id,
                 pruebaId: pruebaId,
@@ -23564,6 +24388,8 @@ class $$InscripcionesPruebaTableTableManager
                 wildcard: wildcard,
                 exentoCoordinadora: exentoCoordinadora,
                 copa: copa,
+                copaModificadaMs: copaModificadaMs,
+                tesoreriaModificadaMs: tesoreriaModificadaMs,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -25499,6 +26325,8 @@ typedef $$VerificacionesTableCreateCompanionBuilder =
       Value<DateTime> fecha,
       Value<int> credAplicadoP1,
       Value<int> credAplicadoP2,
+      Value<int?> modificadoMs,
+      Value<String?> modificadoPor,
     });
 typedef $$VerificacionesTableUpdateCompanionBuilder =
     VerificacionesCompanion Function({
@@ -25543,6 +26371,8 @@ typedef $$VerificacionesTableUpdateCompanionBuilder =
       Value<DateTime> fecha,
       Value<int> credAplicadoP1,
       Value<int> credAplicadoP2,
+      Value<int?> modificadoMs,
+      Value<String?> modificadoPor,
     });
 
 final class $$VerificacionesTableReferences
@@ -25836,6 +26666,16 @@ class $$VerificacionesTableFilterComposer
 
   ColumnFilters<int> get credAplicadoP2 => $composableBuilder(
     column: $table.credAplicadoP2,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get modificadoMs => $composableBuilder(
+    column: $table.modificadoMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get modificadoPor => $composableBuilder(
+    column: $table.modificadoPor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -26133,6 +26973,16 @@ class $$VerificacionesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get modificadoMs => $composableBuilder(
+    column: $table.modificadoMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get modificadoPor => $composableBuilder(
+    column: $table.modificadoPor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$MangasTableOrderingComposer get mangaId {
     final $$MangasTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -26374,6 +27224,16 @@ class $$VerificacionesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get modificadoMs => $composableBuilder(
+    column: $table.modificadoMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get modificadoPor => $composableBuilder(
+    column: $table.modificadoPor,
+    builder: (column) => column,
+  );
+
   $$MangasTableAnnotationComposer get mangaId {
     final $$MangasTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -26546,6 +27406,8 @@ class $$VerificacionesTableTableManager
                 Value<DateTime> fecha = const Value.absent(),
                 Value<int> credAplicadoP1 = const Value.absent(),
                 Value<int> credAplicadoP2 = const Value.absent(),
+                Value<int?> modificadoMs = const Value.absent(),
+                Value<String?> modificadoPor = const Value.absent(),
               }) => VerificacionesCompanion(
                 id: id,
                 mangaId: mangaId,
@@ -26588,6 +27450,8 @@ class $$VerificacionesTableTableManager
                 fecha: fecha,
                 credAplicadoP1: credAplicadoP1,
                 credAplicadoP2: credAplicadoP2,
+                modificadoMs: modificadoMs,
+                modificadoPor: modificadoPor,
               ),
           createCompanionCallback:
               ({
@@ -26632,6 +27496,8 @@ class $$VerificacionesTableTableManager
                 Value<DateTime> fecha = const Value.absent(),
                 Value<int> credAplicadoP1 = const Value.absent(),
                 Value<int> credAplicadoP2 = const Value.absent(),
+                Value<int?> modificadoMs = const Value.absent(),
+                Value<String?> modificadoPor = const Value.absent(),
               }) => VerificacionesCompanion.insert(
                 id: id,
                 mangaId: mangaId,
@@ -26674,6 +27540,8 @@ class $$VerificacionesTableTableManager
                 fecha: fecha,
                 credAplicadoP1: credAplicadoP1,
                 credAplicadoP2: credAplicadoP2,
+                modificadoMs: modificadoMs,
+                modificadoPor: modificadoPor,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -30964,6 +31832,409 @@ typedef $$SyncColaTableProcessedTableManager =
       SyncColaData,
       PrefetchHooks Function()
     >;
+typedef $$BorradosSyncTableCreateCompanionBuilder =
+    BorradosSyncCompanion Function({
+      Value<int> id,
+      required int mangaId,
+      required int equipoId,
+      required int borradoMs,
+      Value<String?> borradoPor,
+    });
+typedef $$BorradosSyncTableUpdateCompanionBuilder =
+    BorradosSyncCompanion Function({
+      Value<int> id,
+      Value<int> mangaId,
+      Value<int> equipoId,
+      Value<int> borradoMs,
+      Value<String?> borradoPor,
+    });
+
+final class $$BorradosSyncTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $BorradosSyncTable, BorradosSyncData> {
+  $$BorradosSyncTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $MangasTable _mangaIdTable(_$AppDatabase db) => db.mangas.createAlias(
+    $_aliasNameGenerator(db.borradosSync.mangaId, db.mangas.id),
+  );
+
+  $$MangasTableProcessedTableManager get mangaId {
+    final $_column = $_itemColumn<int>('manga_id')!;
+
+    final manager = $$MangasTableTableManager(
+      $_db,
+      $_db.mangas,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_mangaIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $EquiposTable _equipoIdTable(_$AppDatabase db) =>
+      db.equipos.createAlias(
+        $_aliasNameGenerator(db.borradosSync.equipoId, db.equipos.id),
+      );
+
+  $$EquiposTableProcessedTableManager get equipoId {
+    final $_column = $_itemColumn<int>('equipo_id')!;
+
+    final manager = $$EquiposTableTableManager(
+      $_db,
+      $_db.equipos,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_equipoIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$BorradosSyncTableFilterComposer
+    extends Composer<_$AppDatabase, $BorradosSyncTable> {
+  $$BorradosSyncTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get borradoMs => $composableBuilder(
+    column: $table.borradoMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get borradoPor => $composableBuilder(
+    column: $table.borradoPor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$MangasTableFilterComposer get mangaId {
+    final $$MangasTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mangaId,
+      referencedTable: $db.mangas,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MangasTableFilterComposer(
+            $db: $db,
+            $table: $db.mangas,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EquiposTableFilterComposer get equipoId {
+    final $$EquiposTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.equipoId,
+      referencedTable: $db.equipos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EquiposTableFilterComposer(
+            $db: $db,
+            $table: $db.equipos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BorradosSyncTableOrderingComposer
+    extends Composer<_$AppDatabase, $BorradosSyncTable> {
+  $$BorradosSyncTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get borradoMs => $composableBuilder(
+    column: $table.borradoMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get borradoPor => $composableBuilder(
+    column: $table.borradoPor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$MangasTableOrderingComposer get mangaId {
+    final $$MangasTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mangaId,
+      referencedTable: $db.mangas,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MangasTableOrderingComposer(
+            $db: $db,
+            $table: $db.mangas,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EquiposTableOrderingComposer get equipoId {
+    final $$EquiposTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.equipoId,
+      referencedTable: $db.equipos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EquiposTableOrderingComposer(
+            $db: $db,
+            $table: $db.equipos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BorradosSyncTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BorradosSyncTable> {
+  $$BorradosSyncTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get borradoMs =>
+      $composableBuilder(column: $table.borradoMs, builder: (column) => column);
+
+  GeneratedColumn<String> get borradoPor => $composableBuilder(
+    column: $table.borradoPor,
+    builder: (column) => column,
+  );
+
+  $$MangasTableAnnotationComposer get mangaId {
+    final $$MangasTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mangaId,
+      referencedTable: $db.mangas,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MangasTableAnnotationComposer(
+            $db: $db,
+            $table: $db.mangas,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EquiposTableAnnotationComposer get equipoId {
+    final $$EquiposTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.equipoId,
+      referencedTable: $db.equipos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EquiposTableAnnotationComposer(
+            $db: $db,
+            $table: $db.equipos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BorradosSyncTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BorradosSyncTable,
+          BorradosSyncData,
+          $$BorradosSyncTableFilterComposer,
+          $$BorradosSyncTableOrderingComposer,
+          $$BorradosSyncTableAnnotationComposer,
+          $$BorradosSyncTableCreateCompanionBuilder,
+          $$BorradosSyncTableUpdateCompanionBuilder,
+          (BorradosSyncData, $$BorradosSyncTableReferences),
+          BorradosSyncData,
+          PrefetchHooks Function({bool mangaId, bool equipoId})
+        > {
+  $$BorradosSyncTableTableManager(_$AppDatabase db, $BorradosSyncTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BorradosSyncTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BorradosSyncTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BorradosSyncTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> mangaId = const Value.absent(),
+                Value<int> equipoId = const Value.absent(),
+                Value<int> borradoMs = const Value.absent(),
+                Value<String?> borradoPor = const Value.absent(),
+              }) => BorradosSyncCompanion(
+                id: id,
+                mangaId: mangaId,
+                equipoId: equipoId,
+                borradoMs: borradoMs,
+                borradoPor: borradoPor,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int mangaId,
+                required int equipoId,
+                required int borradoMs,
+                Value<String?> borradoPor = const Value.absent(),
+              }) => BorradosSyncCompanion.insert(
+                id: id,
+                mangaId: mangaId,
+                equipoId: equipoId,
+                borradoMs: borradoMs,
+                borradoPor: borradoPor,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$BorradosSyncTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({mangaId = false, equipoId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (mangaId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.mangaId,
+                                referencedTable: $$BorradosSyncTableReferences
+                                    ._mangaIdTable(db),
+                                referencedColumn: $$BorradosSyncTableReferences
+                                    ._mangaIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+                    if (equipoId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.equipoId,
+                                referencedTable: $$BorradosSyncTableReferences
+                                    ._equipoIdTable(db),
+                                referencedColumn: $$BorradosSyncTableReferences
+                                    ._equipoIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$BorradosSyncTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BorradosSyncTable,
+      BorradosSyncData,
+      $$BorradosSyncTableFilterComposer,
+      $$BorradosSyncTableOrderingComposer,
+      $$BorradosSyncTableAnnotationComposer,
+      $$BorradosSyncTableCreateCompanionBuilder,
+      $$BorradosSyncTableUpdateCompanionBuilder,
+      (BorradosSyncData, $$BorradosSyncTableReferences),
+      BorradosSyncData,
+      PrefetchHooks Function({bool mangaId, bool equipoId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -31030,4 +32301,6 @@ class $AppDatabaseManager {
       $$HojasVinculadasTableTableManager(_db, _db.hojasVinculadas);
   $$SyncColaTableTableManager get syncCola =>
       $$SyncColaTableTableManager(_db, _db.syncCola);
+  $$BorradosSyncTableTableManager get borradosSync =>
+      $$BorradosSyncTableTableManager(_db, _db.borradosSync);
 }

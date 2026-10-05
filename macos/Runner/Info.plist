@@ -29,10 +29,11 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>PitWall Control busca PitWall en la red local para enviarle las tandas de la prueba.</string>
+	<string>PitWall Control busca PitWall y otros PitWall Control en la red local para enviar las tandas y sincronizar las verificaciones.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_pitwall-manager._tcp</string>
+		<string>_pitwall-control._tcp</string>
 	</array>
 </dict>
 </plist>

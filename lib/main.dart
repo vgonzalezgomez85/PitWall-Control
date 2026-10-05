@@ -26,6 +26,8 @@ import 'core/tema.dart';
 import 'data/database/seeds.dart';
 import 'features/home/app_shell.dart';
 import 'features/pruebas/repositorio_pruebas.dart';
+import 'features/sincronizacion/dispositivo_sync.dart';
+import 'features/sincronizacion/proveedor_sync.dart';
 import 'features/verificaciones/repositorio_verificaciones.dart';
 import 'services/almacen_local.dart';
 
@@ -34,10 +36,12 @@ Future<void> main() async {
   // Todos los locales: las exportaciones se pueden generar en varios idiomas.
   await initializeDateFormatting();
   final prefs = await SharedPreferences.getInstance();
+  final almacen = AlmacenLocal(prefs);
+  DispositivoSync.cargar(almacen);
   runApp(
     ProviderScope(
       overrides: [
-        almacenSyncProvider.overrideWithValue(AlmacenLocal(prefs)),
+        almacenSyncProvider.overrideWithValue(almacen),
       ],
       child: const AppPitWall(),
     ),
@@ -69,6 +73,8 @@ class _AppPitWallState extends ConsumerState<AppPitWall> {
     // tesorería).
     await ref.read(repoInscripcionesProvider).repararInscripcionesPrueba();
     if (mounted) setState(() => _semillaLista = true);
+    // Verificar entre varios: si estaba conectado, se vuelve a conectar.
+    await ref.read(sincronizacionProvider.notifier).reanudarSiEstabaActiva();
   }
 
   @override

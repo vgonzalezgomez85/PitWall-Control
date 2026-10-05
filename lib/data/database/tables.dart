@@ -221,6 +221,12 @@ class InscripcionesPrueba extends Table {
   /// a mitad de campeonato sin perder los puntos de las pruebas anteriores.
   /// Si es null, se usa la copa actual del equipo.
   TextColumn get copa => text().nullable()();
+
+  /// Sincronización por wifi entre Controls: cuándo (ms desde epoch) se
+  /// cambió por última vez la copa de esta prueba y la tesorería del equipo
+  /// (pago, wildcard, "Coord. total"). null = nunca desde que existe la sync.
+  IntColumn get copaModificadaMs => integer().nullable()();
+  IntColumn get tesoreriaModificadaMs => integer().nullable()();
 }
 
 class Resultados extends Table {
@@ -330,6 +336,11 @@ class Verificaciones extends Table {
   /// si la verificación se desvalida, se cambia de coche o se borra.
   IntColumn get credAplicadoP1 => integer().withDefault(const Constant(0))();
   IntColumn get credAplicadoP2 => integer().withDefault(const Constant(0))();
+
+  /// Sincronización por wifi entre Controls: última modificación (ms desde
+  /// epoch) y nombre del dispositivo que la hizo. Gana la más reciente.
+  IntColumn get modificadoMs => integer().nullable()();
+  TextColumn get modificadoPor => text().nullable()();
 }
 
 // ============================================================
@@ -518,4 +529,19 @@ class SyncCola extends Table {
   TextColumn get error => text().nullable()();
   DateTimeColumn get creadoEn => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get sincronizadoEn => dateTime().nullable()();
+}
+
+// ============================================================
+// SYNC entre Controls por wifi — borrados que hay que propagar
+// ============================================================
+
+/// Verificaciones borradas, para que el borrado llegue a los demás Controls
+/// al sincronizar. Se identifica por (manga, equipo), igual que la
+/// verificación. Si se vuelve a crear la verificación, se quita de aquí.
+class BorradosSync extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get mangaId => integer().references(Mangas, #id)();
+  IntColumn get equipoId => integer().references(Equipos, #id)();
+  IntColumn get borradoMs => integer()();
+  TextColumn get borradoPor => text().nullable()();
 }

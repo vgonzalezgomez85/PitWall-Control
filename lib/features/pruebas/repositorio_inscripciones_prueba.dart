@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../sincronizacion/dispositivo_sync.dart';
 import '../../domain/generador_mangas.dart';
 import '../equipos/repositorio_equipos.dart';
 
@@ -253,13 +254,15 @@ class RepositorioInscripcionesPrueba {
               pruebaId: pruebaId,
               equipoId: equipoId,
               copa: Value(copa),
+              copaModificadaMs: Value(ahoraMsSync()),
             ),
           );
       return;
     }
     await (db.update(db.inscripcionesPrueba)
           ..where((t) => t.id.equals(existente.id)))
-        .write(InscripcionesPruebaCompanion(copa: Value(copa)));
+        .write(InscripcionesPruebaCompanion(
+            copa: Value(copa), copaModificadaMs: Value(ahoraMsSync())));
   }
 
   /// Crea las mangas + inscripciones a partir del resultado del generador.

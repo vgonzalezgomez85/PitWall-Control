@@ -14,6 +14,16 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.22.0] — 2026-10-05
+### Añadido
+- **Verificar entre varios, a la vez y sin internet.** Varios Controls (Mac, Windows o Android) pueden verificar la misma prueba al mismo tiempo, cada uno en su dispositivo, y se pasan los cambios por la wifi. No hace falta internet: vale un router sin conexión o el punto de acceso de un móvil. Se abre desde el menú de la prueba, **Verificar entre varios**, o con el nuevo icono de sincronizar en **Verificaciones**.
+  - Cada Control se pone un **nombre** (p. ej. «Mesa 1») y todos la misma **clave del evento**. Al encender **Conectar con otros Controls**, se encuentran solos en la red; si el router no lo permite, se añaden escribiendo la IP que sale en la pantalla del otro.
+  - Viajan las **verificaciones** (con sus **fotos**), los **borrados**, la **copa** de cada equipo en la prueba y los **cobros** de la tesorería. Se sincroniza solo cada 20 s o con **Sincronizar ahora**. Los cambios pasan de un Control a otro aunque no se hayan sincronizado directamente entre sí.
+  - Si dos tocan la misma verificación, **gana el último cambio**. Por eso conviene tener la hora automática en todos; la app avisa si un dispositivo va con la hora desfasada.
+  - Los **créditos** no se descuentan dos veces: cada Control calcula los suyos al recibir una verificación validada.
+  - Si tienes abierta una verificación y otro Control la cambia, se actualiza en pantalla. Si estabas a medio editar, te avisa para elegir con qué te quedas.
+  - Antes del evento, todos deben partir de la **misma copia de datos** (campeonato, prueba, mangas y equipos). La verificación libre no se sincroniza.
+
 ## [1.21.2] — 2026-10-05
 
 ### Corregido

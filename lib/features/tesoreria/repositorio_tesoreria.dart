@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../sincronizacion/dispositivo_sync.dart';
 
 /// Combina varios streams en uno: emite un tick cuando cualquiera emite.
 Stream<void> _mergeTick(List<Stream> streams) {
@@ -364,6 +365,17 @@ class RepositorioTesoreria {
   RepositorioTesoreria(this.db);
   final AppDatabase db;
 
+  /// Apunta en la inscripción que la tesorería de (prueba, equipo) acaba de
+  /// cambiar, para que la sincronización entre Controls sepa cuál es la
+  /// más reciente.
+  Future<void> _firmar(int pruebaId, int equipoId) async {
+    await (db.update(db.inscripcionesPrueba)
+          ..where((t) =>
+              t.pruebaId.equals(pruebaId) & t.equipoId.equals(equipoId)))
+        .write(InscripcionesPruebaCompanion(
+            tesoreriaModificadaMs: Value(ahoraMsSync())));
+  }
+
   Future<void> guardarPago({
     int? id,
     required int pruebaId,
@@ -403,10 +415,14 @@ class RepositorioTesoreria {
         ),
       );
     }
+    await _firmar(pruebaId, equipoId);
   }
 
   Future<void> borrar(int id) async {
+    final pago = await (db.select(db.pagos)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
     await (db.delete(db.pagos)..where((t) => t.id.equals(id))).go();
+    if (pago != null) await _firmar(pago.pruebaId, pago.equipoId);
   }
 
   /// Borra el pago de un equipo en una prueba, si lo hay.
@@ -415,6 +431,7 @@ class RepositorioTesoreria {
           ..where((t) =>
               t.pruebaId.equals(pruebaId) & t.equipoId.equals(equipoId)))
         .go();
+    await _firmar(pruebaId, equipoId);
   }
 
   /// Marca un equipo como wildcard (no paga) en una prueba.
@@ -427,7 +444,8 @@ class RepositorioTesoreria {
           ..where((t) =>
               t.pruebaId.equals(pruebaId) & t.equipoId.equals(equipoId)))
         .write(InscripcionesPruebaCompanion(
-            wildcard: Value(wildcard)));
+            wildcard: Value(wildcard),
+            tesoreriaModificadaMs: Value(ahoraMsSync())));
     // Si pasa a wildcard, borrar cualquier pago existente
     if (wildcard) {
       await (db.delete(db.pagos)
@@ -447,7 +465,8 @@ class RepositorioTesoreria {
           ..where((t) =>
               t.pruebaId.equals(pruebaId) & t.equipoId.equals(equipoId)))
         .write(InscripcionesPruebaCompanion(
-            exentoCoordinadora: Value(exento)));
+            exentoCoordinadora: Value(exento),
+            tesoreriaModificadaMs: Value(ahoraMsSync())));
     // Igual que el wildcard: si pasa a exento, fuera el pago que hubiera.
     if (exento) {
       await (db.delete(db.pagos)

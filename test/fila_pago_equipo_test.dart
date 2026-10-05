@@ -80,9 +80,13 @@ void main() {
       ),
     ));
     await tester.tap(find.text('10 / 3 / 7'));
-    await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 100)));
-    await tester.pump();
+    // guardarPago encadena varias escrituras (pago + firma para la
+    // sincronización): se alternan tiempo real y pumps hasta que acaben.
+    for (var i = 0; i < 5; i++) {
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await tester.pump();
+    }
 
     final guardado = await tester.runAsync(() => db.select(db.pagos).get());
     expect(guardado!.single.pagat, 10);

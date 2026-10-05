@@ -38,6 +38,7 @@ import 'enviar_tanda_dialog.dart';
 import 'enviar_verificaciones_dialog.dart';
 import 'traer_resultados_dialog.dart';
 import 'editor_prueba.dart';
+import '../sincronizacion/pantalla_sincronizacion.dart';
 import 'pantalla_editar_mangas.dart';
 import 'pantalla_inscritos.dart';
 import 'repositorio_pruebas.dart';
@@ -349,6 +350,12 @@ class _PanelPrueba extends StatelessWidget {
               title: const Text('Resum. Verifi.'),
               onTap: () =>
                   abrir(PantallaRejillaVerificaciones(pruebaId: pruebaId)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.sync),
+              title: const Text('Verificar entre varios'),
+              subtitle: const Text('Varios Controls a la vez, por wifi'),
+              onTap: () => abrir(PantallaSincronizacion(pruebaId: pruebaId)),
             ),
             ListTile(
               leading: const Icon(Icons.swap_horiz),

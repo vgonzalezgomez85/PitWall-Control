@@ -35,6 +35,7 @@ import '../../services/fotos_verificacion.dart';
 import '../campeonatos/selector_marcas_permitidas.dart';
 import '../equipos/repositorio_equipos.dart';
 import '../pruebas/repositorio_inscripciones_prueba.dart';
+import '../sincronizacion/dispositivo_sync.dart';
 import '../tesoreria/fila_pago_equipo.dart';
 import '../tesoreria/repositorio_tesoreria.dart';
 import 'frecuencias_verificacion.dart';
@@ -153,6 +154,13 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   bool _dirty = false;
   bool _autoguardando = false;
   _EstadoAuto _estado = _EstadoAuto.idle;
+
+  // Sincronización entre Controls: si otro Control cambia esta verificación
+  // mientras está abierta, se recarga (o se avisa si hay cambios sin guardar)
+  // para no pisar lo que ha hecho el otro con datos viejos.
+  StreamSubscription<List<Verificacione>>? _vigilancia;
+  int _msVisto = 0;
+  ScaffoldMessengerState? _messenger;
 
   Equipo? _equipo;
   Piloto? _piloto1;
@@ -371,55 +379,125 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
       final v = await (db.select(db.verificaciones)
             ..where((t) => t.id.equals(widget.verificacionId!)))
           .getSingle();
-      _cocheId = v.cocheCatalogoId;
-      _pesoIni.text = v.pesoInicial?.toString() ?? '';
-      _pesoFin.text = v.pesoFinal?.toString() ?? '';
-      _pesoIniCoche.text = v.pesoInicialCoche?.toString() ?? '';
-      _pesoFinCoche.text = v.pesoFinalCoche?.toString() ?? '';
-      _motor.text = v.motor ?? '';
-      _motorTipo = v.motorTipo;
-      _motorRpm.text = v.motorRpm?.toString() ?? '';
-      _motorUms.text = v.motorUms?.toString() ?? '';
-      _alturaMotorConforme = v.alturaMotorConforme;
-      _anchuraEjeDel.text = v.anchuraEjeDel?.toString() ?? '';
-      _anchuraEjeTra.text = v.anchuraEjeTra?.toString() ?? '';
-      _carroceriaConforme = v.carroceriaConforme;
-      _carroceriaPiezasFaltantes.text = v.carroceriaPiezasFaltantes ?? '';
-      _pinonMarca = v.pinonMarca;
-      _pinonDientes = v.pinonDientes;
-      _pinonDiametro.text = v.pinonDiametro ?? '';
-      _pinonMaterial = v.pinonMaterial;
-      _coronaMarca = v.coronaMarca;
-      _coronaDientes = v.coronaDientes;
-      _coronaDiametro.text = v.coronaDiametro ?? '';
-      _coronaMaterial = v.coronaMaterial;
-      _llantaDelMarca = v.llantaDelMarca;
-      _llantaDelDim = v.llantaDelDimension;
-      _llantaTraMarca = v.llantaTraMarca;
-      _llantaTraDim = v.llantaTraDimension;
-      _trencilla = v.trencilla;
-      _suspension.text = v.suspension ?? '';
-      _bancada = v.bancada;
-      _chasis = v.chasis;
-      _neumatico = v.neumatico;
-      _observaciones.text = v.observaciones ?? '';
-      _validada = v.validado;
-      try {
-        final raw = json.decode(v.fotosJson);
-        if (raw is List) {
-          // Normalizar entradas a solo el basename (rutas absolutas antiguas
-          // dejan de tener sentido al restaurar backup en otro equipo).
-          _fotos = raw
-              .map((e) => FotosVerificacion.nombreParaBd(e.toString()))
-              .toList();
-        }
-      } catch (_) {}
+      _aplicar(v);
     }
     // Si el campeonato fija el tipo de motor, manda sobre lo guardado.
     final tipoFijo =
         (_campeonato ?? ref.read(campeonatoActivoProvider))?.tipoMotor;
     if (tipoFijo != null) _motorTipo = tipoFijo;
     if (mounted) setState(() => _cargando = false);
+    _vigilar();
+  }
+
+  /// Vuelca en el formulario los datos guardados de [v].
+  void _aplicar(Verificacione v) {
+    _cocheId = v.cocheCatalogoId;
+    _pesoIni.text = v.pesoInicial?.toString() ?? '';
+    _pesoFin.text = v.pesoFinal?.toString() ?? '';
+    _pesoIniCoche.text = v.pesoInicialCoche?.toString() ?? '';
+    _pesoFinCoche.text = v.pesoFinalCoche?.toString() ?? '';
+    _motor.text = v.motor ?? '';
+    _motorTipo = v.motorTipo;
+    _motorRpm.text = v.motorRpm?.toString() ?? '';
+    _motorUms.text = v.motorUms?.toString() ?? '';
+    _alturaMotorConforme = v.alturaMotorConforme;
+    _anchuraEjeDel.text = v.anchuraEjeDel?.toString() ?? '';
+    _anchuraEjeTra.text = v.anchuraEjeTra?.toString() ?? '';
+    _carroceriaConforme = v.carroceriaConforme;
+    _carroceriaPiezasFaltantes.text = v.carroceriaPiezasFaltantes ?? '';
+    _pinonMarca = v.pinonMarca;
+    _pinonDientes = v.pinonDientes;
+    _pinonDiametro.text = v.pinonDiametro ?? '';
+    _pinonMaterial = v.pinonMaterial;
+    _coronaMarca = v.coronaMarca;
+    _coronaDientes = v.coronaDientes;
+    _coronaDiametro.text = v.coronaDiametro ?? '';
+    _coronaMaterial = v.coronaMaterial;
+    _llantaDelMarca = v.llantaDelMarca;
+    _llantaDelDim = v.llantaDelDimension;
+    _llantaTraMarca = v.llantaTraMarca;
+    _llantaTraDim = v.llantaTraDimension;
+    _trencilla = v.trencilla;
+    _suspension.text = v.suspension ?? '';
+    _bancada = v.bancada;
+    _chasis = v.chasis;
+    _neumatico = v.neumatico;
+    _observaciones.text = v.observaciones ?? '';
+    _validada = v.validado;
+    try {
+      final raw = json.decode(v.fotosJson);
+      if (raw is List) {
+        // Normalizar entradas a solo el basename (rutas absolutas antiguas
+        // dejan de tener sentido al restaurar backup en otro equipo).
+        _fotos = raw
+            .map((e) => FotosVerificacion.nombreParaBd(e.toString()))
+            .toList();
+      }
+    } catch (_) {}
+    _msVisto = v.modificadoMs ?? 0;
+  }
+
+  void _vigilar() {
+    final db = ref.read(dbProvider);
+    _vigilancia = (db.select(db.verificaciones)
+          ..where((t) =>
+              t.mangaId.equals(widget.mangaId) &
+              t.equipoId.equals(widget.equipoId))
+          ..limit(1))
+        .watch()
+        .listen((l) {
+      if (l.isNotEmpty) _alCambiarFuera(l.first);
+    });
+  }
+
+  /// La fila ha cambiado en la BD: si lo ha hecho otro Control (llegado por
+  /// la sincronización), se recarga el formulario.
+  void _alCambiarFuera(Verificacione v) {
+    if (!mounted || _cargando) return;
+    final ms = v.modificadoMs ?? 0;
+    if (v.modificadoPor == DispositivoSync.nombre || ms <= _msVisto) return;
+    final quien = v.modificadoPor ?? 'Otro Control';
+    if (_dirty || _autoguardando || _guardando) {
+      _messenger?.showMaterialBanner(MaterialBanner(
+        content: Text('$quien ha cambiado esta verificación. Si sigues '
+            'editando, tus cambios sustituirán a los suyos.'),
+        leading: const Icon(Icons.sync_problem_outlined),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _messenger?.hideCurrentMaterialBanner();
+              _msVisto = ms;
+            },
+            child: const Text('Seguir con lo mío'),
+          ),
+          TextButton(
+            onPressed: () {
+              _messenger?.hideCurrentMaterialBanner();
+              _recargarDesde(v);
+            },
+            child: Text('Ver lo de $quien'),
+          ),
+        ],
+      ));
+      return;
+    }
+    _recargarDesde(v);
+    _messenger?.showSnackBar(SnackBar(
+        content: Text('Actualizada con los cambios de $quien.')));
+  }
+
+  void _recargarDesde(Verificacione v) {
+    _debounce?.cancel();
+    // Con _cargando los listeners de los campos no programan autoguardado.
+    _cargando = true;
+    _aplicar(v);
+    final tipoFijo =
+        (_campeonato ?? ref.read(campeonatoActivoProvider))?.tipoMotor;
+    if (tipoFijo != null) _motorTipo = tipoFijo;
+    _verifId = v.id;
+    _dirty = false;
+    _cargando = false;
+    if (mounted) setState(() => _estado = _EstadoAuto.guardado);
   }
 
   Future<void> _anadirFoto(ImageSource source) async {
@@ -465,8 +543,16 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _messenger = ScaffoldMessenger.maybeOf(context);
+  }
+
+  @override
   void dispose() {
     _debounce?.cancel();
+    _vigilancia?.cancel();
+    _messenger?.hideCurrentMaterialBanner();
     for (final c in _controllers) {
       c.removeListener(_onCambio);
     }
