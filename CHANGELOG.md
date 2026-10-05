@@ -14,6 +14,11 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.20.0] — 2026-10-05
+
+### Añadido
+- **Verificación libre: exportar a Excel con las fotos.** Nuevo botón junto al del PDF en la sesión. Genera un `.xlsx` con una fila por participante y las mismas columnas que el resumen de verificaciones (fuera de reglamento en rojo y una columna con los motivos); al final de cada fila van **todas sus fotos incrustadas**, una por columna, como miniatura dentro de la celda. Al ampliarlas en Excel se ven a 800 px. Una foto que no se pueda leer (p. ej. HEIC antigua) sale como «(foto no compatible)» en vez de fallar.
+
 ## [1.19.1] — 2026-10-05
 
 ### Mejorado

@@ -25,6 +25,7 @@ import '../../services/generador_pdf_verificaciones.dart';
 import '../verificaciones/editor_verificacion.dart';
 import '../verificaciones/lista_verificaciones.dart';
 import 'editor_sesion_libre.dart';
+import 'exportar_excel_sesion_libre.dart';
 import 'pantalla_importar_participantes.dart';
 import 'repositorio_verificacion_libre.dart';
 
@@ -209,6 +210,19 @@ class PantallaSesionLibre extends ConsumerWidget {
                             .generar(pruebaId: pruebaId, idioma: idi),
                       );
                     },
+            ),
+            IconButton(
+              tooltip: 'Exportar verificaciones (Excel con fotos)',
+              icon: const Icon(Icons.table_view_outlined),
+              onPressed: s.conVerificacion == 0
+                  ? null
+                  : () => guardarExcel(
+                        context,
+                        sugerido:
+                            'verificaciones-${slugArchivo(s.nombre)}.xlsx',
+                        generar: () => generarExcelSesionLibre(
+                            ref.read(dbProvider), s),
+                      ),
             ),
             IconButton(
               tooltip: 'Eliminar sesión',
