@@ -16,14 +16,15 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../domain/reglas_verificacion.dart';
 import '../sincronizacion/dispositivo_sync.dart';
+import 'reglas_verificacion_bd.dart';
 
 /// Verificación enriquecida (con datos del equipo y coche).
 class VerificacionConEquipo {
@@ -203,36 +204,10 @@ final bancadasProvider =
   return db.select(db.catalogoBancadas).watch();
 });
 
-/// Normaliza un nombre de copa para compararlo: ignora mayúsculas, espacios
-/// y signos ("LMP-2", "LMP 2" y "lmp2" son la misma copa).
-String _normCopa(String s) =>
-    s.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9ÁÉÍÓÚÜÑ]'), '');
-
-bool _aplicaA(String copasJson, String copa) {
-  try {
-    final raw = (copasJson.isEmpty) ? [] : (jsonDecode(copasJson) as List?);
-    // Sin copa marcada = no aplica a ninguna (no se puede usar hasta que se
-    // le asigne una copa en el catálogo).
-    if (raw == null || raw.isEmpty) return false;
-    // Comparación tolerante a mayúsculas/minúsculas y espacios.
-    final objetivo = _normCopa(copa);
-    return raw.map((e) => _normCopa(e.toString())).contains(objetivo);
-  } catch (_) {
-    return false;
-  }
-}
+bool _aplicaA(String copasJson, String copa) => copaAplica(copasJson, copa);
 
 /// True si el coche tiene [copa] en su lista (NO cuenta la lista vacía).
-bool _tieneCopa(String copasJson, String copa) {
-  try {
-    final raw = (copasJson.isEmpty) ? [] : (jsonDecode(copasJson) as List?);
-    if (raw == null || raw.isEmpty) return false;
-    final objetivo = _normCopa(copa);
-    return raw.map((e) => _normCopa(e.toString())).contains(objetivo);
-  } catch (_) {
-    return false;
-  }
-}
+bool _tieneCopa(String copasJson, String copa) => copaAplica(copasJson, copa);
 
 final neumaticosProvider =
     StreamProvider.autoDispose<List<CatalogoNeumatico>>((ref) {
@@ -460,10 +435,17 @@ class RepositorioVerificaciones {
     int aplicarP1 = 0, aplicarP2 = 0;
     bool insuf = false;
     if (camp.usaCreditos && ver.validado && ver.cocheCatalogoId != null) {
-      final coche = await (db.select(db.catalogoCoches)
-            ..where((t) => t.id.equals(ver.cocheCatalogoId!)))
-          .getSingleOrNull();
-      final valor = coche?.creditosCoche ?? 0;
+      // Créditos del coche con los que se verificó (reglamento congelado);
+      // si aún no lo tiene, los actuales del campeonato o del catálogo.
+      final reglas = ReglasVerificacion.decodificar(ver.reglasJson);
+      final congeladas =
+          reglas != null && reglas.cocheId == ver.cocheCatalogoId;
+      final actuales = congeladas
+          ? null
+          : await CargadorReglas(db).valoresCoche(campId, ver.cocheCatalogoId!);
+      final valor =
+          (congeladas ? reglas.creditosCoche : actuales!.creditos) ?? 0;
+      final nombreCoche = congeladas ? reglas.cocheNombre : actuales!.nombre;
       if (valor != 0) {
         final pc1 = await (db.select(db.pilotoCampeonato)
               ..where((t) =>
@@ -501,7 +483,7 @@ class RepositorioVerificaciones {
         String motivoFor(int parte, String? otroNombre) {
           final signo = valor > 0 ? '+$valor' : '$valor';
           final tu = parte > 0 ? '+$parte' : '$parte';
-          final base = 'Coche ${coche?.nombre ?? ''} · valor $signo';
+          final base = 'Coche ${nombreCoche ?? ''} · valor $signo';
           if (otroNombre == null) return '$base · tu parte $tu';
           return '$base · tu parte $tu (con $otroNombre)';
         }
@@ -585,6 +567,7 @@ class RepositorioVerificaciones {
     String? observaciones,
     required bool validado,
     String? fotosJson,
+    String? reglasJson,
     bool recalcularCreditos = true,
   }) async {
     // Garantiza una sola verificación por (manga, equipo): si llega sin id
@@ -640,6 +623,9 @@ class RepositorioVerificaciones {
               validado: Value(validado),
               fotosJson:
                   fotosJson == null ? const Value.absent() : Value(fotosJson),
+              reglasJson: reglasJson == null
+                  ? const Value.absent()
+                  : Value(reglasJson),
               modificadoMs: Value(ahoraMsSync()),
               modificadoPor: Value(DispositivoSync.nombre),
             ),
@@ -688,6 +674,8 @@ class RepositorioVerificaciones {
         validado: Value(validado),
         fotosJson:
             fotosJson == null ? const Value.absent() : Value(fotosJson),
+        reglasJson:
+            reglasJson == null ? const Value.absent() : Value(reglasJson),
         modificadoMs: Value(ahoraMsSync()),
         modificadoPor: Value(DispositivoSync.nombre),
       ),

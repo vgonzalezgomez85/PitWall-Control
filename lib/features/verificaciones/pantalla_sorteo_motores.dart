@@ -25,6 +25,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../campeonatos/editor_campeonato.dart';
+import 'reglas_verificacion_bd.dart';
 import 'repositorio_verificaciones.dart';
 
 /// Una fila del sorteo: un equipo inscrito en una manga de la prueba, con el
@@ -54,12 +55,16 @@ class DatosSorteo {
   final List<FilaSorteo> filas;
   final List<int> disponibles; // motores del rango aún sin asignar en la prueba
   final int total; // tamaño del rango
+  /// Campeonato finalizado o prueba terminada: no se sortea ni se quita
+  /// nada (null = se puede).
+  final String? bloqueo;
 
   DatosSorteo({
     required this.campeonato,
     required this.filas,
     required this.disponibles,
     required this.total,
+    this.bloqueo,
   });
 
   bool get individual => campeonato.formato == 'INDIVIDUAL';
@@ -174,6 +179,7 @@ final sorteoMotoresProvider =
       filas: filas,
       disponibles: disponibles,
       total: todos.length,
+      bloqueo: motivoBloqueo(camp, prueba),
     );
   });
 });
@@ -193,7 +199,8 @@ class PantallaSorteoMotores extends ConsumerWidget {
         title: const Text('Sorteo de motores'),
         actions: [
           datosAsync.maybeWhen(
-            data: (d) => (d != null && d.rangoConfigurado && d.disponibles.isNotEmpty
+            data: (d) => (d != null && d.bloqueo == null &&
+                    d.rangoConfigurado && d.disponibles.isNotEmpty
                     && d.filas.any((f) => f.motor == null))
                 ? TextButton.icon(
                     onPressed: () => _sortearRestantes(context, ref, d),
@@ -230,6 +237,22 @@ class PantallaSorteoMotores extends ConsumerWidget {
             child: Column(
               children: [
                 _Cabecera(datos: d),
+                if (d.bloqueo != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.lock_outline, size: 18, color: cs.outline),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${d.bloqueo} El sorteo queda en solo lectura.',
+                            style: TextStyle(color: cs.outline),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 TabBar(
                   labelColor: cs.primary,
                   tabs: const [
@@ -247,9 +270,10 @@ class PantallaSorteoMotores extends ConsumerWidget {
                         itemBuilder: (_, i) => _FilaTarjeta(
                           fila: d.filas[i],
                           individual: d.individual,
-                          onSortear: () =>
-                              _sortearUno(context, ref, d, d.filas[i]),
-                          onQuitar: d.filas[i].motor == null
+                          onSortear: d.bloqueo != null
+                              ? null
+                              : () => _sortearUno(context, ref, d, d.filas[i]),
+                          onQuitar: d.filas[i].motor == null || d.bloqueo != null
                               ? null
                               : () => _quitar(ref, d.filas[i]),
                         ),
@@ -435,7 +459,8 @@ class _FilaTarjeta extends StatelessWidget {
 
   final FilaSorteo fila;
   final bool individual;
-  final VoidCallback onSortear;
+  /// null = bloqueado (campeonato finalizado o prueba terminada).
+  final VoidCallback? onSortear;
   final VoidCallback? onQuitar;
 
   @override
@@ -472,9 +497,10 @@ class _FilaTarjeta extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                             fontSize: 15)),
                   ),
+                  if (onSortear != null)
                   PopupMenuButton<String>(
                     onSelected: (op) {
-                      if (op == 'resortear') onSortear();
+                      if (op == 'resortear') onSortear!();
                       if (op == 'quitar') onQuitar?.call();
                     },
                     itemBuilder: (_) => const [

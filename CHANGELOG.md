@@ -14,6 +14,17 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.23.0] — 2026-10-06
+### Añadido
+- **Las verificaciones guardan el reglamento con el que se hicieron.** Al verificar se guardan también el peso mínimo y los créditos del coche, la referencia del motor propio, la anchura máxima de eje, los fabricantes permitidos y las listas homologadas del catálogo (llantas, bancadas, neumáticos, marcas). Una verificación **validada**, o de un campeonato finalizado o una prueba terminada, se comprueba siempre con esos valores, aunque luego se cambie el catálogo o el campeonato. Así, cambiar por ejemplo el peso mínimo de una carrocería ya no altera las verificaciones de campeonatos cerrados ni las ya validadas.
+  - En la ficha sale el aviso **Reglamento congelado** con la fecha y, si algo ha cambiado desde entonces, la lista de qué ha cambiado. Con **Usar el reglamento actual** se puede pasar a los valores de hoy (si está validada, se recalculan sus créditos).
+  - Si en una verificación congelada se cambia el coche, el motor o la copa, solo esa parte se recalcula con los valores actuales; el resto sigue igual.
+  - Los **créditos** que se descuentan o devuelven al revalidar o sincronizar una verificación usan los créditos del coche con los que se verificó, no los del catálogo de hoy.
+  - La rejilla de verificaciones, su Excel, el PDF y el envío a PitWall Manager usan también el reglamento congelado (nombre del coche, mínimos y máximos).
+  - Las verificaciones que ya había se congelan solas al abrir esta versión, con el peso mínimo que ya tenían guardado y el resto de valores del catálogo actual.
+- **Verificaciones bloqueadas en campeonatos finalizados y pruebas terminadas.** Se abren en solo lectura (con un candado) para no cambiarlas sin querer. Si hace falta corregir algo, **Desbloquear** permite editarla tras confirmar. El sorteo de motores de esas pruebas también queda en solo lectura.
+- **Peso mínimo y créditos de los coches por campeonato.** En **Editar campeonato → Coches (verificación)** se pueden fijar el peso mínimo y los créditos de cada coche solo para ese campeonato; lo que se deja vacío sigue al catálogo. **Fijar los valores actuales del catálogo** los copia de una vez, y así se puede cambiar el catálogo para la temporada siguiente sin afectar a la que está en marcha. Al marcar un campeonato como finalizado, sus coches se fijan solos con los valores del catálogo.
+
 ## [1.22.0] — 2026-10-05
 ### Añadido
 - **Verificar entre varios, a la vez y sin internet.** Varios Controls (Mac, Windows o Android) pueden verificar la misma prueba al mismo tiempo, cada uno en su dispositivo, y se pasan los cambios por la wifi. No hace falta internet: vale un router sin conexión o el punto de acceso de un móvil. Se abre desde el menú de la prueba, **Verificar entre varios**, o con el nuevo icono de sincronizar en **Verificaciones**.

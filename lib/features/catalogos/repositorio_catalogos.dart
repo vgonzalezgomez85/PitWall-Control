@@ -206,6 +206,10 @@ class RepositorioCatalogos {
           ..where((t) => t.id.equals(id)))
         .getSingleOrNull();
     await _registrarBorrado('catalogo_coches', x?.idExterno);
+    // Sus valores fijados en campeonatos ya no sirven.
+    await (db.delete(db.cochesCampeonato)
+          ..where((t) => t.cocheCatalogoId.equals(id)))
+        .go();
     await (db.delete(db.catalogoCoches)..where((t) => t.id.equals(id))).go();
   }
 

@@ -28,6 +28,7 @@ import 'features/home/app_shell.dart';
 import 'features/pruebas/repositorio_pruebas.dart';
 import 'features/sincronizacion/dispositivo_sync.dart';
 import 'features/sincronizacion/proveedor_sync.dart';
+import 'features/verificaciones/reglas_verificacion_bd.dart';
 import 'features/verificaciones/repositorio_verificaciones.dart';
 import 'services/almacen_local.dart';
 
@@ -69,6 +70,8 @@ class _AppPitWallState extends ConsumerState<AppPitWall> {
     await Seeds.sembrar(db);
     // Repara verificaciones duplicadas creadas antes de garantizar unicidad.
     await ref.read(repoVerificacionesProvider).limpiarDuplicados();
+    // Congela el reglamento de las verificaciones anteriores a 1.23.0.
+    await rellenarReglasPendientes(db);
     // Equipos inscritos en una manga pero no en su prueba (salían fuera de
     // tesorería).
     await ref.read(repoInscripcionesProvider).repararInscripcionesPrueba();

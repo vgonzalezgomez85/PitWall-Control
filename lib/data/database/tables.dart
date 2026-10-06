@@ -337,6 +337,15 @@ class Verificaciones extends Table {
   IntColumn get credAplicadoP1 => integer().withDefault(const Constant(0))();
   IntColumn get credAplicadoP2 => integer().withDefault(const Constant(0))();
 
+  /// Reglamento con el que se verificó (JSON de `ReglasVerificacion`): peso
+  /// mínimo y créditos del coche, referencia del motor propio, anchura
+  /// máxima de eje, fabricantes permitidos y listas homologadas del
+  /// catálogo, tal como estaban al verificar. Una verificación validada (o
+  /// de un campeonato cerrado) se comprueba contra esto y no contra el
+  /// catálogo actual, para que cambiar el catálogo no altere el histórico.
+  /// Null = aún sin congelar (se usan los valores actuales).
+  TextColumn get reglasJson => text().nullable()();
+
   /// Sincronización por wifi entre Controls: última modificación (ms desde
   /// epoch) y nombre del dispositivo que la hizo. Gana la más reciente.
   IntColumn get modificadoMs => integer().nullable()();
@@ -409,6 +418,20 @@ class CatalogoCoches extends Table {
   /// Identificador estable para sincronizar con Google Sheets (columna ID de
   /// la hoja). Nulo si esta fila aún no se ha subido/bajado con ID.
   TextColumn get idExterno => text().nullable()();
+}
+
+/// Peso mínimo y créditos de un coche del catálogo en UN campeonato. El
+/// catálogo es global y cambia de una temporada a otra: si hay fila aquí,
+/// manda sobre el catálogo para ese campeonato. Un campo null = se usa el
+/// valor del catálogo.
+class CochesCampeonato extends Table {
+  IntColumn get campeonatoId => integer().references(Campeonatos, #id)();
+  IntColumn get cocheCatalogoId =>
+      integer().references(CatalogoCoches, #id)();
+  RealColumn get pesoMin => real().nullable()();
+  IntColumn get creditosCoche => integer().nullable()();
+  @override
+  Set<Column> get primaryKey => {campeonatoId, cocheCatalogoId};
 }
 
 class CatalogoMarcas extends Table {

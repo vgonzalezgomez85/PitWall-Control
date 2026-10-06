@@ -43,6 +43,7 @@ part 'app_database.g.dart';
     MovimientosTesoreria,
     MovimientosCreditos,
     CatalogoCoches,
+    CochesCampeonato,
     CatalogoMarcas,
     CatalogoLlantas,
     CatalogoBancadas,
@@ -65,7 +66,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 47;
+  int get schemaVersion => 48;
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -485,6 +486,15 @@ class AppDatabase extends _$AppDatabase {
             await _aplicar(() => customStatement(
                 'ALTER TABLE inscripciones_prueba ADD COLUMN tesoreria_modificada_ms INTEGER'));
             await _aplicar(() => m.createTable(borradosSync));
+          }
+          if (from < 48) {
+            // Congelar el reglamento de cada verificación y valores de los
+            // coches por campeonato (el catálogo deja de reescribir el
+            // histórico). Las verificaciones existentes se rellenan al
+            // arrancar (rellenarReglasPendientes).
+            await _aplicar(() => customStatement(
+                'ALTER TABLE verificaciones ADD COLUMN reglas_json TEXT'));
+            await _aplicar(() => m.createTable(cochesCampeonato));
           }
         },
       );

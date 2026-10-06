@@ -28,6 +28,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/proveedores.dart';
 import '../data/database/app_database.dart';
 import '../data/database/copas_en_prueba.dart';
+import '../domain/reglas_verificacion.dart';
 
 class GeneradorVerificacionesJson {
   GeneradorVerificacionesJson(this.ref);
@@ -85,7 +86,10 @@ class GeneradorVerificacionesJson {
             'copa': copasPrueba[eq.id] ?? eq.copa,
             'pilotos': pilotos,
           },
-          if (coche != null) 'coche': coche.nombre,
+          if (coche != null)
+            'coche': ReglasVerificacion.decodificar(v.reglasJson)
+                    ?.cocheNombre ??
+                coche.nombre,
           'validado': v.validado,
           'peso_inicial': v.pesoInicial,
           'peso_final': v.pesoFinal,

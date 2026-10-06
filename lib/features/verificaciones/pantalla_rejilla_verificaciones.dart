@@ -24,10 +24,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../domain/reglas_verificacion.dart';
 import '../campeonatos/selector_marcas_permitidas.dart';
 import '../../services/exportar_pdf.dart';
 import '../pruebas/repositorio_pruebas.dart';
 import 'exportar_rejilla_verificaciones.dart';
+import 'reglas_verificacion_bd.dart';
 
 /// Una fila de la rejilla: un equipo inscrito a la prueba, con su
 /// verificación si la tiene.
@@ -43,6 +45,10 @@ class FilaRejilla {
   final double? ejeDelMax;
   final double? ejeTraMax;
 
+  /// Reglamento congelado de la verificación (validada o de una prueba
+  /// cerrada); null = se comprueba con el reglamento actual.
+  final ReglasVerificacion? reglas;
+
   FilaRejilla({
     required this.equipo,
     required this.copa,
@@ -51,7 +57,12 @@ class FilaRejilla {
     required this.v,
     required this.ejeDelMax,
     required this.ejeTraMax,
+    this.reglas,
   });
+
+  /// Fabricantes permitidos: los congelados o los actuales del campeonato.
+  Set<String> marcasPermitidas(Campeonato c) =>
+      reglas?.marcasPermitidas ?? marcasPermitidasDe(c.marcasPermitidasJson);
 }
 
 /// Contenido de una celda: texto y, si está fuera de reglamento, el motivo.
@@ -130,6 +141,11 @@ Future<List<FilaRejilla>> cargarRejilla(
     return l is Map && l[lado] is num ? (l[lado] as num).toDouble() : null;
   }
 
+  final prueba = await (db.select(db.pruebas)
+        ..where((t) => t.id.equals(pruebaId)))
+      .getSingleOrNull();
+  final bloqueada = motivoBloqueo(activo, prueba) != null;
+
   final out = <FilaRejilla>[];
   for (final eq in equipos) {
     var ids = miembros
@@ -141,6 +157,10 @@ Future<List<FilaRejilla>> cargarRejilla(
     }
     final v = verifPorEquipo[eq.id];
     final copa = copaPrueba[eq.id] ?? eq.copa;
+    // Igual que en la ficha: validada o prueba cerrada = reglamento congelado.
+    final reglas = v != null && (v.validado || bloqueada)
+        ? ReglasVerificacion.decodificar(v.reglasJson)
+        : null;
     out.add(
       FilaRejilla(
         equipo: eq,
@@ -148,10 +168,11 @@ Future<List<FilaRejilla>> cargarRejilla(
         pilotos: ids.map((id) => nombrePiloto[id] ?? '?').join(' + '),
         coche: v?.cocheCatalogoId == null
             ? null
-            : nombreCoche[v!.cocheCatalogoId],
+            : (reglas?.cocheNombre ?? nombreCoche[v!.cocheCatalogoId]),
         v: v,
-        ejeDelMax: max(copa, 'del'),
-        ejeTraMax: max(copa, 'tra'),
+        ejeDelMax: reglas == null ? max(copa, 'del') : reglas.anchuraEjeDelMax,
+        ejeTraMax: reglas == null ? max(copa, 'tra') : reglas.anchuraEjeTraMax,
+        reglas: reglas,
       ),
     );
   }
@@ -313,7 +334,7 @@ final columnasRejilla = <ColumnaRejilla>[
       v?.pinonMarca,
       v?.pinonDientes,
       v?.pinonMaterial,
-      marcasPermitidasDe(c.marcasPermitidasJson),
+      f.marcasPermitidas(c),
     );
   }),
   ColumnaRejilla('Corona', 150, (f, c) {
@@ -322,7 +343,7 @@ final columnasRejilla = <ColumnaRejilla>[
       v?.coronaMarca,
       v?.coronaDientes,
       v?.coronaMaterial,
-      marcasPermitidasDe(c.marcasPermitidasJson),
+      f.marcasPermitidas(c),
     );
   }),
   ColumnaRejilla(
@@ -330,7 +351,7 @@ final columnasRejilla = <ColumnaRejilla>[
     140,
     (f, c) => _marca(
       f.v?.llantaDelMarca,
-      marcasPermitidasDe(c.marcasPermitidasJson),
+      f.marcasPermitidas(c),
       [f.v?.llantaDelDimension],
     ),
   ),
@@ -339,7 +360,7 @@ final columnasRejilla = <ColumnaRejilla>[
     140,
     (f, c) => _marca(
       f.v?.llantaTraMarca,
-      marcasPermitidasDe(c.marcasPermitidasJson),
+      f.marcasPermitidas(c),
       [f.v?.llantaTraDimension],
     ),
   ),
@@ -348,7 +369,7 @@ final columnasRejilla = <ColumnaRejilla>[
     110,
     (f, c) => _marca(
       f.v?.trencilla,
-      marcasPermitidasDe(c.marcasPermitidasJson),
+      f.marcasPermitidas(c),
       const [],
     ),
   ),

@@ -25,6 +25,8 @@ import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/seeds.dart';
 import '../creditos/repositorio_creditos.dart';
+import 'pantalla_coches_campeonato.dart';
+import 'repositorio_coches_campeonato.dart';
 import 'selector_marcas_permitidas.dart';
 import 'selector_tipo_motor.dart';
 
@@ -354,6 +356,14 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
           marcaTitulo: Value(mTitulo.isEmpty ? null : mTitulo),
           marcaLema: Value(mLema.isEmpty ? null : mLema),
         ));
+        // Al finalizar, el peso mínimo y los créditos de sus coches quedan
+        // fijados con los del catálogo (lo ya fijado no se toca): cambiar
+        // el catálogo para otra temporada no altera este campeonato.
+        if (_finalizado && !_finalizadoOriginal) {
+          await ref
+              .read(repoCochesCampeonatoProvider)
+              .fijarDesdeCatalogo(widget.campeonatoId!);
+        }
         // Acaba de marcarse como finalizado: ofrecer la bonificación de cierre.
         if (_usaCreditos && _finalizado && !_finalizadoOriginal && mounted) {
           await _ofrecerBonificacionCierre(widget.campeonatoId!);
@@ -441,6 +451,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
     );
     if (ok != true) return;
     final db = ref.read(dbProvider);
+    await ref
+        .read(repoCochesCampeonatoProvider)
+        .quitarTodos(widget.campeonatoId!);
     await (db.delete(db.campeonatos)
           ..where((t) => t.id.equals(widget.campeonatoId!)))
         .go();
@@ -757,6 +770,28 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 return null;
               },
             ),
+            if (!esNuevo) ...[
+              const SizedBox(height: 28),
+              Text('Coches (verificación)',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.w700,
+                      )),
+              const SizedBox(height: 4),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.directions_car_outlined),
+                title: Text(_usaCreditos
+                    ? 'Peso mínimo y créditos en este campeonato'
+                    : 'Peso mínimo en este campeonato'),
+                subtitle: const Text('Fija los valores de los coches para que '
+                    'los cambios del catálogo no afecten a este campeonato.'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => PantallaCochesCampeonato(
+                        campeonatoId: widget.campeonatoId!))),
+              ),
+            ],
             const SizedBox(height: 28),
             Text('Motor (verificación)',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -871,8 +906,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 onChanged: (v) => setState(() => _finalizado = v),
                 title: const Text('Campeonato finalizado'),
                 subtitle: const Text(
-                    'Temporada cerrada: la clasificación ordena por netos y se '
-                    'habilita la bonificación de cierre.'),
+                    'Temporada cerrada: la clasificación ordena por netos, se '
+                    'habilita la bonificación de cierre y sus verificaciones '
+                    'quedan bloqueadas (solo lectura).'),
               ),
             const SizedBox(height: 24),
             FilledButton.icon(

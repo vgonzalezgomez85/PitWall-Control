@@ -30,36 +30,17 @@ import 'package:path/path.dart' as p;
 import '../../core/proveedores.dart';
 import '../../core/widgets/selector_buscable.dart';
 import '../../data/database/app_database.dart';
+import '../../domain/reglas_verificacion.dart';
 import '../../domain/validador_verificacion.dart';
 import '../../services/fotos_verificacion.dart';
-import '../campeonatos/selector_marcas_permitidas.dart';
 import '../equipos/repositorio_equipos.dart';
 import '../pruebas/repositorio_inscripciones_prueba.dart';
 import '../sincronizacion/dispositivo_sync.dart';
 import '../tesoreria/fila_pago_equipo.dart';
 import '../tesoreria/repositorio_tesoreria.dart';
 import 'frecuencias_verificacion.dart';
+import 'reglas_verificacion_bd.dart';
 import 'repositorio_verificaciones.dart';
-
-/// "12" si min==max (fijo), "24–30" si es rango.
-
-/// Anchura máxima de eje (mm) configurada para [copa] en el JSON
-/// `{"GT": {"del": 65.0, "tra": 63.0}, ...}` del campeonato: (delantero,
-/// trasero). Cada valor es null si no hay copa o no está configurado ese
-/// lado (no se comprueba).
-(double?, double?) _anchuraEjeMax(String? anchuraEjeJson, String? copa) {
-  if (anchuraEjeJson == null || copa == null) return (null, null);
-  try {
-    final raw = jsonDecode(anchuraEjeJson);
-    if (raw is Map && raw[copa] is Map) {
-      final lados = raw[copa] as Map;
-      final del = lados['del'] == null ? null : (lados['del'] as num).toDouble();
-      final tra = lados['tra'] == null ? null : (lados['tra'] as num).toDouble();
-      return (del, tra);
-    }
-  } catch (_) {}
-  return (null, null);
-}
 
 /// Dientes distintos del catálogo de engranajes ya filtrado (tipo + copa).
 List<int> _dientesDe(AsyncValue<List<CatalogoEngranaje>> async) {
@@ -145,6 +126,25 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   String? _trencilla;
 
   bool _validada = false;
+  /// Estado de validación tal como está guardado (no el del checkbox).
+  bool _validadaGuardada = false;
+
+  /// Reglamento guardado en la verificación (null = aún sin congelar) y el
+  /// actual del catálogo/campeonato. Ver [_reglas].
+  ReglasVerificacion? _reglasGuardadas;
+  ReglasVerificacion? _reglasVivas;
+  int _turnoReglas = 0;
+  /// Fila del catálogo del coche elegido, aunque ya no esté activo o no
+  /// tenga la copa (verificaciones antiguas).
+  CatalogoCoche? _cocheFila;
+  /// Peso mínimo y créditos de los coches fijados en el campeonato.
+  Map<int, CochesCampeonatoData> _ajustesCoches = {};
+
+  /// Bloqueo (campeonato finalizado o prueba terminada): la verificación
+  /// se abre en solo lectura hasta que se desbloquea a propósito.
+  String? _motivoBloqueo;
+  bool _desbloqueada = false;
+
   bool _cargando = true;
   bool _guardando = false;
 
@@ -187,9 +187,71 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
         _pinonDiametro, _coronaDiametro, _suspension, _observaciones,
       ];
 
+  bool get _soloLectura => _motivoBloqueo != null && !_desbloqueada;
+
+  /// Una verificación validada, o de un campeonato/prueba cerrados, se
+  /// comprueba con el reglamento que se guardó al verificar, no con el
+  /// catálogo actual.
+  bool get _congelada =>
+      _reglasGuardadas != null &&
+      (_validadaGuardada || _motivoBloqueo != null);
+
+  String? get _copaActual => _copaPrueba ?? _equipo?.copa;
+
+  /// Motor que cuenta para el reglamento (solo el motor propio del catálogo).
+  String? get _motorParaReglas {
+    final m = _motor.text.trim();
+    return _motorTipo == 'PROPIO' && m.isNotEmpty ? m : null;
+  }
+
+  /// Reglamento efectivo: el congelado si lo está (rehaciendo solo la parte
+  /// que el verificador haya cambiado: coche, motor o copa), si no el actual.
+  ReglasVerificacion? get _reglas {
+    final g = _reglasGuardadas;
+    final vivas = _reglasVivas;
+    if (!_congelada || g == null) return vivas;
+    if (vivas == null) return g;
+    return g.combinar(
+      vivas,
+      coche: g.cocheId != _cocheId,
+      motor: g.motor != _motorParaReglas,
+      copa: g.copa != _copaActual,
+    );
+  }
+
+  /// Recalcula el reglamento actual (catálogo + campeonato) para el coche,
+  /// motor y copa que hay ahora en la ficha.
+  Future<void> _refrescarReglas() async {
+    final turno = ++_turnoReglas;
+    final db = ref.read(dbProvider);
+    final r = await CargadorReglas(db).actuales(
+      mangaId: widget.mangaId,
+      equipoId: widget.equipoId,
+      cocheId: _cocheId,
+      motorTipo: _motorTipo,
+      motor: _motor.text,
+      copa: _copaActual,
+    );
+    final coche = _cocheId == null
+        ? null
+        : await (db.select(db.catalogoCoches)
+              ..where((t) => t.id.equals(_cocheId!)))
+            .getSingleOrNull();
+    if (!mounted || turno != _turnoReglas) return;
+    setState(() {
+      _reglasVivas = r;
+      _cocheFila = coche;
+    });
+  }
+
+  double _pesoMinDe(CatalogoCoche c) =>
+      _ajustesCoches[c.id]?.pesoMin ?? c.pesoMin;
+  int _creditosDe(CatalogoCoche c) =>
+      _ajustesCoches[c.id]?.creditosCoche ?? c.creditosCoche;
+
   /// Programa un autoguardado de borrador tras una breve pausa sin cambios.
   void _onCambio() {
-    if (_cargando) return;
+    if (_cargando || _soloLectura) return;
     _dirty = true;
     if (_estado != _EstadoAuto.guardando && mounted) {
       setState(() => _estado = _EstadoAuto.pendiente);
@@ -296,9 +358,11 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     _cambiar(() => _motor.text = '$elegido');
   }
 
-  void _cambiar(VoidCallback fn) {
+  /// [reglas]: el cambio afecta al reglamento (coche, motor o copa).
+  void _cambiar(VoidCallback fn, {bool reglas = false}) {
     setState(fn);
     _onCambio();
+    if (reglas) _refrescarReglas();
   }
 
   Future<void> _autoguardar() async {
@@ -336,6 +400,15 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               ..where((t) => t.id.equals(prueba.campeonatoId)))
             .getSingleOrNull();
       }
+      _motivoBloqueo = motivoBloqueo(_campeonato, prueba);
+    }
+    if (_campeonato != null) {
+      _ajustesCoches = {
+        for (final a in await (db.select(db.cochesCampeonato)
+              ..where((t) => t.campeonatoId.equals(_campeonato!.id)))
+            .get())
+          a.cocheCatalogoId: a,
+      };
     }
     _equipo = await (db.select(db.equipos)
           ..where((t) => t.id.equals(widget.equipoId)))
@@ -349,7 +422,25 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           .getSingleOrNull();
       _copaPrueba = ins?.copa;
     }
-    // Cargar pilotos del equipo y sus créditos en el campeonato de la prueba
+    await _cargarCreditos();
+    if (widget.verificacionId != null) {
+      final v = await (db.select(db.verificaciones)
+            ..where((t) => t.id.equals(widget.verificacionId!)))
+          .getSingle();
+      _aplicar(v);
+    }
+    // Si el campeonato fija el tipo de motor, manda sobre lo guardado.
+    final tipoFijo =
+        (_campeonato ?? ref.read(campeonatoActivoProvider))?.tipoMotor;
+    if (tipoFijo != null) _motorTipo = tipoFijo;
+    await _refrescarReglas();
+    if (mounted) setState(() => _cargando = false);
+    _vigilar();
+  }
+
+  /// Pilotos del equipo y sus créditos en el campeonato de la prueba.
+  Future<void> _cargarCreditos() async {
+    final db = ref.read(dbProvider);
     final activo = _campeonato ?? ref.read(campeonatoActivoProvider);
     _piloto1 = await (db.select(db.pilotos)
           ..where((t) => t.id.equals(_equipo!.piloto1Id)))
@@ -375,18 +466,6 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
         _creditosP2 = pc2?.creditosActuales ?? 0;
       }
     }
-    if (widget.verificacionId != null) {
-      final v = await (db.select(db.verificaciones)
-            ..where((t) => t.id.equals(widget.verificacionId!)))
-          .getSingle();
-      _aplicar(v);
-    }
-    // Si el campeonato fija el tipo de motor, manda sobre lo guardado.
-    final tipoFijo =
-        (_campeonato ?? ref.read(campeonatoActivoProvider))?.tipoMotor;
-    if (tipoFijo != null) _motorTipo = tipoFijo;
-    if (mounted) setState(() => _cargando = false);
-    _vigilar();
   }
 
   /// Vuelca en el formulario los datos guardados de [v].
@@ -424,6 +503,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     _neumatico = v.neumatico;
     _observaciones.text = v.observaciones ?? '';
     _validada = v.validado;
+    _validadaGuardada = v.validado;
+    _reglasGuardadas = ReglasVerificacion.decodificar(v.reglasJson);
     try {
       final raw = json.decode(v.fotosJson);
       if (raw is List) {
@@ -498,6 +579,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     _dirty = false;
     _cargando = false;
     if (mounted) setState(() => _estado = _EstadoAuto.guardado);
+    _refrescarReglas();
   }
 
   Future<void> _anadirFoto(ImageSource source) async {
@@ -589,14 +671,11 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     required bool validado,
     bool recalcularCreditos = true,
   }) async {
-    final db = ref.read(dbProvider);
-    double? pesoMin;
-    if (_cocheId != null) {
-      final c = await (db.select(db.catalogoCoches)
-            ..where((t) => t.id.equals(_cocheId!)))
-          .getSingleOrNull();
-      pesoMin = c?.pesoMin;
-    }
+    // Reglamento con el que queda la verificación: el actual mientras es un
+    // borrador; el congelado (con lo que se haya cambiado) si ya lo estaba.
+    await _refrescarReglas();
+    final reglas = _reglas;
+    final pesoMin = _cocheId == null ? null : reglas?.pesoMin;
     final id = await ref.read(repoVerificacionesProvider).guardar(
           id: _verifId,
           recalcularCreditos: recalcularCreditos,
@@ -639,8 +718,11 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           observaciones: _vacio(_observaciones),
           validado: validado,
           fotosJson: json.encode(_fotos),
+          reglasJson: reglas?.codificar(),
         );
     _verifId = id;
+    _reglasGuardadas = reglas;
+    _validadaGuardada = validado;
     return id;
   }
 
@@ -722,7 +804,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                           pruebaId: pruebaId,
                           equipoId: widget.equipoId,
                           copa: null);
-                  if (mounted) setState(() => _copaPrueba = null);
+                  if (mounted) _alCambiarCopa(null);
                   if (ctx.mounted) Navigator.pop(ctx);
                 },
                 child: const Text('Usar la del equipo'),
@@ -741,7 +823,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               pruebaId: pruebaId,
                               equipoId: widget.equipoId,
                               copa: seleccion);
-                      if (mounted) setState(() => _copaPrueba = seleccion);
+                      if (mounted) _alCambiarCopa(seleccion);
                       if (ctx.mounted) Navigator.pop(ctx);
                     },
               child: const Text('Guardar'),
@@ -750,6 +832,87 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
         ),
       ),
     );
+  }
+
+  /// La copa en la prueba cambia el reglamento (anchura de eje, llantas,
+  /// neumáticos…): se recalcula y, si ya hay verificación, se guarda.
+  void _alCambiarCopa(String? copa) {
+    setState(() => _copaPrueba = copa);
+    if (_verifId != null) _onCambio();
+    _refrescarReglas();
+  }
+
+  /// Pasa una verificación congelada al reglamento actual (catálogo y
+  /// campeonato de hoy), previa confirmación. Si estaba validada, también
+  /// se recalculan sus créditos.
+  Future<void> _usarReglamentoActual(List<String> diferencias) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Usar el reglamento actual'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Esta verificación se comprobará con los valores de '
+                'hoy del catálogo y del campeonato en lugar de con los que '
+                'tenía al verificarla:'),
+            const SizedBox(height: 8),
+            for (final d in diferencias) Text('• $d'),
+            if (_validadaGuardada) ...[
+              const SizedBox(height: 8),
+              const Text('Como está validada, se recalcularán sus créditos.'),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Usar el actual')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    _debounce?.cancel();
+    setState(() {
+      _reglasGuardadas = _reglasVivas;
+      _estado = _EstadoAuto.guardando;
+    });
+    try {
+      await _persistir(validado: _validadaGuardada);
+      _dirty = false;
+      await _cargarCreditos();
+      if (mounted) setState(() => _estado = _EstadoAuto.guardado);
+    } catch (e) {
+      if (mounted) setState(() => _estado = _EstadoAuto.error);
+    }
+  }
+
+  /// Quita el bloqueo de solo lectura (campeonato finalizado / prueba
+  /// terminada) para corregir algo, previa confirmación.
+  Future<void> _desbloquear() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Desbloquear la verificación'),
+        content: Text('${_motivoBloqueo ?? ''} Sus verificaciones están '
+            'bloqueadas para no cambiarlas sin querer.\n\n'
+            'Si la desbloqueas, los cambios se guardarán como siempre. '
+            'Seguirá comprobándose con el reglamento con el que se verificó.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Desbloquear')),
+        ],
+      ),
+    );
+    if (ok == true && mounted) setState(() => _desbloqueada = true);
   }
 
   @override
@@ -762,8 +925,6 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     // Los desplegables ponen primero lo más elegido en verificaciones previas.
     final uso = ref.watch(frecuenciasVerificacionProvider).asData?.value ??
         FrecuenciasVerificacion.vacia;
-    // ignore: unused_local_variable
-    final bancadasAsync = ref.watch(bancadasProvider);
     // Filtramos coches, bancadas, motores, neumáticos y llantas por la copa del equipo
     // Copa que corre el equipo EN esta prueba (snapshot); cae a la copa actual.
     final copaEquipo = _copaPrueba ?? _equipo?.copa;
@@ -771,12 +932,13 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     final llantasTraAsync = ref.watch(llantasTraFiltradasProvider(copaEquipo));
     final neumaticosAsync = ref.watch(neumaticosFiltradosProvider(copaEquipo));
     final campActivo = _campeonato ?? ref.watch(campeonatoActivoProvider);
-    final (anchuraEjeDelMax, anchuraEjeTraMax) =
-        _anchuraEjeMax(campActivo?.anchuraEjeJson, copaEquipo);
+    // Reglamento contra el que se comprueba (congelado o actual).
+    final reglas = _reglas;
+    final anchuraEjeDelMax = reglas?.anchuraEjeDelMax;
+    final anchuraEjeTraMax = reglas?.anchuraEjeTraMax;
     // Limitar fabricante: los desplegables de marca solo ofrecen las
     // permitidas por el campeonato (vacío = todas las del catálogo).
-    final marcasPermitidas =
-        marcasPermitidasDe(campActivo?.marcasPermitidasJson);
+    final marcasPermitidas = reglas?.marcasPermitidas ?? const <String>{};
     final marcasSelAsync = marcasPermitidas.isEmpty
         ? marcasAsync
         : marcasAsync.whenData((_) => marcasPermitidas);
@@ -819,7 +981,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             Text(_equipo?.nombre ?? 'Verificación'),
             if (_equipo != null)
               InkWell(
-                onTap: _pruebaId == null ? null : _editarCopa,
+                onTap: _pruebaId == null || _soloLectura ? null : _editarCopa,
                 borderRadius: BorderRadius.circular(4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -831,7 +993,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             fontWeight: FontWeight.w600,
                           ),
                     ),
-                    if (_pruebaId != null) ...[
+                    if (_pruebaId != null && !_soloLectura) ...[
                       const SizedBox(width: 4),
                       Icon(Icons.edit_outlined,
                           size: 14,
@@ -844,7 +1006,12 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
         ),
         actions: [
           _IndicadorGuardado(estado: _estado),
-          if (_verifId != null)
+          if (_soloLectura)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Icon(Icons.lock_outline),
+            ),
+          if (_verifId != null && !_soloLectura)
             IconButton(
               tooltip: 'Eliminar verificación',
               icon: const Icon(Icons.delete_outline),
@@ -883,7 +1050,16 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
       body: cochesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (coches) {
+        data: (cochesCopa) {
+          // El coche guardado sigue apareciendo aunque ya no esté activo o
+          // no tenga la copa (verificaciones antiguas).
+          final coches = [
+            ...cochesCopa,
+            if (_cocheFila != null &&
+                _cocheFila!.id == _cocheId &&
+                !cochesCopa.any((c) => c.id == _cocheId))
+              _cocheFila!,
+          ];
           final cocheSel = coches.firstWhere(
             (c) => c.id == _cocheId,
             orElse: () => CatalogoCoche(
@@ -895,15 +1071,15 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           final datos = DatosVerificacion(
             pesoInicial: _parseDouble(_pesoIni.text),
             pesoFinal: _parseDouble(_pesoFin.text),
-            pesoMinCoche: cocheSel.id < 0 ? null : cocheSel.pesoMin,
-            creditosCoche: cocheSel.id < 0 ? null : cocheSel.creditosCoche,
+            pesoMinCoche: _cocheId == null ? null : reglas?.pesoMin,
+            creditosCoche: _cocheId == null ? null : reglas?.creditosCoche,
             motor: _vacio(_motor),
             motorTipo: _motorTipo,
             motorRpm: _parseInt(_motorRpm.text),
             motorUms: _parseDouble(_motorUms.text),
-            motorRefNombre: motorSel?.nombre,
-            motorRefRpm: motorSel?.rpm,
-            motorRefGauss: motorSel?.gauss,
+            motorRefNombre: reglas?.motorRefNombre,
+            motorRefRpm: reglas?.motorRefRpm,
+            motorRefGauss: reglas?.motorRefGauss,
             alturaMotorConforme: _alturaMotorConforme,
             anchuraEjeDel: _parseDouble(_anchuraEjeDel.text),
             anchuraEjeDelMax: anchuraEjeDelMax,
@@ -922,21 +1098,12 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             bancada: _bancada,
             chasis: _chasis,
             neumatico: _neumatico,
-            marcasValidas:
-                marcasAsync.maybeWhen(data: (d) => d, orElse: () => {}),
+            marcasValidas: reglas?.marcasValidas ?? const {},
             marcasPermitidas: marcasPermitidas,
-            llantasDelValidas: llantasDelAsync.maybeWhen(
-                data: (d) => d.map((l) => l.dimension).toSet(),
-                orElse: () => {}),
-            llantasTraValidas: llantasTraAsync.maybeWhen(
-                data: (d) => d.map((l) => l.dimension).toSet(),
-                orElse: () => {}),
-            bancadasValidas: bancadasAsync.maybeWhen(
-                data: (d) => d.map((b) => b.nombre).toSet(),
-                orElse: () => {}),
-            neumaticosValidos: neumaticosAsync.maybeWhen(
-                data: (d) => d.map((n) => n.nombre).toSet(),
-                orElse: () => {}),
+            llantasDelValidas: reglas?.llantasDelValidas ?? const {},
+            llantasTraValidas: reglas?.llantasTraValidas ?? const {},
+            bancadasValidas: reglas?.bancadasValidas ?? const {},
+            neumaticosValidos: reglas?.neumaticosValidos ?? const {},
           );
           final res = ValidadorVerificacion.validar(datos);
 
@@ -997,9 +1164,37 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           };
 
           final usaCreditos = campActivo?.usaCreditos ?? false;
+          final diferencias =
+              _congelada && reglas != null && _reglasVivas != null
+                  ? reglas.diferenciasCon(_reglasVivas!)
+                  : const <String>[];
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              if (_motivoBloqueo != null) ...[
+                _AvisoBloqueo(
+                  motivo: _motivoBloqueo!,
+                  soloLectura: _soloLectura,
+                  onDesbloquear: _desbloquear,
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (_congelada && reglas != null) ...[
+                _AvisoReglamento(
+                  reglas: reglas,
+                  diferencias: diferencias,
+                  onUsarActual: _soloLectura || diferencias.isEmpty
+                      ? null
+                      : () => _usarReglamentoActual(diferencias),
+                ),
+                const SizedBox(height: 12),
+              ],
+              // Solo lectura: se ve todo, pero no se puede tocar nada.
+              IgnorePointer(
+                ignoring: _soloLectura,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
               if (usaCreditos && _piloto1 != null)
                 _BloqueEquipoCreditos(
                   equipo: _equipo!,
@@ -1007,7 +1202,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   creditosP1: _creditosP1,
                   piloto2: _piloto2,
                   creditosP2: _creditosP2,
-                  coche: cocheSel.id < 0 ? null : cocheSel,
+                  creditosCoche: cocheSel.id < 0 ? null : reglas?.creditosCoche,
                   validada: _validada,
                 ),
               if (usaCreditos && _piloto1 != null)
@@ -1050,8 +1245,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   opciones: uso.ordenar('coche', coches, (c) => c.id),
                   etiquetaOpcion: (c) => c.nombre,
                   subtituloOpcion: (c) =>
-                      '${c.pesoMin.toStringAsFixed(2)}g · ${c.creditosCoche >= 0 ? "+" : ""}${c.creditosCoche} créd',
-                  onCambio: (c) => _cambiar(() => _cocheId = c?.id),
+                      '${_pesoMinDe(c).toStringAsFixed(2)}g · ${_creditosDe(c) >= 0 ? "+" : ""}${_creditosDe(c)} créd',
+                  onCambio: (c) =>
+                      _cambiar(() => _cocheId = c?.id, reglas: true),
                 ),
                 if (cocheSel.id >= 0) ...[
                   const SizedBox(height: 8),
@@ -1077,9 +1273,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                           controller: _pesoIni,
                           decoration: InputDecoration(
                             labelText: 'Peso carrocería',
-                            helperText: cocheSel.id < 0
+                            helperText: cocheSel.id < 0 || reglas?.pesoMin == null
                                 ? null
-                                : 'Mínimo: ${cocheSel.pesoMin.toStringAsFixed(2)}g',
+                                : 'Mínimo: ${reglas!.pesoMin!.toStringAsFixed(2)}g',
                           ),
                           keyboardType:
                               const TextInputType.numberWithOptions(
@@ -1165,7 +1361,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                           ],
                           selected: {_motorTipo},
                           onSelectionChanged: (s) {
-                            _cambiar(() => _motorTipo = s.first);
+                            _cambiar(() => _motorTipo = s.first, reglas: true);
                           },
                         ),
                         if (campActivo?.tipoMotor == null)
@@ -1197,16 +1393,18 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             etiqueta: 'Motor del catálogo',
                             titulo: 'Elegir motor',
                             icono: Icons.bolt_outlined,
-                            helper: motorSel == null
-                                ? 'Motores homologados para la copa $copaEquipo'
-                                : 'Ref: ${motorSel.rpm ?? "—"} RPM · ${motorSel.gauss ?? "—"} gauss',
+                            helper: reglas?.motorRefNombre != null
+                                ? '${motorSel == null ? '${reglas!.motorRefNombre} (ya no está en el catálogo) · ' : ''}'
+                                    'Ref: ${reglas!.motorRefRpm ?? "—"} RPM · ${reglas.motorRefGauss ?? "—"} gauss'
+                                : 'Motores homologados para la copa $copaEquipo',
                             valor: motorSel,
                             opciones: uso.ordenar('motor', motores, (m) => m.nombre),
                             etiquetaOpcion: (m) => m.nombre,
                             subtituloOpcion: (m) =>
                                 '${m.rpm ?? "—"} RPM · ${m.gauss ?? "—"} gauss',
                             onCambio: (m) => _cambiar(
-                                () => _motor.text = m?.nombre ?? ''),
+                                () => _motor.text = m?.nombre ?? '',
+                                reglas: true),
                           ),
                           const SizedBox(height: 8),
                           Row(
@@ -1218,9 +1416,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                     labelText: 'RPM',
                                     prefixIcon:
                                         const Icon(Icons.speed_outlined),
-                                    helperText: motorSel?.rpm == null
+                                    helperText: reglas?.motorRefRpm == null
                                         ? null
-                                        : 'Máx ${motorSel!.rpm}',
+                                        : 'Máx ${reglas!.motorRefRpm}',
                                     // ✓/✗ en vivo contra la referencia del
                                     // catálogo (la infracción real, si la
                                     // hay, también sale en el resumen de
@@ -1228,7 +1426,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                     suffixIcon: _iconoCumpleMotor(
                                         cs,
                                         _parseInt(_motorRpm.text),
-                                        motorSel?.rpm,
+                                        reglas?.motorRefRpm,
                                         maximo: true),
                                   ),
                                   keyboardType: TextInputType.number,
@@ -1241,13 +1439,13 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                   controller: _motorUms,
                                   decoration: InputDecoration(
                                     labelText: 'uMs',
-                                    helperText: motorSel?.gauss == null
+                                    helperText: reglas?.motorRefGauss == null
                                         ? null
-                                        : 'Máx ${motorSel!.gauss}',
+                                        : 'Máx ${reglas!.motorRefGauss}',
                                     suffixIcon: _iconoCumpleMotor(
                                         cs,
                                         _parseDouble(_motorUms.text),
-                                        motorSel?.gauss,
+                                        reglas?.motorRefGauss,
                                         maximo: true),
                                   ),
                                   keyboardType:
@@ -1777,6 +1975,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   style: TextStyle(color: cs.error, fontSize: 13),
                 ),
               ],
+                  ],
+                ),
+              ),
             ],
           );
         },
@@ -1894,6 +2095,125 @@ class _IndicadorGuardado extends StatelessWidget {
           const SizedBox(width: 6),
           Text(texto, style: TextStyle(color: color, fontSize: 13)),
         ],
+      ),
+    );
+  }
+}
+
+// ----- Bloqueo y reglamento congelado -----
+
+/// Aviso de verificación bloqueada (campeonato finalizado o prueba
+/// terminada): en solo lectura, con botón para desbloquear.
+class _AvisoBloqueo extends StatelessWidget {
+  const _AvisoBloqueo({
+    required this.motivo,
+    required this.soloLectura,
+    required this.onDesbloquear,
+  });
+  final String motivo;
+  final bool soloLectura;
+  final VoidCallback onDesbloquear;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final oscuro = Theme.of(context).brightness == Brightness.dark;
+    final fondo = soloLectura
+        ? cs.surfaceContainerHighest
+        : (oscuro ? Colors.orange.shade900 : Colors.orange.shade50);
+    final texto = soloLectura
+        ? cs.onSurface
+        : (oscuro ? Colors.orange.shade50 : Colors.orange.shade900);
+    return Card(
+      color: fondo,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Icon(soloLectura ? Icons.lock_outline : Icons.lock_open_outlined,
+                color: texto),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                soloLectura
+                    ? '$motivo Verificación en solo lectura.'
+                    : '$motivo Desbloqueada: los cambios se guardan.',
+                style: TextStyle(color: texto),
+              ),
+            ),
+            if (soloLectura)
+              TextButton.icon(
+                onPressed: onDesbloquear,
+                icon: const Icon(Icons.lock_open_outlined),
+                label: const Text('Desbloquear'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Reglamento congelado: cuándo se tomó y, si el catálogo o el campeonato
+/// han cambiado desde entonces, qué ha cambiado (sin aplicarlo).
+class _AvisoReglamento extends StatelessWidget {
+  const _AvisoReglamento({
+    required this.reglas,
+    required this.diferencias,
+    required this.onUsarActual,
+  });
+  final ReglasVerificacion reglas;
+  final List<String> diferencias;
+  final VoidCallback? onUsarActual;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final fecha = reglas.fechaMs == null
+        ? null
+        : DateFormat('dd/MM/yyyy HH:mm')
+            .format(DateTime.fromMillisecondsSinceEpoch(reglas.fechaMs!));
+    return Card(
+      color: cs.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.ac_unit, size: 18, color: cs.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Reglamento congelado${fecha == null ? '' : ' el $fecha'}: '
+                    'se comprueba con los valores de cuando se verificó.',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            if (diferencias.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text('Ha cambiado desde entonces (no se aplica):',
+                  style: TextStyle(color: cs.outline, fontSize: 13)),
+              const SizedBox(height: 4),
+              for (final d in diferencias)
+                Text('• $d', style: const TextStyle(fontSize: 13)),
+              if (onUsarActual != null) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: onUsarActual,
+                    icon: const Icon(Icons.update),
+                    label: const Text('Usar el reglamento actual'),
+                  ),
+                ),
+              ],
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -2330,7 +2650,7 @@ class _BloqueEquipoCreditos extends StatelessWidget {
     required this.creditosP1,
     this.piloto2,
     required this.creditosP2,
-    this.coche,
+    this.creditosCoche,
     this.validada = false,
   });
 
@@ -2339,7 +2659,8 @@ class _BloqueEquipoCreditos extends StatelessWidget {
   final int creditosP1;
   final Piloto? piloto2;
   final int creditosP2;
-  final CatalogoCoche? coche;
+  /// Créditos del coche elegido (del reglamento de la verificación).
+  final int? creditosCoche;
   final bool validada;
 
   @override
@@ -2350,9 +2671,10 @@ class _BloqueEquipoCreditos extends StatelessWidget {
     // Previsión de créditos al validar con el coche seleccionado.
     // Si ya está validada, los saldos mostrados ya incluyen el descuento.
     RepartoCreditos? reparto;
-    if (!validada && coche != null && coche!.creditosCoche != 0) {
+    final valor = creditosCoche ?? 0;
+    if (!validada && valor != 0) {
       reparto = repartirCreditos(
-        valor: coche!.creditosCoche,
+        valor: valor,
         disp1: creditosP1,
         disp2: piloto2 == null ? null : creditosP2,
       );
@@ -2419,7 +2741,7 @@ class _BloqueEquipoCreditos extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    coche!.creditosCoche > 0
+                    valor > 0
                         ? Icons.trending_up
                         : Icons.trending_down,
                     size: 18,
@@ -2429,7 +2751,7 @@ class _BloqueEquipoCreditos extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'Con este coche '
-                      '(${coche!.creditosCoche > 0 ? '+' : ''}${coche!.creditosCoche} créd): '
+                      '(${valor > 0 ? '+' : ''}$valor créd): '
                       '${piloto1.nombre} $creditosP1→${creditosP1 + reparto.delta1}'
                       '${piloto2 == null ? '' : ' · ${piloto2!.nombre} $creditosP2→${creditosP2 + reparto.delta2}'}'
                       ' · Total $total→${total + reparto.delta1 + reparto.delta2}',

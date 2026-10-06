@@ -297,6 +297,9 @@ class RepositorioVerificacionLibre {
       await (db.delete(db.equipos)
             ..where((t) => t.campeonatoId.equals(s.reglamento.id)))
           .go();
+      await (db.delete(db.cochesCampeonato)
+            ..where((t) => t.campeonatoId.equals(s.reglamento.id)))
+          .go();
       await (db.delete(db.campeonatos)
             ..where((t) => t.id.equals(s.reglamento.id)))
           .go();

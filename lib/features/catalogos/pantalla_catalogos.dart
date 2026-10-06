@@ -611,8 +611,11 @@ class _TabCochesState extends ConsumerState<_TabCoches> {
               ),
               TextField(
                 controller: peso,
-                decoration:
-                    const InputDecoration(labelText: 'Peso mínimo (g) *'),
+                decoration: const InputDecoration(
+                    labelText: 'Peso mínimo (g) *',
+                    helperText: 'No cambia las verificaciones validadas ni '
+                        'los campeonatos con valores fijados',
+                    helperMaxLines: 2),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
               ),

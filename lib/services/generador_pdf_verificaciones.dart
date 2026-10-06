@@ -28,27 +28,12 @@ import 'package:pdf/widgets.dart' as pw;
 import '../core/proveedores.dart';
 import '../data/database/app_database.dart';
 import '../data/database/copas_en_prueba.dart';
+import '../domain/reglas_verificacion.dart';
+import '../features/verificaciones/reglas_verificacion_bd.dart';
 import 'exportar_config.dart';
 import 'fotos_verificacion.dart';
 import 'pdf_marca.dart';
 import 'pdf_util.dart';
-
-/// Anchura máxima de eje (mm) configurada para [copa] en el JSON
-/// `{"GT": {"del": 65.0, "tra": 63.0}, ...}` del campeonato: (delantero,
-/// trasero). Null en el que no esté configurado (no se comprueba).
-(double?, double?) _anchuraEjeMax(String? anchuraEjeJson, String? copa) {
-  if (anchuraEjeJson == null || copa == null) return (null, null);
-  try {
-    final raw = jsonDecode(anchuraEjeJson);
-    if (raw is Map && raw[copa] is Map) {
-      final lados = raw[copa] as Map;
-      final del = lados['del'] == null ? null : (lados['del'] as num).toDouble();
-      final tra = lados['tra'] == null ? null : (lados['tra'] as num).toDouble();
-      return (del, tra);
-    }
-  } catch (_) {}
-  return (null, null);
-}
 
 /// Dimensión máxima (en px) de las fotos incrustadas en el PDF. Las fotos
 /// solo se muestran como miniaturas de 110x110pt, así que no hace falta
@@ -153,6 +138,7 @@ class GeneradorPdfVerificaciones {
     for (final v in verifs) {
       verifPorEquipo[v.equipoId] ??= v;
     }
+    final bloqueada = motivoBloqueo(campeonato, prueba) != null;
 
     // Datos enriquecidos por equipo
     final lista = <_VerifData>[];
@@ -203,8 +189,13 @@ class GeneradorPdfVerificaciones {
         }
       } catch (_) {}
 
-      final (anchuraEjeDelMax, anchuraEjeTraMax) =
-          _anchuraEjeMax(campeonato?.anchuraEjeJson, copa);
+      // Validada o prueba cerrada: con el reglamento con que se verificó.
+      final reglas = v.validado || bloqueada
+          ? ReglasVerificacion.decodificar(v.reglasJson)
+          : null;
+      final (anchuraEjeDelMax, anchuraEjeTraMax) = reglas == null
+          ? anchuraEjeMaxDe(campeonato?.anchuraEjeJson, copa)
+          : (reglas.anchuraEjeDelMax, reglas.anchuraEjeTraMax);
 
       String motor = '-';
       if (v.motorTipo == 'PROPIO') {
@@ -240,7 +231,7 @@ class GeneradorPdfVerificaciones {
         equipo: eq.nombre,
         copa: copa,
         pilotos: nombresMiembros.join(' + '),
-        coche: coche?.nombre,
+        coche: reglas?.cocheNombre ?? coche?.nombre,
         filas: [
           _Vrow(t('Peso carrocería'), _medidaConMinimo(v.pesoInicial, v.pesoMin)),
           _Vrow(t('Peso coche entero'),
