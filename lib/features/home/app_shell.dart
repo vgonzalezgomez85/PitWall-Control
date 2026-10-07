@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../core/entorno.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/logo_pitwall.dart';
 import '../../data/database/app_database.dart';
@@ -472,7 +473,7 @@ class _VersionPie extends StatelessWidget {
             )),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text('v$v',
+              child: Text(esEntornoDev ? 'v$v DEV' : 'v$v',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Theme.of(context).colorScheme.outline,
@@ -522,10 +523,60 @@ class _Vacio extends StatelessWidget {
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const PantallaVerificacionLibre())),
               ),
+              const SizedBox(height: 28),
+              // Sin campeonato también hay que poder conectar Google, preparar
+              // el catálogo, bajar plantillas, ver novedades y cambiar el modo.
+              const Wrap(
+                alignment: WrapAlignment.center,
+                children: [
+                  _OpcionVacio(
+                    child: _AccionSecundaria(
+                      icono: Icons.cloud_outlined,
+                      etiqueta: 'Google Sheets',
+                      extendida: true,
+                      destino: PantallaConfiguracionGoogle(),
+                    ),
+                  ),
+                  _OpcionVacio(
+                    child: _AccionSecundaria(
+                      icono: Icons.inventory_2_outlined,
+                      etiqueta: 'Catálogos',
+                      extendida: true,
+                      destino: PantallaCatalogos(),
+                    ),
+                  ),
+                  _OpcionVacio(
+                    child: _AccionSecundaria(
+                      icono: Icons.file_download_outlined,
+                      etiqueta: 'Plantillas CSV',
+                      extendida: true,
+                      destino: PantallaPlantillasCsv(),
+                    ),
+                  ),
+                  _OpcionVacio(
+                    child: _AccionSecundaria(
+                      icono: Icons.new_releases_outlined,
+                      etiqueta: 'Novedades',
+                      extendida: true,
+                      destino: PantallaChangelog(),
+                    ),
+                  ),
+                  _OpcionVacio(child: _BotonTema(extendida: true)),
+                ],
+              ),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+/// Ancho fijo para las opciones de la pantalla sin campeonatos.
+class _OpcionVacio extends StatelessWidget {
+  const _OpcionVacio({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(width: 220, child: child);
 }

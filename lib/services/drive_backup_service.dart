@@ -24,6 +24,7 @@ import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../core/entorno.dart';
 import '../core/proveedores.dart';
 import 'fotos_verificacion.dart';
 import 'google_auth_service.dart';
@@ -62,7 +63,7 @@ class DriveBackupService {
   /// Path del archivo SQLite local que usa drift_flutter.
   Future<File> _archivoBdLocal() async {
     final docs = await getApplicationDocumentsDirectory();
-    return File(p.join(docs.path, 'pitwall.sqlite'));
+    return File(p.join(docs.path, '$nombreBaseDatos.sqlite'));
   }
 
   /// Busca el backup existente en Drive (si lo hay). Prefiere el .zip nuevo;

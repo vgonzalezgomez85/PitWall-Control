@@ -23,7 +23,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/proveedores.dart';
 import 'core/tema.dart';
-import 'data/database/seeds.dart';
 import 'features/home/app_shell.dart';
 import 'features/pruebas/repositorio_pruebas.dart';
 import 'features/sincronizacion/dispositivo_sync.dart';
@@ -62,12 +61,11 @@ class _AppPitWallState extends ConsumerState<AppPitWall> {
   @override
   void initState() {
     super.initState();
-    _sembrar();
+    _prepararDatos();
   }
 
-  Future<void> _sembrar() async {
+  Future<void> _prepararDatos() async {
     final db = ref.read(dbProvider);
-    await Seeds.sembrar(db);
     // Repara verificaciones duplicadas creadas antes de garantizar unicidad.
     await ref.read(repoVerificacionesProvider).limpiarDuplicados();
     // Congela el reglamento de las verificaciones anteriores a 1.23.0.

@@ -20,13 +20,15 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../core/entorno.dart';
+
 /// Helpers para localizar las fotos de verificación.
 ///
 /// Las fotos se guardan en `<docs>/fotos_verificaciones/<nombre>.jpg` y en la
 /// base de datos solo se almacena el **nombre del archivo** (no la ruta
 /// absoluta) para que la copia de seguridad sea portable entre dispositivos.
 class FotosVerificacion {
-  static const _carpeta = 'fotos_verificaciones';
+  static const _carpeta = carpetaFotosVerificaciones;
 
   /// Carpeta donde viven las fotos en este dispositivo (la crea si no existe).
   static Future<Directory> carpeta() async {

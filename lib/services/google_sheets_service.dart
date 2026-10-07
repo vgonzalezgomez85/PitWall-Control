@@ -127,6 +127,73 @@ class GoogleSheetsService {
     }
   }
 
+  /// Sobrescribe varias filas (número 1-based → valores) en UNA sola petición.
+  /// Google limita las escrituras a 60 por minuto y usuario: hacerlo fila a
+  /// fila con un catálogo grande agota la cuota (error 429).
+  Future<void> escribirFilas(String hojaId, String tituloPestana,
+      Map<int, List<Object?>> filas) async {
+    if (filas.isEmpty) return;
+    final cli = await _auth.clienteAutenticado();
+    try {
+      final api = sheets.SheetsApi(cli);
+      final datos = [
+        for (final e in filas.entries)
+          sheets.ValueRange(
+            range: "'$tituloPestana'!A${e.key}:"
+                '${columnaLetra(e.value.length - 1)}${e.key}',
+            values: [e.value],
+          ),
+      ];
+      await api.spreadsheets.values.batchUpdate(
+        sheets.BatchUpdateValuesRequest(
+            valueInputOption: 'USER_ENTERED', data: datos),
+        hojaId,
+      );
+    } finally {
+      cli.close();
+    }
+  }
+
+  /// Borra varias filas (1-based) en UNA sola petición. Van de mayor a menor
+  /// para que borrar una no desplace el número de las siguientes.
+  Future<void> borrarFilas(
+      String hojaId, String tituloPestana, List<int> filas) async {
+    if (filas.isEmpty) return;
+    final cli = await _auth.clienteAutenticado();
+    try {
+      final api = sheets.SheetsApi(cli);
+      final meta = await api.spreadsheets
+          .get(hojaId, $fields: 'sheets.properties');
+      int? gid;
+      for (final s in meta.sheets ?? const <sheets.Sheet>[]) {
+        if (s.properties?.title == tituloPestana) {
+          gid = s.properties?.sheetId;
+          break;
+        }
+      }
+      if (gid == null) return;
+      final orden = [...filas]..sort((a, b) => b.compareTo(a));
+      await api.spreadsheets.batchUpdate(
+        sheets.BatchUpdateSpreadsheetRequest(requests: [
+          for (final f in orden)
+            sheets.Request(
+              deleteDimension: sheets.DeleteDimensionRequest(
+                range: sheets.DimensionRange(
+                  sheetId: gid,
+                  dimension: 'ROWS',
+                  startIndex: f - 1,
+                  endIndex: f,
+                ),
+              ),
+            ),
+        ]),
+        hojaId,
+      );
+    } finally {
+      cli.close();
+    }
+  }
+
   /// Borra físicamente una fila (1-based) de una pestaña.
   Future<void> borrarFila(
       String hojaId, String tituloPestana, int fila1) async {
@@ -157,6 +224,33 @@ class GoogleSheetsService {
             ),
           ),
         ]),
+        hojaId,
+      );
+    } finally {
+      cli.close();
+    }
+  }
+
+  /// Escribe varias celdas sueltas (fila 1-based, columna 0-based) en UNA sola
+  /// petición, por el mismo motivo que [escribirFilas].
+  Future<void> escribirCeldas(String hojaId, String tituloPestana,
+      List<({int fila1, int col0, Object? valor})> celdas) async {
+    if (celdas.isEmpty) return;
+    final cli = await _auth.clienteAutenticado();
+    try {
+      final api = sheets.SheetsApi(cli);
+      final datos = [
+        for (final c in celdas)
+          sheets.ValueRange(
+            range: "'$tituloPestana'!${columnaLetra(c.col0)}${c.fila1}",
+            values: [
+              [c.valor]
+            ],
+          ),
+      ];
+      await api.spreadsheets.values.batchUpdate(
+        sheets.BatchUpdateValuesRequest(
+            valueInputOption: 'USER_ENTERED', data: datos),
         hojaId,
       );
     } finally {

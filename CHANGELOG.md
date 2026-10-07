@@ -14,6 +14,20 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.23.5] — 2026-10-07
+### Corregido
+- **Cambiar la foto de un coche ya sincronizado ahora se sube al Sheet.** Si la hoja ya tenía un enlace en FOTO, la foto nueva se ignoraba y «Subir al Sheet» decía que no había cambios. Ahora sale como diferencia: se sube la foto a Drive y sustituye al enlace. Si falla la subida de la foto, el enlace anterior se conserva en vez de borrarse.
+
+## [1.23.4] — 2026-10-07
+### Corregido
+- **«Subir al Sheet» ya no agota la cuota de Google (error 429).** Las filas con cambios se escribían una a una y Google permite 60 escrituras por minuto; ahora se suben todas en una sola petición, y los borrados también. Lo mismo al bajar un catálogo desde la hoja: los IDs que se escriben en las filas que no tenían se suben de una vez, en vez de una petición por celda.
+- **«Subir al Sheet» ya no marca como diferencia un mismo número escrito distinto.** El peso `17.0` de la app y `17,00` de la hoja se comparaban como texto y salían 130 conflictos falsos; ahora se comparan como números.
+
+## [1.23.3] — 2026-10-07
+### Corregido
+- **Una instalación nueva arranca con la base de datos vacía.** Antes la app creaba por su cuenta el campeonato «Resisbarna», y rellenaba el catálogo con copas, clubes, marcas, llantas, bancadas, neumáticos y coches. Ahora no se crea nada: se empieza desde la pantalla «Aún no hay campeonatos». Quien ya tiene la app instalada conserva sus datos tal cual.
+- **Sin campeonatos también se puede configurar la app.** La pantalla «Aún no hay campeonatos» ofrece ahora Google Sheets, Catálogos, Plantillas CSV, Novedades y el cambio de modo claro/oscuro, además de crear un campeonato o solo verificar coches.
+
 ## [1.23.2] — 2026-10-07
 ### Mejorado
 - **Quitar un participante de una verificación libre ahora es un botón visible.** Cada participante tiene una papelera junto a su estado; antes solo se podía con una pulsación larga y no se descubría. Sigue pidiendo confirmación y borra también su verificación.

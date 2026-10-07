@@ -101,6 +101,19 @@ class PlanSubida {
 String _norm(Object? s) =>
     (s ?? '').toString().toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
 
+/// Números de la hoja ("17,00") y de la app (17.0) son el mismo valor aunque
+/// se escriban distinto; el resto se compara como texto normalizado.
+final _reNumero = RegExp(r'^-?\d+([.,]\d+)?$');
+
+bool igualCeldaHoja(String hoja, Object? app) {
+  if (_norm(hoja) == _norm(app)) return true;
+  final a = hoja.trim();
+  final b = (app ?? '').toString().trim();
+  if (!_reNumero.hasMatch(a) || !_reNumero.hasMatch(b)) return false;
+  return double.parse(a.replaceAll(',', '.')) ==
+      double.parse(b.replaceAll(',', '.'));
+}
+
 String _copasStr(String copasJson) {
   try {
     final raw = copasJson.isEmpty ? [] : (jsonDecode(copasJson) as List?);
@@ -443,7 +456,7 @@ class SubidorCatalogo {
           if (field == 'colFoto') return;
           final c = colDe(field);
           if (c == null || c >= width) return;
-          if (_norm(existente[c]) != _norm(val)) {
+          if (!igualCeldaHoja(existente[c], val)) {
             diffs.add(DiffColumna(
                 field == 'colId' ? 'ID' : v.mapeo[field].toString(),
                 val.toString(),
@@ -486,7 +499,8 @@ class SubidorCatalogo {
   }
 
   /// Foto de coche al subir: solo rellena la celda FOTO si en la hoja está
-  /// vacía (la hoja manda; un enlace distinto no se sobrescribe). Si la foto
+  /// vacía, o si la foto local se puso a mano (no viene de Drive) y sustituye
+  /// al enlace; si viene de Drive, la hoja manda. Si la foto
   /// ya viene de Drive se escribe su enlace; si solo está en local, queda
   /// pendiente de subir a Drive al aplicar.
   ({DiffColumna? diff, ({int cocheId, String fotoPath, int col})? pendiente})
@@ -496,8 +510,18 @@ class SubidorCatalogo {
     if (col == null || col >= width || fotoPath.isEmpty) {
       return (diff: null, pendiente: null);
     }
-    if (celdaHoja.trim().isNotEmpty) return (diff: null, pendiente: null);
     final idDrive = FotosCochesDrive.idDeFotoLocal(fotoPath);
+    if (celdaHoja.trim().isNotEmpty) {
+      // Foto que viene de Drive: la hoja manda. Foto puesta a mano en la app
+      // (no tiene nombre de Drive): se cambió, y sustituye al enlace.
+      if (idDrive != null) return (diff: null, pendiente: null);
+      return (
+        diff: DiffColumna(
+            'FOTO', '(foto nueva: se sube a Drive y sustituye al enlace)',
+            celdaHoja),
+        pendiente: (cocheId: cocheId, fotoPath: fotoPath, col: col),
+      );
+    }
     if (idDrive != null) {
       final enlace = FotosCochesDrive.enlace(idDrive);
       fila[col] = enlace;
@@ -528,7 +552,7 @@ class SubidorCatalogo {
               fp.cocheId, CatalogoCochesCompanion(fotoPath: Value(nombre)));
           f.valores[fp.col] = FotosCochesDrive.enlace(idDrive);
         } catch (e) {
-          f.valores[fp.col] = '';
+          // La celda se deja como estaba (el enlace anterior, si lo había).
           fallidas.add('${f.etiqueta}: $e');
         }
       }
@@ -563,11 +587,11 @@ class SubidorCatalogo {
           primeraColumna: plan.primeraCol,
           ultimaColumna: plan.ancho > 0 ? plan.ancho - 1 : null);
     }
-    var act = 0;
-    for (final f in plan.conflictos.where((f) => f.aplicar)) {
-      await svc.escribirFila(plan.hojaId, plan.pestana, f.filaNum1, f.valores);
-      act++;
-    }
+    // Una sola petición para todas las filas: ver [escribirFilas].
+    final aActualizar = plan.conflictos.where((f) => f.aplicar).toList();
+    await svc.escribirFilas(plan.hojaId, plan.pestana,
+        {for (final f in aActualizar) f.filaNum1: f.valores});
+    final act = aActualizar.length;
     // Las filas nuevas que estrenaban id externo ya están en la hoja: se
     // guarda ese id en el catálogo local para que la próxima subida/bajada
     // las reconozca por id en vez de volver a tratarlas como nuevas.
@@ -580,20 +604,18 @@ class SubidorCatalogo {
         await repo.actualizarIdExterno(plan.tipo!, f.dbId!, f.idExternoNuevo!);
       }
     }
-    // Borrados: de mayor a menor número de fila, para que borrar una no
-    // desplace el número de las que quedan por borrar en esta misma tanda.
-    var borr = 0;
-    final aBorrar = plan.borrados.where((f) => f.aplicar).toList()
-      ..sort((a, b) => b.filaNum1.compareTo(a.filaNum1));
+    // Borrados en una sola petición (ver [borrarFilas]).
+    final aBorrar = plan.borrados.where((f) => f.aplicar).toList();
+    await svc.borrarFilas(
+        plan.hojaId, plan.pestana, [for (final f in aBorrar) f.filaNum1]);
     for (final f in aBorrar) {
-      await svc.borrarFila(plan.hojaId, plan.pestana, f.filaNum1);
       if (f.tombstoneId != null) {
         await (_db.delete(_db.catalogoBorrados)
               ..where((t) => t.id.equals(f.tombstoneId!)))
             .go();
       }
-      borr++;
     }
+    final borr = aBorrar.length;
     return (
       anadidas: appendRows.length,
       actualizadas: act,

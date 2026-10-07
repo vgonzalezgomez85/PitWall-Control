@@ -53,6 +53,9 @@ class ResultadoActualizacion {
 
 /// Servicio que, dado un vínculo a una hoja de Drive, lee la pestaña y
 /// aplica la importación correspondiente (pilotos / equipos / inscripciones).
+/// Celda de la hoja pendiente de escribir (fila 1-based, columna 0-based).
+typedef CeldaPendiente = ({int fila1, int col0, Object? valor});
+
 class ActualizadorDrive {
   ActualizadorDrive(this.ref);
   final Ref ref;
@@ -179,6 +182,7 @@ class ActualizadorDrive {
     VinculoHoja v,
     int filaAbs,
     int idColIdx,
+    List<CeldaPendiente> pendientes,
   ) async {
     final x = sinId.tomar(claves);
     if (x == null) return null;
@@ -187,8 +191,7 @@ class ActualizadorDrive {
         .read(repoCatalogosProvider)
         .actualizarIdExterno(tipo, idLocal(x), idFinal);
     if (idHoja.isEmpty) {
-      await ref.read(googleSheetsServiceProvider).escribirCelda(
-          v.fila.hojaId, v.fila.pestanaTitulo, filaAbs + 1, idColIdx, idFinal);
+      pendientes.add((fila1: filaAbs + 1, col0: idColIdx, valor: idFinal));
     }
     return x;
   }
@@ -428,6 +431,9 @@ class ActualizadorDrive {
       final repo = ref.read(repoCatalogosProvider);
       final svc = ref.read(googleSheetsServiceProvider);
       int nuevos = 0, actualizados = 0, saltados = 0;
+      // IDs nuevos que se escriben en la hoja: se acumulan y se suben de una
+      // vez al final (una petición por celda agotaba la cuota de Google).
+      final pendientes = <CeldaPendiente>[];
 
       // Columna "ID" (convención fija, igual que al subir): si la hoja ya
       // la tiene, se empareja por id en vez de por nombre/clave — hace
@@ -518,7 +524,7 @@ class ActualizadorDrive {
               final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
                   await _adoptar(sinId, ['${_norm(nombre)}|${_norm(marca)}', _norm(nombre)], (x) => x.id,
                       tipo, idHoja, () => ++siguienteId, v,
-                      datos.filaAbs[k], idColIdx);
+                      datos.filaAbs[k], idColIdx, pendientes);
               if (ex != null) {
                 if (ex.nombre != nombre ||
                     ex.marca != marca ||
@@ -553,8 +559,8 @@ class ActualizadorDrive {
                     pesoMin: peso, creditosCoche: cred,
                     copasJson: copasJson, idExterno: idFinal);
                 if (idHoja.isEmpty) {
-                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
-                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                  pendientes.add((
+                      fila1: datos.filaAbs[k] + 1, col0: idColIdx, valor: idFinal));
                 }
                 nuevos++;
               }
@@ -601,7 +607,7 @@ class ActualizadorDrive {
               final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
                   await _adoptar(sinId, [_norm(cod)], (x) => x.id,
                       tipo, idHoja, () => ++siguienteId, v,
-                      datos.filaAbs[k], idColIdx);
+                      datos.filaAbs[k], idColIdx, pendientes);
               if (ex != null) {
                 if (ex.codigo != cod || ex.nombre != nom) {
                   await repo.actualizarMarca(ex.id, cod, nom);
@@ -619,8 +625,8 @@ class ActualizadorDrive {
                 }
                 await repo.crearMarca(cod, nom, idExterno: idFinal);
                 if (idHoja.isEmpty) {
-                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
-                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                  pendientes.add((
+                      fila1: datos.filaAbs[k] + 1, col0: idColIdx, valor: idFinal));
                 }
                 nuevos++;
               }
@@ -671,7 +677,7 @@ class ActualizadorDrive {
               final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
                   await _adoptar(sinId, ['${_norm(dim)}|$t'], (x) => x.id,
                       tipo, idHoja, () => ++siguienteId, v,
-                      datos.filaAbs[k], idColIdx);
+                      datos.filaAbs[k], idColIdx, pendientes);
               if (ex != null) {
                 if (ex.dimension != dim ||
                     ex.tipo != t ||
@@ -693,8 +699,8 @@ class ActualizadorDrive {
                 await repo.crearLlanta(dim, t,
                     copasJson: copasJson, idExterno: idFinal);
                 if (idHoja.isEmpty) {
-                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
-                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                  pendientes.add((
+                      fila1: datos.filaAbs[k] + 1, col0: idColIdx, valor: idFinal));
                 }
                 nuevos++;
               }
@@ -750,7 +756,7 @@ class ActualizadorDrive {
               final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
                   await _adoptar(sinId, ['$t|$diametro|$dientes'], (x) => x.id,
                       tipo, idHoja, () => ++siguienteId, v,
-                      datos.filaAbs[k], idColIdx);
+                      datos.filaAbs[k], idColIdx, pendientes);
               if (ex != null) {
                 if (ex.tipo != t ||
                     ex.diametro != diametro ||
@@ -777,8 +783,8 @@ class ActualizadorDrive {
                     copasJson: copasJson,
                     idExterno: idFinal);
                 if (idHoja.isEmpty) {
-                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
-                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                  pendientes.add((
+                      fila1: datos.filaAbs[k] + 1, col0: idColIdx, valor: idFinal));
                 }
                 nuevos++;
               }
@@ -851,7 +857,7 @@ class ActualizadorDrive {
               final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
                   await _adoptar(sinId, ['${_norm(n)}|${_copasClave(copasJson)}', _norm(n)], (x) => x.id,
                       tipo, idHoja, () => ++siguienteId, v,
-                      datos.filaAbs[k], idColIdx);
+                      datos.filaAbs[k], idColIdx, pendientes);
               if (ex != null) {
                 if (ex.nombre != n ||
                     ex.rpm != rpm ||
@@ -888,8 +894,8 @@ class ActualizadorDrive {
                     copasJson: copasJson == '[]' ? null : copasJson,
                     idExterno: idFinal);
                 if (idHoja.isEmpty) {
-                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
-                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                  pendientes.add((
+                      fila1: datos.filaAbs[k] + 1, col0: idColIdx, valor: idFinal));
                 }
                 nuevos++;
               }
@@ -936,7 +942,7 @@ class ActualizadorDrive {
               final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
                   await _adoptar(sinId, [_norm(n)], (x) => x.id,
                       tipo, idHoja, () => ++siguienteId, v,
-                      datos.filaAbs[k], idColIdx);
+                      datos.filaAbs[k], idColIdx, pendientes);
               if (ex != null) {
                 if (ex.nombre != n ||
                     (ex.referencia ?? '') != (r ?? '') ||
@@ -959,8 +965,8 @@ class ActualizadorDrive {
                     n, (r == null || r.isEmpty) ? null : r,
                     copasJson: copasJson, idExterno: idFinal);
                 if (idHoja.isEmpty) {
-                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
-                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                  pendientes.add((
+                      fila1: datos.filaAbs[k] + 1, col0: idColIdx, valor: idFinal));
                 }
                 nuevos++;
               }
@@ -1018,7 +1024,7 @@ class ActualizadorDrive {
               final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
                   await _adoptar(sinId, [_norm(n)], (x) => x.id,
                       tipo, idHoja, () => ++siguienteId, v,
-                      datos.filaAbs[k], idColIdx);
+                      datos.filaAbs[k], idColIdx, pendientes);
               if (ex != null) {
                 if (ex.nombre != n || ex.copasJson != copasJson) {
                   await repo.actualizarBancada(ex.id, n,
@@ -1038,8 +1044,8 @@ class ActualizadorDrive {
                 await repo.crearBancada(n,
                     copasJson: copasJson, idExterno: idFinal);
                 if (idHoja.isEmpty) {
-                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
-                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                  pendientes.add((
+                      fila1: datos.filaAbs[k] + 1, col0: idColIdx, valor: idFinal));
                 }
                 nuevos++;
               }
@@ -1096,7 +1102,7 @@ class ActualizadorDrive {
               final ex = (idHoja.isEmpty ? null : porId[idHoja]) ??
                   await _adoptar(sinId, [_norm(n)], (x) => x.id,
                       tipo, idHoja, () => ++siguienteId, v,
-                      datos.filaAbs[k], idColIdx);
+                      datos.filaAbs[k], idColIdx, pendientes);
               if (ex != null) {
                 if (ex.nombre != n) {
                   await actualizar(ex.id, n);
@@ -1114,14 +1120,17 @@ class ActualizadorDrive {
                 }
                 await crear(n, idExterno: idFinal);
                 if (idHoja.isEmpty) {
-                  await svc.escribirCelda(v.fila.hojaId, v.fila.pestanaTitulo,
-                      datos.filaAbs[k] + 1, idColIdx, idFinal);
+                  pendientes.add((
+                      fila1: datos.filaAbs[k] + 1, col0: idColIdx, valor: idFinal));
                 }
                 nuevos++;
               }
             }
           }
       }
+
+      await svc.escribirCeldas(
+          v.fila.hojaId, v.fila.pestanaTitulo, pendientes);
 
       var resumen =
           'Nuevos: $nuevos · Actualizados: $actualizados · Sin cambios: $saltados';

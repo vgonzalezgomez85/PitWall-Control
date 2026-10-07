@@ -18,6 +18,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../../core/entorno.dart';
 import 'tables.dart';
 
 part 'app_database.g.dart';
@@ -532,6 +533,6 @@ class AppDatabase extends _$AppDatabase {
   }
 
   static QueryExecutor _openConnection() {
-    return driftDatabase(name: 'pitwall');
+    return driftDatabase(name: nombreBaseDatos);
   }
 }
