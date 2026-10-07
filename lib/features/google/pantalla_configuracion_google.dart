@@ -396,59 +396,105 @@ class _GuiaGoogleCloud extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           Text(
-            'Una sola vez tienes que crear unas credenciales gratuitas en Google Cloud. '
-            'Sigue estos pasos:',
+            'Solo se hace una vez, es gratis y no pide tarjeta. Necesitas la cuenta '
+            'de Google que tiene tus hojas y tu Drive y unos 10 minutos.',
             style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => launchUrl(
+                Uri.parse('https://www.pitwall.es/manual-control.html#google'),
+                mode: LaunchMode.externalApplication),
+            icon: const Icon(Icons.menu_book_outlined, size: 16),
+            label: const Text('Ver el manual con capturas'),
           ),
           const SizedBox(height: 16),
           _Paso(
             n: 1,
             titulo: 'Crear un proyecto',
             cuerpo:
-                'Entra en console.cloud.google.com con tu cuenta de Google '
-                '(la misma que tendrá las hojas). Crea un proyecto nuevo, '
-                'por ejemplo "PitWall Control".',
+                'Entra en Google Cloud Console con tu cuenta de Google. Arriba, '
+                'pulsa el selector de proyectos → "Proyecto nuevo". Nombre: '
+                '"PitWall Control". Pulsa "Crear" y comprueba que queda seleccionado.',
             urlAccion: 'https://console.cloud.google.com/projectcreate',
             textoAccion: 'Abrir Cloud Console',
           ),
           _Paso(
             n: 2,
-            titulo: 'Activar las API de Sheets y Drive',
+            titulo: 'Activar las dos API',
             cuerpo:
-                'En el buscador de Google Cloud Console busca "Google Sheets API" '
-                'y pulsa "Habilitar". Repite con "Google Drive API".',
+                'Habilita "Google Sheets API" y también "Google Drive API" '
+                '(pulsa "Habilitar" en cada una). Si no, la conexión fallará.',
             urlAccion:
                 'https://console.cloud.google.com/apis/library/sheets.googleapis.com',
             textoAccion: 'API Sheets',
+            urlAccion2:
+                'https://console.cloud.google.com/apis/library/drive.googleapis.com',
+            textoAccion2: 'API Drive',
           ),
           _Paso(
             n: 3,
             titulo: 'Pantalla de consentimiento',
             cuerpo:
-                'Ve a "APIs y servicios → Pantalla de consentimiento OAuth". '
-                'Elige tipo "Externo", pon nombre "PitWall Control", tu email de soporte '
-                'y guarda. En "Audiencia" añade tu propio email como usuario de prueba.',
+                'En "Google Auth Platform" pulsa "Comenzar" y sigue el asistente: '
+                '1) nombre "PitWall Control" y tu correo de asistencia; '
+                '2) Público: elige "Usuarios externos" ("Interno" solo vale para '
+                'cuentas de empresa); 3) tu correo de contacto; '
+                '4) acepta la política de datos, "Continuar" y "Crear".',
             urlAccion:
-                'https://console.cloud.google.com/apis/credentials/consent',
-            textoAccion: 'Pantalla consentimiento',
+                'https://console.cloud.google.com/auth/overview/create',
+            textoAccion: 'Pantalla de consentimiento',
           ),
           _Paso(
             n: 4,
-            titulo: 'Crear credenciales OAuth de escritorio',
+            titulo: 'Añadir tu cuenta como usuario de prueba',
             cuerpo:
-                'Ve a "APIs y servicios → Credenciales → Crear credenciales → '
-                'ID de cliente de OAuth". Tipo: "Aplicación de escritorio". '
-                'Nombre: "PitWall Control Desktop". Acepta.',
-            urlAccion: 'https://console.cloud.google.com/apis/credentials',
-            textoAccion: 'Credenciales',
+                'En el menú lateral entra en "Público" → "Usuarios de prueba" → '
+                '"Add users". Escribe el correo de Google con el que vas a conectar '
+                'Control (y el de quien más vaya a conectarse) y guarda. '
+                'Sin este paso Google da el "Error 403: access_denied".',
+            urlAccion: 'https://console.cloud.google.com/auth/audience',
+            textoAccion: 'Público',
           ),
           _Paso(
             n: 5,
-            titulo: 'Copiar Client ID y Client Secret',
+            titulo: 'Crear el cliente OAuth',
             cuerpo:
-                'Aparece un cuadro con el Client ID (termina en .apps.googleusercontent.com) '
-                'y el Client Secret. Cópialos y pégalos en la pantalla anterior. '
-                '¡Listo! Pulsa "Conectar con Google".',
+                'En "Clientes" pulsa "Crear cliente". Tipo: "Aplicación de '
+                'escritorio". Nombre: "PitWall Control Desktop". Pulsa "Crear".',
+            urlAccion: 'https://console.cloud.google.com/auth/clients',
+            textoAccion: 'Clientes',
+          ),
+          _Paso(
+            n: 6,
+            titulo: 'Copiar el ID y el secreto',
+            cuerpo:
+                'Aparece el ID de cliente (acaba en .apps.googleusercontent.com) y '
+                'el secreto. Cópialos y pulsa "Descargar JSON": Google solo enseña '
+                'el secreto en este momento. Pégalos en la pantalla anterior, '
+                'pulsa "Guardar credenciales" y luego "Conectar con Google".',
+          ),
+          _Paso(
+            n: 7,
+            titulo: 'Autorizar en el navegador',
+            cuerpo:
+                'Elige la cuenta del paso 4. Si sale "Google no ha verificado esta '
+                'aplicación", pulsa "Configuración avanzada" → "Ir a PitWall '
+                'Control (no seguro)", marca todos los permisos y "Continuar".',
+          ),
+          Card(
+            color: Theme.of(context).colorScheme.tertiaryContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Para que no caduque a los 7 días: mientras la aplicación está en '
+                'estado "Prueba", Google cierra la sesión cada 7 días. En '
+                '"Público" pulsa "Publicar aplicación" (pasa a "En producción"); '
+                'para uso propio no necesita verificación.',
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onTertiaryContainer),
+              ),
+            ),
           ),
         ],
       ),
@@ -463,6 +509,8 @@ class _Paso extends StatelessWidget {
     required this.cuerpo,
     this.urlAccion,
     this.textoAccion,
+    this.urlAccion2,
+    this.textoAccion2,
   });
 
   final int n;
@@ -470,6 +518,8 @@ class _Paso extends StatelessWidget {
   final String cuerpo;
   final String? urlAccion;
   final String? textoAccion;
+  final String? urlAccion2;
+  final String? textoAccion2;
 
   @override
   Widget build(BuildContext context) {
@@ -500,11 +550,24 @@ class _Paso extends StatelessWidget {
             Text(cuerpo),
             if (urlAccion != null && textoAccion != null) ...[
               const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () => launchUrl(Uri.parse(urlAccion!),
-                    mode: LaunchMode.externalApplication),
-                icon: const Icon(Icons.open_in_new, size: 16),
-                label: Text(textoAccion!),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => launchUrl(Uri.parse(urlAccion!),
+                        mode: LaunchMode.externalApplication),
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    label: Text(textoAccion!),
+                  ),
+                  if (urlAccion2 != null && textoAccion2 != null)
+                    OutlinedButton.icon(
+                      onPressed: () => launchUrl(Uri.parse(urlAccion2!),
+                          mode: LaunchMode.externalApplication),
+                      icon: const Icon(Icons.open_in_new, size: 16),
+                      label: Text(textoAccion2!),
+                    ),
+                ],
               ),
             ],
           ],
@@ -582,7 +645,7 @@ class _CardError extends StatelessWidget {
         low.contains('verification process') ||
         low.contains('app blocked')) {
       out.add(
-          'Estás en modo "Testing" de la pantalla de consentimiento OAuth y tu email NO está añadido como "Usuario de prueba". En Google Cloud Console → APIs y servicios → Pantalla de consentimiento → Audiencia → "Añadir usuarios" → pon tu email.');
+          'Google bloquea la cuenta con la que has entrado porque la app está en modo "Prueba" y esa cuenta NO está en la lista de usuarios de prueba. En Google Cloud Console → Google Auth Platform → Público → "Usuarios de prueba" → "Add users", añade ese correo exacto. O pulsa "Publicar aplicación" en esa misma pantalla.');
     }
     if (low.contains('redirect_uri_mismatch') ||
         low.contains('redirect uri mismatch')) {
