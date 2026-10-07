@@ -248,15 +248,26 @@ class _TarjetaVerificacion extends StatelessWidget {
         subtitle: Text(
             '${fila.pilotosTexto}\n${fila.coche?.modelo ?? "Sin coche asignado"}  ·  Copa ${fila.copa}'),
         isThreeLine: true,
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(etiqueta,
-              style: TextStyle(
-                  color: color, fontWeight: FontWeight.w600, fontSize: 12)),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(etiqueta,
+                  style: TextStyle(
+                      color: color, fontWeight: FontWeight.w600, fontSize: 12)),
+            ),
+            if (onLongPress != null)
+              IconButton(
+                tooltip: 'Quitar participante',
+                icon: const Icon(Icons.delete_outline),
+                onPressed: onLongPress,
+              ),
+          ],
         ),
         onTap: onTap,
         onLongPress: onLongPress,

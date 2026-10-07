@@ -14,6 +14,10 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.23.2] — 2026-10-07
+### Mejorado
+- **Quitar un participante de una verificación libre ahora es un botón visible.** Cada participante tiene una papelera junto a su estado; antes solo se podía con una pulsación larga y no se descubría. Sigue pidiendo confirmación y borra también su verificación.
+
 ## [1.23.1] — 2026-10-07
 ### Mejorado
 - **Guía «Cómo conseguirlas» de Google más clara.** Ahora son 7 pasos con los nombres actuales de Google Cloud (Google Auth Platform, «Usuarios externos», «Clientes»), enlaces directos a cada pantalla, aviso de añadir tu cuenta como usuario de prueba (si no, sale el «Error 403: access_denied»), de descargar el JSON porque el secreto solo se ve al crearlo, y de publicar la aplicación para que la conexión no caduque a los 7 días. Incluye un botón al manual con capturas. El diagnóstico del error 403 explica ahora también cómo arreglarlo.
