@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../services/exportar_pdf.dart';
@@ -138,24 +139,23 @@ class _DetallePruebaState extends ConsumerState<DetallePrueba>
   // "Enviar a PitWall").
   Future<void> _exportarTanda(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
+    final l = context.l;
     try {
       // Con pole no se exporta el orden de carril: la parrilla se asigna en
       // PitWall después de correr la pole.
       final pole = await showDialog<bool>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('¿La carrera tiene pole?'),
-          content: const Text(
-              'Con pole no se exporta el orden de carril: PitWall crea la '
-              'sesión de pole y la parrilla se asigna tras correrla.'),
+          title: Text(context.l.carreraTienePole),
+          content: Text(context.l.carreraTienePoleTexto),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Sin pole'),
+              child: Text(context.l.sinPole),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Con pole'),
+              child: Text(context.l.conPole),
             ),
           ],
         ),
@@ -169,8 +169,8 @@ class _DetallePruebaState extends ConsumerState<DetallePrueba>
       if (tandas.isEmpty) {
         messenger.showSnackBar(SnackBar(
             content: Text(pole
-                ? 'No hay inscritos que exportar.'
-                : 'No hay tandas con carriles asignados que exportar.')));
+                ? l.noHayInscritosExportar
+                : l.noHayTandasConCarriles)));
         return;
       }
       final jsonStr = const JsonEncoder.withIndent('  ').convert(data);
@@ -189,7 +189,7 @@ class _DetallePruebaState extends ConsumerState<DetallePrueba>
         generar: () async => bytes,
       );
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(l.errorDetalle('$e'))));
     }
   }
 
@@ -232,13 +232,13 @@ class _DetallePruebaState extends ConsumerState<DetallePrueba>
               _BarraAcciones(children: [
                 OutlinedButton.icon(
                   icon: const Icon(Icons.file_upload_outlined),
-                  label: const Text('Importar del cronometraje'),
+                  label: Text(context.l.importarDelCronometraje),
                   onPressed: () => _abrir(context,
                       PantallaImportarResultadosPrueba(pruebaId: pruebaId)),
                 ),
                 OutlinedButton.icon(
                   icon: const Icon(Icons.cloud_download_outlined),
-                  label: const Text('Traer resultados de PitWall'),
+                  label: Text(context.l.traerResultadosPitwall),
                   onPressed: () =>
                       mostrarTraerResultados(context, ref, pruebaId),
                 ),
@@ -257,13 +257,13 @@ class _DetallePruebaState extends ConsumerState<DetallePrueba>
     return Scaffold(
       appBar: AppBar(
         title: pruebaAsync.maybeWhen(
-          data: (p) => Text(p?.nombre ?? 'Prueba'),
-          orElse: () => const Text('Prueba'),
+          data: (p) => Text(p?.nombre ?? context.l.prueba),
+          orElse: () => Text(context.l.prueba),
         ),
         actions: [
           TextButton.icon(
             icon: const Icon(Icons.edit_outlined),
-            label: const Text('Editar'),
+            label: Text(context.l.editar),
             onPressed: () =>
                 _abrir(context, EditorPrueba(pruebaId: pruebaId)),
           ),
@@ -289,15 +289,18 @@ class _DetallePruebaState extends ConsumerState<DetallePrueba>
           tabs: [
             for (final p in _pestanas)
               switch (p) {
-                PestanaPrueba.preparar => const Tab(
-                    icon: Icon(Icons.how_to_reg_outlined), text: 'Preparar'),
-                PestanaPrueba.verificar => const Tab(
-                    icon: Icon(Icons.fact_check_outlined), text: 'Verificar'),
-                PestanaPrueba.resultados => const Tab(
-                    icon: Icon(Icons.emoji_events_outlined),
-                    text: 'Resultados'),
-                PestanaPrueba.caja => const Tab(
-                    icon: Icon(Icons.payments_outlined), text: 'Caja'),
+                PestanaPrueba.preparar => Tab(
+                    icon: const Icon(Icons.how_to_reg_outlined),
+                    text: context.l.pestanaPreparar),
+                PestanaPrueba.verificar => Tab(
+                    icon: const Icon(Icons.fact_check_outlined),
+                    text: context.l.pestanaVerificar),
+                PestanaPrueba.resultados => Tab(
+                    icon: const Icon(Icons.emoji_events_outlined),
+                    text: context.l.pestanaResultados),
+                PestanaPrueba.caja => Tab(
+                    icon: const Icon(Icons.payments_outlined),
+                    text: context.l.pestanaCaja),
               },
           ],
         ),
@@ -314,7 +317,7 @@ class _DetallePruebaState extends ConsumerState<DetallePrueba>
               onPressed: () =>
                   _abrir(context, EditorManga(pruebaId: pruebaId)),
               icon: const Icon(Icons.add),
-              label: const Text('Nueva tanda'),
+              label: Text(context.l.nuevaTanda),
             )
           : null,
     );
@@ -359,24 +362,24 @@ class _BotonCompartir extends StatelessWidget {
         );
 
     return PopupMenuButton<String>(
-      tooltip: 'Compartir',
+      tooltip: context.l.compartir,
       onSelected: onElegir,
       itemBuilder: (_) => [
-        opcion('mangas', Icons.flag_outlined, 'PDF de tandas', null),
-        opcion('verifs', Icons.fact_check_outlined, 'PDF de verificaciones',
+        opcion('mangas', Icons.flag_outlined, context.l.pdfTandas, null),
+        opcion('verifs', Icons.fact_check_outlined, context.l.pdfVerificaciones,
             null),
         const PopupMenuDivider(),
-        opcion('enviar', Icons.wifi_tethering, 'Enviar tandas a PitWall',
-            'Por wifi, sin archivo'),
+        opcion('enviar', Icons.wifi_tethering, context.l.enviarTandasPitwall,
+            context.l.porWifiSinArchivo),
         opcion('enviar_verifs', Icons.fact_check_outlined,
-            'Enviar verificaciones a PitWall', 'Solo consulta en Manager'),
-        opcion('tanda', Icons.download_outlined, 'Archivo para PitWall (JSON)',
-            'Para importarlo a mano en Manager'),
+            context.l.enviarVerificacionesPitwall, context.l.soloConsultaManager),
+        opcion('tanda', Icons.download_outlined, context.l.archivoParaPitwall,
+            context.l.paraImportarAManoManager),
       ],
       child: IgnorePointer(
         child: FilledButton.tonalIcon(
           icon: const Icon(Icons.ios_share),
-          label: const Text('Compartir'),
+          label: Text(context.l.compartir),
           onPressed: () {},
         ),
       ),
@@ -411,12 +414,12 @@ class _ContenidoPrueba extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return pruebaAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
       data: (prueba) {
-        if (prueba == null) return const Center(child: Text('No encontrada'));
+        if (prueba == null) return Center(child: Text(context.l.noEncontrada));
         return mangasAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error: $e')),
+          error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
           data: (mangas) => ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
             children: [
@@ -428,20 +431,20 @@ class _ContenidoPrueba extends StatelessWidget {
                 children: [
                   FilledButton.tonalIcon(
                     icon: const Icon(Icons.how_to_reg_outlined),
-                    label: const Text('Inscritos'),
+                    label: Text(context.l.botonInscritos),
                     onPressed: () =>
                         onAbrir(PantallaInscritos(pruebaId: pruebaId)),
                   ),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.swap_horiz),
-                    label: const Text('Editar tandas'),
+                    label: Text(context.l.editarTandas),
                     onPressed: () =>
                         onAbrir(PantallaEditarMangas(pruebaId: pruebaId)),
                   ),
                   if (conSorteo)
                     OutlinedButton.icon(
                       icon: const Icon(Icons.casino_outlined),
-                      label: const Text('Sorteo de motores'),
+                      label: Text(context.l.sorteoMotores),
                       onPressed: () =>
                           onAbrir(PantallaSorteoMotores(pruebaId: pruebaId)),
                     ),
@@ -450,7 +453,7 @@ class _ContenidoPrueba extends StatelessWidget {
               const SizedBox(height: 24),
               Row(
                 children: [
-                  Text('Tandas',
+                  Text(context.l.tandas,
                       style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(width: 8),
                   Container(
@@ -477,12 +480,11 @@ class _ContenidoPrueba extends StatelessWidget {
                       children: [
                         Icon(Icons.flag_outlined, size: 64, color: cs.outline),
                         const SizedBox(height: 8),
-                        Text('Aún no hay tandas',
+                        Text(context.l.aunNoHayTandas,
                             style: Theme.of(context).textTheme.titleMedium),
                         const SizedBox(height: 4),
                         Text(
-                          'Crea las tandas que tendrá esta prueba '
-                          '(Jueves 21:00, Viernes 21:00…).',
+                          context.l.crearTandasTexto,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
@@ -515,7 +517,7 @@ class _CabeceraPrueba extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final fmt = DateFormat("EEEE d 'de' MMMM y", 'es_ES');
+    final fmt = DateFormat.yMMMMEEEEd(context.idiomaFechas);
     return Card(
       color: cs.surfaceContainer,
       child: Padding(
@@ -535,13 +537,13 @@ class _CabeceraPrueba extends StatelessWidget {
                     color: cs.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text('Prueba #${prueba.orden}',
+                  child: Text(context.l.pruebaNumero(prueba.orden),
                       style: TextStyle(
                         color: cs.onPrimaryContainer,
                         fontWeight: FontWeight.w700,
                       )),
                 ),
-                Text(etiquetaEstado(prueba.estado),
+                Text(etiquetaEstado(context, prueba.estado),
                     style: Theme.of(context).textTheme.bodyMedium),
               ],
             ),
@@ -577,7 +579,7 @@ class _TarjetaManga extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final fmt = DateFormat("d MMM, HH:mm", 'es_ES');
+    final fmt = DateFormat.MMMd(context.idiomaFechas).add_Hm();
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Card(
@@ -604,7 +606,7 @@ class _TarjetaManga extends StatelessWidget {
                         Text(fmt.format(manga.fechaHora!),
                             style: Theme.of(context).textTheme.bodyMedium),
                       const SizedBox(height: 2),
-                      Text('${manga.numCarriles} carriles',
+                      Text(context.l.nCarriles(manga.numCarriles),
                           style: TextStyle(color: cs.outline, fontSize: 13)),
                     ],
                   ),

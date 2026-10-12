@@ -34,6 +34,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:nsd/nsd.dart';
+import '../../core/idioma.dart';
 
 const _serviceType = '_pitwall-manager._tcp';
 const _puertoManager = 3000;
@@ -244,7 +245,7 @@ class _SelectorPitwallState extends State<SelectorPitwall> {
       children: [
         Row(
           children: [
-            const Text('PitWall en la red',
+            Text(context.l.pitwallEnLaRed,
                 style: TextStyle(fontWeight: FontWeight.w600)),
             const Spacer(),
             if (_buscando)
@@ -254,7 +255,7 @@ class _SelectorPitwallState extends State<SelectorPitwall> {
                   child: CircularProgressIndicator(strokeWidth: 2))
             else
               IconButton(
-                tooltip: 'Buscar de nuevo',
+                tooltip: context.l.buscarDeNuevo,
                 visualDensity: VisualDensity.compact,
                 icon: const Icon(Icons.refresh, size: 18),
                 onPressed: _buscar,
@@ -265,10 +266,8 @@ class _SelectorPitwallState extends State<SelectorPitwall> {
         if (_encontrados.isEmpty)
           Text(
             _buscando
-                ? 'Buscando PitWall en la red local…'
-                : 'No se ha encontrado ningún PitWall. Comprueba que está '
-                    'abierto y en la misma red Wi‑Fi, o escribe su dirección '
-                    'abajo.',
+                ? context.l.buscandoPitwall
+                : context.l.noSeEncuentraPitwall,
             style: gris,
           )
         else
@@ -299,8 +298,8 @@ class _SelectorPitwallState extends State<SelectorPitwall> {
         TextField(
           controller: widget.hostCtrl,
           onChanged: (_) => setState(() => _editadoAMano = true),
-          decoration: const InputDecoration(
-            labelText: 'Dirección (IP:puerto)',
+          decoration: InputDecoration(
+            labelText: context.l.direccionIpPuerto,
             hintText: '192.168.1.50:3000',
           ),
         ),

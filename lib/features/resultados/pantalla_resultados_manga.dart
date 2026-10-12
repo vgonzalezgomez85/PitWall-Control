@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import 'repositorio_resultados.dart';
@@ -33,10 +34,10 @@ class PantallaResultadosManga extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Resultados de la tanda')),
+      appBar: AppBar(title: Text(context.l.resultadosDeLaTanda)),
       body: lista.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
         data: (filas) {
           if (filas.isEmpty) {
             return Center(
@@ -48,11 +49,11 @@ class PantallaResultadosManga extends ConsumerWidget {
                     Icon(Icons.event_busy_outlined,
                         size: 96, color: cs.outline),
                     const SizedBox(height: 16),
-                    Text('No hay equipos en esta tanda',
+                    Text(context.l.noHayEquiposEnTanda,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Inscribe equipos para poder registrar sus resultados.',
+                    Text(
+                      context.l.inscribeEquiposParaResultados,
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -76,8 +77,7 @@ class PantallaResultadosManga extends ConsumerWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Indica la posición final de cada equipo. '
-                          'Los puntos se calculan solos según la tabla del campeonato.',
+                          context.l.indicaPosicionFinalTexto,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
@@ -243,7 +243,7 @@ class _FilaResultadoState extends ConsumerState<_FilaResultado> {
                               : cs.outline,
                         ),
                       ),
-                      Text('puntos',
+                      Text(context.l.puntos,
                           style: TextStyle(
                               fontSize: 11, color: cs.outline)),
                     ],
@@ -258,17 +258,17 @@ class _FilaResultadoState extends ConsumerState<_FilaResultado> {
                   child: DropdownButtonFormField<int?>(
                     initialValue: fila.posicion,
                     isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Posición',
+                    decoration: InputDecoration(
+                      labelText: context.l.posicion,
                       isDense: true,
                     ),
                     items: [
-                      const DropdownMenuItem(
-                          value: null, child: Text('Sin asignar')),
+                      DropdownMenuItem(
+                          value: null, child: Text(context.l.sinAsignar)),
                       for (var i = 1;
                           i <= widget.totalEquipos.clamp(1, 64);
                           i++)
-                        DropdownMenuItem(value: i, child: Text('$iº')),
+                        DropdownMenuItem(value: i, child: Text('$i')),
                     ],
                     onChanged: _setPosicion,
                   ),
@@ -278,10 +278,10 @@ class _FilaResultadoState extends ConsumerState<_FilaResultado> {
                   width: 110,
                   child: TextField(
                     controller: _aRestar,
-                    decoration: const InputDecoration(
-                      labelText: 'A restar',
+                    decoration: InputDecoration(
+                      labelText: context.l.aRestar,
                       isDense: true,
-                      helperText: 'créditos',
+                      helperText: context.l.creditosMin,
                     ),
                     keyboardType: TextInputType.number,
                     onEditingComplete: _setARestar,

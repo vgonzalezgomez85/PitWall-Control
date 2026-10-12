@@ -21,6 +21,8 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:excel/excel.dart';
 
+import '../../domain/errores_importacion.dart';
+
 /// Una fila parseada del archivo de resultados.
 class FilaResultadoImportada {
   int posicion;
@@ -63,7 +65,7 @@ class ImportadorResultados {
         ? await _leerCsv(path)
         : (ext == 'xlsx' || ext == 'xls'
             ? await _leerExcel(path)
-            : throw Exception('Formato no soportado: $ext'));
+            : throw FormatoNoSoportado(ext));
     return _extraer(filas);
   }
 

@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
@@ -36,20 +37,20 @@ class PantallaPruebas extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Pruebas')),
+      appBar: AppBar(title: Text(context.l.menuPruebas)),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab_pruebas',
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const EditorPrueba()),
         ),
         icon: const Icon(Icons.event_outlined),
-        label: const Text('Nueva prueba'),
+        label: Text(context.l.nuevaPrueba),
       ),
       body: activo == null
-          ? const Center(child: Text('Selecciona primero un campeonato'))
+          ? Center(child: Text(context.l.seleccionaCampeonato))
           : pruebasAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
               data: (pruebas) {
                 if (pruebas.isEmpty) {
                   return Center(
@@ -61,12 +62,11 @@ class PantallaPruebas extends ConsumerWidget {
                           Icon(Icons.event_outlined,
                               size: 96, color: cs.outline),
                           const SizedBox(height: 16),
-                          Text('Aún no hay pruebas',
+                          Text(context.l.aunNoHayPruebas,
                               style: Theme.of(context).textTheme.titleMedium),
                           const SizedBox(height: 8),
                           Text(
-                            'Crea la primera prueba del campeonato '
-                            '(por ejemplo "EL SOT", "SLOTMANIA"…).',
+                            context.l.aunNoHayPruebasTexto,
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
@@ -96,7 +96,7 @@ class _TarjetaPrueba extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final colorEst = _colorEstado(prueba.estado, context);
-    final fmt = DateFormat("d MMM y", 'es_ES');
+    final fmt = DateFormat.yMMMd(context.idiomaFechas);
 
     return Card(
       child: InkWell(
@@ -150,7 +150,7 @@ class _TarjetaPrueba extends StatelessWidget {
                   color: colorEst.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(etiquetaEstado(prueba.estado),
+                child: Text(etiquetaEstado(context, prueba.estado),
                     style: TextStyle(
                       color: colorEst,
                       fontSize: 13,

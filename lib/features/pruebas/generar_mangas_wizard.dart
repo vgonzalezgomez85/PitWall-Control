@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../domain/generador_mangas.dart';
 import '../equipos/repositorio_equipos.dart';
@@ -169,7 +170,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
     final clamped = n.clamp(1, 10);
     while (_nombresControllers.length < clamped) {
       _nombresControllers.add(TextEditingController(
-        text: 'Tanda ${_nombresControllers.length + 1}',
+        text: context.l.tandaNumero(_nombresControllers.length + 1),
       ));
     }
     while (_nombresControllers.length > clamped) {
@@ -205,6 +206,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
   }
 
   Future<void> _aplicar() async {
+    final l = context.l;
     setState(() => _trabajando = true);
     try {
       await ref.read(repoInscripcionesPruebaProvider).aplicarGeneracion(
@@ -219,16 +221,15 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
       await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Tandas creadas'),
+          title: Text(l.tandasCreadas),
           content: Text(
-              'Se han creado ${_previa.length} tandas con '
-              '${_previa.fold<int>(0, (n, m) => n + m.equipos.length)} equipos.\n\n'
-              '${_conCarriles ? 'Con carril de salida asignado.' : 'Los carriles se asignarán antes de la carrera.'}'
-              '${_conPisters ? '\nPisters asignados entre las tandas de cada día.' : ''}'),
+              '${l.tandasCreadasTexto(_previa.length, _previa.fold<int>(0, (n, m) => n + m.equipos.length))}\n\n'
+              '${_conCarriles ? l.conCarrilAsignado : l.carrilesSeAsignaranAntes}'
+              '${_conPisters ? '\n${l.pistersAsignadosEntreTandas}' : ''}'),
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
+              child: Text(l.ok),
             ),
           ],
         ),
@@ -237,7 +238,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(context.l.errorDetalle('$e'))),
       );
     } finally {
       if (mounted) setState(() => _trabajando = false);
@@ -262,7 +263,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
     final hayPuntos = _puntosPorPiloto.values.any((v) => v > 0);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Generar tandas')),
+      appBar: AppBar(title: Text(context.l.generarTandas)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -279,7 +280,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '$total equipos inscritos a repartir',
+                          context.l.equiposInscritosARepartir(total),
                           style: TextStyle(
                               color: cs.onPrimaryContainer,
                               fontSize: 16,
@@ -287,8 +288,8 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
                         ),
                         Text(
                           hayPuntos
-                              ? 'Ordenados por puntos brutos acumulados.'
-                              : 'Sin puntos este año → ordenados por saldo año anterior (0 si no hay).',
+                              ? context.l.ordenadosPorPuntos
+                              : context.l.sinPuntosEsteAnio,
                           style: TextStyle(
                               color: cs.onPrimaryContainer.withValues(alpha: 0.8),
                               fontSize: 13),
@@ -301,12 +302,11 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
             ),
           ),
           const SizedBox(height: 20),
-          Text('1. Carriles de la pista',
+          Text(context.l.paso1CarrilesPista,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Text(
-            'Cuántos coches corren a la vez. Marca el máximo de equipos por '
-            'tanda para repartirlos bien.',
+            context.l.paso1CarrilesTexto,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -330,13 +330,13 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
                 icon: const Icon(Icons.add),
               ),
               const SizedBox(width: 8),
-              Text('carriles', style: Theme.of(context).textTheme.bodyMedium),
+              Text(context.l.carrilesMin,
+                  style: Theme.of(context).textTheme.bodyMedium),
             ],
           ),
           const SizedBox(height: 16),
           Text(
-            'Minutos por carril (cuánto dura el turno de un equipo en '
-            'cada carril, para calcular la duración de la tanda).',
+            context.l.minutosPorCarrilTexto,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -360,27 +360,28 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
                 icon: const Icon(Icons.add),
               ),
               const SizedBox(width: 8),
-              Text('min/carril',
+              Text(context.l.minPorCarril,
                   style: Theme.of(context).textTheme.bodyMedium),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'Cada tanda durará ~$_duracionMangaMinutos min '
-            '($_carriles carriles × $_minutosPorCarril min).',
+            context.l.cadaTandaDurara(
+                _duracionMangaMinutos, _carriles, _minutosPorCarril),
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
                 ?.copyWith(fontWeight: FontWeight.w600, color: cs.primary),
           ),
           const SizedBox(height: 20),
-          Text('2. Número de tandas',
+          Text(context.l.paso2NumeroTandas,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Text(
-            'Sugerido: ${GeneradorMangas.numMangasSugerido(totalEquipos: total, tamMax: _carriles)} '
-            '(sin carriles vacíos con $_carriles carriles: si sobran '
-            'equipos, las tandas pasan de $_carriles). Puedes cambiarlo.',
+            context.l.sugeridoTexto(
+                GeneradorMangas.numMangasSugerido(
+                    totalEquipos: total, tamMax: _carriles),
+                _carriles),
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -405,7 +406,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
             ],
           ),
           const SizedBox(height: 20),
-          Text('3. Nombres y horarios',
+          Text(context.l.paso3NombresHorarios,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           ..._nombresControllers.asMap().entries.map((e) => Padding(
@@ -413,7 +414,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
                 child: TextField(
                   controller: e.value,
                   decoration: InputDecoration(
-                    labelText: 'Tanda ${e.key + 1}',
+                    labelText: context.l.tandaNumero(e.key + 1),
                     prefixIcon: const Icon(Icons.flag_outlined),
                   ),
                   onChanged: (_) => _recalcular(),
@@ -423,32 +424,27 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
             const SizedBox(height: 12),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Asignar carril automáticamente'),
-              subtitle: Text(
-                  'Por puntos, de más a menos: carriles 1 a $_carriles y, '
-                  'si hay más pilotos, D1, D2…'),
+              title: Text(context.l.asignarCarrilAutomatico),
+              subtitle: Text(context.l.asignarCarrilTexto(_carriles)),
               value: _asignarCarriles,
               onChanged: (v) => setState(() => _asignarCarriles = v),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Asignar pisters'),
-              subtitle: const Text(
-                  'Entre las tandas del mismo día. 2 tandas: 1ª↔2ª. '
-                  '3: la 3ª hace de pisters en la 1ª, la 1ª en la 2ª y la '
-                  '2ª en la 3ª. 4: 1ª↔2ª y 3ª↔4ª.'),
+              title: Text(context.l.asignarPisters),
+              subtitle: Text(context.l.asignarPistersTexto),
               value: _asignarPisters,
               onChanged: (v) => setState(() => _asignarPisters = v),
             ),
           ],
           const SizedBox(height: 24),
-          Text('4. Vista previa',
+          Text(context.l.paso4VistaPrevia,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Text(
             _conCarriles
-                ? 'El número de la izquierda es el carril de salida.'
-                : 'Los carriles los asignarás después, antes de la carrera.',
+                ? context.l.numeroIzquierdaCarril
+                : context.l.carrilesLosAsignarasDespues,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -474,9 +470,8 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
           ],
           const SizedBox(height: 16),
           SwitchListTile(
-            title: const Text('Sustituir tandas existentes'),
-            subtitle: const Text(
-                'Si esta prueba ya tenía tandas, se eliminan y se reemplazan.'),
+            title: Text(context.l.sustituirTandasExistentes),
+            subtitle: Text(context.l.sustituirTandasTexto),
             value: _sustituir,
             onChanged: (v) => setState(() => _sustituir = v),
           ),
@@ -489,7 +484,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.check),
-            label: const Text('Crear estas tandas'),
+            label: Text(context.l.crearEstasTandas),
           ),
         ],
       ),
@@ -518,7 +513,7 @@ class _BloqueSinManga extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Sin tanda (${equipos.length})',
+                    context.l.sinTandaN(equipos.length),
                     style: TextStyle(
                       color: cs.onErrorContainer,
                       fontWeight: FontWeight.w700,
@@ -529,8 +524,7 @@ class _BloqueSinManga extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Estos equipos prefieren un día que no tiene ninguna tanda en este reparto. '
-              'Añade una tanda de ese día arriba o cambia su preferencia.',
+              context.l.sinTandaTexto,
               style: TextStyle(color: cs.onErrorContainer, fontSize: 13),
             ),
             const SizedBox(height: 8),
@@ -550,7 +544,7 @@ class _BloqueSinManga extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Prefiere: ${e.preferenciaDia ?? "?"}',
+                        context.l.prefiereDia(e.preferenciaDia ?? '?'),
                         style: TextStyle(
                           color: cs.onErrorContainer,
                           fontSize: 12,
@@ -594,7 +588,8 @@ class _MangaPreview extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium),
                   ),
                   Text(
-                    '${manga.equipos.length} eq.  ·  ${manga.puntuacionTotal} pts',
+                    '${context.l.nEquiposAbrev(manga.equipos.length)}  ·  '
+                    '${context.l.puntosAbrev(manga.puntuacionTotal.round())}',
                     style: TextStyle(color: cs.outline, fontSize: 13),
                   ),
                 ],
@@ -606,7 +601,7 @@ class _MangaPreview extends StatelessWidget {
                     children: [
                       Icon(Icons.sports_outlined, size: 16, color: cs.outline),
                       const SizedBox(width: 6),
-                      Text('Pisters: pilotos de $pisters',
+                      Text(context.l.pistersPilotosDe(pisters!),
                           style: TextStyle(color: cs.outline, fontSize: 13)),
                     ],
                   ),
@@ -648,7 +643,7 @@ class _MangaPreview extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            '${e.value.puntuacion} pts',
+                            context.l.puntosAbrev(e.value.puntuacion.round()),
                             style: TextStyle(
                                 color: cs.primary,
                                 fontWeight: FontWeight.w700,

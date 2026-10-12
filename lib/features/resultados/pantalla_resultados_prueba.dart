@@ -19,6 +19,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
@@ -133,7 +134,7 @@ class PantallaResultadosPrueba extends ConsumerWidget {
 
     final cuerpo = dataAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
       data: (filas) {
         if (filas.isEmpty) {
           return Center(
@@ -145,12 +146,11 @@ class PantallaResultadosPrueba extends ConsumerWidget {
                   Icon(Icons.emoji_events_outlined,
                       size: 96, color: cs.outline),
                   const SizedBox(height: 16),
-                  Text('No hay inscritos en esta prueba',
+                  Text(context.l.noHayInscritosEnPrueba,
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Inscribe equipos y genera las tandas. Luego podrás '
-                    'importar los resultados del cronometraje aquí.',
+                  Text(
+                    context.l.inscribeEquiposGeneraTandas,
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -174,7 +174,7 @@ class PantallaResultadosPrueba extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '$conResultado de ${filas.length} equipos con resultado registrado.',
+                        context.l.equiposConResultado(conResultado, filas.length),
                       ),
                     ),
                   ],
@@ -193,10 +193,10 @@ class PantallaResultadosPrueba extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Resultados de la prueba'),
+        title: Text(context.l.resultadosDeLaPrueba),
         actions: [
           IconButton(
-            tooltip: 'Importar desde archivo de cronometraje',
+            tooltip: context.l.importarDesdeArchivoCronometraje,
             icon: const Icon(Icons.file_upload_outlined),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
@@ -279,7 +279,7 @@ class _FilaResultadoPruebaState extends ConsumerState<_FilaResultadoPrueba> {
                   Text(fila.pilotosTexto,
                       style: TextStyle(color: cs.outline, fontSize: 13)),
                   Text(
-                    'Copa ${fila.copa}  ·  ${fila.nombreManga}',
+                    context.l.copaYManga(fila.copa, fila.nombreManga),
                     style: TextStyle(color: cs.outline, fontSize: 12),
                   ),
                 ],
@@ -295,7 +295,7 @@ class _FilaResultadoPruebaState extends ConsumerState<_FilaResultadoPrueba> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '${fila.puntos ?? 0} pts',
+                  context.l.puntosAbrev(fila.puntos ?? 0),
                   style: TextStyle(
                       color: context.estado.exito,
                       fontWeight: FontWeight.w700),
@@ -307,8 +307,8 @@ class _FilaResultadoPruebaState extends ConsumerState<_FilaResultadoPrueba> {
               child: DropdownButtonFormField<int?>(
                 initialValue: fila.posicion,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Pos.',
+                decoration: InputDecoration(
+                  labelText: context.l.posAbrev,
                   isDense: true,
                 ),
                 items: [

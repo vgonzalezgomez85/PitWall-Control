@@ -16,8 +16,10 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'package:drift/drift.dart';
+import 'package:flutter/widgets.dart' show BuildContext;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/generador_mangas.dart';
@@ -52,11 +54,11 @@ Future<Map<int, num>> puntosSemillaPorPiloto(
 
 const estadosPrueba = ['PROGRAMADA', 'EN_CURSO', 'TERMINADA', 'CANCELADA'];
 
-String etiquetaEstado(String e) => switch (e) {
-      'PROGRAMADA' => 'Programada',
-      'EN_CURSO' => 'En curso',
-      'TERMINADA' => 'Terminada',
-      'CANCELADA' => 'Cancelada',
+String etiquetaEstado(BuildContext context, String e) => switch (e) {
+      'PROGRAMADA' => context.l.estadoProgramada,
+      'EN_CURSO' => context.l.estadoEnCurso,
+      'TERMINADA' => context.l.estadoTerminada,
+      'CANCELADA' => context.l.estadoCancelada,
       _ => e,
     };
 

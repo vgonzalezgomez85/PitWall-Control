@@ -24,6 +24,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../services/almacen_local.dart';
 import '../../services/enviar_tanda_service.dart';
 import '../../services/generador_tanda_json.dart';
@@ -73,10 +74,10 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
 
   Future<void> _enviar() async {
     final messenger = ScaffoldMessenger.of(context);
+    final l = context.l;
     final host = _hostCtrl.text.trim();
     if (host.isEmpty) {
-      messenger.showSnackBar(const SnackBar(
-          content: Text('Elige un PitWall o escribe su dirección.')));
+      messenger.showSnackBar(SnackBar(content: Text(l.eligePitwall)));
       return;
     }
     setState(() => _enviando = true);
@@ -94,8 +95,8 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
       if (tandas.isEmpty) {
         messenger.showSnackBar(SnackBar(
             content: Text(_pole
-                ? 'No hay inscritos que enviar.'
-                : 'No hay tandas con carriles asignados que enviar.')));
+                ? l.noHayInscritosEnviar
+                : l.noHayTandasEnviar)));
         setState(() => _enviando = false);
         return;
       }
@@ -118,14 +119,14 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _enviando = false);
-      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(l.errorDetalle('$e'))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Enviar a PitWall'),
+      title: Text(context.l.enviarAPitwall),
       content: SizedBox(
         width: 420,
         child: Column(
@@ -137,9 +138,9 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
             TextField(
               controller: _pinCtrl,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'PIN de importación',
-                helperText: 'El PIN que muestra PitWall en «Importar tanda».',
+              decoration: InputDecoration(
+                labelText: context.l.pinImportacion,
+                helperText: context.l.pinImportacionAyuda,
               ),
             ),
             const SizedBox(height: 4),
@@ -150,9 +151,9 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
               onChanged: _enviando
                   ? null
                   : (v) => setState(() => _pole = v),
-              title: const Text('La carrera tiene pole'),
-              subtitle: const Text(
-                  'No se envía el orden de carril: la parrilla se asigna en PitWall tras la pole'),
+              title: Text(context.l.carreraTienePoleSi),
+              subtitle: Text(
+                  context.l.carreraTienePoleAyuda),
             ),
           ],
         ),
@@ -160,7 +161,7 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
       actions: [
         TextButton(
           onPressed: _enviando ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(context.l.cancelar),
         ),
         FilledButton.icon(
           onPressed: _enviando ? null : _enviar,
@@ -170,7 +171,7 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.send),
-          label: const Text('Enviar'),
+          label: Text(context.l.enviar),
         ),
       ],
     );

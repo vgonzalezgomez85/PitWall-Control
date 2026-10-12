@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../data/database/app_database.dart';
 import '../pruebas/repositorio_pruebas.dart';
@@ -43,7 +44,7 @@ class PestanaVerificarPrueba extends ConsumerWidget {
 
     return mangasAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
       data: (mangas) => ListView(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
         children: [
@@ -53,7 +54,7 @@ class PestanaVerificarPrueba extends ConsumerWidget {
             children: [
               OutlinedButton.icon(
                 icon: const Icon(Icons.table_chart_outlined),
-                label: const Text('Resumen de verificaciones'),
+                label: Text(context.l.resumenVerificaciones),
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) =>
                       PantallaRejillaVerificaciones(pruebaId: pruebaId),
@@ -70,11 +71,11 @@ class PestanaVerificarPrueba extends ConsumerWidget {
                 children: [
                   Icon(Icons.fact_check_outlined, size: 64, color: cs.outline),
                   const SizedBox(height: 8),
-                  Text('Aún no hay tandas',
+                  Text(context.l.aunNoHayTandas,
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Inscribe equipos y crea las tandas en la pestaña Preparar.',
+                  Text(
+                    context.l.verificarSinTandasTexto,
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -100,7 +101,7 @@ class _SeccionManga extends ConsumerWidget {
     final filasAsync = ref.watch(verificacionesMangaProvider(manga.id));
     final filas = filasAsync.asData?.value ?? const <VerificacionConEquipo>[];
     final validadas = filas.where((f) => f.validada).length;
-    final fmt = DateFormat("d MMM, HH:mm", 'es_ES');
+    final fmt = DateFormat.MMMd(context.idiomaFechas).add_Hm();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -125,7 +126,7 @@ class _SeccionManga extends ConsumerWidget {
                   ),
                 ),
                 if (filas.isNotEmpty)
-                  Text('$validadas / ${filas.length} validadas',
+                  Text(context.l.validadasDe(validadas, filas.length),
                       style: TextStyle(
                         color: validadas == filas.length
                             ? context.estado.exito
@@ -140,11 +141,11 @@ class _SeccionManga extends ConsumerWidget {
               padding: EdgeInsets.all(16),
               child: Center(child: CircularProgressIndicator()),
             ),
-            error: (e, _) => Text('Error: $e'),
+            error: (e, _) => Text(context.l.errorDetalle('$e')),
             data: (filas) => filas.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-                    child: Text('Sin equipos en esta tanda.',
+                    child: Text(context.l.sinEquiposEnTanda,
                         style: TextStyle(color: cs.outline)),
                   )
                 : Column(children: [

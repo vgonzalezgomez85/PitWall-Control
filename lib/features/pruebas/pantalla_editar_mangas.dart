@@ -19,6 +19,7 @@ import 'package:drift/drift.dart' as d;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import 'pantalla_inscritos.dart';
@@ -117,10 +118,10 @@ class PantallaEditarMangas extends ConsumerWidget {
     final dataAsync = ref.watch(_mangasConEquiposProvider(pruebaId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Editar tandas')),
+      appBar: AppBar(title: Text(context.l.editarTandas)),
       body: dataAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
         data: (mangas) {
           if (mangas.isEmpty) {
             return Center(
@@ -131,10 +132,10 @@ class PantallaEditarMangas extends ConsumerWidget {
                   children: [
                     Icon(Icons.flag_outlined, size: 96, color: cs.outline),
                     const SizedBox(height: 16),
-                    Text('Esta prueba no tiene tandas todavía',
+                    Text(context.l.pruebaSinTandas,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    const Text('Generálas desde Inscritos → Generar tandas.',
+                    Text(context.l.generaTandasDesdeInscritos,
                         textAlign: TextAlign.center),
                   ],
                 ),
@@ -146,10 +147,10 @@ class PantallaEditarMangas extends ConsumerWidget {
             children: [
               Card(
                 color: cs.surfaceContainer,
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.all(12),
                   child: Text(
-                      'Tocá un equipo para moverlo a otra tanda.'),
+                      context.l.tocaEquipoParaMover),
                 ),
               ),
               const SizedBox(height: 12),
@@ -188,7 +189,7 @@ class _MangaCard extends ConsumerWidget {
                     child: Text(manga.manga.nombre,
                         style: Theme.of(context).textTheme.titleMedium),
                   ),
-                  Text('${manga.equipos.length} eq.',
+                  Text(context.l.nEquiposAbrev(manga.equipos.length),
                       style: TextStyle(color: cs.outline)),
                 ],
               ),
@@ -196,7 +197,7 @@ class _MangaCard extends ConsumerWidget {
               if (manga.equipos.isEmpty)
                 Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Text('Sin equipos',
+                  child: Text(context.l.sinEquipos,
                       style: TextStyle(color: cs.outline)),
                 )
               else
@@ -228,7 +229,7 @@ class _FilaEquipo extends ConsumerWidget {
     final destino = await showDialog<int>(
       context: context,
       builder: (_) => SimpleDialog(
-        title: Text('Mover "${equipo.nombre}" a…'),
+        title: Text(context.l.moverEquipoA(equipo.nombre)),
         children: todasLasMangas
             .where((m) => m.manga.id != mangaActualId)
             .map((m) => SimpleDialogOption(
@@ -236,7 +237,7 @@ class _FilaEquipo extends ConsumerWidget {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text(
-                        '${m.manga.nombre}  (${m.equipos.length} eq.)'),
+                        context.l.tandaConEquipos(m.manga.nombre, m.equipos.length)),
                   ),
                 ))
             .toList(),
@@ -275,7 +276,7 @@ class _FilaEquipo extends ConsumerWidget {
             Text(equipo.copa,
                 style: TextStyle(color: cs.outline, fontSize: 12)),
             IconButton(
-              tooltip: 'Dar de baja de la prueba',
+              tooltip: context.l.darDeBajaPrueba,
               icon: Icon(Icons.person_remove_outlined,
                   color: cs.error, size: 20),
               onPressed: () async {

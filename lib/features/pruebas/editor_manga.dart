@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../equipos/repositorio_equipos.dart';
@@ -137,7 +138,7 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo guardar: $e')),
+          SnackBar(content: Text(context.l.noSePudoGuardar('$e'))),
         );
         setState(() => _guardando = false);
       }
@@ -148,16 +149,16 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Eliminar tanda'),
+        title: Text(context.l.eliminarTanda),
         content: Text(
-            '¿Eliminar la tanda "${_nombre.text}"? Se borrarán también las inscripciones, resultados y verificaciones de la tanda.'),
+            context.l.eliminarTandaTexto(_nombre.text)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(context.l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Eliminar')),
+              child: Text(context.l.eliminar)),
         ],
       ),
     );
@@ -172,15 +173,15 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final esNuevo = widget.mangaId == null;
-    final fmt = DateFormat("EEEE d 'de' MMMM, HH:mm", 'es_ES');
+    final fmt = DateFormat.MMMMEEEEd(context.idiomaFechas).add_Hm();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(esNuevo ? 'Nueva tanda' : 'Editar tanda'),
+        title: Text(esNuevo ? context.l.nuevaTanda : context.l.editarTanda),
         actions: [
           if (!esNuevo)
             IconButton(
-              tooltip: 'Eliminar',
+              tooltip: context.l.eliminar,
               icon: const Icon(Icons.delete_outline),
               onPressed: _borrar,
             ),
@@ -193,13 +194,13 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
           children: [
             TextFormField(
               controller: _nombre,
-              decoration: const InputDecoration(
-                labelText: 'Nombre de la tanda *',
-                helperText: 'Ej: Jueves 21:00, Viernes 23:00…',
+              decoration: InputDecoration(
+                labelText: context.l.nombreTandaObligatorio,
+                helperText: context.l.nombreTandaAyuda,
                 prefixIcon: Icon(Icons.label_outline),
               ),
               validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Indica el nombre'
+                  ? context.l.indicaElNombre
                   : null,
             ),
             const SizedBox(height: 12),
@@ -207,7 +208,7 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
               child: ListTile(
                 leading: const Icon(Icons.event_outlined),
                 title: Text(_fechaHora == null
-                    ? 'Sin fecha y hora asignadas'
+                    ? context.l.sinFechaHora
                     : fmt.format(_fechaHora!)),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -215,12 +216,12 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
                     if (_fechaHora != null)
                       IconButton(
                         icon: const Icon(Icons.close),
-                        tooltip: 'Quitar',
+                        tooltip: context.l.quitar,
                         onPressed: () => setState(() => _fechaHora = null),
                       ),
                     TextButton(
                       onPressed: _elegirFechaHora,
-                      child: Text(_fechaHora == null ? 'Elegir' : 'Cambiar'),
+                      child: Text(_fechaHora == null ? context.l.elegir : context.l.cambiar),
                     ),
                   ],
                 ),
@@ -229,16 +230,16 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _numCarriles,
-              decoration: const InputDecoration(
-                labelText: 'Número de carriles',
-                helperText: 'Habitualmente 6, 7 u 8 (hasta 32)',
+              decoration: InputDecoration(
+                labelText: context.l.numeroCarriles,
+                helperText: context.l.numeroCarrilesAyuda,
                 prefixIcon: Icon(Icons.linear_scale),
               ),
               keyboardType: TextInputType.number,
               validator: (v) {
                 final n = int.tryParse(v ?? '');
                 if (n == null || n < 1 || n > 32) {
-                  return 'Indica un número entre 1 y 32';
+                  return context.l.numeroCarrilesError;
                 }
                 return null;
               },
@@ -251,17 +252,17 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
               const SizedBox(height: 12),
               DropdownButtonFormField<int?>(
                 initialValue: _pistersMangaId,
-                decoration: const InputDecoration(
-                  labelText: 'Pisters',
-                  helperText: 'Tanda cuyos pilotos hacen de pisters en esta',
+                decoration: InputDecoration(
+                  labelText: context.l.pisters,
+                  helperText: context.l.pistersAyuda,
                   prefixIcon: Icon(Icons.sports_outlined),
                 ),
                 items: [
-                  const DropdownMenuItem<int?>(
-                      value: null, child: Text('— sin pisters —')),
+                  DropdownMenuItem<int?>(
+                      value: null, child: Text(context.l.sinPisters)),
                   for (final o in _otrasMangas)
                     DropdownMenuItem<int?>(
-                        value: o.id, child: Text('Pilotos de ${o.nombre}')),
+                        value: o.id, child: Text(context.l.pilotosDe(o.nombre))),
                 ],
                 onChanged: (v) => setState(() => _pistersMangaId = v),
               ),
@@ -270,13 +271,13 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _estado,
-                decoration: const InputDecoration(
-                  labelText: 'Estado',
+                decoration: InputDecoration(
+                  labelText: context.l.estado,
                   prefixIcon: Icon(Icons.flag_outlined),
                 ),
                 items: estadosPrueba
                     .map((e) => DropdownMenuItem(
-                        value: e, child: Text(etiquetaEstado(e))))
+                        value: e, child: Text(etiquetaEstado(context, e))))
                     .toList(),
                 onChanged: (v) => setState(() => _estado = v ?? 'PROGRAMADA'),
               ),
@@ -290,7 +291,7 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.check),
-              label: Text(esNuevo ? 'Crear tanda' : 'Guardar cambios'),
+              label: Text(esNuevo ? context.l.crearTanda : context.l.guardarCambios),
             ),
           ],
         ),

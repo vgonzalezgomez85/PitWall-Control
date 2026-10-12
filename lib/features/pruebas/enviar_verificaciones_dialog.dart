@@ -24,6 +24,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/idioma.dart';
 import '../../services/almacen_local.dart';
 import '../../services/enviar_verificaciones_service.dart';
 import '../../services/generador_verificaciones_json.dart';
@@ -83,9 +85,10 @@ class _EnviarVerificacionesDialogState
 
   // Paso 0 → 1: guardar host/PIN y pedir la lista de carreras a Manager.
   Future<void> _verCarreras() async {
+    final l = context.l;
     final host = _hostCtrl.text.trim();
     if (host.isEmpty) {
-      _snack('Elige un PitWall o escribe su dirección.');
+      _snack(l.eligePitwall);
       return;
     }
     setState(() => _trabajando = true);
@@ -100,7 +103,7 @@ class _EnviarVerificacionesDialogState
         _paso = 1;
       });
     } catch (e) {
-      _snack('No se pudo conectar: $e');
+      _snack(l.noSePudoConectar('$e'));
     } finally {
       if (mounted) setState(() => _trabajando = false);
     }
@@ -108,6 +111,7 @@ class _EnviarVerificacionesDialogState
 
   // Paso 1: al elegir una carrera, se envían las verificaciones ligadas a ella.
   Future<void> _enviarACarrera(CarreraManager carrera) async {
+    final l = context.l;
     setState(() => _trabajando = true);
     try {
       final payload = await widget.ref
@@ -115,7 +119,7 @@ class _EnviarVerificacionesDialogState
           .generar(pruebaId: widget.pruebaId, raceId: carrera.id);
       final verificaciones = (payload['verificaciones'] as List?) ?? const [];
       if (verificaciones.isEmpty) {
-        _snack('No hay verificaciones que enviar en esta prueba.');
+        _snack(l.noHayVerificacionesEnviar);
         setState(() => _trabajando = false);
         return;
       }
@@ -138,7 +142,7 @@ class _EnviarVerificacionesDialogState
     } catch (e) {
       if (!mounted) return;
       setState(() => _trabajando = false);
-      _snack('Error: $e');
+      _snack(l.errorDetalle('$e'));
     }
   }
 
@@ -146,18 +150,18 @@ class _EnviarVerificacionesDialogState
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(_paso == 0
-          ? 'Enviar verificaciones a PitWall'
-          : 'Elige la carrera'),
+          ? context.l.enviarVerificacionesPitwall
+          : context.l.eligeLaCarrera),
       content: SizedBox(width: 420, child: _cuerpo()),
       actions: [
         TextButton(
           onPressed: _trabajando ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(context.l.cancelar),
         ),
         if (_paso == 1)
           TextButton(
             onPressed: _trabajando ? null : () => setState(() => _paso = 0),
-            child: const Text('Atrás'),
+            child: Text(context.l.atras),
           ),
         if (_paso == 0)
           FilledButton.icon(
@@ -168,7 +172,7 @@ class _EnviarVerificacionesDialogState
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.list),
-            label: const Text('Ver carreras'),
+            label: Text(context.l.verCarreras),
           ),
       ],
     );
@@ -182,7 +186,7 @@ class _EnviarVerificacionesDialogState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Se envían a modo de consulta: en PitWall se podrán ver pero no editar.',
+          context.l.seEnvianComoConsulta,
           style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outline),
         ),
         const SizedBox(height: 8),
@@ -191,9 +195,9 @@ class _EnviarVerificacionesDialogState
         TextField(
           controller: _pinCtrl,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'PIN de importación',
-            helperText: 'El PIN que muestra PitWall en «Importar tanda».',
+          decoration: InputDecoration(
+            labelText: context.l.pinImportacion,
+            helperText: context.l.pinImportacionAyuda,
           ),
         ),
       ],
@@ -202,10 +206,9 @@ class _EnviarVerificacionesDialogState
 
   Widget _pasoCarreras() {
     if (_carreras.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('PitWall no tiene carreras. Envía antes una tanda '
-            '(«Enviar a PitWall») o crea la carrera en Manager.'),
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(context.l.pitwallNoTieneCarrerasEnvia),
       );
     }
     return ConstrainedBox(
@@ -218,7 +221,8 @@ class _EnviarVerificacionesDialogState
               leading: const Icon(Icons.flag_outlined),
               title: Text(c.nombre),
               subtitle: Text(
-                  '${c.tandas} tanda(s)${c.creada != null ? ' · ${c.creada}' : ''}'),
+                  '${context.l.tandasDeCarrera(c.tandas)}'
+                  '${c.creada != null ? ' · ${c.creada}' : ''}'),
               enabled: !_trabajando,
               onTap: () => _enviarACarrera(c),
             ),

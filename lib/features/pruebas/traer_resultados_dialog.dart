@@ -25,6 +25,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../services/almacen_local.dart';
@@ -91,9 +92,10 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
 
   // Paso 0 → 1: pedir la lista de carreras a Manager.
   Future<void> _cargarCarreras() async {
+    final l = context.l;
     final host = _hostCtrl.text.trim();
     if (host.isEmpty) {
-      _snack('Elige un PitWall o escribe su dirección.');
+      _snack(l.eligePitwall);
       return;
     }
     setState(() => _trabajando = true);
@@ -108,7 +110,7 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
         _paso = 1;
       });
     } catch (e) {
-      _snack('No se pudo conectar: $e');
+      _snack(l.noSePudoConectar('$e'));
     } finally {
       if (mounted) setState(() => _trabajando = false);
     }
@@ -116,12 +118,16 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
 
   // Paso 1 → 2: bajar los resultados y casarlos con los equipos del campeonato.
   Future<void> _elegirCarrera(CarreraManager c) async {
+    final l = context.l;
     setState(() => _trabajando = true);
     try {
       final res = await traerResultados(_hostCtrl.text.trim(), c.id);
       final db = widget.ref.read(dbProvider);
       final activo = widget.ref.read(campeonatoActivoProvider);
-      if (activo == null) throw 'No hay campeonato activo.';
+      if (activo == null) {
+        _snack(l.noHayCampeonatoActivo);
+        return;
+      }
 
       final equipos = await (db.select(db.equipos)
             ..where((t) => t.campeonatoId.equals(activo.id)))
@@ -149,7 +155,7 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
         _paso = 2;
       });
     } catch (e) {
-      _snack('No se pudieron traer los resultados: $e');
+      _snack(l.noSePudieronTraerResultados('$e'));
     } finally {
       if (mounted) setState(() => _trabajando = false);
     }
@@ -160,6 +166,7 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
 
   // Paso 2: aplicar posiciones (los puntos salen de la TablaPuntos de Control).
   Future<void> _aplicar() async {
+    final l = context.l;
     final activo = widget.ref.read(campeonatoActivoProvider)!;
     final repoRes = widget.ref.read(repoResultadosProvider);
     setState(() => _trabajando = true);
@@ -180,9 +187,9 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
       }
       if (!mounted) return;
       Navigator.of(context).pop();
-      _snack('Resultados aplicados: $ok · saltados: $saltados');
+      _snack(l.resultadosAplicadosSaltados(ok, saltados));
     } catch (e) {
-      _snack('Error al aplicar: $e');
+      _snack(l.errorAlAplicar('$e'));
       if (mounted) setState(() => _trabajando = false);
     }
   }
@@ -191,15 +198,15 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(switch (_paso) {
-        0 => 'Traer resultados de PitWall',
-        1 => 'Elige la carrera',
-        _ => 'Resultados: $_raceName',
+        0 => context.l.traerResultadosPitwall,
+        1 => context.l.eligeLaCarrera,
+        _ => context.l.resultadosDeCarrera(_raceName),
       }),
       content: SizedBox(width: 480, child: _cuerpo()),
       actions: [
         TextButton(
           onPressed: _trabajando ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(context.l.cancelar),
         ),
         if (_paso == 0)
           FilledButton.icon(
@@ -210,7 +217,7 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.list),
-            label: const Text('Ver carreras'),
+            label: Text(context.l.verCarreras),
           ),
         if (_paso == 2)
           FilledButton.icon(
@@ -224,8 +231,8 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.check),
-            label: Text(
-                'Aplicar (${_filas.where((f) => f.importar && f.equipoId != null).length})'),
+            label: Text(context.l.aplicarN(
+                _filas.where((f) => f.importar && f.equipoId != null).length)),
           ),
       ],
     );
@@ -254,9 +261,9 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
 
   Widget _pasoCarreras() {
     if (_carreras.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('PitWall no tiene carreras.'),
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(context.l.pitwallNoTieneCarreras),
       );
     }
     return ConstrainedBox(
@@ -269,7 +276,8 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
               leading: const Icon(Icons.flag_outlined),
               title: Text(c.nombre),
               subtitle: Text(
-                  '${c.tandas} tanda(s)${c.creada != null ? ' · ${c.creada}' : ''}'),
+                  '${context.l.tandasDeCarrera(c.tandas)}'
+                  '${c.creada != null ? ' · ${c.creada}' : ''}'),
               enabled: !_trabajando,
               onTap: () => _elegirCarrera(c),
             ),
@@ -280,9 +288,9 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
 
   Widget _pasoPreview() {
     if (_filas.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('La carrera no tiene resultados todavía.'),
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(context.l.laCarreraNoTieneResultados),
       );
     }
     final multiTanda = _filas.map((f) => f.remoto.tanda).toSet().length > 1;
@@ -300,13 +308,14 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
                   ? null
                   : (v) => setState(() => f.importar = v ?? false),
               title: Text(
-                  '${multiTanda ? 'T${f.remoto.tanda} · ' : ''}'
-                  '${f.remoto.posicion}º  ${f.remoto.nombre}'),
+                  '${multiTanda ? '${context.l.tandaAbrev(f.remoto.tanda)} · ' : ''}'
+                  '${f.remoto.posicion}  ${f.remoto.nombre}'),
               subtitle: Text(switch (f.estado) {
-                'equipo_no_existe' => 'Equipo no encontrado en el campeonato',
-                'no_inscrito' => 'No inscrito en esta prueba',
-                _ =>
-                  '${f.remoto.vueltas ?? '—'} vueltas · se aplicará posición ${f.remoto.posicion}',
+                'equipo_no_existe' =>
+                  context.l.equipoNoEncontradoCampeonato,
+                'no_inscrito' => context.l.noInscritoEnEstaPrueba,
+                _ => '${f.remoto.vueltas == null ? '—' : context.l.nVueltas(f.remoto.vueltas!)}'
+                    ' · ${context.l.seAplicaraPosicion(f.remoto.posicion)}',
               }),
               secondary: Icon(
                 switch (f.estado) {

@@ -14,6 +14,13 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.38.0] — 2026-10-12
+### Añadido
+- **La traducción avanza a las pruebas y los resultados (fase 2)**: se traducen la pantalla de la prueba con sus pestañas (Preparar, Verificar, Resultados y Caja), los inscritos (alta a mano e importación de CSV/Excel), las tandas (crear con «Generar tandas», editar y la pantalla de cada tanda, con carriles, seeds directos, pisters y avisos), los resultados (por prueba y por tanda, e importación del cronometraje), el sorteo de motores y los envíos a PitWall (tandas y verificaciones). El resto de pantallas se irá traduciendo por fases y, mientras tanto, sigue en español.
+
+### Mejorado
+- Los recuentos usan el plural de cada idioma («1 equipo» / «8 equipos», «vueltas», «seleccionados»…) y el desplegable de posición ya no lleva el ordinal español «1º».
+
 ## [1.37.0] — 2026-10-12
 ### Añadido
 - **La app empieza a estar en varios idiomas: español, català, English, français e italiano.** Nuevo ajuste **Ajustes → Apariencia → Idioma**, que cambia la app al momento (también «Automático», que sigue el idioma del sistema). En esta primera fase están traducidos el menú (lateral y del móvil), el Inicio, Ajustes y el aviso de versión nueva; el resto de pantallas se irá traduciendo por fases y, mientras tanto, sigue en español. Las fechas del Inicio salen en el formato de cada idioma.

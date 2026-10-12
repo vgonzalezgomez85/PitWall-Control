@@ -141,5 +141,832 @@
         "type": "int"
       }
     }
+  },
+  "nuevaPrueba": "Nueva prueba",
+  "seleccionaCampeonato": "Selecciona primero un campeonato",
+  "aunNoHayPruebas": "Aún no hay pruebas",
+  "aunNoHayPruebasTexto": "Crea la primera prueba del campeonato (por ejemplo \"EL SOT\", \"SLOTMANIA\"…).",
+  "estadoProgramada": "Programada",
+  "estadoEnCurso": "En curso",
+  "estadoTerminada": "Terminada",
+  "estadoCancelada": "Cancelada",
+  "resumenVerificaciones": "Resumen de verificaciones",
+  "aunNoHayTandas": "Aún no hay tandas",
+  "verificarSinTandasTexto": "Inscribe equipos y crea las tandas en la pestaña Preparar.",
+  "validadasDe": "{validadas} / {total} validadas",
+  "@validadasDe": {
+    "placeholders": {
+      "validadas": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sinEquiposEnTanda": "Sin equipos en esta tanda.",
+  "carreraTienePole": "¿La carrera tiene pole?",
+  "carreraTienePoleTexto": "Con pole no se exporta el orden de carril: PitWall crea la sesión de pole y la parrilla se asigna tras correrla.",
+  "sinPole": "Sin pole",
+  "conPole": "Con pole",
+  "noHayInscritosExportar": "No hay inscritos que exportar.",
+  "noHayTandasConCarriles": "No hay tandas con carriles asignados que exportar.",
+  "importarDelCronometraje": "Importar del cronometraje",
+  "traerResultadosPitwall": "Traer resultados de PitWall",
+  "prueba": "Prueba",
+  "editar": "Editar",
+  "pestanaPreparar": "Preparar",
+  "pestanaVerificar": "Verificar",
+  "pestanaResultados": "Resultados",
+  "pestanaCaja": "Caja",
+  "nuevaTanda": "Nueva tanda",
+  "compartir": "Compartir",
+  "pdfTandas": "PDF de tandas",
+  "pdfVerificaciones": "PDF de verificaciones",
+  "enviarTandasPitwall": "Enviar tandas a PitWall",
+  "porWifiSinArchivo": "Por wifi, sin archivo",
+  "enviarVerificacionesPitwall": "Enviar verificaciones a PitWall",
+  "soloConsultaManager": "Solo consulta en Manager",
+  "archivoParaPitwall": "Archivo para PitWall (JSON)",
+  "paraImportarAManoManager": "Para importarlo a mano en Manager",
+  "noEncontrada": "No encontrada",
+  "editarTandas": "Editar tandas",
+  "sorteoMotores": "Sorteo de motores",
+  "tandas": "Tandas",
+  "crearTandasTexto": "Crea las tandas que tendrá esta prueba (Jueves 21:00, Viernes 21:00…).",
+  "pruebaNumero": "Prueba #{orden}",
+  "@pruebaNumero": {
+    "placeholders": {
+      "orden": {
+        "type": "int"
+      }
+    }
+  },
+  "nCarriles": "{n} carriles",
+  "@nCarriles": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "noSePudoGuardar": "No se pudo guardar: {detalle}",
+  "@noSePudoGuardar": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "eliminarPrueba": "Eliminar prueba",
+  "eliminarPruebaTexto": "¿Eliminar \"{nombre}\"?\n\nSe borrarán también sus tandas, inscripciones, resultados y verificaciones. Esta acción no se puede deshacer.",
+  "@eliminarPruebaTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "eliminar": "Eliminar",
+  "editarPrueba": "Editar prueba",
+  "nombrePruebaObligatorio": "Nombre de la prueba *",
+  "nombrePruebaAyuda": "Ej: EL SOT, SLOTMANIA, GASCLAVAT…",
+  "indicaElNombre": "Indica el nombre",
+  "sedeClub": "Sede / club",
+  "sinFechaAsignada": "Sin fecha asignada",
+  "quitarFecha": "Quitar fecha",
+  "elegir": "Elegir",
+  "cambiar": "Cambiar",
+  "ordenCampeonato": "Orden en el campeonato",
+  "ordenCampeonatoAyuda": "Posición en el calendario (1, 2, 3…)",
+  "numeroEntero": "Número entero",
+  "estado": "Estado",
+  "crearPrueba": "Crear prueba",
+  "guardarCambios": "Guardar cambios",
+  "eliminarTanda": "Eliminar tanda",
+  "eliminarTandaTexto": "¿Eliminar la tanda \"{nombre}\"? Se borrarán también las inscripciones, resultados y verificaciones de la tanda.",
+  "@eliminarTandaTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "editarTanda": "Editar tanda",
+  "nombreTandaObligatorio": "Nombre de la tanda *",
+  "nombreTandaAyuda": "Ej: Jueves 21:00, Viernes 23:00…",
+  "sinFechaHora": "Sin fecha y hora asignadas",
+  "quitar": "Quitar",
+  "numeroCarriles": "Número de carriles",
+  "numeroCarrilesAyuda": "Habitualmente 6, 7 u 8 (hasta 32)",
+  "numeroCarrilesError": "Indica un número entre 1 y 32",
+  "pisters": "Pisters",
+  "pistersAyuda": "Tanda cuyos pilotos hacen de pisters en esta",
+  "sinPisters": "— sin pisters —",
+  "pilotosDe": "Pilotos de {nombre}",
+  "@pilotosDe": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "crearTanda": "Crear tanda",
+  "pruebaSinTandas": "Esta prueba no tiene tandas todavía",
+  "generaTandasDesdeInscritos": "Genéralas desde Inscritos → Generar tandas.",
+  "tocaEquipoParaMover": "Toca un equipo para moverlo a otra tanda.",
+  "nEquiposAbrev": "{n} eq.",
+  "@nEquiposAbrev": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "sinEquipos": "Sin equipos",
+  "moverEquipoA": "Mover \"{nombre}\" a…",
+  "@moverEquipoA": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "tandaConEquipos": "{nombre}  ({n} eq.)",
+  "@tandaConEquipos": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "darDeBajaPrueba": "Dar de baja de la prueba",
+  "eligePitwall": "Elige un PitWall o escribe su dirección.",
+  "noHayInscritosEnviar": "No hay inscritos que enviar.",
+  "noHayTandasEnviar": "No hay tandas con carriles asignados que enviar.",
+  "enviarAPitwall": "Enviar a PitWall",
+  "pinImportacion": "PIN de importación",
+  "pinImportacionAyuda": "El PIN que muestra PitWall en «Importar tanda».",
+  "carreraTienePoleSi": "La carrera tiene pole",
+  "carreraTienePoleAyuda": "No se envía el orden de carril: la parrilla se asigna en PitWall tras la pole",
+  "enviar": "Enviar",
+  "pitwallEnLaRed": "PitWall en la red",
+  "buscarDeNuevo": "Buscar de nuevo",
+  "buscandoPitwall": "Buscando PitWall en la red local…",
+  "noSeEncuentraPitwall": "No se ha encontrado ningún PitWall. Comprueba que está abierto y en la misma red Wi‑Fi, o escribe su dirección abajo.",
+  "direccionIpPuerto": "Dirección (IP:puerto)",
+  "resultadosDeLaTanda": "Resultados de la tanda",
+  "noHayEquiposEnTanda": "No hay equipos en esta tanda",
+  "inscribeEquiposParaResultados": "Inscribe equipos para poder registrar sus resultados.",
+  "indicaPosicionFinalTexto": "Indica la posición final de cada equipo. Los puntos se calculan solos según la tabla del campeonato.",
+  "puntos": "puntos",
+  "posicion": "Posición",
+  "sinAsignar": "Sin asignar",
+  "aRestar": "A restar",
+  "creditosMin": "créditos",
+  "noHayInscritosEnPrueba": "No hay inscritos en esta prueba",
+  "inscribeEquiposGeneraTandas": "Inscribe equipos y genera las tandas. Luego podrás importar los resultados del cronometraje aquí.",
+  "equiposConResultado": "{con} de {total, plural, =1{1 equipo} other{{total} equipos}} con resultado registrado.",
+  "@equiposConResultado": {
+    "placeholders": {
+      "con": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "resultadosDeLaPrueba": "Resultados de la prueba",
+  "importarDesdeArchivoCronometraje": "Importar desde archivo de cronometraje",
+  "copaYManga": "Copa {copa}  ·  {manga}",
+  "@copaYManga": {
+    "placeholders": {
+      "copa": {
+        "type": "String"
+      },
+      "manga": {
+        "type": "String"
+      }
+    }
+  },
+  "posAbrev": "Pos.",
+  "archivos": "Archivos",
+  "noSeEncontraronResultados": "No se encontraron resultados. El archivo debe tener columnas como \"Posición\" y \"Nombre\" (formato TicTacSlot o similar).",
+  "noSePudoLeerArchivo": "No se pudo leer el archivo: {detalle}",
+  "@noSePudoLeerArchivo": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "importacionCompletada": "Importación completada",
+  "resumenImportacionResultados": "✓ Resultados aplicados: {ok}\n+ Inscritos automáticamente: {inscritos}\n✗ Saltados: {saltados}",
+  "@resumenImportacionResultados": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "inscritos": {
+        "type": "int"
+      },
+      "saltados": {
+        "type": "int"
+      }
+    }
+  },
+  "ok": "OK",
+  "importarResultadosPrueba": "Importar resultados de la prueba",
+  "paso1EligeArchivo": "1. Elige el archivo",
+  "importaArchivoTexto": "Importa el archivo del sistema de cronometraje (TicTacSlot, SloTime…). Cada equipo del archivo se asigna a la tanda de esta prueba donde esté inscrito.",
+  "elegirArchivo": "Elegir archivo",
+  "resultadosGenerales": "Resultados generales",
+  "crearTandaResultadosGenerales": "Crear tanda \"Resultados generales\"",
+  "pruebaSinTandasAviso": "La prueba no tiene tandas aún. Marcamos los resultados en una tanda creada al vuelo.",
+  "paso2VistaPrevia": "2. Vista previa",
+  "nDeTotalSeAplicaran": "{n} de {total} se aplicarán",
+  "@nDeTotalSeAplicaran": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "equiposNoExistenAviso": "{n, plural, =1{⚠️ 1 equipo del archivo no existe en el campeonato.} other{⚠️ {n} equipos del archivo no existen en el campeonato.}}",
+  "@equiposNoExistenAviso": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "aplicarResultadosA": "Aplicar resultados a {n, plural, =1{1 equipo} other{{n} equipos}}",
+  "@aplicarResultadosA": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "noExiste": "No existe",
+  "seInscribira": "Se inscribirá",
+  "aplicar": "Aplicar",
+  "copaTexto": "Copa {copa}",
+  "@copaTexto": {
+    "placeholders": {
+      "copa": {
+        "type": "String"
+      }
+    }
+  },
+  "nVueltas": "{n, plural, =1{1 vuelta} other{{n} vueltas}}",
+  "@nVueltas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "formatoNoSoportado": "Formato no soportado: {ext}",
+  "@formatoNoSoportado": {
+    "placeholders": {
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "sortearRestantes": "Sortear restantes",
+  "pruebaNoEncontrada": "Prueba no encontrada",
+  "noHayEquiposInscritosTandas": "No hay equipos inscritos en las tandas de esta prueba.",
+  "sorteoBloqueadoTexto": "{motivo} El sorteo queda en solo lectura.",
+  "@sorteoBloqueadoTexto": {
+    "placeholders": {
+      "motivo": {
+        "type": "String"
+      }
+    }
+  },
+  "equipos": "Equipos",
+  "numeros": "Números",
+  "noQuedanMotores": "No quedan motores disponibles.",
+  "motorSorteado": "Motor sorteado",
+  "repetir": "Repetir",
+  "asignar": "Asignar",
+  "faltanMotores": "Faltan motores: {equipos} equipos y solo {motores} motores disponibles.",
+  "@faltanMotores": {
+    "placeholders": {
+      "equipos": {
+        "type": "int"
+      },
+      "motores": {
+        "type": "int"
+      }
+    }
+  },
+  "motoresRango": "Motores {min}–{max}",
+  "@motoresRango": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "asignadosDe": "{asignados}/{total} asignados",
+  "@asignadosDe": {
+    "placeholders": {
+      "asignados": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "disponiblesN": "{n} disponibles",
+  "@disponiblesN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "sortear": "Sortear",
+  "numeroMotor": "Nº {n}",
+  "@numeroMotor": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "volverASortear": "Volver a sortear",
+  "quitarMotor": "Quitar motor",
+  "faltaRangoMotores": "Falta configurar el rango de motores",
+  "faltaRangoMotoresTexto": "Define el rango de números de motor de organización en el campeonato para poder sortearlos.",
+  "configurarCampeonato": "Configurar campeonato",
+  "rangoMotoresNoConfigurado": "Rango de motores no configurado.",
+  "asignado": "Asignado",
+  "disponible": "Disponible",
+  "tanda": "Tanda",
+  "verificaciones": "Verificaciones",
+  "renumerarCarriles": "Renumerar carriles",
+  "renumerar": "Renumerar",
+  "renumerarCarrilesTexto": "Se vuelven a asignar todos los carriles de \"{nombre}\" por puntos, de más a menos: 1 a {carriles} y, si hay más pilotos, D1, D2… Se pierden los cambios hechos a mano.",
+  "@renumerarCarrilesTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      },
+      "carriles": {
+        "type": "int"
+      }
+    }
+  },
+  "inscribirEquipo": "Inscribir equipo",
+  "aunNoHayEquiposInscritos": "Aún no hay equipos inscritos",
+  "pulsaInscribirEquipo": "Pulsa \"Inscribir equipo\" para añadirlos uno a uno asignando carril de salida.",
+  "sinCarrilN": "Sin carril ({n})",
+  "@sinCarrilN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "actual": "actual",
+  "libre": "libre",
+  "libreTitulo": "Libre",
+  "carrilDe": "Carril de {nombre}",
+  "@carrilDe": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "tocaCarrilLibreTexto": "Toca un carril libre para moverlo, o uno ocupado para intercambiarlos.",
+  "pista": "Pista",
+  "descanso": "Descanso",
+  "seedDirecto": "Seed directo",
+  "sinCarril": "Sin carril",
+  "escribirAMano": "Escribir a mano…",
+  "carrilDeSalida": "Carril de salida",
+  "carrilEjemplo": "Ej: D1, D2, 1, 2, 3…",
+  "carrilAyuda": "D1-D4 para seeds directos, 1-N para sorteo",
+  "guardar": "Guardar",
+  "quienSaleEnCarril": "¿Quién sale en el carril {carril}?",
+  "@quienSaleEnCarril": {
+    "placeholders": {
+      "carril": {
+        "type": "String"
+      }
+    }
+  },
+  "dejaLibreEl": "Deja libre el {carril}",
+  "@dejaLibreEl": {
+    "placeholders": {
+      "carril": {
+        "type": "String"
+      }
+    }
+  },
+  "carrilesRepetidos": "Carriles repetidos",
+  "pistersPilotosDe": "Pisters: pilotos de {tanda}",
+  "@pistersPilotosDe": {
+    "placeholders": {
+      "tanda": {
+        "type": "String"
+      }
+    }
+  },
+  "cambiarCarril": "Cambiar carril",
+  "quitarSeedDirecto": "Quitar seed directo",
+  "marcarSeedDirecto": "Marcar como seed directo",
+  "quitarDeLaTanda": "Quitar de la tanda",
+  "quitarInscripcion": "Quitar inscripción",
+  "quitarInscripcionTexto": "¿Quitar a \"{nombre}\" de esta tanda?",
+  "@quitarInscripcionTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "inscribirEquipoEn": "Inscribir equipo en \"{nombre}\"",
+  "@inscribirEquipoEn": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "buscarEquipoOPiloto": "Buscar equipo o piloto…",
+  "noHayEquiposEnCampeonatoCrealos": "No hay equipos en este campeonato. Créalos primero.",
+  "todosLosEquiposYaInscritos": "Todos los equipos ya están inscritos.",
+  "inscribir": "Inscribir",
+  "carrilEjemploCorto": "Ej: D1, 3…",
+  "carrilAyudaVacio": "Deja vacío si aún no asignas carril",
+  "inscritosALaPrueba": "Inscritos a la prueba",
+  "actualizarDesdeDrive": "Actualizar desde Drive",
+  "actualizandoDesdeDrive": "Actualizando desde Drive…",
+  "anadirPiloto": "Añadir piloto",
+  "anadirEquipo": "Añadir equipo",
+  "importar": "Importar",
+  "vincularGoogleSheet": "Vincular Google Sheet",
+  "desdeArchivoCsvExcel": "Desde archivo CSV / Excel",
+  "generarTandas": "Generar tandas",
+  "aunNoHayPilotosInscritosPrueba": "Aún no hay pilotos inscritos a esta prueba",
+  "aunNoHayEquiposInscritosPrueba": "Aún no hay equipos inscritos a esta prueba",
+  "importaCsvGoogleFormPilotos": "Importa el CSV/Excel del Google Form o añade pilotos a mano.",
+  "importaCsvGoogleFormEquipos": "Importa el CSV/Excel del Google Form o añade equipos a mano.",
+  "importarCsvExcel": "Importar CSV/Excel",
+  "anadirAMano": "Añadir a mano",
+  "pilotosInscritosGenerarTandas": "{n, plural, =1{1 piloto inscrito. Cuando los tengas todos, pulsa \"Generar tandas\".} other{{n} pilotos inscritos. Cuando los tengas todos, pulsa \"Generar tandas\".}}",
+  "@pilotosInscritosGenerarTandas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "equiposInscritosGenerarTandas": "{n, plural, =1{1 equipo inscrito. Cuando los tengas todos, pulsa \"Generar tandas\".} other{{n} equipos inscritos. Cuando los tengas todos, pulsa \"Generar tandas\".}}",
+  "@equiposInscritosGenerarTandas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "darDeBaja": "Dar de baja",
+  "darDeBajaTexto": "¿Dar de baja a \"{nombre}\"?\n\nSe quita de Inscritos y de su tanda. Los carriles del resto no cambian: si hace falta, renumera la tanda después.",
+  "@darDeBajaTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "inscribirPilotos": "Inscribir pilotos",
+  "inscribirEquipos": "Inscribir equipos",
+  "nSeleccionados": "{n, plural, =1{1 seleccionado} other{{n} seleccionados}}",
+  "@nSeleccionados": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "limpiar": "Limpiar",
+  "buscarPiloto": "Buscar piloto…",
+  "noHayPilotosEnCampeonato": "No hay pilotos en este campeonato.",
+  "noHayEquiposEnCampeonato": "No hay equipos en este campeonato.",
+  "todosYaInscritos": "Todos están ya inscritos.",
+  "nuevaInscripcion": "Nueva inscripción",
+  "nuevoEquipo": "Nuevo equipo",
+  "copaParaPilotosNuevos": "Copa para pilotos nuevos:",
+  "desmarcarTodos": "Desmarcar todos",
+  "marcarTodosN": "Marcar todos ({n})",
+  "@marcarTodosN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nuevaInscripcionCopa": "Nueva inscripción · Copa {copa}",
+  "@nuevaInscripcionCopa": {
+    "placeholders": {
+      "copa": {
+        "type": "String"
+      }
+    }
+  },
+  "marcaPilotosInscribir": "Marca los pilotos que quieras inscribir",
+  "marcaEquiposInscribir": "Marca los equipos que quieras inscribir",
+  "inscribirNPilotos": "Inscribir {n, plural, =1{1 piloto} other{{n} pilotos}}",
+  "@inscribirNPilotos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "inscribirNEquipos": "Inscribir {n, plural, =1{1 equipo} other{{n} equipos}}",
+  "@inscribirNEquipos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "importarInscripciones": "Importar inscripciones",
+  "csvGoogleFormInscripcionPilotos": "CSV/Excel del Google Form de inscripción a la prueba. Las inscripciones se vinculan a pilotos existentes por nombre.",
+  "csvGoogleFormInscripcionEquipos": "CSV/Excel del Google Form de inscripción a la prueba. Las inscripciones se vinculan a equipos existentes por nombre.",
+  "paso2AsignaColumnas": "2. Asigna columnas",
+  "nombreDelPilotoObligatorio": "Nombre del piloto *",
+  "nombreDelEquipoObligatorio": "Nombre del equipo *",
+  "diaPreferidoOpcional": "Día preferido (opcional)",
+  "notasOpcional": "Notas (opcional)",
+  "paso3VistaPrevia": "3. Vista previa",
+  "nDeTotalSeImportaran": "{n} de {total} se importarán",
+  "@nDeTotalSeImportaran": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "pilotosNoExistenAviso": "{n, plural, =1{⚠️ 1 piloto no existe en el campeonato. Créalo primero o revisa el nombre.} other{⚠️ {n} pilotos no existen en el campeonato. Créalos primero o revisa el nombre.}}",
+  "@pilotosNoExistenAviso": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "equiposNoExistenAvisoImport": "{n, plural, =1{⚠️ 1 equipo no existe en el campeonato. Créalo primero o revisa el nombre.} other{⚠️ {n} equipos no existen en el campeonato. Créalos primero o revisa el nombre.}}",
+  "@equiposNoExistenAvisoImport": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "asignaColumnaPiloto": "Asigna la columna del nombre del piloto.",
+  "asignaColumnaEquipo": "Asigna la columna del nombre del equipo.",
+  "ninguna": "— ninguna —",
+  "yaInscrito": "Ya inscrito",
+  "diaTexto": "Día: {dia}",
+  "@diaTexto": {
+    "placeholders": {
+      "dia": {
+        "type": "String"
+      }
+    }
+  },
+  "noSePudoLeer": "No se pudo leer: {detalle}",
+  "@noSePudoLeer": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "resumenImportacionInscripciones": "✓ Inscritos: {ok}\n✗ Saltados: {saltados}",
+  "@resumenImportacionInscripciones": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "saltados": {
+        "type": "int"
+      }
+    }
+  },
+  "tandaNumero": "Tanda {n}",
+  "@tandaNumero": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tandasCreadas": "Tandas creadas",
+  "tandasCreadasTexto": "{n, plural, =1{Se ha creado 1 tanda con {equipos} equipos.} other{Se han creado {n} tandas con {equipos} equipos.}}",
+  "@tandasCreadasTexto": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "equipos": {
+        "type": "int"
+      }
+    }
+  },
+  "conCarrilAsignado": "Con carril de salida asignado.",
+  "carrilesSeAsignaranAntes": "Los carriles se asignarán antes de la carrera.",
+  "pistersAsignadosEntreTandas": "Pisters asignados entre las tandas de cada día.",
+  "equiposInscritosARepartir": "{n, plural, =1{1 equipo inscrito a repartir} other{{n} equipos inscritos a repartir}}",
+  "@equiposInscritosARepartir": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "ordenadosPorPuntos": "Ordenados por puntos brutos acumulados.",
+  "sinPuntosEsteAnio": "Sin puntos este año → ordenados por saldo año anterior (0 si no hay).",
+  "paso1CarrilesPista": "1. Carriles de la pista",
+  "paso1CarrilesTexto": "Cuántos coches corren a la vez. Marca el máximo de equipos por tanda para repartirlos bien.",
+  "carrilesMin": "carriles",
+  "minutosPorCarrilTexto": "Minutos por carril (cuánto dura el turno de un equipo en cada carril, para calcular la duración de la tanda).",
+  "minPorCarril": "min/carril",
+  "cadaTandaDurara": "Cada tanda durará ~{minutos} min ({carriles} carriles × {minPorCarril} min).",
+  "@cadaTandaDurara": {
+    "placeholders": {
+      "minutos": {
+        "type": "int"
+      },
+      "carriles": {
+        "type": "int"
+      },
+      "minPorCarril": {
+        "type": "int"
+      }
+    }
+  },
+  "paso2NumeroTandas": "2. Número de tandas",
+  "sugeridoTexto": "Sugerido: {n} (sin carriles vacíos con {carriles} carriles: si sobran equipos, las tandas pasan de {carriles}). Puedes cambiarlo.",
+  "@sugeridoTexto": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "carriles": {
+        "type": "int"
+      }
+    }
+  },
+  "paso3NombresHorarios": "3. Nombres y horarios",
+  "asignarCarrilAutomatico": "Asignar carril automáticamente",
+  "asignarCarrilTexto": "Por puntos, de más a menos: carriles 1 a {carriles} y, si hay más pilotos, D1, D2…",
+  "@asignarCarrilTexto": {
+    "placeholders": {
+      "carriles": {
+        "type": "int"
+      }
+    }
+  },
+  "asignarPisters": "Asignar pisters",
+  "asignarPistersTexto": "Entre las tandas del mismo día. 2 tandas: 1ª↔2ª. 3: la 3ª hace de pisters en la 1ª, la 1ª en la 2ª y la 2ª en la 3ª. 4: 1ª↔2ª y 3ª↔4ª.",
+  "paso4VistaPrevia": "4. Vista previa",
+  "numeroIzquierdaCarril": "El número de la izquierda es el carril de salida.",
+  "carrilesLosAsignarasDespues": "Los carriles los asignarás después, antes de la carrera.",
+  "sinTandaN": "Sin tanda ({n})",
+  "@sinTandaN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "sinTandaTexto": "Estos equipos prefieren un día que no tiene ninguna tanda en este reparto. Añade una tanda de ese día arriba o cambia su preferencia.",
+  "prefiereDia": "Prefiere: {dia}",
+  "@prefiereDia": {
+    "placeholders": {
+      "dia": {
+        "type": "String"
+      }
+    }
+  },
+  "sustituirTandasExistentes": "Sustituir tandas existentes",
+  "sustituirTandasTexto": "Si esta prueba ya tenía tandas, se eliminan y se reemplazan.",
+  "crearEstasTandas": "Crear estas tandas",
+  "eligeLaCarrera": "Elige la carrera",
+  "verCarreras": "Ver carreras",
+  "resultadosDeCarrera": "Resultados: {nombre}",
+  "@resultadosDeCarrera": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "noSePudoConectar": "No se pudo conectar: {detalle}",
+  "@noSePudoConectar": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "noSePudieronTraerResultados": "No se pudieron traer los resultados: {detalle}",
+  "@noSePudieronTraerResultados": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "noHayCampeonatoActivo": "No hay campeonato activo.",
+  "resultadosAplicadosSaltados": "Resultados aplicados: {ok} · saltados: {saltados}",
+  "@resultadosAplicadosSaltados": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "saltados": {
+        "type": "int"
+      }
+    }
+  },
+  "errorAlAplicar": "Error al aplicar: {detalle}",
+  "@errorAlAplicar": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "pitwallNoTieneCarreras": "PitWall no tiene carreras.",
+  "pitwallNoTieneCarrerasEnvia": "PitWall no tiene carreras. Envía antes una tanda («Enviar a PitWall») o crea la carrera en Manager.",
+  "tandasDeCarrera": "{n} tanda(s)",
+  "@tandasDeCarrera": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "laCarreraNoTieneResultados": "La carrera no tiene resultados todavía.",
+  "equipoNoEncontradoCampeonato": "Equipo no encontrado en el campeonato",
+  "noInscritoEnEstaPrueba": "No inscrito en esta prueba",
+  "seAplicaraPosicion": "se aplicará posición {posicion}",
+  "@seAplicaraPosicion": {
+    "placeholders": {
+      "posicion": {
+        "type": "int"
+      }
+    }
+  },
+  "aplicarN": "Aplicar ({n})",
+  "@aplicarN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tandaAbrev": "T{n}",
+  "@tandaAbrev": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "seEnvianComoConsulta": "Se envían a modo de consulta: en PitWall se podrán ver pero no editar.",
+  "atras": "Atrás",
+  "noHayVerificacionesEnviar": "No hay verificaciones que enviar en esta prueba.",
+  "copaDosPuntos": "Copa: {copa}",
+  "@copaDosPuntos": {
+    "placeholders": {
+      "copa": {
+        "type": "String"
+      }
+    }
   }
 }

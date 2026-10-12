@@ -24,6 +24,7 @@ import 'package:pitwall/core/idioma.dart';
 import 'package:pitwall/core/proveedores.dart';
 import 'package:pitwall/data/database/app_database.dart';
 import 'package:pitwall/features/home/app_shell.dart';
+import 'package:pitwall/features/pruebas/detalle_prueba.dart';
 import 'package:pitwall/services/almacen_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -62,6 +63,63 @@ Future<ProviderContainer> _montar(WidgetTester tester, Locale? idioma) async {
 Future<void> _desmontar(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox());
   await tester.pump(const Duration(seconds: 1));
+}
+
+/// Monta la pantalla de una prueba (con una tanda y un equipo) en [idioma],
+/// para comprobar que la fase 2 (pruebas, tandas y resultados) sale traducida.
+Future<void> _montarDetallePrueba(WidgetTester tester, Locale idioma) async {
+  tester.view.physicalSize = const Size(1400, 1000);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+
+  final db = AppDatabase.forTesting(NativeDatabase.memory());
+  late Campeonato camp;
+  late int pruebaId;
+  await tester.runAsync(() async {
+    final campId = await db.into(db.campeonatos).insert(
+        CampeonatosCompanion.insert(
+            nombre: 'Liga Test', formato: 'INDIVIDUAL', anio: 2026));
+    camp = await (db.select(db.campeonatos)
+          ..where((t) => t.id.equals(campId)))
+        .getSingle();
+    pruebaId = await db.into(db.pruebas).insert(PruebasCompanion.insert(
+        campeonatoId: campId, nombre: 'Prueba 1', orden: 1));
+    final manga = await db.into(db.mangas).insert(
+        MangasCompanion.insert(pruebaId: pruebaId, nombre: 'Jueves'));
+    final p = await db
+        .into(db.pilotos)
+        .insert(PilotosCompanion.insert(nombre: 'Ana'));
+    final e = await db.into(db.equipos).insert(EquiposCompanion.insert(
+        campeonatoId: campId, nombre: 'Equipo Ana', copa: 'GT', piloto1Id: p));
+    await db.into(db.inscripcionesPrueba).insert(
+        InscripcionesPruebaCompanion.insert(pruebaId: pruebaId, equipoId: e));
+    await db
+        .into(db.inscripciones)
+        .insert(InscripcionesCompanion.insert(mangaId: manga, equipoId: e));
+  });
+
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
+  final contenedor = ProviderContainer(overrides: [
+    dbProvider.overrideWithValue(db),
+    almacenSyncProvider.overrideWithValue(AlmacenLocal(prefs)),
+  ]);
+  addTearDown(contenedor.dispose);
+  contenedor.read(campeonatoActivoProvider.notifier).seleccionar(camp);
+  await tester.pumpWidget(UncontrolledProviderScope(
+    container: contenedor,
+    child: MaterialApp(
+      locale: idioma,
+      supportedLocales: Textos.supportedLocales,
+      localizationsDelegates: Textos.localizationsDelegates,
+      home: DetallePrueba(pruebaId: pruebaId),
+    ),
+  ));
+  for (var i = 0; i < 5; i++) {
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await tester.pump(const Duration(milliseconds: 300));
+  }
 }
 
 void main() {
@@ -112,6 +170,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Races'), findsOneWidget);
     expect(c.read(almacenSyncProvider).readSync(key: 'idioma_app'), 'auto');
+    expect(tester.takeException(), isNull);
+    await _desmontar(tester);
+  });
+
+  testWidgets('la pantalla de la prueba (fase 2) sale traducida',
+      (tester) async {
+    await _montarDetallePrueba(tester, const Locale('en'));
+    expect(find.text('Prepare'), findsOneWidget);
+    expect(find.text('Scrutineer'), findsOneWidget);
+    expect(find.text('Results'), findsOneWidget);
+    expect(find.text('Entries'), findsOneWidget);
+    expect(find.text('New round'), findsOneWidget);
+    expect(find.text('Nueva tanda'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await _desmontar(tester);
+
+    await _montarDetallePrueba(tester, const Locale('ca'));
+    expect(find.text('Inscrits'), findsOneWidget);
+    expect(find.text('Sorteig de motors'), findsOneWidget);
+    expect(find.text('Nova tanda'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await _desmontar(tester);
   });

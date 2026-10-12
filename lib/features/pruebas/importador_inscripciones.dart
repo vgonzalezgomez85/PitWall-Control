@@ -21,6 +21,8 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:excel/excel.dart';
 
+import '../../domain/errores_importacion.dart';
+
 /// Resultado del parsing: una fila = un equipo que se inscribe.
 class FilaInscripcion {
   String nombreEquipo;
@@ -59,7 +61,7 @@ class ImportadorInscripciones {
     final ext = path.toLowerCase().split('.').last;
     if (ext == 'csv') return _leerCsv(path);
     if (ext == 'xlsx' || ext == 'xls') return _leerExcel(path);
-    throw Exception('Formato no soportado: $ext');
+    throw FormatoNoSoportado(ext);
   }
 
   static Future<({List<String> columnas, List<Map<String, String>> filas})>

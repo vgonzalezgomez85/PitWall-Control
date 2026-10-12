@@ -22,6 +22,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
@@ -197,7 +198,7 @@ class PantallaSorteoMotores extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sorteo de motores'),
+        title: Text(context.l.sorteoMotores),
         actions: [
           datosAsync.maybeWhen(
             data: (d) => (d != null && d.bloqueo == null &&
@@ -206,7 +207,7 @@ class PantallaSorteoMotores extends ConsumerWidget {
                 ? TextButton.icon(
                     onPressed: () => _sortearRestantes(context, ref, d),
                     icon: const Icon(Icons.casino_outlined),
-                    label: const Text('Sortear restantes'),
+                    label: Text(context.l.sortearRestantes),
                   )
                 : const SizedBox.shrink(),
             orElse: () => const SizedBox.shrink(),
@@ -215,9 +216,11 @@ class PantallaSorteoMotores extends ConsumerWidget {
       ),
       body: datosAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
         data: (d) {
-          if (d == null) return const Center(child: Text('Prueba no encontrada'));
+          if (d == null) {
+            return Center(child: Text(context.l.pruebaNoEncontrada));
+          }
           if (!d.rangoConfigurado) {
             return _SinRango(campeonato: d.campeonato);
           }
@@ -226,7 +229,7 @@ class PantallaSorteoMotores extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(32),
                 child: Text(
-                  'No hay equipos inscritos en las tandas de esta prueba.',
+                  context.l.noHayEquiposInscritosTandas,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: cs.outline),
                 ),
@@ -247,7 +250,7 @@ class PantallaSorteoMotores extends ConsumerWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            '${d.bloqueo} El sorteo queda en solo lectura.',
+                            context.l.sorteoBloqueadoTexto(d.bloqueo!),
                             style: TextStyle(color: cs.outline),
                           ),
                         ),
@@ -256,9 +259,9 @@ class PantallaSorteoMotores extends ConsumerWidget {
                   ),
                 TabBar(
                   labelColor: cs.primary,
-                  tabs: const [
-                    Tab(text: 'Equipos'),
-                    Tab(text: 'Números'),
+                  tabs: [
+                    Tab(text: context.l.equipos),
+                    Tab(text: context.l.numeros),
                   ],
                 ),
                 Expanded(
@@ -296,11 +299,12 @@ class PantallaSorteoMotores extends ConsumerWidget {
 
   Future<void> _sortearUno(
       BuildContext context, WidgetRef ref, DatosSorteo d, FilaSorteo f) async {
+    final l = context.l;
     // Para re-sortear, el motor actual del equipo vuelve a estar disponible.
     final candidatos = [...d.disponibles, if (f.motor != null) f.motor!];
     if (candidatos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No quedan motores disponibles.')),
+        SnackBar(content: Text(l.noQuedanMotores)),
       );
       return;
     }
@@ -315,7 +319,7 @@ class PantallaSorteoMotores extends ConsumerWidget {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Motor sorteado', style: Theme.of(ctx).textTheme.labelLarge),
+                Text(l.motorSorteado, style: Theme.of(ctx).textTheme.labelLarge),
                 const SizedBox(height: 8),
                 Text('$actual',
                     style: Theme.of(ctx).textTheme.displayMedium?.copyWith(
@@ -326,18 +330,18 @@ class PantallaSorteoMotores extends ConsumerWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancelar'),
+                child: Text(l.cancelar),
               ),
               if (candidatos.length > 1)
                 TextButton.icon(
                   onPressed: () =>
                       setSt(() => actual = candidatos[rng.nextInt(candidatos.length)]),
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Repetir'),
+                  label: Text(l.repetir),
                 ),
               FilledButton(
                 onPressed: () => Navigator.pop(ctx, actual),
-                child: const Text('Asignar'),
+                child: Text(l.asignar),
               ),
             ],
           ),
@@ -354,13 +358,14 @@ class PantallaSorteoMotores extends ConsumerWidget {
 
   Future<void> _sortearRestantes(
       BuildContext context, WidgetRef ref, DatosSorteo d) async {
+    final l = context.l;
     final pendientes = d.filas.where((f) => f.motor == null).toList();
     final pool = [...d.disponibles]..shuffle(Random());
     if (pool.length < pendientes.length) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(
-            'Faltan motores: ${pendientes.length} equipos y solo '
-            '${pool.length} motores disponibles.')),
+        SnackBar(
+            content: Text(
+                l.faltanMotores(pendientes.length, pool.length))),
       );
     }
     final repo = ref.read(repoVerificacionesProvider);
@@ -401,17 +406,18 @@ class _Cabecera extends StatelessWidget {
             children: [
               _Pildora(
                   icono: Icons.numbers,
-                  label: 'Motores $min–$max',
+                  label: context.l.motoresRango(min ?? 0, max ?? 0),
                   color: cs.primary),
               const SizedBox(width: 8),
               _Pildora(
                   icono: Icons.check_circle_outline,
-                  label: '${datos.asignados}/${datos.filas.length} asignados',
+                  label: context.l
+                      .asignadosDe(datos.asignados, datos.filas.length),
                   color: context.estado.exito),
               const SizedBox(width: 8),
               _Pildora(
                   icono: Icons.inventory_2_outlined,
-                  label: '${datos.disponibles.length} disponibles',
+                  label: context.l.disponiblesN(datos.disponibles.length),
                   color: cs.secondary),
             ],
           ),
@@ -467,10 +473,12 @@ class _FilaTarjeta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = context.l;
     final nombre = individual ? fila.pilotoNombre : fila.equipoNombre;
     final subtitulo = individual
-        ? '${fila.equipoNombre} · Copa ${fila.copa} · ${fila.mangaNombre}'
-        : '${fila.pilotoNombre.isEmpty ? '' : '${fila.pilotoNombre} · '}Copa ${fila.copa} · ${fila.mangaNombre}';
+        ? '${fila.equipoNombre} · ${l.copaTexto(fila.copa)} · ${fila.mangaNombre}'
+        : '${fila.pilotoNombre.isEmpty ? '' : '${fila.pilotoNombre} · '}'
+            '${l.copaTexto(fila.copa)} · ${fila.mangaNombre}';
 
     return Card(
       child: ListTile(
@@ -480,7 +488,7 @@ class _FilaTarjeta extends StatelessWidget {
             ? FilledButton.tonalIcon(
                 onPressed: onSortear,
                 icon: const Icon(Icons.casino_outlined),
-                label: const Text('Sortear'),
+                label: Text(l.sortear),
               )
             : Row(
                 mainAxisSize: MainAxisSize.min,
@@ -492,7 +500,7 @@ class _FilaTarjeta extends StatelessWidget {
                       color: cs.primaryContainer,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text('Nº ${fila.motor}',
+                    child: Text(l.numeroMotor(fila.motor!),
                         style: TextStyle(
                             color: cs.onPrimaryContainer,
                             fontWeight: FontWeight.w800,
@@ -504,10 +512,11 @@ class _FilaTarjeta extends StatelessWidget {
                       if (op == 'resortear') onSortear!();
                       if (op == 'quitar') onQuitar?.call();
                     },
-                    itemBuilder: (_) => const [
+                    itemBuilder: (_) => [
                       PopupMenuItem(
-                          value: 'resortear', child: Text('Volver a sortear')),
-                      PopupMenuItem(value: 'quitar', child: Text('Quitar motor')),
+                          value: 'resortear', child: Text(l.volverASortear)),
+                      PopupMenuItem(
+                          value: 'quitar', child: Text(l.quitarMotor)),
                     ],
                   ),
                 ],
@@ -532,19 +541,18 @@ class _SinRango extends StatelessWidget {
           children: [
             Icon(Icons.settings_outlined, size: 80, color: cs.outline),
             const SizedBox(height: 16),
-            Text('Falta configurar el rango de motores',
+            Text(context.l.faltaRangoMotores,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Text(
-              'Define el rango de números de motor de organización en el '
-              'campeonato para poder sortearlos.',
+              context.l.faltaRangoMotoresTexto,
               textAlign: TextAlign.center,
               style: TextStyle(color: cs.outline),
             ),
             const SizedBox(height: 20),
             FilledButton.icon(
               icon: const Icon(Icons.edit_outlined),
-              label: const Text('Configurar campeonato'),
+              label: Text(context.l.configurarCampeonato),
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) =>
                     EditorCampeonato(campeonatoId: campeonato.id),
@@ -572,7 +580,7 @@ class _VistaNumeros extends StatelessWidget {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
-          child: Text('Rango de motores no configurado.',
+          child: Text(context.l.rangoMotoresNoConfigurado,
               style: TextStyle(color: cs.outline)),
         ),
       );
@@ -642,7 +650,7 @@ class _ChipMotor extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(asignado ? 'Asignado' : 'Disponible',
+                Text(asignado ? context.l.asignado : context.l.disponible,
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,

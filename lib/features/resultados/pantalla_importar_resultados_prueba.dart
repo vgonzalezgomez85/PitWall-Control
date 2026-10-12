@@ -19,9 +19,11 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../domain/errores_importacion.dart';
 import '../pruebas/repositorio_pruebas.dart';
 import 'importador_resultados.dart';
 import 'pantalla_resultados_prueba.dart';
@@ -53,9 +55,10 @@ class _PantallaImportarResultadosPruebaState
       _trabajando = true;
       _error = null;
     });
+    final l = context.l;
     try {
       final tipo = XTypeGroup(
-        label: 'Archivos',
+        label: l.archivos,
         extensions: ['csv', 'xlsx', 'xls'],
       );
       final xfile = await openFile(acceptedTypeGroups: [tipo]);
@@ -66,15 +69,15 @@ class _PantallaImportarResultadosPruebaState
       _archivo = xfile.path;
       final filas = await ImportadorResultados.leerArchivo(xfile.path);
       if (filas.isEmpty) {
-        _error =
-            'No se encontraron resultados. El archivo debe tener columnas como '
-            '"Posición" y "Nombre" (formato TicTacSlot o similar).';
+        _error = l.noSeEncontraronResultados;
         _filas = [];
       } else {
         await _cruzarConBD(filas);
       }
+    } on FormatoNoSoportado catch (e) {
+      _error = l.formatoNoSoportado(e.extension);
     } catch (e) {
-      _error = 'No se pudo leer el archivo: $e';
+      _error = l.noSePudoLeerArchivo('$e');
     } finally {
       if (mounted) setState(() => _trabajando = false);
     }
@@ -116,6 +119,7 @@ class _PantallaImportarResultadosPruebaState
       s.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
 
   Future<int> _asegurarMangaGeneral() async {
+    final l = context.l;
     final db = ref.read(dbProvider);
     final mangas = await (db.select(db.mangas)
           ..where((t) => t.pruebaId.equals(widget.pruebaId)))
@@ -124,7 +128,7 @@ class _PantallaImportarResultadosPruebaState
     final id = await db.into(db.mangas).insert(
           MangasCompanion.insert(
             pruebaId: widget.pruebaId,
-            nombre: 'Resultados generales',
+            nombre: l.resultadosGenerales,
           ),
         );
     return id;
@@ -175,19 +179,18 @@ class _PantallaImportarResultadosPruebaState
         ok++;
       }
       if (!mounted) return;
+      final l = context.l;
       await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Importación completada'),
+          title: Text(l.importacionCompletada),
           content: Text(
-            '✓ Resultados aplicados: $ok\n'
-            '+ Inscritos automáticamente: $inscritosAuto\n'
-            '✗ Saltados: $saltados',
+            l.resumenImportacionResultados(ok, inscritosAuto, saltados),
           ),
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
+              child: Text(l.ok),
             ),
           ],
         ),
@@ -196,7 +199,7 @@ class _PantallaImportarResultadosPruebaState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(context.l.errorDetalle('$e'))),
       );
     } finally {
       if (mounted) setState(() => _trabajando = false);
@@ -211,7 +214,7 @@ class _PantallaImportarResultadosPruebaState
         _filas.where((f) => f.estado == 'equipo_no_existe').length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Importar resultados de la prueba')),
+      appBar: AppBar(title: Text(context.l.importarResultadosPrueba)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -222,13 +225,11 @@ class _PantallaImportarResultadosPruebaState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('1. Elige el archivo',
+                  Text(context.l.paso1EligeArchivo,
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   Text(
-                    'Importa el archivo del sistema de cronometraje (TicTacSlot, SloTime…). '
-                    'Cada equipo del archivo se asigna a la tanda de esta prueba '
-                    'donde esté inscrito.',
+                    context.l.importaArchivoTexto,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 12),
@@ -237,7 +238,7 @@ class _PantallaImportarResultadosPruebaState
                       FilledButton.icon(
                         onPressed: _trabajando ? null : _elegirArchivo,
                         icon: const Icon(Icons.folder_open),
-                        label: const Text('Elegir archivo'),
+                        label: Text(context.l.elegirArchivo),
                       ),
                       const SizedBox(width: 12),
                       if (_archivo != null)
@@ -276,9 +277,8 @@ class _PantallaImportarResultadosPruebaState
               SwitchListTile(
                 value: _crearMangaSiFalta,
                 onChanged: (v) => setState(() => _crearMangaSiFalta = v),
-                title: const Text('Crear tanda "Resultados generales"'),
-                subtitle: const Text(
-                    'La prueba no tiene tandas aún. Marcamos los resultados en una tanda creada al vuelo.'),
+                title: Text(context.l.crearTandaResultadosGenerales),
+                subtitle: Text(context.l.pruebaSinTandasAviso),
               ),
             Card(
               child: Padding(
@@ -288,16 +288,16 @@ class _PantallaImportarResultadosPruebaState
                   children: [
                     Row(
                       children: [
-                        Text('2. Vista previa',
+                        Text(context.l.paso2VistaPrevia,
                             style: Theme.of(context).textTheme.titleMedium),
                         const Spacer(),
-                        Text('$n de ${_filas.length} se aplicarán'),
+                        Text(context.l.nDeTotalSeAplicaran(n, _filas.length)),
                       ],
                     ),
                     if (desconocidos > 0) ...[
                       const SizedBox(height: 8),
                       Text(
-                        '⚠️ $desconocidos equipos del archivo no existen en el campeonato.',
+                        context.l.equiposNoExistenAviso(desconocidos),
                         style: TextStyle(color: cs.error),
                       ),
                     ],
@@ -322,7 +322,7 @@ class _PantallaImportarResultadosPruebaState
                       width: 18, height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.check),
-              label: Text('Aplicar resultados a $n equipos'),
+              label: Text(context.l.aplicarResultadosA(n)),
             ),
           ],
         ],
@@ -344,13 +344,13 @@ class _FilaPrevia extends StatelessWidget {
     switch (fila.estado) {
       case 'equipo_no_existe':
         color = cs.error;
-        etiqueta = 'No existe';
+        etiqueta = context.l.noExiste;
       case 'no_inscrito':
         color = context.estado.aviso;
-        etiqueta = 'Se inscribirá';
+        etiqueta = context.l.seInscribira;
       default:
         color = cs.primary;
-        etiqueta = 'Aplicar';
+        etiqueta = context.l.aplicar;
     }
     final bloqueado = fila.estado == 'equipo_no_existe';
 
@@ -391,8 +391,9 @@ class _FilaPrevia extends StatelessWidget {
                 if (fila.copaDetectada != null || fila.vueltas != null)
                   Text(
                     [
-                      if (fila.copaDetectada != null) 'Copa ${fila.copaDetectada}',
-                      if (fila.vueltas != null) '${fila.vueltas} vueltas',
+                      if (fila.copaDetectada != null)
+                        context.l.copaTexto(fila.copaDetectada!),
+                      if (fila.vueltas != null) context.l.nVueltas(fila.vueltas!),
                     ].join('  ·  '),
                     style: TextStyle(color: cs.outline, fontSize: 12),
                   ),

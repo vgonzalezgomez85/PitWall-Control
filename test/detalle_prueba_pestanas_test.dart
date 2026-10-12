@@ -124,7 +124,7 @@ void main() {
     await tester.tap(find.text('Resultados'));
     await _asentar(tester);
     expect(find.text('Traer resultados de PitWall'), findsOneWidget);
-    expect(find.text('0 de 1 equipos con resultado registrado.'),
+    expect(find.text('0 de 1 equipo con resultado registrado.'),
         findsOneWidget);
 
     await tester.tap(find.text('Compartir'));

@@ -19,9 +19,11 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/acciones_barra.dart';
 import '../../data/database/app_database.dart';
+import '../../domain/errores_importacion.dart';
 import '../equipos/editor_equipo.dart';
 import '../equipos/repositorio_equipos.dart';
 import '../google/actualizador_drive.dart';
@@ -34,20 +36,19 @@ import 'repositorio_inscripciones_prueba.dart';
 /// Confirma la baja de un piloto/equipo de la prueba (se borra el día de
 /// carrera, etc.). Lo quita de Inscritos y de su manga.
 Future<bool> confirmarBajaPrueba(BuildContext context, String nombre) async {
+  final l = context.l;
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Dar de baja de la prueba'),
-      content: Text('¿Dar de baja a "$nombre"?\n\n'
-          'Se quita de Inscritos y de su tanda. Los carriles del resto no '
-          'cambian: si hace falta, renumera la tanda después.'),
+      title: Text(l.darDeBajaPrueba),
+      content: Text(l.darDeBajaTexto(nombre)),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar')),
+            child: Text(l.cancelar)),
         FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Dar de baja')),
+            child: Text(l.darDeBaja)),
       ],
     ),
   );
@@ -68,7 +69,7 @@ class PantallaInscritos extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inscritos a la prueba'),
+        title: Text(context.l.inscritosALaPrueba),
         actions: [
           Consumer(builder: (context, ref, _) {
             final v =
@@ -79,12 +80,12 @@ class PantallaInscritos extends ConsumerWidget {
               if (v != null)
                 AccionBarra(
                   icono: Icons.sync,
-                  etiqueta: 'Actualizar desde Drive',
+                  etiqueta: context.l.actualizarDesdeDrive,
                   onPressed: () async {
                     final m = ScaffoldMessenger.of(context);
-                    m.showSnackBar(const SnackBar(
-                      content: Text('Actualizando desde Drive…'),
-                      duration: Duration(seconds: 2),
+                    m.showSnackBar(SnackBar(
+                      content: Text(context.l.actualizandoDesdeDrive),
+                      duration: const Duration(seconds: 2),
                     ));
                     final r = await ref
                         .read(actualizadorDriveProvider)
@@ -99,18 +100,22 @@ class PantallaInscritos extends ConsumerWidget {
               // Siempre visible: con inscritos, el FAB pasa a "Generar tandas".
               AccionBarra(
                 icono: Icons.person_add_alt_1_outlined,
-                etiqueta: esIndividual ? 'Añadir piloto' : 'Añadir equipo',
+                etiqueta: esIndividual
+                    ? context.l.anadirPiloto
+                    : context.l.anadirEquipo,
                 onPressed: () => _abrirAnadirManual(context, ref),
               ),
               AccionBarra(
                 icono: Icons.file_upload_outlined,
-                etiqueta: 'Importar',
+                etiqueta: context.l.importar,
                 opciones: [
-                  OpcionAccion(Icons.cloud_outlined, 'Vincular Google Sheet',
+                  OpcionAccion(
+                      Icons.cloud_outlined,
+                      context.l.vincularGoogleSheet,
                       () => abrir(ImportarInscripcionesSheets(pruebaId: pruebaId))),
                   OpcionAccion(
                       Icons.upload_file_outlined,
-                      'Desde archivo CSV / Excel',
+                      context.l.desdeArchivoCsvExcel,
                       () => abrir(
                           _PantallaImportarInscripciones(pruebaId: pruebaId))),
                 ],
@@ -124,7 +129,9 @@ class PantallaInscritos extends ConsumerWidget {
             ? FloatingActionButton.extended(
                 onPressed: () => _abrirAnadirManual(context, ref),
                 icon: const Icon(Icons.add),
-                label: Text(esIndividual ? 'Añadir piloto' : 'Añadir equipo'),
+                label: Text(esIndividual
+                    ? context.l.anadirPiloto
+                    : context.l.anadirEquipo),
               )
             : FloatingActionButton.extended(
                 onPressed: () => Navigator.of(context).push(
@@ -136,13 +143,13 @@ class PantallaInscritos extends ConsumerWidget {
                   ),
                 ),
                 icon: const Icon(Icons.auto_awesome),
-                label: const Text('Generar tandas'),
+                label: Text(context.l.generarTandas),
               ),
         orElse: () => null,
       ),
       body: inscritosAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
         data: (inscritos) {
           if (inscritos.isEmpty) {
             return Center(
@@ -156,16 +163,14 @@ class PantallaInscritos extends ConsumerWidget {
                     const SizedBox(height: 16),
                     Text(
                         esIndividual
-                            ? 'Aún no hay pilotos inscritos a esta prueba'
-                            : 'Aún no hay equipos inscritos a esta prueba',
+                            ? context.l.aunNoHayPilotosInscritosPrueba
+                            : context.l.aunNoHayEquiposInscritosPrueba,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     Text(
                       esIndividual
-                          ? 'Importa el CSV/Excel del Google Form '
-                              'o añade pilotos a mano.'
-                          : 'Importa el CSV/Excel del Google Form '
-                              'o añade equipos a mano.',
+                          ? context.l.importaCsvGoogleFormPilotos
+                          : context.l.importaCsvGoogleFormEquipos,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -181,13 +186,13 @@ class PantallaInscritos extends ConsumerWidget {
                             ),
                           ),
                           icon: const Icon(Icons.file_upload_outlined),
-                          label: const Text('Importar CSV/Excel'),
+                          label: Text(context.l.importarCsvExcel),
                         ),
                         const SizedBox(width: 12),
                         OutlinedButton.icon(
                           onPressed: () => _abrirAnadirManual(context, ref),
                           icon: const Icon(Icons.add),
-                          label: const Text('Añadir a mano'),
+                          label: Text(context.l.anadirAMano),
                         ),
                       ],
                     ),
@@ -215,10 +220,14 @@ class PantallaInscritos extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           esIndividual
-                              ? '${inscritos.length} pilotos inscritos. Cuando los tengas todos, '
-                                  'pulsa "Generar tandas".'
-                              : '${inscritos.length} equipos inscritos. Cuando los tengas todos, '
-                                  'pulsa "Generar tandas".',
+                              ? context
+                                  .l
+                                  .pilotosInscritosGenerarTandas(
+                                      inscritos.length)
+                              : context
+                                  .l
+                                  .equiposInscritosGenerarTandas(
+                                      inscritos.length),
                         ),
                       ),
                     ],
@@ -268,9 +277,9 @@ class _TarjetaInscrito extends ConsumerWidget {
         title: Text(inscrito.equipo.nombre),
         subtitle: Text(
           esIndividual
-              ? 'Copa: ${inscrito.copa}'
+              ? '${context.l.copaDosPuntos(inscrito.copa)}'
                   '${inscrito.inscripcion.preferenciaDia != null ? "  ·  ${inscrito.inscripcion.preferenciaDia}" : ""}'
-              : '${inscrito.nombrePilotos}\nCopa: ${inscrito.copa}'
+              : '${inscrito.nombrePilotos}\n${context.l.copaDosPuntos(inscrito.copa)}'
                   '${inscrito.inscripcion.preferenciaDia != null ? "  ·  ${inscrito.inscripcion.preferenciaDia}" : ""}',
         ),
         isThreeLine: !esIndividual,
@@ -286,7 +295,7 @@ class _TarjetaInscrito extends ConsumerWidget {
             }
           },
           itemBuilder: (_) => [
-            const PopupMenuItem(value: 'quitar', child: Text('Dar de baja')),
+            PopupMenuItem(value: 'quitar', child: Text(context.l.darDeBaja)),
           ],
         ),
       ),
@@ -367,8 +376,10 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
                 Expanded(
                   child: Text(
                     _totalSeleccionados == 0
-                        ? (esIndividual ? 'Inscribir pilotos' : 'Inscribir equipos')
-                        : '$_totalSeleccionados seleccionado${_totalSeleccionados == 1 ? "" : "s"}',
+                        ? (esIndividual
+                            ? context.l.inscribirPilotos
+                            : context.l.inscribirEquipos)
+                        : context.l.nSeleccionados(_totalSeleccionados),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
@@ -379,7 +390,7 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
                       _pilotosSeleccionados.clear();
                     }),
                     icon: const Icon(Icons.clear),
-                    label: const Text('Limpiar'),
+                    label: Text(context.l.limpiar),
                   ),
               ],
             ),
@@ -387,7 +398,9 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
             TextField(
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.search),
-                hintText: esIndividual ? 'Buscar piloto…' : 'Buscar equipo o piloto…',
+                hintText: esIndividual
+                    ? context.l.buscarPiloto
+                    : context.l.buscarEquipoOPiloto,
               ),
               onChanged: (v) =>
                   setState(() => _busqueda = v.trim().toLowerCase()),
@@ -397,7 +410,8 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
               child: equiposAsync.when(
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
+                error: (e, _) =>
+                    Center(child: Text(context.l.errorDetalle('$e'))),
                 data: (equipos) {
                   final ya = inscritosAsync.maybeWhen(
                     data: (l) => l.map((i) => i.equipo.id).toSet(),
@@ -437,9 +451,9 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
                           Text(
                             sinNada
                                 ? (esIndividual
-                                    ? 'No hay pilotos en este campeonato.'
-                                    : 'No hay equipos en este campeonato.')
-                                : 'Todos están ya inscritos.',
+                                    ? context.l.noHayPilotosEnCampeonato
+                                    : context.l.noHayEquiposEnCampeonato)
+                                : context.l.todosYaInscritos,
                             style: TextStyle(color: cs.outline),
                           ),
                           if (sinNada) ...[
@@ -454,8 +468,8 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
                               },
                               icon: const Icon(Icons.add),
                               label: Text(esIndividual
-                                  ? 'Nueva inscripción'
-                                  : 'Nuevo equipo'),
+                                  ? context.l.nuevaInscripcion
+                                  : context.l.nuevoEquipo),
                             ),
                           ],
                         ],
@@ -483,7 +497,7 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Row(
                             children: [
-                              Text('Copa para pilotos nuevos:',
+                              Text(context.l.copaParaPilotosNuevos,
                                   style: TextStyle(color: cs.outline)),
                               const SizedBox(width: 8),
                               DropdownButton<String>(
@@ -527,8 +541,8 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
                             ),
                             Text(
                               todosMarcados
-                                  ? 'Desmarcar todos'
-                                  : 'Marcar todos ($totalVisibles)',
+                                  ? context.l.desmarcarTodos
+                                  : context.l.marcarTodosN(totalVisibles),
                               style: TextStyle(color: cs.outline),
                             ),
                           ],
@@ -555,8 +569,9 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
                                 },
                                 title: Text(eq.equipo.nombre),
                                 subtitle: Text(esIndividual
-                                    ? 'Copa ${eq.equipo.copa}'
-                                    : '${eq.pilotosTexto}\nCopa ${eq.equipo.copa}'),
+                                    ? context.l.copaTexto(eq.equipo.copa)
+                                    : '${eq.pilotosTexto}\n'
+                                        '${context.l.copaTexto(eq.equipo.copa)}'),
                                 isThreeLine: !esIndividual,
                               ),
                             for (final p in candPilotos)
@@ -574,7 +589,8 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
                                 title: Text(p.nombre),
                                 subtitle: copaEfectiva == null
                                     ? null
-                                    : Text('Nueva inscripción · Copa $copaEfectiva'),
+                                    : Text(context.l
+                                        .nuevaInscripcionCopa(copaEfectiva)),
                               ),
                           ],
                         ),
@@ -598,11 +614,11 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
                     : const Icon(Icons.check),
                 label: Text(_totalSeleccionados == 0
                     ? (esIndividual
-                        ? 'Marca los pilotos que quieras inscribir'
-                        : 'Marca los equipos que quieras inscribir')
+                        ? context.l.marcaPilotosInscribir
+                        : context.l.marcaEquiposInscribir)
                     : (esIndividual
-                        ? 'Inscribir $_totalSeleccionados piloto${_totalSeleccionados == 1 ? "" : "s"}'
-                        : 'Inscribir $_totalSeleccionados equipo${_totalSeleccionados == 1 ? "" : "s"}')),
+                        ? context.l.inscribirNPilotos(_totalSeleccionados)
+                        : context.l.inscribirNEquipos(_totalSeleccionados))),
               ),
             ),
           ],
@@ -634,13 +650,14 @@ class _PantallaImportarInscripcionesState
   String? _error;
 
   Future<void> _elegirArchivo() async {
+    final l = context.l;
     setState(() {
       _trabajando = true;
       _error = null;
     });
     try {
       final tipo = XTypeGroup(
-          label: 'Archivos', extensions: ['csv', 'xlsx', 'xls']);
+          label: l.archivos, extensions: ['csv', 'xlsx', 'xls']);
       final xfile = await openFile(acceptedTypeGroups: [tipo]);
       if (xfile == null) {
         setState(() => _trabajando = false);
@@ -652,8 +669,10 @@ class _PantallaImportarInscripcionesState
       _filasArchivo = res.filas;
       _mapeo = ImportadorInscripciones.detectarMapeo(_columnas);
       await _recalcular();
+    } on FormatoNoSoportado catch (e) {
+      _error = l.formatoNoSoportado(e.extension);
     } catch (e) {
-      _error = 'No se pudo leer: $e';
+      _error = l.noSePudoLeer('$e');
     } finally {
       if (mounted) setState(() => _trabajando = false);
     }
@@ -725,15 +744,15 @@ class _PantallaImportarInscripcionesState
         ok++;
       }
       if (!mounted) return;
+      final l = context.l;
       await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Importación completada'),
-          content: Text(
-              '✓ Inscritos: $ok\n✗ Saltados: $saltados'),
+          title: Text(l.importacionCompletada),
+          content: Text(l.resumenImportacionInscripciones(ok, saltados)),
           actions: [
             FilledButton(
-                onPressed: () => Navigator.pop(context), child: const Text('OK'))
+                onPressed: () => Navigator.pop(context), child: Text(l.ok))
           ],
         ),
       );
@@ -741,7 +760,7 @@ class _PantallaImportarInscripcionesState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(context.l.errorDetalle('$e'))),
       );
     } finally {
       if (mounted) setState(() => _trabajando = false);
@@ -757,7 +776,7 @@ class _PantallaImportarInscripcionesState
     final esIndividual = maxPilotosEquipo(activo?.formato ?? 'PAREJAS') == 1;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Importar inscripciones')),
+      appBar: AppBar(title: Text(context.l.importarInscripciones)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -768,15 +787,13 @@ class _PantallaImportarInscripcionesState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('1. Elige el archivo',
+                  Text(context.l.paso1EligeArchivo,
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   Text(
                     esIndividual
-                        ? 'CSV/Excel del Google Form de inscripción a la prueba. '
-                            'Las inscripciones se vinculan a pilotos existentes por nombre.'
-                        : 'CSV/Excel del Google Form de inscripción a la prueba. '
-                            'Las inscripciones se vinculan a equipos existentes por nombre.',
+                        ? context.l.csvGoogleFormInscripcionPilotos
+                        : context.l.csvGoogleFormInscripcionEquipos,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 12),
@@ -785,7 +802,7 @@ class _PantallaImportarInscripcionesState
                       FilledButton.icon(
                         onPressed: _trabajando ? null : _elegirArchivo,
                         icon: const Icon(Icons.folder_open),
-                        label: const Text('Elegir archivo'),
+                        label: Text(context.l.elegirArchivo),
                       ),
                       const SizedBox(width: 12),
                       if (_archivo != null)
@@ -813,15 +830,18 @@ class _PantallaImportarInscripcionesState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('2. Asigna columnas',
+                    Text(context.l.paso2AsignaColumnas,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 12),
-                    _sel(esIndividual ? 'Nombre del piloto *' : 'Nombre del equipo *',
+                    _sel(
+                        esIndividual
+                            ? context.l.nombreDelPilotoObligatorio
+                            : context.l.nombreDelEquipoObligatorio,
                         _mapeo.colEquipo,
                         (v) { _mapeo.colEquipo = v; _recalcular(); }),
-                    _sel('Día preferido (opcional)', _mapeo.colDia,
+                    _sel(context.l.diaPreferidoOpcional, _mapeo.colDia,
                         (v) { _mapeo.colDia = v; _recalcular(); }),
-                    _sel('Notas (opcional)', _mapeo.colNotas,
+                    _sel(context.l.notasOpcional, _mapeo.colNotas,
                         (v) { _mapeo.colNotas = v; _recalcular(); }),
                   ],
                 ),
@@ -836,20 +856,18 @@ class _PantallaImportarInscripcionesState
                   children: [
                     Row(
                       children: [
-                        Text('3. Vista previa',
+                        Text(context.l.paso3VistaPrevia,
                             style: Theme.of(context).textTheme.titleMedium),
                         const Spacer(),
-                        Text('$n de ${_previo.length} se importarán'),
+                        Text(context.l.nDeTotalSeImportaran(n, _previo.length)),
                       ],
                     ),
                     if (inexistentes > 0) ...[
                       const SizedBox(height: 8),
                       Text(
                         esIndividual
-                            ? '⚠️ $inexistentes pilotos no existen en el campeonato. '
-                                'Créalos primero o revisa el nombre.'
-                            : '⚠️ $inexistentes equipos no existen en el campeonato. '
-                                'Créalos primero o revisa el nombre.',
+                            ? context.l.pilotosNoExistenAviso(inexistentes)
+                            : context.l.equiposNoExistenAvisoImport(inexistentes),
                         style: TextStyle(color: cs.error),
                       ),
                     ],
@@ -857,8 +875,8 @@ class _PantallaImportarInscripcionesState
                     if (!_mapeo.esValido)
                       Text(
                           esIndividual
-                              ? 'Asigna la columna del nombre del piloto.'
-                              : 'Asigna la columna del nombre del equipo.',
+                              ? context.l.asignaColumnaPiloto
+                              : context.l.asignaColumnaEquipo,
                           style: TextStyle(color: cs.error))
                     else
                       ..._previo.map((f) => _FilaPrevia(fila: f)),
@@ -875,7 +893,9 @@ class _PantallaImportarInscripcionesState
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.cloud_download_outlined),
-              label: Text(esIndividual ? 'Inscribir $n pilotos' : 'Inscribir $n equipos'),
+              label: Text(esIndividual
+                  ? context.l.inscribirNPilotos(n)
+                  : context.l.inscribirNEquipos(n)),
             ),
           ],
         ],
@@ -891,7 +911,7 @@ class _PantallaImportarInscripcionesState
         isExpanded: true,
         decoration: InputDecoration(labelText: label, isDense: true),
         items: [
-          const DropdownMenuItem(value: null, child: Text('— ninguna —')),
+          DropdownMenuItem(value: null, child: Text(context.l.ninguna)),
           ..._columnas.map((c) => DropdownMenuItem(value: c, child: Text(c))),
         ],
         onChanged: onChange,
@@ -912,13 +932,13 @@ class _FilaPrevia extends StatelessWidget {
     switch (fila.estado) {
       case 'equipo_no_existe':
         color = cs.error;
-        etiqueta = 'No existe';
+        etiqueta = context.l.noExiste;
       case 'ya_inscrito':
         color = cs.outline;
-        etiqueta = 'Ya inscrito';
+        etiqueta = context.l.yaInscrito;
       default:
         color = cs.primary;
-        etiqueta = 'Inscribir';
+        etiqueta = context.l.inscribir;
     }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -936,7 +956,7 @@ class _FilaPrevia extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     )),
                 if (fila.preferenciaDia != null)
-                  Text('Día: ${fila.preferenciaDia}',
+                  Text(context.l.diaTexto(fila.preferenciaDia!),
                       style: TextStyle(color: cs.outline, fontSize: 12)),
               ],
             ),

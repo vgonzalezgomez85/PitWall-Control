@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/acciones_barra.dart';
 import '../../data/database/app_database.dart';
@@ -48,8 +49,8 @@ class DetalleManga extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: mangaAsync.maybeWhen(
-          data: (m) => Text(m?.nombre ?? 'Tanda'),
-          orElse: () => const Text('Tanda'),
+          data: (m) => Text(m?.nombre ?? context.l.tanda),
+          orElse: () => Text(context.l.tanda),
         ),
         actions: [
           mangaAsync.maybeWhen(
@@ -58,7 +59,7 @@ class DetalleManga extends ConsumerWidget {
                 : AccionesBarra([
                     AccionBarra(
                       icono: Icons.fact_check_outlined,
-                      etiqueta: 'Verificaciones',
+                      etiqueta: context.l.verificaciones,
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => PantallaVerificaciones(mangaId: m.id),
@@ -67,7 +68,7 @@ class DetalleManga extends ConsumerWidget {
                     ),
                     AccionBarra(
                       icono: Icons.emoji_events_outlined,
-                      etiqueta: 'Resultados',
+                      etiqueta: context.l.botonResultados,
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) =>
@@ -77,7 +78,7 @@ class DetalleManga extends ConsumerWidget {
                     ),
                     AccionBarra(
                       icono: Icons.edit_outlined,
-                      etiqueta: 'Editar',
+                      etiqueta: context.l.editar,
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => EditorManga(
@@ -90,7 +91,7 @@ class DetalleManga extends ConsumerWidget {
                     if (esIndividual)
                       AccionBarra(
                         icono: Icons.format_list_numbered,
-                        etiqueta: 'Renumerar carriles',
+                        etiqueta: context.l.renumerarCarriles,
                         principal: false,
                         onPressed: () => _renumerar(context, ref, m),
                       ),
@@ -105,18 +106,20 @@ class DetalleManga extends ConsumerWidget {
             : FloatingActionButton.extended(
                 onPressed: () => _abrirInscribir(context, ref, m),
                 icon: const Icon(Icons.add),
-                label: const Text('Inscribir equipo'),
+                label: Text(context.l.inscribirEquipo),
               ),
         orElse: () => null,
       ),
       body: mangaAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
         data: (manga) {
-          if (manga == null) return const Center(child: Text('No encontrada'));
+          if (manga == null) {
+            return Center(child: Text(context.l.noEncontrada));
+          }
           return inscritosAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
+            error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
             data: (inscritos) {
               if (inscritos.isEmpty) {
                 return Center(
@@ -132,13 +135,12 @@ class DetalleManga extends ConsumerWidget {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Aún no hay equipos inscritos',
+                          context.l.aunNoHayEquiposInscritos,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Pulsa "Inscribir equipo" para añadirlos uno a uno '
-                          'asignando carril de salida.',
+                          context.l.pulsaInscribirEquipo,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
@@ -147,7 +149,8 @@ class DetalleManga extends ConsumerWidget {
                   ),
                 );
               }
-              final filas = _filasManga(manga, inscritos, esIndividual);
+              final filas =
+                  _filasManga(context.l, manga, inscritos, esIndividual);
               final lista = ListView.separated(
                 padding: const EdgeInsets.fromLTRB(12, 16, 12, 96),
                 itemCount: filas.length,
@@ -203,23 +206,22 @@ class DetalleManga extends ConsumerWidget {
     WidgetRef ref,
     Manga manga,
   ) async {
+    final l = context.l;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Renumerar carriles'),
+        title: Text(l.renumerarCarriles),
         content: Text(
-          'Se vuelven a asignar todos los carriles de "${manga.nombre}" '
-          'por puntos, de más a menos: 1 a ${manga.numCarriles} y, si hay '
-          'más pilotos, D1, D2… Se pierden los cambios hechos a mano.',
+          l.renumerarCarrilesTexto(manga.nombre, manga.numCarriles),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(l.cancelar),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Renumerar'),
+            child: Text(l.renumerar),
           ),
         ],
       ),
@@ -300,6 +302,7 @@ class _Fila {
 /// ver la parrilla de un vistazo. Orden: D1.. (seeds/descanso), 1..N, carriles
 /// fuera de rango y, al final, los equipos sin carril.
 List<_Fila> _filasManga(
+  Textos l,
   Manga manga,
   List<InscripcionConEquipo> inscritos,
   bool esIndividual,
@@ -333,7 +336,7 @@ List<_Fila> _filasManga(
     }
   }
   if (sinCarril.isNotEmpty) {
-    filas.add(_Fila.cabecera('Sin carril (${sinCarril.length})'));
+    filas.add(_Fila.cabecera(l.sinCarrilN(sinCarril.length)));
     filas.addAll(sinCarril.map(_Fila.equipo));
   }
   return filas;
@@ -349,6 +352,7 @@ Future<void> _elegirCarril(
   required List<InscripcionConEquipo> inscritos,
   required bool esIndividual,
 }) async {
+  final l = context.l;
   final carriles = _carrilesManga(manga, inscritos, esIndividual);
   final actual = _normCarril(ins.inscripcion.carrilSalida);
   final ocupante = <String, InscripcionConEquipo>{
@@ -402,10 +406,10 @@ Future<void> _elegirCarril(
                     ),
                     Text(
                       esActual
-                          ? 'actual'
+                          ? l.actual
                           : o != null
                           ? o.nombreEquipo
-                          : 'libre',
+                          : l.libre,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -447,19 +451,18 @@ Future<void> _elegirCarril(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Carril de ${ins.nombreEquipo}',
+                l.carrilDe(ins.nombreEquipo),
                 style: Theme.of(ctx).textTheme.titleLarge,
               ),
               const SizedBox(height: 4),
               Text(
-                'Toca un carril libre para moverlo, o uno ocupado para '
-                'intercambiarlos.',
+                l.tocaCarrilLibreTexto,
                 style: Theme.of(ctx).textTheme.bodySmall,
               ),
-              seccion('Pista', carriles.pista),
+              seccion(l.pista, carriles.pista),
               if (carriles.descanso.isNotEmpty)
                 seccion(
-                  esIndividual ? 'Descanso' : 'Seed directo',
+                  esIndividual ? l.descanso : l.seedDirecto,
                   carriles.descanso,
                 ),
               const SizedBox(height: 16),
@@ -469,12 +472,12 @@ Future<void> _elegirCarril(
                     OutlinedButton.icon(
                       onPressed: () => Navigator.pop(ctx, ''),
                       icon: const Icon(Icons.block),
-                      label: const Text('Sin carril'),
+                      label: Text(l.sinCarril),
                     ),
                   const Spacer(),
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, aMano),
-                    child: const Text('Escribir a mano…'),
+                    child: Text(l.escribirAMano),
                   ),
                 ],
               ),
@@ -508,31 +511,32 @@ Future<void> _escribirCarril(
   WidgetRef ref,
   InscripcionConEquipo ins,
 ) async {
+  final l = context.l;
   final controller = TextEditingController(
     text: ins.inscripcion.carrilSalida ?? '',
   );
   final res = await showDialog<String?>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Carril de salida'),
+      title: Text(l.carrilDeSalida),
       content: TextField(
         controller: controller,
         autofocus: true,
-        decoration: const InputDecoration(
-          hintText: 'Ej: D1, D2, 1, 2, 3…',
-          helperText: 'D1-D4 para seeds directos, 1-N para sorteo',
+        decoration: InputDecoration(
+          hintText: l.carrilEjemplo,
+          helperText: l.carrilAyuda,
         ),
         textCapitalization: TextCapitalization.characters,
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, null),
-          child: const Text('Cancelar'),
+          child: Text(l.cancelar),
         ),
         FilledButton(
           onPressed: () =>
               Navigator.pop(ctx, controller.text.trim().toUpperCase()),
-          child: const Text('Guardar'),
+          child: Text(l.guardar),
         ),
       ],
     ),
@@ -588,7 +592,7 @@ class _FilaCarrilLibre extends ConsumerWidget {
           ),
         ),
         title: Text(
-          'Libre',
+          context.l.libreTitulo,
           style: TextStyle(color: cs.outline, fontStyle: FontStyle.italic),
         ),
         trailing: Icon(Icons.add_circle_outline, color: cs.primary),
@@ -623,7 +627,7 @@ class _FilaCarrilLibre extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: Text(
-                  '¿Quién sale en el carril $carril?',
+                  context.l.quienSaleEnCarril(carril),
                   style: Theme.of(ctx).textTheme.titleLarge,
                 ),
               ),
@@ -647,8 +651,10 @@ class _FilaCarrilLibre extends ConsumerWidget {
                         title: Text(i.nombreEquipo),
                         subtitle: Text(
                           _normCarril(i.inscripcion.carrilSalida).isEmpty
-                              ? 'Sin carril'
-                              : 'Deja libre el ${i.inscripcion.carrilSalida}',
+                              ? context.l.sinCarril
+                              : context
+                                  .l
+                                  .dejaLibreEl(i.inscripcion.carrilSalida!),
                         ),
                         onTap: () => Navigator.pop(ctx, i),
                       ),
@@ -684,7 +690,7 @@ class _AvisoRepetidos extends StatelessWidget {
       child: ListTile(
         leading: Icon(Icons.warning_amber_outlined, color: cs.onErrorContainer),
         title: Text(
-          'Carriles repetidos',
+          context.l.carrilesRepetidos,
           style: TextStyle(
             color: cs.onErrorContainer,
             fontWeight: FontWeight.w600,
@@ -725,7 +731,7 @@ class _BandaPisters extends ConsumerWidget {
       child: ListTile(
         leading: Icon(Icons.sports_outlined, color: cs.onSecondaryContainer),
         title: Text(
-          'Pisters: pilotos de ${pisters.nombre}',
+          context.l.pistersPilotosDe(pisters.nombre),
           style: TextStyle(
             color: cs.onSecondaryContainer,
             fontWeight: FontWeight.w600,
@@ -827,21 +833,21 @@ class _TarjetaInscripcion extends ConsumerWidget {
                     seedDirecto: !esSeed,
                   );
             } else if (op == 'quitar') {
+              final l = context.l;
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (_) => AlertDialog(
-                  title: const Text('Quitar inscripción'),
-                  content: Text(
-                    '¿Quitar a "${inscripcion.nombreEquipo}" de esta tanda?',
-                  ),
+                  title: Text(l.quitarInscripcion),
+                  content:
+                      Text(l.quitarInscripcionTexto(inscripcion.nombreEquipo)),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancelar'),
+                      child: Text(l.cancelar),
                     ),
                     FilledButton(
                       onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Quitar'),
+                      child: Text(l.quitar),
                     ),
                   ],
                 ),
@@ -854,20 +860,23 @@ class _TarjetaInscripcion extends ConsumerWidget {
             }
           },
           itemBuilder: (_) => [
-            const PopupMenuItem(value: 'carril', child: Text('Cambiar carril')),
+            PopupMenuItem(
+                value: 'carril', child: Text(context.l.cambiarCarril)),
             PopupMenuItem(
               value: 'seed',
               child: Text(
-                esSeed ? 'Quitar seed directo' : 'Marcar como seed directo',
+                esSeed
+                    ? context.l.quitarSeedDirecto
+                    : context.l.marcarSeedDirecto,
               ),
             ),
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'quitar',
-              child: Text('Quitar de la tanda'),
+              child: Text(context.l.quitarDeLaTanda),
             ),
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'baja',
-              child: Text('Dar de baja de la prueba'),
+              child: Text(context.l.darDeBajaPrueba),
             ),
           ],
         ),
@@ -912,14 +921,14 @@ class _HojaInscribirState extends ConsumerState<_HojaInscribir> {
         child: Column(
           children: [
             Text(
-              'Inscribir equipo en "${widget.manga.nombre}"',
+              context.l.inscribirEquipoEn(widget.manga.nombre),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
             TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Buscar equipo o piloto…',
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: context.l.buscarEquipoOPiloto,
               ),
               onChanged: (v) =>
                   setState(() => _busqueda = v.trim().toLowerCase()),
@@ -928,7 +937,7 @@ class _HojaInscribirState extends ConsumerState<_HojaInscribir> {
             Expanded(
               child: equiposAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
+                error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
                 data: (equipos) {
                   final yaInscritos = inscritosAsync.maybeWhen(
                     data: (lista) => lista.map((i) => i.equipo.id).toSet(),
@@ -948,8 +957,8 @@ class _HojaInscribirState extends ConsumerState<_HojaInscribir> {
                     return Center(
                       child: Text(
                         equipos.isEmpty
-                            ? 'No hay equipos en este campeonato. Créalos primero.'
-                            : 'Todos los equipos ya están inscritos.',
+                            ? context.l.noHayEquiposEnCampeonatoCrealos
+                            : context.l.todosLosEquiposYaInscritos,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: cs.outline),
                       ),
@@ -967,7 +976,7 @@ class _HojaInscribirState extends ConsumerState<_HojaInscribir> {
                           subtitle: Text(eq.pilotosTexto),
                           trailing: FilledButton(
                             onPressed: () => _inscribir(eq.equipo),
-                            child: const Text('Inscribir'),
+                            child: Text(context.l.inscribir),
                           ),
                         ),
                       );
@@ -983,28 +992,29 @@ class _HojaInscribirState extends ConsumerState<_HojaInscribir> {
   }
 
   Future<void> _inscribir(Equipo equipo) async {
+    final l = context.l;
     final carril = await showDialog<String?>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Carril de "${equipo.nombre}"'),
+        title: Text(l.carrilDe(equipo.nombre)),
         content: TextField(
           controller: _carril,
           autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Ej: D1, 3…',
-            helperText: 'Deja vacío si aún no asignas carril',
+          decoration: InputDecoration(
+            hintText: l.carrilEjemploCorto,
+            helperText: l.carrilAyudaVacio,
           ),
           textCapitalization: TextCapitalization.characters,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, null),
-            child: const Text('Cancelar'),
+            child: Text(l.cancelar),
           ),
           FilledButton(
             onPressed: () =>
                 Navigator.pop(context, _carril.text.trim().toUpperCase()),
-            child: const Text('Inscribir'),
+            child: Text(l.inscribir),
           ),
         ],
       ),

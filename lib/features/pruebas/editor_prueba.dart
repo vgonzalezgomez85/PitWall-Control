@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import 'repositorio_pruebas.dart';
 
@@ -117,7 +118,7 @@ class _EditorPruebaState extends ConsumerState<EditorPrueba> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo guardar: $e')),
+          SnackBar(content: Text(context.l.noSePudoGuardar('$e'))),
         );
         setState(() => _guardando = false);
       }
@@ -128,19 +129,17 @@ class _EditorPruebaState extends ConsumerState<EditorPrueba> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Eliminar prueba'),
+        title: Text(context.l.eliminarPrueba),
         content: Text(
-          '¿Eliminar "${_nombre.text}"?\n\n'
-          'Se borrarán también sus tandas, inscripciones, resultados y verificaciones. '
-          'Esta acción no se puede deshacer.',
+          context.l.eliminarPruebaTexto(_nombre.text),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(context.l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Eliminar')),
+              child: Text(context.l.eliminar)),
         ],
       ),
     );
@@ -155,15 +154,15 @@ class _EditorPruebaState extends ConsumerState<EditorPrueba> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final esNuevo = widget.pruebaId == null;
-    final fmt = DateFormat("EEEE d 'de' MMMM y", 'es_ES');
+    final fmt = DateFormat.yMMMMEEEEd(context.idiomaFechas);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(esNuevo ? 'Nueva prueba' : 'Editar prueba'),
+        title: Text(esNuevo ? context.l.nuevaPrueba : context.l.editarPrueba),
         actions: [
           if (!esNuevo)
             IconButton(
-              tooltip: 'Eliminar',
+              tooltip: context.l.eliminar,
               icon: const Icon(Icons.delete_outline),
               onPressed: _borrar,
             ),
@@ -176,20 +175,20 @@ class _EditorPruebaState extends ConsumerState<EditorPrueba> {
           children: [
             TextFormField(
               controller: _nombre,
-              decoration: const InputDecoration(
-                labelText: 'Nombre de la prueba *',
-                helperText: 'Ej: EL SOT, SLOTMANIA, GASCLAVAT…',
+              decoration: InputDecoration(
+                labelText: context.l.nombrePruebaObligatorio,
+                helperText: context.l.nombrePruebaAyuda,
                 prefixIcon: Icon(Icons.label_outline),
               ),
               textCapitalization: TextCapitalization.characters,
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Indica el nombre' : null,
+                  (v == null || v.trim().isEmpty) ? context.l.indicaElNombre : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _sede,
-              decoration: const InputDecoration(
-                labelText: 'Sede / club',
+              decoration: InputDecoration(
+                labelText: context.l.sedeClub,
                 prefixIcon: Icon(Icons.place_outlined),
               ),
             ),
@@ -198,20 +197,20 @@ class _EditorPruebaState extends ConsumerState<EditorPrueba> {
               child: ListTile(
                 leading: const Icon(Icons.calendar_today_outlined),
                 title: Text(_fecha == null
-                    ? 'Sin fecha asignada'
+                    ? context.l.sinFechaAsignada
                     : fmt.format(_fecha!)),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_fecha != null)
                       IconButton(
-                        tooltip: 'Quitar fecha',
+                        tooltip: context.l.quitarFecha,
                         icon: const Icon(Icons.close),
                         onPressed: () => setState(() => _fecha = null),
                       ),
                     TextButton(
                       onPressed: _elegirFecha,
-                      child: Text(_fecha == null ? 'Elegir' : 'Cambiar'),
+                      child: Text(_fecha == null ? context.l.elegir : context.l.cambiar),
                     ),
                   ],
                 ),
@@ -220,14 +219,14 @@ class _EditorPruebaState extends ConsumerState<EditorPrueba> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _orden,
-              decoration: const InputDecoration(
-                labelText: 'Orden en el campeonato',
-                helperText: 'Posición en el calendario (1, 2, 3…)',
+              decoration: InputDecoration(
+                labelText: context.l.ordenCampeonato,
+                helperText: context.l.ordenCampeonatoAyuda,
                 prefixIcon: Icon(Icons.format_list_numbered),
               ),
               keyboardType: TextInputType.number,
               validator: (v) {
-                if (v == null || int.tryParse(v) == null) return 'Número entero';
+                if (v == null || int.tryParse(v) == null) return context.l.numeroEntero;
                 return null;
               },
             ),
@@ -235,13 +234,13 @@ class _EditorPruebaState extends ConsumerState<EditorPrueba> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _estado,
-                decoration: const InputDecoration(
-                  labelText: 'Estado',
+                decoration: InputDecoration(
+                  labelText: context.l.estado,
                   prefixIcon: Icon(Icons.flag_outlined),
                 ),
                 items: estadosPrueba
                     .map((e) =>
-                        DropdownMenuItem(value: e, child: Text(etiquetaEstado(e))))
+                        DropdownMenuItem(value: e, child: Text(etiquetaEstado(context, e))))
                     .toList(),
                 onChanged: (v) => setState(() => _estado = v ?? 'PROGRAMADA'),
               ),
@@ -255,7 +254,7 @@ class _EditorPruebaState extends ConsumerState<EditorPrueba> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.check),
-              label: Text(esNuevo ? 'Crear prueba' : 'Guardar cambios'),
+              label: Text(esNuevo ? context.l.crearPrueba : context.l.guardarCambios),
             ),
           ],
         ),

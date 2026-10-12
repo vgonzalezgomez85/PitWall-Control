@@ -290,4 +290,1206 @@ class TextosFr extends Textos {
   String actDescargandoPct(int pct) {
     return 'Téléchargement… $pct %';
   }
+
+  @override
+  String get nuevaPrueba => 'Nouvelle épreuve';
+
+  @override
+  String get seleccionaCampeonato => 'Sélectionnez d\'abord un championnat';
+
+  @override
+  String get aunNoHayPruebas => 'Aucune épreuve pour l\'instant';
+
+  @override
+  String get aunNoHayPruebasTexto =>
+      'Créez la première épreuve du championnat (par exemple « EL SOT », « SLOTMANIA »…).';
+
+  @override
+  String get estadoProgramada => 'Programmée';
+
+  @override
+  String get estadoEnCurso => 'En cours';
+
+  @override
+  String get estadoTerminada => 'Terminée';
+
+  @override
+  String get estadoCancelada => 'Annulée';
+
+  @override
+  String get resumenVerificaciones => 'Résumé des vérifications';
+
+  @override
+  String get aunNoHayTandas => 'Aucune série pour l\'instant';
+
+  @override
+  String get verificarSinTandasTexto =>
+      'Inscrivez des équipes et créez les séries dans l\'onglet Préparer.';
+
+  @override
+  String validadasDe(int validadas, int total) {
+    return '$validadas / $total validées';
+  }
+
+  @override
+  String get sinEquiposEnTanda => 'Aucune équipe dans cette série.';
+
+  @override
+  String get carreraTienePole => 'La course a-t-elle une pole ?';
+
+  @override
+  String get carreraTienePoleTexto =>
+      'Avec une pole, l\'ordre des voies n\'est pas exporté : PitWall crée la séance de pole et la grille est attribuée après.';
+
+  @override
+  String get sinPole => 'Sans pole';
+
+  @override
+  String get conPole => 'Avec pole';
+
+  @override
+  String get noHayInscritosExportar => 'Aucun inscrit à exporter.';
+
+  @override
+  String get noHayTandasConCarriles =>
+      'Aucune série avec des voies attribuées à exporter.';
+
+  @override
+  String get importarDelCronometraje => 'Importer du chronométrage';
+
+  @override
+  String get traerResultadosPitwall => 'Récupérer les résultats de PitWall';
+
+  @override
+  String get prueba => 'Épreuve';
+
+  @override
+  String get editar => 'Modifier';
+
+  @override
+  String get pestanaPreparar => 'Préparer';
+
+  @override
+  String get pestanaVerificar => 'Vérifier';
+
+  @override
+  String get pestanaResultados => 'Résultats';
+
+  @override
+  String get pestanaCaja => 'Caisse';
+
+  @override
+  String get nuevaTanda => 'Nouvelle série';
+
+  @override
+  String get compartir => 'Partager';
+
+  @override
+  String get pdfTandas => 'PDF des séries';
+
+  @override
+  String get pdfVerificaciones => 'PDF des vérifications';
+
+  @override
+  String get enviarTandasPitwall => 'Envoyer les séries à PitWall';
+
+  @override
+  String get porWifiSinArchivo => 'Par wifi, sans fichier';
+
+  @override
+  String get enviarVerificacionesPitwall =>
+      'Envoyer les vérifications à PitWall';
+
+  @override
+  String get soloConsultaManager => 'Consultation seule dans Manager';
+
+  @override
+  String get archivoParaPitwall => 'Fichier pour PitWall (JSON)';
+
+  @override
+  String get paraImportarAManoManager =>
+      'Pour l\'importer manuellement dans Manager';
+
+  @override
+  String get noEncontrada => 'Introuvable';
+
+  @override
+  String get editarTandas => 'Modifier les séries';
+
+  @override
+  String get sorteoMotores => 'Tirage des moteurs';
+
+  @override
+  String get tandas => 'Séries';
+
+  @override
+  String get crearTandasTexto =>
+      'Créez les séries de cette épreuve (Jeudi 21:00, Vendredi 21:00…).';
+
+  @override
+  String pruebaNumero(int orden) {
+    return 'Épreuve n° $orden';
+  }
+
+  @override
+  String nCarriles(int n) {
+    return '$n voies';
+  }
+
+  @override
+  String noSePudoGuardar(String detalle) {
+    return 'Impossible d\'enregistrer : $detalle';
+  }
+
+  @override
+  String get eliminarPrueba => 'Supprimer l\'épreuve';
+
+  @override
+  String eliminarPruebaTexto(String nombre) {
+    return 'Supprimer « $nombre » ?\n\nSes séries, inscriptions, résultats et vérifications seront aussi supprimés. Cette action est irréversible.';
+  }
+
+  @override
+  String get eliminar => 'Supprimer';
+
+  @override
+  String get editarPrueba => 'Modifier l\'épreuve';
+
+  @override
+  String get nombrePruebaObligatorio => 'Nom de l\'épreuve *';
+
+  @override
+  String get nombrePruebaAyuda => 'Ex. : EL SOT, SLOTMANIA, GASCLAVAT…';
+
+  @override
+  String get indicaElNombre => 'Indiquez le nom';
+
+  @override
+  String get sedeClub => 'Lieu / club';
+
+  @override
+  String get sinFechaAsignada => 'Aucune date';
+
+  @override
+  String get quitarFecha => 'Retirer la date';
+
+  @override
+  String get elegir => 'Choisir';
+
+  @override
+  String get cambiar => 'Modifier';
+
+  @override
+  String get ordenCampeonato => 'Ordre dans le championnat';
+
+  @override
+  String get ordenCampeonatoAyuda => 'Position dans le calendrier (1, 2, 3…)';
+
+  @override
+  String get numeroEntero => 'Nombre entier';
+
+  @override
+  String get estado => 'État';
+
+  @override
+  String get crearPrueba => 'Créer l\'épreuve';
+
+  @override
+  String get guardarCambios => 'Enregistrer';
+
+  @override
+  String get eliminarTanda => 'Supprimer la série';
+
+  @override
+  String eliminarTandaTexto(String nombre) {
+    return 'Supprimer la série « $nombre » ? Ses inscriptions, résultats et vérifications seront aussi supprimés.';
+  }
+
+  @override
+  String get editarTanda => 'Modifier la série';
+
+  @override
+  String get nombreTandaObligatorio => 'Nom de la série *';
+
+  @override
+  String get nombreTandaAyuda => 'Ex. : Jeudi 21:00, Vendredi 23:00…';
+
+  @override
+  String get sinFechaHora => 'Aucune date ni heure';
+
+  @override
+  String get quitar => 'Retirer';
+
+  @override
+  String get numeroCarriles => 'Nombre de voies';
+
+  @override
+  String get numeroCarrilesAyuda => 'Habituellement 6, 7 ou 8 (jusqu\'à 32)';
+
+  @override
+  String get numeroCarrilesError => 'Indiquez un nombre entre 1 et 32';
+
+  @override
+  String get pisters => 'Commissaires';
+
+  @override
+  String get pistersAyuda =>
+      'Série dont les pilotes sont commissaires dans celle-ci';
+
+  @override
+  String get sinPisters => '— sans commissaires —';
+
+  @override
+  String pilotosDe(String nombre) {
+    return 'Pilotes de $nombre';
+  }
+
+  @override
+  String get crearTanda => 'Créer la série';
+
+  @override
+  String get pruebaSinTandas => 'Cette épreuve n\'a pas encore de séries';
+
+  @override
+  String get generaTandasDesdeInscritos =>
+      'Générez-les depuis Inscrits → Générer les séries.';
+
+  @override
+  String get tocaEquipoParaMover =>
+      'Touchez une équipe pour la déplacer vers une autre série.';
+
+  @override
+  String nEquiposAbrev(int n) {
+    return '$n éq.';
+  }
+
+  @override
+  String get sinEquipos => 'Aucune équipe';
+
+  @override
+  String moverEquipoA(String nombre) {
+    return 'Déplacer « $nombre » vers…';
+  }
+
+  @override
+  String tandaConEquipos(String nombre, int n) {
+    return '$nombre  ($n éq.)';
+  }
+
+  @override
+  String get darDeBajaPrueba => 'Retirer de l\'épreuve';
+
+  @override
+  String get eligePitwall => 'Choisissez un PitWall ou saisissez son adresse.';
+
+  @override
+  String get noHayInscritosEnviar => 'Aucun inscrit à envoyer.';
+
+  @override
+  String get noHayTandasEnviar =>
+      'Aucune série avec des voies attribuées à envoyer.';
+
+  @override
+  String get enviarAPitwall => 'Envoyer à PitWall';
+
+  @override
+  String get pinImportacion => 'PIN d\'importation';
+
+  @override
+  String get pinImportacionAyuda =>
+      'Le PIN affiché par PitWall dans « Importer une série ».';
+
+  @override
+  String get carreraTienePoleSi => 'La course a une pole';
+
+  @override
+  String get carreraTienePoleAyuda =>
+      'L\'ordre des voies n\'est pas envoyé : la grille est attribuée dans PitWall après la pole';
+
+  @override
+  String get enviar => 'Envoyer';
+
+  @override
+  String get pitwallEnLaRed => 'PitWall sur le réseau';
+
+  @override
+  String get buscarDeNuevo => 'Rechercher à nouveau';
+
+  @override
+  String get buscandoPitwall => 'Recherche de PitWall sur le réseau local…';
+
+  @override
+  String get noSeEncuentraPitwall =>
+      'Aucun PitWall trouvé. Vérifiez qu\'il est ouvert et sur le même réseau Wi‑Fi, ou saisissez son adresse ci-dessous.';
+
+  @override
+  String get direccionIpPuerto => 'Adresse (IP:port)';
+
+  @override
+  String get resultadosDeLaTanda => 'Résultats de la série';
+
+  @override
+  String get noHayEquiposEnTanda => 'Aucune équipe dans cette série';
+
+  @override
+  String get inscribeEquiposParaResultados =>
+      'Inscrivez des équipes pour pouvoir enregistrer leurs résultats.';
+
+  @override
+  String get indicaPosicionFinalTexto =>
+      'Indiquez la position finale de chaque équipe. Les points sont calculés automatiquement selon la table du championnat.';
+
+  @override
+  String get puntos => 'points';
+
+  @override
+  String get posicion => 'Position';
+
+  @override
+  String get sinAsignar => 'Non attribuée';
+
+  @override
+  String get aRestar => 'À déduire';
+
+  @override
+  String get creditosMin => 'crédits';
+
+  @override
+  String get noHayInscritosEnPrueba => 'Aucun inscrit dans cette épreuve';
+
+  @override
+  String get inscribeEquiposGeneraTandas =>
+      'Inscrivez des équipes et générez les séries. Vous pourrez ensuite importer ici les résultats du chronométrage.';
+
+  @override
+  String equiposConResultado(int con, int total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total équipes',
+      one: '1 équipe',
+    );
+    return '$con sur $_temp0 avec un résultat enregistré.';
+  }
+
+  @override
+  String get resultadosDeLaPrueba => 'Résultats de l\'épreuve';
+
+  @override
+  String get importarDesdeArchivoCronometraje =>
+      'Importer depuis un fichier de chronométrage';
+
+  @override
+  String copaYManga(String copa, String manga) {
+    return 'Coupe $copa  ·  $manga';
+  }
+
+  @override
+  String get posAbrev => 'Pos.';
+
+  @override
+  String get archivos => 'Fichiers';
+
+  @override
+  String get noSeEncontraronResultados =>
+      'Aucun résultat trouvé. Le fichier doit comporter des colonnes telles que « Position » et « Nom » (format TicTacSlot ou similaire).';
+
+  @override
+  String noSePudoLeerArchivo(String detalle) {
+    return 'Impossible de lire le fichier : $detalle';
+  }
+
+  @override
+  String get importacionCompletada => 'Importation terminée';
+
+  @override
+  String resumenImportacionResultados(int ok, int inscritos, int saltados) {
+    return '✓ Résultats appliqués : $ok\n+ Inscrits automatiquement : $inscritos\n✗ Ignorés : $saltados';
+  }
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get importarResultadosPrueba => 'Importer les résultats de l\'épreuve';
+
+  @override
+  String get paso1EligeArchivo => '1. Choisissez le fichier';
+
+  @override
+  String get importaArchivoTexto =>
+      'Importez le fichier du système de chronométrage (TicTacSlot, SloTime…). Chaque équipe du fichier est affectée à la série de cette épreuve où elle est inscrite.';
+
+  @override
+  String get elegirArchivo => 'Choisir un fichier';
+
+  @override
+  String get resultadosGenerales => 'Résultats généraux';
+
+  @override
+  String get crearTandaResultadosGenerales =>
+      'Créer la série « Résultats généraux »';
+
+  @override
+  String get pruebaSinTandasAviso =>
+      'L\'épreuve n\'a pas encore de séries. Les résultats sont marqués dans une série créée à la volée.';
+
+  @override
+  String get paso2VistaPrevia => '2. Aperçu';
+
+  @override
+  String nDeTotalSeAplicaran(int n, int total) {
+    return '$n sur $total seront appliqués';
+  }
+
+  @override
+  String equiposNoExistenAviso(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '⚠️ $n équipes du fichier n\'existent pas dans le championnat.',
+      one: '⚠️ 1 équipe du fichier n\'existe pas dans le championnat.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aplicarResultadosA(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n équipes',
+      one: '1 équipe',
+    );
+    return 'Appliquer les résultats à $_temp0';
+  }
+
+  @override
+  String get noExiste => 'Inexistante';
+
+  @override
+  String get seInscribira => 'Sera inscrite';
+
+  @override
+  String get aplicar => 'Appliquer';
+
+  @override
+  String copaTexto(String copa) {
+    return 'Coupe $copa';
+  }
+
+  @override
+  String nVueltas(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n tours',
+      one: '1 tour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String formatoNoSoportado(String ext) {
+    return 'Format non pris en charge : $ext';
+  }
+
+  @override
+  String get sortearRestantes => 'Tirer les restants';
+
+  @override
+  String get pruebaNoEncontrada => 'Épreuve introuvable';
+
+  @override
+  String get noHayEquiposInscritosTandas =>
+      'Aucune équipe inscrite dans les séries de cette épreuve.';
+
+  @override
+  String sorteoBloqueadoTexto(String motivo) {
+    return '$motivo Le tirage reste en lecture seule.';
+  }
+
+  @override
+  String get equipos => 'Équipes';
+
+  @override
+  String get numeros => 'Numéros';
+
+  @override
+  String get noQuedanMotores => 'Plus de moteurs disponibles.';
+
+  @override
+  String get motorSorteado => 'Moteur tiré';
+
+  @override
+  String get repetir => 'Répéter';
+
+  @override
+  String get asignar => 'Attribuer';
+
+  @override
+  String faltanMotores(int equipos, int motores) {
+    return 'Moteurs insuffisants : $equipos équipes et seulement $motores moteurs disponibles.';
+  }
+
+  @override
+  String motoresRango(int min, int max) {
+    return 'Moteurs $min–$max';
+  }
+
+  @override
+  String asignadosDe(int asignados, int total) {
+    return '$asignados/$total attribués';
+  }
+
+  @override
+  String disponiblesN(int n) {
+    return '$n disponibles';
+  }
+
+  @override
+  String get sortear => 'Tirer';
+
+  @override
+  String numeroMotor(int n) {
+    return 'N° $n';
+  }
+
+  @override
+  String get volverASortear => 'Retirer';
+
+  @override
+  String get quitarMotor => 'Retirer le moteur';
+
+  @override
+  String get faltaRangoMotores => 'Plage de moteurs non configurée';
+
+  @override
+  String get faltaRangoMotoresTexto =>
+      'Définissez la plage de numéros de moteur d\'organisation dans le championnat pour pouvoir les tirer.';
+
+  @override
+  String get configurarCampeonato => 'Configurer le championnat';
+
+  @override
+  String get rangoMotoresNoConfigurado => 'Plage de moteurs non configurée.';
+
+  @override
+  String get asignado => 'Attribué';
+
+  @override
+  String get disponible => 'Disponible';
+
+  @override
+  String get tanda => 'Série';
+
+  @override
+  String get verificaciones => 'Vérifications';
+
+  @override
+  String get renumerarCarriles => 'Renuméroter les voies';
+
+  @override
+  String get renumerar => 'Renuméroter';
+
+  @override
+  String renumerarCarrilesTexto(String nombre, int carriles) {
+    return 'Toutes les voies de « $nombre » sont réattribuées par points, du plus haut au plus bas : 1 à $carriles et, s\'il y a plus de pilotes, D1, D2… Les modifications manuelles sont perdues.';
+  }
+
+  @override
+  String get inscribirEquipo => 'Inscrire une équipe';
+
+  @override
+  String get aunNoHayEquiposInscritos =>
+      'Aucune équipe inscrite pour l\'instant';
+
+  @override
+  String get pulsaInscribirEquipo =>
+      'Appuyez sur « Inscrire une équipe » pour les ajouter une à une en attribuant une voie de départ.';
+
+  @override
+  String sinCarrilN(int n) {
+    return 'Sans voie ($n)';
+  }
+
+  @override
+  String get actual => 'actuelle';
+
+  @override
+  String get libre => 'libre';
+
+  @override
+  String get libreTitulo => 'Libre';
+
+  @override
+  String carrilDe(String nombre) {
+    return 'Voie de $nombre';
+  }
+
+  @override
+  String get tocaCarrilLibreTexto =>
+      'Touchez une voie libre pour l\'y déplacer, ou une voie occupée pour les échanger.';
+
+  @override
+  String get pista => 'Piste';
+
+  @override
+  String get descanso => 'Repos';
+
+  @override
+  String get seedDirecto => 'Seed direct';
+
+  @override
+  String get sinCarril => 'Sans voie';
+
+  @override
+  String get escribirAMano => 'Saisir à la main…';
+
+  @override
+  String get carrilDeSalida => 'Voie de départ';
+
+  @override
+  String get carrilEjemplo => 'Ex. : D1, D2, 1, 2, 3…';
+
+  @override
+  String get carrilAyuda => 'D1-D4 pour les seeds directs, 1-N pour le tirage';
+
+  @override
+  String get guardar => 'Enregistrer';
+
+  @override
+  String quienSaleEnCarril(String carril) {
+    return 'Qui part de la voie $carril ?';
+  }
+
+  @override
+  String dejaLibreEl(String carril) {
+    return 'Libère la voie $carril';
+  }
+
+  @override
+  String get carrilesRepetidos => 'Voies en double';
+
+  @override
+  String pistersPilotosDe(String tanda) {
+    return 'Commissaires : pilotes de $tanda';
+  }
+
+  @override
+  String get cambiarCarril => 'Changer de voie';
+
+  @override
+  String get quitarSeedDirecto => 'Retirer le seed direct';
+
+  @override
+  String get marcarSeedDirecto => 'Marquer comme seed direct';
+
+  @override
+  String get quitarDeLaTanda => 'Retirer de la série';
+
+  @override
+  String get quitarInscripcion => 'Retirer l\'inscription';
+
+  @override
+  String quitarInscripcionTexto(String nombre) {
+    return 'Retirer « $nombre » de cette série ?';
+  }
+
+  @override
+  String inscribirEquipoEn(String nombre) {
+    return 'Inscrire une équipe dans « $nombre »';
+  }
+
+  @override
+  String get buscarEquipoOPiloto => 'Rechercher une équipe ou un pilote…';
+
+  @override
+  String get noHayEquiposEnCampeonatoCrealos =>
+      'Aucune équipe dans ce championnat. Créez-les d\'abord.';
+
+  @override
+  String get todosLosEquiposYaInscritos =>
+      'Toutes les équipes sont déjà inscrites.';
+
+  @override
+  String get inscribir => 'Inscrire';
+
+  @override
+  String get carrilEjemploCorto => 'Ex. : D1, 3…';
+
+  @override
+  String get carrilAyudaVacio =>
+      'Laissez vide si vous n\'attribuez pas encore de voie';
+
+  @override
+  String get inscritosALaPrueba => 'Inscrits à l\'épreuve';
+
+  @override
+  String get actualizarDesdeDrive => 'Mettre à jour depuis Drive';
+
+  @override
+  String get actualizandoDesdeDrive => 'Mise à jour depuis Drive…';
+
+  @override
+  String get anadirPiloto => 'Ajouter un pilote';
+
+  @override
+  String get anadirEquipo => 'Ajouter une équipe';
+
+  @override
+  String get importar => 'Importer';
+
+  @override
+  String get vincularGoogleSheet => 'Lier un Google Sheet';
+
+  @override
+  String get desdeArchivoCsvExcel => 'Depuis un fichier CSV / Excel';
+
+  @override
+  String get generarTandas => 'Générer les séries';
+
+  @override
+  String get aunNoHayPilotosInscritosPrueba =>
+      'Aucun pilote inscrit à cette épreuve pour l\'instant';
+
+  @override
+  String get aunNoHayEquiposInscritosPrueba =>
+      'Aucune équipe inscrite à cette épreuve pour l\'instant';
+
+  @override
+  String get importaCsvGoogleFormPilotos =>
+      'Importez le CSV/Excel du Google Form ou ajoutez des pilotes à la main.';
+
+  @override
+  String get importaCsvGoogleFormEquipos =>
+      'Importez le CSV/Excel du Google Form ou ajoutez des équipes à la main.';
+
+  @override
+  String get importarCsvExcel => 'Importer CSV/Excel';
+
+  @override
+  String get anadirAMano => 'Ajouter à la main';
+
+  @override
+  String pilotosInscritosGenerarTandas(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other:
+          '$n pilotes inscrits. Quand ils sont tous là, appuyez sur « Générer les séries ».',
+      one:
+          '1 pilote inscrit. Quand ils sont tous là, appuyez sur « Générer les séries ».',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String equiposInscritosGenerarTandas(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other:
+          '$n équipes inscrites. Quand elles sont toutes là, appuyez sur « Générer les séries ».',
+      one:
+          '1 équipe inscrite. Quand elles sont toutes là, appuyez sur « Générer les séries ».',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get darDeBaja => 'Retirer';
+
+  @override
+  String darDeBajaTexto(String nombre) {
+    return 'Retirer « $nombre » ?\n\nIl est retiré des Inscrits et de sa série. Les voies des autres ne changent pas : renumérotez la série ensuite si nécessaire.';
+  }
+
+  @override
+  String get inscribirPilotos => 'Inscrire des pilotes';
+
+  @override
+  String get inscribirEquipos => 'Inscrire des équipes';
+
+  @override
+  String nSeleccionados(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n sélectionnés',
+      one: '1 sélectionné',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get limpiar => 'Effacer';
+
+  @override
+  String get buscarPiloto => 'Rechercher un pilote…';
+
+  @override
+  String get noHayPilotosEnCampeonato => 'Aucun pilote dans ce championnat.';
+
+  @override
+  String get noHayEquiposEnCampeonato => 'Aucune équipe dans ce championnat.';
+
+  @override
+  String get todosYaInscritos => 'Tous sont déjà inscrits.';
+
+  @override
+  String get nuevaInscripcion => 'Nouvelle inscription';
+
+  @override
+  String get nuevoEquipo => 'Nouvelle équipe';
+
+  @override
+  String get copaParaPilotosNuevos => 'Coupe pour les nouveaux pilotes :';
+
+  @override
+  String get desmarcarTodos => 'Tout décocher';
+
+  @override
+  String marcarTodosN(int n) {
+    return 'Tout cocher ($n)';
+  }
+
+  @override
+  String nuevaInscripcionCopa(String copa) {
+    return 'Nouvelle inscription · Coupe $copa';
+  }
+
+  @override
+  String get marcaPilotosInscribir => 'Cochez les pilotes à inscrire';
+
+  @override
+  String get marcaEquiposInscribir => 'Cochez les équipes à inscrire';
+
+  @override
+  String inscribirNPilotos(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n pilotes',
+      one: '1 pilote',
+    );
+    return 'Inscrire $_temp0';
+  }
+
+  @override
+  String inscribirNEquipos(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n équipes',
+      one: '1 équipe',
+    );
+    return 'Inscrire $_temp0';
+  }
+
+  @override
+  String get importarInscripciones => 'Importer les inscriptions';
+
+  @override
+  String get csvGoogleFormInscripcionPilotos =>
+      'CSV/Excel du Google Form d\'inscription à l\'épreuve. Les inscriptions sont reliées aux pilotes existants par leur nom.';
+
+  @override
+  String get csvGoogleFormInscripcionEquipos =>
+      'CSV/Excel du Google Form d\'inscription à l\'épreuve. Les inscriptions sont reliées aux équipes existantes par leur nom.';
+
+  @override
+  String get paso2AsignaColumnas => '2. Associez les colonnes';
+
+  @override
+  String get nombreDelPilotoObligatorio => 'Nom du pilote *';
+
+  @override
+  String get nombreDelEquipoObligatorio => 'Nom de l\'équipe *';
+
+  @override
+  String get diaPreferidoOpcional => 'Jour préféré (facultatif)';
+
+  @override
+  String get notasOpcional => 'Notes (facultatif)';
+
+  @override
+  String get paso3VistaPrevia => '3. Aperçu';
+
+  @override
+  String nDeTotalSeImportaran(int n, int total) {
+    return '$n sur $total seront importés';
+  }
+
+  @override
+  String pilotosNoExistenAviso(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other:
+          '⚠️ $n pilotes n\'existent pas dans le championnat. Créez-les d\'abord ou vérifiez les noms.',
+      one:
+          '⚠️ 1 pilote n\'existe pas dans le championnat. Créez-le d\'abord ou vérifiez le nom.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String equiposNoExistenAvisoImport(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other:
+          '⚠️ $n équipes n\'existent pas dans le championnat. Créez-les d\'abord ou vérifiez les noms.',
+      one:
+          '⚠️ 1 équipe n\'existe pas dans le championnat. Créez-la d\'abord ou vérifiez le nom.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get asignaColumnaPiloto => 'Associez la colonne du nom du pilote.';
+
+  @override
+  String get asignaColumnaEquipo => 'Associez la colonne du nom de l\'équipe.';
+
+  @override
+  String get ninguna => '— aucune —';
+
+  @override
+  String get yaInscrito => 'Déjà inscrit';
+
+  @override
+  String diaTexto(String dia) {
+    return 'Jour : $dia';
+  }
+
+  @override
+  String noSePudoLeer(String detalle) {
+    return 'Impossible de lire : $detalle';
+  }
+
+  @override
+  String resumenImportacionInscripciones(int ok, int saltados) {
+    return '✓ Inscrits : $ok\n✗ Ignorés : $saltados';
+  }
+
+  @override
+  String tandaNumero(int n) {
+    return 'Série $n';
+  }
+
+  @override
+  String get tandasCreadas => 'Séries créées';
+
+  @override
+  String tandasCreadasTexto(int n, int equipos) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n séries créées avec $equipos équipes.',
+      one: '1 série créée avec $equipos équipes.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get conCarrilAsignado => 'Avec voie de départ attribuée.';
+
+  @override
+  String get carrilesSeAsignaranAntes =>
+      'Les voies seront attribuées avant la course.';
+
+  @override
+  String get pistersAsignadosEntreTandas =>
+      'Commissaires attribués entre les séries de chaque journée.';
+
+  @override
+  String equiposInscritosARepartir(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n équipes inscrites à répartir',
+      one: '1 équipe inscrite à répartir',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ordenadosPorPuntos => 'Triées par points bruts cumulés.';
+
+  @override
+  String get sinPuntosEsteAnio =>
+      'Aucun point cette année → triées par solde de l\'année précédente (0 sinon).';
+
+  @override
+  String get paso1CarrilesPista => '1. Voies de la piste';
+
+  @override
+  String get paso1CarrilesTexto =>
+      'Combien de voitures roulent en même temps. Fixe le maximum d\'équipes par série pour bien les répartir.';
+
+  @override
+  String get carrilesMin => 'voies';
+
+  @override
+  String get minutosPorCarrilTexto =>
+      'Minutes par voie (durée du relais d\'une équipe sur chaque voie, pour calculer la durée de la série).';
+
+  @override
+  String get minPorCarril => 'min/voie';
+
+  @override
+  String cadaTandaDurara(int minutos, int carriles, int minPorCarril) {
+    return 'Chaque série durera ~$minutos min ($carriles voies × $minPorCarril min).';
+  }
+
+  @override
+  String get paso2NumeroTandas => '2. Nombre de séries';
+
+  @override
+  String sugeridoTexto(int n, int carriles) {
+    return 'Suggéré : $n (sans voies vides avec $carriles voies : s\'il reste des équipes, les séries dépassent $carriles). Vous pouvez le changer.';
+  }
+
+  @override
+  String get paso3NombresHorarios => '3. Noms et horaires';
+
+  @override
+  String get asignarCarrilAutomatico => 'Attribuer les voies automatiquement';
+
+  @override
+  String asignarCarrilTexto(int carriles) {
+    return 'Par points, du plus haut au plus bas : voies 1 à $carriles et, s\'il y a plus de pilotes, D1, D2…';
+  }
+
+  @override
+  String get asignarPisters => 'Attribuer les commissaires';
+
+  @override
+  String get asignarPistersTexto =>
+      'Entre les séries du même jour. 2 séries : 1re↔2e. 3 : la 3e commissaire dans la 1re, la 1re dans la 2e et la 2e dans la 3e. 4 : 1re↔2e et 3e↔4e.';
+
+  @override
+  String get paso4VistaPrevia => '4. Aperçu';
+
+  @override
+  String get numeroIzquierdaCarril =>
+      'Le numéro de gauche est la voie de départ.';
+
+  @override
+  String get carrilesLosAsignarasDespues =>
+      'Vous attribuerez les voies plus tard, avant la course.';
+
+  @override
+  String sinTandaN(int n) {
+    return 'Sans série ($n)';
+  }
+
+  @override
+  String get sinTandaTexto =>
+      'Ces équipes préfèrent un jour qui n\'a aucune série dans cette répartition. Ajoutez une série de ce jour ci-dessus ou changez leur préférence.';
+
+  @override
+  String prefiereDia(String dia) {
+    return 'Préfère : $dia';
+  }
+
+  @override
+  String get sustituirTandasExistentes => 'Remplacer les séries existantes';
+
+  @override
+  String get sustituirTandasTexto =>
+      'Si cette épreuve avait déjà des séries, elles sont supprimées et remplacées.';
+
+  @override
+  String get crearEstasTandas => 'Créer ces séries';
+
+  @override
+  String get eligeLaCarrera => 'Choisissez la course';
+
+  @override
+  String get verCarreras => 'Voir les courses';
+
+  @override
+  String resultadosDeCarrera(String nombre) {
+    return 'Résultats : $nombre';
+  }
+
+  @override
+  String noSePudoConectar(String detalle) {
+    return 'Connexion impossible : $detalle';
+  }
+
+  @override
+  String noSePudieronTraerResultados(String detalle) {
+    return 'Impossible de récupérer les résultats : $detalle';
+  }
+
+  @override
+  String get noHayCampeonatoActivo => 'Aucun championnat actif.';
+
+  @override
+  String resultadosAplicadosSaltados(int ok, int saltados) {
+    return 'Résultats appliqués : $ok · ignorés : $saltados';
+  }
+
+  @override
+  String errorAlAplicar(String detalle) {
+    return 'Erreur lors de l\'application : $detalle';
+  }
+
+  @override
+  String get pitwallNoTieneCarreras => 'PitWall n\'a aucune course.';
+
+  @override
+  String get pitwallNoTieneCarrerasEnvia =>
+      'PitWall n\'a aucune course. Envoyez d\'abord une série (« Envoyer à PitWall ») ou créez la course dans Manager.';
+
+  @override
+  String tandasDeCarrera(int n) {
+    return '$n série(s)';
+  }
+
+  @override
+  String get laCarreraNoTieneResultados =>
+      'La course n\'a pas encore de résultats.';
+
+  @override
+  String get equipoNoEncontradoCampeonato =>
+      'Équipe introuvable dans le championnat';
+
+  @override
+  String get noInscritoEnEstaPrueba => 'Non inscrite à cette épreuve';
+
+  @override
+  String seAplicaraPosicion(int posicion) {
+    return 'la position $posicion sera appliquée';
+  }
+
+  @override
+  String aplicarN(int n) {
+    return 'Appliquer ($n)';
+  }
+
+  @override
+  String tandaAbrev(int n) {
+    return 'S$n';
+  }
+
+  @override
+  String get seEnvianComoConsulta =>
+      'Ils sont envoyés en consultation : visibles dans PitWall mais non modifiables.';
+
+  @override
+  String get atras => 'Retour';
+
+  @override
+  String get noHayVerificacionesEnviar =>
+      'Aucune vérification à envoyer dans cette épreuve.';
+
+  @override
+  String copaDosPuntos(String copa) {
+    return 'Coupe : $copa';
+  }
 }
