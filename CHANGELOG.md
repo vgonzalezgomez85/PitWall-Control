@@ -14,6 +14,10 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.29.1] — 2026-10-12
+### Corregido
+- **«Elegir logo» no abría nada en el Mac.** La app se quedaba esperando: el selector de imágenes de móvil no funciona en escritorio. Ahora en Mac y Windows se abre el selector de archivos del sistema (PNG, JPG, WebP, GIF o BMP); en Android sigue abriendo la galería.
+
 ## [1.29.0] — 2026-10-12
 ### Añadido
 - **Club organizador y logo del campeonato.** Nueva sección «Club organizador» en el editor de campeonato (visible también al crearlo): nombre del club y su logo (PNG o JPG; se reduce a 400 px y se guarda dentro del campeonato, así que viaja en las copias de seguridad). La cabecera de los PDF muestra el logo a la izquierda del título, sobre fondo blanco, y «Organiza: …» debajo del subtítulo, traducido al idioma de la exportación. Afecta a los PDF de tandas, verificaciones, resumen de verificaciones, clasificación y créditos.

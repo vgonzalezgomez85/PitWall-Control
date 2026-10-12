@@ -21,11 +21,11 @@ import 'dart:typed_data';
 import 'package:drift/drift.dart' show BooleanExpressionOperators, OrderingTerm, Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/seeds.dart';
+import '../../services/elegir_imagen.dart';
 import '../../services/logo_club.dart';
 import '../clasificacion/pantalla_editor_tabla_puntos.dart';
 import '../creditos/repositorio_creditos.dart';
@@ -493,7 +493,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   Future<void> _elegirLogo() async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final xfile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      final xfile = await elegirImagenDeArchivo();
       if (xfile == null) return;
       final logo = prepararLogoClub(await xfile.readAsBytes());
       if (logo == null) {
