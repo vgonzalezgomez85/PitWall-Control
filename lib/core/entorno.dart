@@ -14,11 +14,22 @@
 // this program. If not, see <https://www.gnu.org/licenses/>.
 //
 // Additional permission under GPLv3 section 7: distribution through application
+// stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
+import 'dart:io' show Platform;
 
 /// Versión "Dev" de la app (`--dart-define=PITWALL_DEV=true`): usa su propia
 /// base de datos y carpeta de fotos para poder hacer pruebas sin tocar los
 /// datos reales. Ver `macos/construir_dev.sh`.
 const bool esEntornoDev = bool.fromEnvironment('PITWALL_DEV');
+
+/// `flutter test` define `FLUTTER_TEST` en el proceso de pruebas: en los tests
+/// no se consulta la web de actualizaciones (haría peticiones reales y dejaría
+/// temporizadores pendientes al desmontar).
+bool get esEntornoPrueba => Platform.environment.containsKey('FLUTTER_TEST');
+
+/// ¿Esta build comprueba en la web si hay versiones nuevas? En Dev molesta
+/// mientras se desarrolla y en las pruebas rompería los tests.
+bool get compruebaActualizaciones => !esEntornoDev && !esEntornoPrueba;
 
 /// Nombre de la base de datos local (sin extensión).
 const String nombreBaseDatos = esEntornoDev ? 'pitwall_dev' : 'pitwall';

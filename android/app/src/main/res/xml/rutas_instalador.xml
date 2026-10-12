@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rutas que el FileProvider comparte con el instalador de APK: la caché de
+     la app, donde se descarga PitWallControl-actualizacion.apk. -->
+<paths>
+    <cache-path name="cache" path="." />
+</paths>

@@ -14,6 +14,15 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.33.0] — 2026-10-12
+### Añadido
+- **Aviso de versión nueva, con descarga desde la propia app.** Al arrancar y al volver a la app (si pasaron más de 6 horas), PitWall Control pregunta a la web (`https://www.pitwall.es/software/pitwall-control/version.json`); si la versión publicada es posterior a la instalada, **Inicio** muestra una tarjeta con el botón **Actualizar**, que **descarga el APK** (con porcentaje y **Cancelar**, y se corta sola si se atasca), comprueba que llegue completo y abre el instalador de Android (la primera vez Android pide permitir a la app «instalar apps desconocidas»; después hay que volver a pulsar). Sin red o si la web no responde, no molesta. **Más tarde** descarta la tarjeta hasta la próxima vez que se abre la app.
+- **Ajustes → Actualizaciones:** la versión instalada y una comprobación a mano («Buscar actualizaciones»), con «Estás al día» o «No se pudo comprobar (¿sin conexión?)».
+- **En escritorio (macOS, Windows y Linux)** la tarjeta también sale, cuando la versión nueva tiene instalador publicado para esa plataforma, y su botón **Descargar** abre el navegador. Mientras solo se publique el APK, en escritorio no avisa.
+- `scripts/construir_apk.sh`: compila el APK de release y lo deja con su `version.json` (versión, tamaño, sha256 y las descargas de escritorio publicadas) en la carpeta de la web, listo para desplegar con su `deploy.sh`. `SOLO_MANIFIESTO=1` regenera solo el manifiesto.
+- Permiso de Android `REQUEST_INSTALL_PACKAGES` y un `FileProvider` propio (canal `pitwall/actualizacion`) para pasarle el APK descargado al instalador del sistema; si no se puede, se abre el navegador.
+- Los APK siguen firmados con la clave **debug** del proyecto, la misma que la de los ya publicados: las actualizaciones se instalan **encima** sin perder datos. Cada APK publicado sube el `+N` de `pubspec.yaml` (el `versionCode` de Android sale de ahí). Las versiones anteriores a la 1.33.0 no llevan el aviso: se actualizan a mano una vez.
+
 ## [1.32.0] — 2026-10-12
 ### Mejorado
 - **Colores de PitWall.** La app usa la misma paleta que PitWall Lap y la web: fondo azul-negro con superficies escalonadas y bordes finos en modo oscuro, tarjetas blancas sobre gris claro en modo claro, y el **rojo de marca** como acento (más profundo en botones y botones flotantes, para que el texto blanco se lea bien). Desaparecen los tonos rosados y granates que generaba Material.

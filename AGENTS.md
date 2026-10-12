@@ -11,6 +11,7 @@ The whole codebase is **Spanish**: identifiers, comments, UI strings, commit mes
 - `flutter analyze` — lint/typecheck.
 - `flutter test` — run all tests. Desktop tests bypass the plugin-heavy widget tree, so most run fine headless; prefer macOS device for anything plugin-dependent.
 - `dart run build_runner build --delete-conflicting-outputs` — regenerate Drift code. **Required after any change to `lib/data/database/tables.dart`.**
+- `scripts/construir_apk.sh [destino]` — release APK (`~/Desktop/PitWallControl-<v>.apk`) and publishes it plus `version.json` for the in-app update check into `PitWall Landing/software/pitwall-control/` (deploy with its `deploy.sh`). `LANDING_DIR=-` builds without publishing; `SOLO_MANIFIESTO=1` rewrites only `version.json` (e.g. after adding desktop installers).
 
 ## Database (drift / SQLite)
 
@@ -36,4 +37,13 @@ The whole codebase is **Spanish**: identifiers, comments, UI strings, commit mes
 
 - Commit messages are conventional-commit in Spanish, scoped by feature: `feat(verificaciones): ...`, `fix(catalogos): ...`, `chore: ...`.
 - Every feature/fix merge **must bump `version` in `pubspec.yaml`** and add a matching `CHANGELOG.md` entry under **Añadido / Mejorado / Corregido** (rules are documented at the top of `CHANGELOG.md`). The version is shown in the app's sidebar (Material: `vX.Y.Z`).
+- Release APKs must also raise the **build number** (`1.33.0+2` → `+3`): Android's `versionCode` comes only from there, and it must never repeat or go down or the in-app update will not install over the previous one.
+- Release APKs stay signed with the project's **debug keystore** (`android/app/build.gradle.kts`) — the same key as the already-published APKs, so updates install **on top** without losing the local database. Changing keys means users must uninstall first; don't.
 - GPLv3 + App Store exception; every Dart file carries a license header — keep it on new files.
+
+## In-app update check
+
+- `lib/features/actualizacion/`: `actualizacion.dart` (pure version/manifest logic), `servicio_actualizacion.dart` (HTTP check, APK download + Android installer, desktop browser), `aviso_actualizacion.dart` (Inicio card, checked on start and on resume every 6 h), `pantalla_actualizacion.dart` (Ajustes row).
+- The web publishes `software/pitwall-control/version.json` next to the APK (`version`, `apk`, `bytes`, `sha256`, `notas`, and `descargas` with per-platform desktop installers of that version). The deployed file is the source of truth: the download page can lag behind it.
+- Disabled in dev builds and under `flutter test` (`compruebaActualizaciones` in `lib/core/entorno.dart`) — otherwise tests would hit the network and leave pending timers.
+- Android side: `REQUEST_INSTALL_PACKAGES` + a `FileProvider` (`${applicationId}.instalador`, `res/xml/rutas_instalador.xml`) opened from `MainActivity.kt` over the `pitwall/actualizacion` channel; when it cannot open, the app falls back to the browser.

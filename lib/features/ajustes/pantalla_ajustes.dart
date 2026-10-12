@@ -21,6 +21,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/entorno.dart';
 import '../../core/proveedores.dart';
+import '../actualizacion/pantalla_actualizacion.dart';
 import '../google/pantalla_backup.dart';
 import '../google/pantalla_configuracion_google.dart';
 import '../plantillas/pantalla_plantillas_csv.dart';
@@ -85,6 +86,13 @@ class PantallaAjustes extends ConsumerWidget {
               );
             },
           ),
+          if (!esEntornoDev)
+            _Opcion(
+              icono: Icons.system_update_alt,
+              titulo: 'Actualizaciones',
+              subtitulo: 'Buscar una versión nueva y descargarla',
+              onTap: () => abrir(const PantallaActualizacion()),
+            ),
         ],
       ),
     );

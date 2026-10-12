@@ -23,6 +23,7 @@ import 'package:intl/intl.dart';
 import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../actualizacion/aviso_actualizacion.dart';
 import '../clasificacion/repositorio_clasificacion.dart';
 import '../pruebas/detalle_prueba.dart';
 import '../pruebas/pantalla_inscritos.dart';
@@ -166,6 +167,7 @@ class PantallaResumen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          const AvisoActualizacion(),
           Card(
             color: color.primaryContainer,
             child: Padding(
