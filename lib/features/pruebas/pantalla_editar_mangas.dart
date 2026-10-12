@@ -117,7 +117,7 @@ class PantallaEditarMangas extends ConsumerWidget {
     final dataAsync = ref.watch(_mangasConEquiposProvider(pruebaId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Editar mangas')),
+      appBar: AppBar(title: const Text('Editar tandas')),
       body: dataAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -131,10 +131,10 @@ class PantallaEditarMangas extends ConsumerWidget {
                   children: [
                     Icon(Icons.flag_outlined, size: 96, color: cs.outline),
                     const SizedBox(height: 16),
-                    Text('Esta prueba no tiene mangas todavía',
+                    Text('Esta prueba no tiene tandas todavía',
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    const Text('Generálas desde Inscritos → Generar mangas.',
+                    const Text('Generálas desde Inscritos → Generar tandas.',
                         textAlign: TextAlign.center),
                   ],
                 ),
@@ -149,7 +149,7 @@ class PantallaEditarMangas extends ConsumerWidget {
                 child: const Padding(
                   padding: EdgeInsets.all(12),
                   child: Text(
-                      'Tocá un equipo para moverlo a otra manga.'),
+                      'Tocá un equipo para moverlo a otra tanda.'),
                 ),
               ),
               const SizedBox(height: 12),

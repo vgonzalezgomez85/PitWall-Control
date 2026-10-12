@@ -126,7 +126,7 @@ class FusionadorSync {
         if (m == null || e == null) {
           r.avisos.add('Verificación de «${RefSync.fromJson(j['equipo'])?.nombre}» '
               'en «${RefSync.fromJson(j['manga'])?.nombre}»: '
-              'no existe aquí esa manga o ese equipo.');
+              'no existe aquí esa tanda o ese equipo.');
           continue;
         }
         final cocheRef = RefSync.fromJson(j['coche']);

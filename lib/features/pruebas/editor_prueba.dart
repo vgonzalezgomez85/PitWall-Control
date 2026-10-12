@@ -131,7 +131,7 @@ class _EditorPruebaState extends ConsumerState<EditorPrueba> {
         title: const Text('Eliminar prueba'),
         content: Text(
           '¿Eliminar "${_nombre.text}"?\n\n'
-          'Se borrarán también sus mangas, inscripciones, resultados y verificaciones. '
+          'Se borrarán también sus tandas, inscripciones, resultados y verificaciones. '
           'Esta acción no se puede deshacer.',
         ),
         actions: [

@@ -225,7 +225,7 @@ class PantallaSorteoMotores extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(32),
                 child: Text(
-                  'No hay equipos inscritos en las mangas de esta prueba.',
+                  'No hay equipos inscritos en las tandas de esta prueba.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: cs.outline),
                 ),

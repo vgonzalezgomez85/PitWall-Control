@@ -99,8 +99,8 @@ const Map<String, List<String>> _textos = {
     'Barrato in rosso = risultato scartato',
     'Barré en rouge = résultat écarté',
   ],
-  // Mangas
-  'Mangas': ['Mangas', 'Heats', 'Manche', 'Manches'],
+  // Tandas (grupo de pilotos que corre junto; cada tanda tiene sus mangas)
+  'Tandas': ['Tandas', 'Rounds', 'Batterie', 'Séries'],
   'PILOTOS': ['PILOTOS', 'DRIVERS', 'PILOTI', 'PILOTES'],
   'PUNTOS': ['PUNTOS', 'POINTS', 'PUNTI', 'POINTS'],
   'CARRIL': ['CARRIL', 'LANE', 'CORSIA', 'COULOIR'],

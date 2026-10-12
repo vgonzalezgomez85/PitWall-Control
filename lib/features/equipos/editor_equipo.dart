@@ -346,7 +346,7 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Text(
-                            'El coche se indica en la verificación de cada manga. '
+                            'El coche se indica en la verificación de cada tanda. '
                             'Un equipo puede usar coches diferentes en distintas pruebas.',
                           ),
                         ),

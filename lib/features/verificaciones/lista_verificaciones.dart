@@ -29,9 +29,9 @@ class PantallaVerificaciones extends ConsumerWidget {
     this.subtitulo,
     this.acciones = const [],
     this.botonFlotante,
-    this.vacioTitulo = 'Aún no hay equipos en esta manga',
+    this.vacioTitulo = 'Aún no hay equipos en esta tanda',
     this.vacioTexto =
-        'Inscribe equipos en la manga para poder hacerles la verificación.',
+        'Inscribe equipos en la tanda para poder hacerles la verificación.',
     this.onQuitar,
   });
 

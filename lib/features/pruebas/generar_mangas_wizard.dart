@@ -169,7 +169,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
     final clamped = n.clamp(1, 10);
     while (_nombresControllers.length < clamped) {
       _nombresControllers.add(TextEditingController(
-        text: 'Manga ${_nombresControllers.length + 1}',
+        text: 'Tanda ${_nombresControllers.length + 1}',
       ));
     }
     while (_nombresControllers.length > clamped) {
@@ -219,12 +219,12 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
       await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Mangas creadas'),
+          title: const Text('Tandas creadas'),
           content: Text(
-              'Se han creado ${_previa.length} mangas con '
+              'Se han creado ${_previa.length} tandas con '
               '${_previa.fold<int>(0, (n, m) => n + m.equipos.length)} equipos.\n\n'
               '${_conCarriles ? 'Con carril de salida asignado.' : 'Los carriles se asignarán antes de la carrera.'}'
-              '${_conPisters ? '\nPisters asignados entre las mangas de cada día.' : ''}'),
+              '${_conPisters ? '\nPisters asignados entre las tandas de cada día.' : ''}'),
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(context),
@@ -262,7 +262,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
     final hayPuntos = _puntosPorPiloto.values.any((v) => v > 0);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Generar mangas')),
+      appBar: AppBar(title: const Text('Generar tandas')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -306,7 +306,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
           const SizedBox(height: 4),
           Text(
             'Cuántos coches corren a la vez. Marca el máximo de equipos por '
-            'manga para repartirlos bien.',
+            'tanda para repartirlos bien.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -336,7 +336,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
           const SizedBox(height: 16),
           Text(
             'Minutos por carril (cuánto dura el turno de un equipo en '
-            'cada carril, para calcular la duración de la manga).',
+            'cada carril, para calcular la duración de la tanda).',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -366,7 +366,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Cada manga durará ~$_duracionMangaMinutos min '
+            'Cada tanda durará ~$_duracionMangaMinutos min '
             '($_carriles carriles × $_minutosPorCarril min).',
             style: Theme.of(context)
                 .textTheme
@@ -374,13 +374,13 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
                 ?.copyWith(fontWeight: FontWeight.w600, color: cs.primary),
           ),
           const SizedBox(height: 20),
-          Text('2. Número de mangas',
+          Text('2. Número de tandas',
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Text(
             'Sugerido: ${GeneradorMangas.numMangasSugerido(totalEquipos: total, tamMax: _carriles)} '
             '(sin carriles vacíos con $_carriles carriles: si sobran '
-            'equipos, las mangas pasan de $_carriles). Puedes cambiarlo.',
+            'equipos, las tandas pasan de $_carriles). Puedes cambiarlo.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
@@ -413,7 +413,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
                 child: TextField(
                   controller: e.value,
                   decoration: InputDecoration(
-                    labelText: 'Manga ${e.key + 1}',
+                    labelText: 'Tanda ${e.key + 1}',
                     prefixIcon: const Icon(Icons.flag_outlined),
                   ),
                   onChanged: (_) => _recalcular(),
@@ -434,7 +434,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
               contentPadding: EdgeInsets.zero,
               title: const Text('Asignar pisters'),
               subtitle: const Text(
-                  'Entre las mangas del mismo día. 2 mangas: 1ª↔2ª. '
+                  'Entre las tandas del mismo día. 2 tandas: 1ª↔2ª. '
                   '3: la 3ª hace de pisters en la 1ª, la 1ª en la 2ª y la '
                   '2ª en la 3ª. 4: 1ª↔2ª y 3ª↔4ª.'),
               value: _asignarPisters,
@@ -474,9 +474,9 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
           ],
           const SizedBox(height: 16),
           SwitchListTile(
-            title: const Text('Sustituir mangas existentes'),
+            title: const Text('Sustituir tandas existentes'),
             subtitle: const Text(
-                'Si esta prueba ya tenía mangas, se eliminan y se reemplazan.'),
+                'Si esta prueba ya tenía tandas, se eliminan y se reemplazan.'),
             value: _sustituir,
             onChanged: (v) => setState(() => _sustituir = v),
           ),
@@ -489,7 +489,7 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.check),
-            label: const Text('Crear estas mangas'),
+            label: const Text('Crear estas tandas'),
           ),
         ],
       ),
@@ -518,7 +518,7 @@ class _BloqueSinManga extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Sin manga (${equipos.length})',
+                    'Sin tanda (${equipos.length})',
                     style: TextStyle(
                       color: cs.onErrorContainer,
                       fontWeight: FontWeight.w700,
@@ -529,8 +529,8 @@ class _BloqueSinManga extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Estos equipos prefieren un día que no tiene ninguna manga en este reparto. '
-              'Añade una manga de ese día arriba o cambia su preferencia.',
+              'Estos equipos prefieren un día que no tiene ninguna tanda en este reparto. '
+              'Añade una tanda de ese día arriba o cambia su preferencia.',
               style: TextStyle(color: cs.onErrorContainer, fontSize: 13),
             ),
             const SizedBox(height: 8),

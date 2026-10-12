@@ -47,8 +47,8 @@ class DetalleManga extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: mangaAsync.maybeWhen(
-          data: (m) => Text(m?.nombre ?? 'Manga'),
-          orElse: () => const Text('Manga'),
+          data: (m) => Text(m?.nombre ?? 'Tanda'),
+          orElse: () => const Text('Tanda'),
         ),
         actions: [
           mangaAsync.maybeWhen(
@@ -83,7 +83,7 @@ class DetalleManga extends ConsumerWidget {
                         ),
                       ),
                       IconButton(
-                        tooltip: 'Editar manga',
+                        tooltip: 'Editar tanda',
                         icon: const Icon(Icons.edit_outlined),
                         onPressed: () => Navigator.of(context).push(
                           MaterialPageRoute(
@@ -833,7 +833,7 @@ class _TarjetaInscripcion extends ConsumerWidget {
                 builder: (_) => AlertDialog(
                   title: const Text('Quitar inscripción'),
                   content: Text(
-                    '¿Quitar a "${inscripcion.nombreEquipo}" de esta manga?',
+                    '¿Quitar a "${inscripcion.nombreEquipo}" de esta tanda?',
                   ),
                   actions: [
                     TextButton(
@@ -864,7 +864,7 @@ class _TarjetaInscripcion extends ConsumerWidget {
             ),
             const PopupMenuItem(
               value: 'quitar',
-              child: Text('Quitar de la manga'),
+              child: Text('Quitar de la tanda'),
             ),
             const PopupMenuItem(
               value: 'baja',

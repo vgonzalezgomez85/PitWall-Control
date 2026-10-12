@@ -226,7 +226,7 @@ class _PantallaImportarResultadosPruebaState
                   const SizedBox(height: 8),
                   Text(
                     'Importa el archivo del sistema de cronometraje (TicTacSlot, SloTime…). '
-                    'Cada equipo del archivo se asigna a la manga de esta prueba '
+                    'Cada equipo del archivo se asigna a la tanda de esta prueba '
                     'donde esté inscrito.',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
@@ -275,9 +275,9 @@ class _PantallaImportarResultadosPruebaState
               SwitchListTile(
                 value: _crearMangaSiFalta,
                 onChanged: (v) => setState(() => _crearMangaSiFalta = v),
-                title: const Text('Crear manga "Resultados generales"'),
+                title: const Text('Crear tanda "Resultados generales"'),
                 subtitle: const Text(
-                    'La prueba no tiene mangas aún. Marcamos los resultados en una manga creada al vuelo.'),
+                    'La prueba no tiene tandas aún. Marcamos los resultados en una tanda creada al vuelo.'),
               ),
             Card(
               child: Padding(

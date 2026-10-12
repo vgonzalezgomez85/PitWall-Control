@@ -125,7 +125,7 @@ class PantallaClasificacion extends ConsumerWidget {
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     const Text(
-                      'Registra resultados de manga, impórtala desde un archivo '
+                      'Registra resultados de tanda, impórtala desde un archivo '
                       'o rellénala a mano.',
                       textAlign: TextAlign.center,
                     ),

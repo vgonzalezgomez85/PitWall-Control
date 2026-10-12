@@ -148,7 +148,7 @@ class PantallaResultadosPrueba extends ConsumerWidget {
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   const Text(
-                    'Inscribe equipos y genera las mangas. Luego podrás '
+                    'Inscribe equipos y genera las tandas. Luego podrás '
                     'importar los resultados del cronometraje aquí.',
                     textAlign: TextAlign.center,
                   ),

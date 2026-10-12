@@ -117,7 +117,7 @@ class _DetallePruebaState extends ConsumerState<DetallePrueba>
     final idi = await elegirIdiomaExport(context, ref);
     if (idi == null || !context.mounted) return;
     final sugerido = op == 'mangas'
-        ? 'mangas-${DateTime.now().millisecondsSinceEpoch}.pdf'
+        ? 'tandas-${DateTime.now().millisecondsSinceEpoch}.pdf'
         : 'verificaciones-${DateTime.now().millisecondsSinceEpoch}.pdf';
     await guardarPdf(
       context,
@@ -170,7 +170,7 @@ class _DetallePruebaState extends ConsumerState<DetallePrueba>
         messenger.showSnackBar(SnackBar(
             content: Text(pole
                 ? 'No hay inscritos que exportar.'
-                : 'No hay mangas con carriles asignados que exportar.')));
+                : 'No hay tandas con carriles asignados que exportar.')));
         return;
       }
       final jsonStr = const JsonEncoder.withIndent('  ').convert(data);
@@ -314,7 +314,7 @@ class _DetallePruebaState extends ConsumerState<DetallePrueba>
               onPressed: () =>
                   _abrir(context, EditorManga(pruebaId: pruebaId)),
               icon: const Icon(Icons.add),
-              label: const Text('Nueva manga'),
+              label: const Text('Nueva tanda'),
             )
           : null,
     );
@@ -362,11 +362,11 @@ class _BotonCompartir extends StatelessWidget {
       tooltip: 'Compartir',
       onSelected: onElegir,
       itemBuilder: (_) => [
-        opcion('mangas', Icons.flag_outlined, 'PDF de mangas', null),
+        opcion('mangas', Icons.flag_outlined, 'PDF de tandas', null),
         opcion('verifs', Icons.fact_check_outlined, 'PDF de verificaciones',
             null),
         const PopupMenuDivider(),
-        opcion('enviar', Icons.wifi_tethering, 'Enviar mangas a PitWall',
+        opcion('enviar', Icons.wifi_tethering, 'Enviar tandas a PitWall',
             'Por wifi, sin archivo'),
         opcion('enviar_verifs', Icons.fact_check_outlined,
             'Enviar verificaciones a PitWall', 'Solo consulta en Manager'),
@@ -434,7 +434,7 @@ class _ContenidoPrueba extends StatelessWidget {
                   ),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.swap_horiz),
-                    label: const Text('Editar mangas'),
+                    label: const Text('Editar tandas'),
                     onPressed: () =>
                         onAbrir(PantallaEditarMangas(pruebaId: pruebaId)),
                   ),
@@ -450,7 +450,7 @@ class _ContenidoPrueba extends StatelessWidget {
               const SizedBox(height: 24),
               Row(
                 children: [
-                  Text('Mangas',
+                  Text('Tandas',
                       style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(width: 8),
                   Container(
@@ -477,11 +477,11 @@ class _ContenidoPrueba extends StatelessWidget {
                       children: [
                         Icon(Icons.flag_outlined, size: 64, color: cs.outline),
                         const SizedBox(height: 8),
-                        Text('Aún no hay mangas',
+                        Text('Aún no hay tandas',
                             style: Theme.of(context).textTheme.titleMedium),
                         const SizedBox(height: 4),
                         Text(
-                          'Crea las mangas que tendrá esta prueba '
+                          'Crea las tandas que tendrá esta prueba '
                           '(Jueves 21:00, Viernes 21:00…).',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium,

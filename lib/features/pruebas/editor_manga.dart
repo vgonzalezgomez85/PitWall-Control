@@ -148,9 +148,9 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Eliminar manga'),
+        title: const Text('Eliminar tanda'),
         content: Text(
-            '¿Eliminar la manga "${_nombre.text}"? Se borrarán también las inscripciones, resultados y verificaciones de la manga.'),
+            '¿Eliminar la tanda "${_nombre.text}"? Se borrarán también las inscripciones, resultados y verificaciones de la tanda.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -176,7 +176,7 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(esNuevo ? 'Nueva manga' : 'Editar manga'),
+        title: Text(esNuevo ? 'Nueva tanda' : 'Editar tanda'),
         actions: [
           if (!esNuevo)
             IconButton(
@@ -194,7 +194,7 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
             TextFormField(
               controller: _nombre,
               decoration: const InputDecoration(
-                labelText: 'Nombre de la manga *',
+                labelText: 'Nombre de la tanda *',
                 helperText: 'Ej: Jueves 21:00, Viernes 23:00…',
                 prefixIcon: Icon(Icons.label_outline),
               ),
@@ -253,7 +253,7 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
                 initialValue: _pistersMangaId,
                 decoration: const InputDecoration(
                   labelText: 'Pisters',
-                  helperText: 'Manga cuyos pilotos hacen de pisters en esta',
+                  helperText: 'Tanda cuyos pilotos hacen de pisters en esta',
                   prefixIcon: Icon(Icons.sports_outlined),
                 ),
                 items: [
@@ -290,7 +290,7 @@ class _EditorMangaState extends ConsumerState<EditorManga> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.check),
-              label: Text(esNuevo ? 'Crear manga' : 'Guardar cambios'),
+              label: Text(esNuevo ? 'Crear tanda' : 'Guardar cambios'),
             ),
           ],
         ),

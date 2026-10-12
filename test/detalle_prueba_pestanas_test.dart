@@ -27,7 +27,7 @@ import 'package:pitwall/features/pruebas/detalle_prueba.dart';
 import 'package:pitwall/services/almacen_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Monta la pantalla de una prueba con un equipo inscrito en una manga.
+/// Monta la pantalla de una prueba con un equipo inscrito en una tanda.
 Future<void> _montar(WidgetTester tester,
     {required bool usaTesoreria, String? tipoMotor}) async {
   tester.view.physicalSize = const Size(1400, 1000);
@@ -105,12 +105,12 @@ void main() {
     expect(find.text('Resultados'), findsOneWidget);
     expect(find.text('Caja'), findsOneWidget);
     expect(find.text('Compartir'), findsOneWidget);
-    // Preparar: accesos y lista de mangas.
+    // Preparar: accesos y lista de tandas.
     expect(find.text('Inscritos'), findsOneWidget);
     // Sin tipo de motor elegido cuenta como mixto: hay sorteo.
     expect(find.text('Sorteo de motores'), findsOneWidget);
     expect(find.text('Jueves'), findsOneWidget);
-    expect(find.text('Nueva manga'), findsOneWidget);
+    expect(find.text('Nueva tanda'), findsOneWidget);
 
     await tester.tap(find.text('Verificar'));
     await _asentar(tester);
@@ -118,8 +118,8 @@ void main() {
     expect(find.text('Pendiente'), findsOneWidget);
     expect(find.text('0 / 1 validadas'), findsOneWidget);
     expect(find.text('Resumen de verificaciones'), findsOneWidget);
-    // El botón de nueva manga solo está en Preparar.
-    expect(find.text('Nueva manga'), findsNothing);
+    // El botón de nueva tanda solo está en Preparar.
+    expect(find.text('Nueva tanda'), findsNothing);
 
     await tester.tap(find.text('Resultados'));
     await _asentar(tester);
@@ -129,8 +129,8 @@ void main() {
 
     await tester.tap(find.text('Compartir'));
     await _asentar(tester);
-    expect(find.text('PDF de mangas'), findsOneWidget);
-    expect(find.text('Enviar mangas a PitWall'), findsOneWidget);
+    expect(find.text('PDF de tandas'), findsOneWidget);
+    expect(find.text('Enviar tandas a PitWall'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await _desmontar(tester);

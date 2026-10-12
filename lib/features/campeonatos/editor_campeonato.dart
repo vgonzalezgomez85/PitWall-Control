@@ -437,7 +437,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
         title: const Text('Eliminar campeonato'),
         content: Text(
             '¿Eliminar "${_nombre.text}"?\n\n'
-            'Se borrarán también sus pruebas, mangas, inscripciones, '
+            'Se borrarán también sus pruebas, tandas, inscripciones, '
             'resultados, verificaciones y pagos. No se puede deshacer.'),
         actions: [
           TextButton(

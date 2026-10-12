@@ -100,7 +100,7 @@ class GeneradorMangas {
     }
     final numMangas = config.nombresMangas.length;
     if (numMangas == 0) {
-      throw ArgumentError('Indica al menos un nombre de manga');
+      throw ArgumentError('Indica al menos un nombre de tanda');
     }
 
     // Ordenar por puntuación descendente; desempate por nombre.
@@ -263,7 +263,7 @@ class GeneradorMangas {
         'Viernes 23:00', 'Sábado 18:00', 'Sábado 21:00'];
     return List.generate(
       numMangas,
-      (i) => i < dias.length ? dias[i] : 'Manga ${i + 1}',
+      (i) => i < dias.length ? dias[i] : 'Tanda ${i + 1}',
     );
   }
 
@@ -324,7 +324,7 @@ class GeneradorMangas {
     if (out.isEmpty && sinPref > 0) {
       final num = (sinPref / tamMax).ceil().clamp(1, 10);
       for (var i = 0; i < num; i++) {
-        out.add('Manga ${i + 1}');
+        out.add('Tanda ${i + 1}');
       }
     }
     return out;

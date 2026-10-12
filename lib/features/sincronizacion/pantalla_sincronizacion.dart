@@ -149,7 +149,7 @@ class _PantallaSincronizacionState
                 '• Todos en la misma wifi. No hace falta internet: vale un '
                 'router sin conexión o el punto de acceso de un móvil.\n'
                 '• Antes del evento, partid todos de la misma copia de datos '
-                '(campeonato, prueba, mangas y equipos).\n'
+                '(campeonato, prueba, tandas y equipos).\n'
                 '• La misma clave del evento en todos, y la hora automática '
                 'activada: si dos tocan la misma verificación, gana el último '
                 'cambio.',

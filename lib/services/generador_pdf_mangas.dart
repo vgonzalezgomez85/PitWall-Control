@@ -156,7 +156,7 @@ class GeneradorPdfMangas {
     }
 
     final pdf = pw.Document(
-      title: 'Mangas ${prueba.nombre}',
+      title: 'Tandas ${prueba.nombre}',
       author: 'PitWall Control',
     );
 
@@ -172,7 +172,7 @@ class GeneradorPdfMangas {
     final lemaMarca = (activo?.marcaLema?.trim().isNotEmpty ?? false)
         ? activo!.marcaLema!.trim()
         : marcaLemaPorDefecto;
-    final subtitulo = '${t('Mangas')} · ${prueba.nombre} - ${activo?.nombre ?? ''}';
+    final subtitulo = '${t('Tandas')} · ${prueba.nombre} - ${activo?.nombre ?? ''}';
 
     // Una hoja por manga: cada manga entra entera en su propia página (A4 y,
     // si tiene muchos equipos, A3), escalada si hiciera falta.

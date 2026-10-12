@@ -95,7 +95,7 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
         messenger.showSnackBar(SnackBar(
             content: Text(_pole
                 ? 'No hay inscritos que enviar.'
-                : 'No hay mangas con carriles asignados que enviar.')));
+                : 'No hay tandas con carriles asignados que enviar.')));
         setState(() => _enviando = false);
         return;
       }

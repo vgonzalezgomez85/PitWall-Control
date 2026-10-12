@@ -38,8 +38,8 @@ Future<bool> confirmarBajaPrueba(BuildContext context, String nombre) async {
     builder: (ctx) => AlertDialog(
       title: const Text('Dar de baja de la prueba'),
       content: Text('¿Dar de baja a "$nombre"?\n\n'
-          'Se quita de Inscritos y de su manga. Los carriles del resto no '
-          'cambian: si hace falta, renumera la manga después.'),
+          'Se quita de Inscritos y de su tanda. Los carriles del resto no '
+          'cambian: si hace falta, renumera la tanda después.'),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -155,7 +155,7 @@ class PantallaInscritos extends ConsumerWidget {
                   ),
                 ),
                 icon: const Icon(Icons.auto_awesome),
-                label: const Text('Generar mangas'),
+                label: const Text('Generar tandas'),
               ),
         orElse: () => null,
       ),
@@ -235,9 +235,9 @@ class PantallaInscritos extends ConsumerWidget {
                         child: Text(
                           esIndividual
                               ? '${inscritos.length} pilotos inscritos. Cuando los tengas todos, '
-                                  'pulsa "Generar mangas".'
+                                  'pulsa "Generar tandas".'
                               : '${inscritos.length} equipos inscritos. Cuando los tengas todos, '
-                                  'pulsa "Generar mangas".',
+                                  'pulsa "Generar tandas".',
                         ),
                       ),
                     ],

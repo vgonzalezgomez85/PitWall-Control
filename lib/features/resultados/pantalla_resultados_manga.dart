@@ -32,7 +32,7 @@ class PantallaResultadosManga extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Resultados de la manga')),
+      appBar: AppBar(title: const Text('Resultados de la tanda')),
       body: lista.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -47,7 +47,7 @@ class PantallaResultadosManga extends ConsumerWidget {
                     Icon(Icons.event_busy_outlined,
                         size: 96, color: cs.outline),
                     const SizedBox(height: 16),
-                    Text('No hay equipos en esta manga',
+                    Text('No hay equipos en esta tanda',
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     const Text(

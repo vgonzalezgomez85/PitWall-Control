@@ -14,6 +14,10 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.26.2] — 2026-10-12
+### Corregido
+- **«Tanda», no «manga», como en PitWall Manager.** El grupo de pilotos que corre junto (p. ej. «Jueves 21:00») es una **tanda**; cada tanda tiene tantas **mangas** como pilotos (una por rotación de carril). En toda la app se decía «manga» donde iba «tanda»: «Nueva tanda», «Generar tandas», «Editar tandas», «PDF de tandas», «Enviar tandas a PitWall», etc. Las tandas nuevas sin nombre se llaman «Tanda 1, 2…». En los PDF: *Tandas · Rounds · Batterie · Séries*. Los nombres ya guardados no cambian.
+
 ## [1.26.1] — 2026-10-12
 ### Mejorado
 - **«Sorteo de motores» solo aparece si el campeonato lo usa.** En la pestaña Preparar de la prueba el botón se muestra con motor de sorteo o mixto, y se oculta si el campeonato es de motor propio.

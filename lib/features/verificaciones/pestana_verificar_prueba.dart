@@ -69,11 +69,11 @@ class PestanaVerificarPrueba extends ConsumerWidget {
                 children: [
                   Icon(Icons.fact_check_outlined, size: 64, color: cs.outline),
                   const SizedBox(height: 8),
-                  Text('Aún no hay mangas',
+                  Text('Aún no hay tandas',
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 4),
                   const Text(
-                    'Inscribe equipos y crea las mangas en la pestaña Preparar.',
+                    'Inscribe equipos y crea las tandas en la pestaña Preparar.',
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -143,7 +143,7 @@ class _SeccionManga extends ConsumerWidget {
             data: (filas) => filas.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-                    child: Text('Sin equipos en esta manga.',
+                    child: Text('Sin equipos en esta tanda.',
                         style: TextStyle(color: cs.outline)),
                   )
                 : Column(children: [

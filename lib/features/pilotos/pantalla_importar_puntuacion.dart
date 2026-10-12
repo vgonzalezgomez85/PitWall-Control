@@ -131,7 +131,7 @@ class _PantallaImportarPuntuacionState
           title: const Text('Puntuación importada'),
           content: Text(
               '✓ Actualizados: $ok\n✗ Saltados: $saltados\n\n'
-              'Esta puntuación solo se usa para "Generar mangas" en la '
+              'Esta puntuación solo se usa para "Generar tandas" en la '
               'primera prueba; en cuanto el campeonato tenga resultados '
               'propios, la clasificación real la sustituye sola.'),
           actions: [
