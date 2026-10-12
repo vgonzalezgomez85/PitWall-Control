@@ -26,6 +26,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pitwall/data/database/app_database.dart';
 import 'package:pitwall/data/database/sync_triggers.dart';
+import 'package:pitwall/domain/generador_mangas.dart';
+import 'package:pitwall/features/pruebas/repositorio_pruebas.dart';
 import 'package:pitwall/features/equipos/repositorio_equipos.dart';
 import 'package:pitwall/features/pilotos/repositorio_pilotos.dart';
 import 'package:pitwall/features/pruebas/repositorio_inscripciones_prueba.dart';
@@ -73,7 +75,7 @@ Future<AppDatabase> _baseComun() async {
       creditosCoche: const Value(-4)));
   // Como una copia restaurada de antes de la sincronización: mismos uuid en
   // las dos BDs (derivados de id y nombre) y sin marca de cambio.
-  for (final t in ['pilotos', 'equipos', 'campeonatos', 'pruebas']) {
+  for (final t in ['pilotos', 'equipos', 'campeonatos', 'pruebas', 'mangas']) {
     await db.customStatement('UPDATE $t SET uuid = NULL');
   }
   for (final sql in sentenciasUuidHeredado()) {
@@ -83,7 +85,8 @@ Future<AppDatabase> _baseComun() async {
     'pilotos',
     'equipos',
     'piloto_campeonato',
-    'inscripciones_prueba'
+    'inscripciones_prueba',
+    'mangas',
   ]) {
     await db.customStatement('UPDATE $t SET mod_ms = NULL, mod_por = NULL');
   }
@@ -416,6 +419,121 @@ void main() {
       // Y no vuelve al traer del que lo tenía.
       await _traer(uno, dos);
       expect(await equipoLlamado(uno, 'Equipo C'), isNull);
+    });
+  });
+
+  group('tandas y carriles (v3)', () {
+    setUp(() async {
+      await uno.fijarDispositivoSync('Control 1');
+      await dos.fijarDispositivoSync('Control 2');
+    });
+
+    Future<List<Manga>> tandas(AppDatabase db) => (db.select(db.mangas)
+          ..where((t) => t.pruebaId.equals(_prueba))
+          ..orderBy([(t) => OrderingTerm.asc(t.nombre)]))
+        .get();
+    Future<Map<int, String?>> parrilla(AppDatabase db, int mangaId) async => {
+          for (final c in await (db.select(db.inscripciones)
+                ..where((t) => t.mangaId.equals(mangaId)))
+              .get())
+            c.equipoId: c.carrilSalida,
+        };
+    Future<bool> asignada(AppDatabase db, int equipoId) async =>
+        (await (db.select(db.inscripcionesPrueba)
+                  ..where((t) =>
+                      t.pruebaId.equals(_prueba) & t.equipoId.equals(equipoId)))
+                .getSingle())
+            .asignada;
+    EquipoSemilla semilla(int id) =>
+        EquipoSemilla(equipoId: id, nombre: 'E$id', copa: 'GT', puntuacion: 0);
+    Future<void> pausa() =>
+        Future<void>.delayed(const Duration(milliseconds: 5));
+
+    test('generar tandas en un Control las monta igual en el otro', () async {
+      await RepositorioInscripcionesPrueba(uno).aplicarGeneracion(
+        pruebaId: _prueba,
+        mangasGeneradas: [
+          MangaGenerada(nombre: 'Viernes 21:00', equipos: [semilla(_equipoA)]),
+          MangaGenerada(nombre: 'Viernes 22:00', equipos: [semilla(_equipoB)]),
+        ],
+        sustituirExistentes: true,
+        asignarCarriles: true,
+        asignarPisters: true,
+        carrilesPorManga: 4,
+      );
+      final r = await _traer(dos, uno);
+      expect(r.tandas, 2);
+      expect(r.bajas, 1); // la «Jueves 21:00» de la copia
+      final enDos = await tandas(dos);
+      expect(enDos.map((m) => (m.nombre, m.numCarriles)),
+          [('Viernes 21:00', 4), ('Viernes 22:00', 4)]);
+      expect(await parrilla(dos, enDos[0].id), {_equipoA: '1'});
+      expect(await parrilla(dos, enDos[1].id), {_equipoB: '1'});
+      // Pisters enlazados con la tanda equivalente de este Control.
+      final enUno = await tandas(uno);
+      final pistersUno = enUno.map((m) => m.pistersMangaId == null
+          ? null
+          : enUno.firstWhere((x) => x.id == m.pistersMangaId).nombre);
+      final pistersDos = enDos.map((m) => m.pistersMangaId == null
+          ? null
+          : enDos.firstWhere((x) => x.id == m.pistersMangaId).nombre);
+      expect(pistersDos.toList(), pistersUno.toList());
+      expect(await asignada(dos, _equipoA), isTrue);
+
+      // Ya está igual: ni a la ida ni a la vuelta hay cambios.
+      expect((await _traer(dos, uno)).cambios, 0);
+      expect((await _traer(uno, dos)).cambios, 0);
+    });
+
+    test('un cambio de carril llega y una verificación de esa tanda encaja',
+        () async {
+      final carrilA = await (uno.select(uno.inscripciones)
+            ..where((t) => t.equipoId.equals(_equipoA)))
+          .getSingleOrNull();
+      // En la copia nadie está en la tanda: se mete y se pone carril.
+      final idIns = carrilA?.id ??
+          await uno.into(uno.inscripciones).insert(InscripcionesCompanion.insert(
+              mangaId: _manga, equipoId: _equipoA));
+      await RepositorioInscripciones(uno)
+          .cambiarCarril(inscripcionId: idIns, carrilSalida: '3');
+      await RepositorioVerificaciones(uno).guardar(
+          mangaId: _manga, equipoId: _equipoA, pesoInicial: 70, validado: false);
+
+      final r = await _traer(dos, uno);
+      expect(r.tandas, 1);
+      expect(await parrilla(dos, _manga), {_equipoA: '3'});
+      expect(await asignada(dos, _equipoA), isTrue);
+      expect(r.verifNuevas, 1);
+      expect((await _traer(uno, dos)).cambios, 0);
+    });
+
+    test('si los dos tocan la parrilla gana la última entera', () async {
+      await uno.into(uno.inscripciones).insert(InscripcionesCompanion.insert(
+          mangaId: _manga, equipoId: _equipoA, carrilSalida: const Value('1')));
+      await pausa();
+      await dos.into(dos.inscripciones).insert(InscripcionesCompanion.insert(
+          mangaId: _manga, equipoId: _equipoB, carrilSalida: const Value('2')));
+      await _traer(uno, dos);
+      await _traer(dos, uno);
+      for (final db in [uno, dos]) {
+        expect(await parrilla(db, _manga), {_equipoB: '2'});
+      }
+    });
+
+    test('borrar una tanda la quita en el otro y libera a sus equipos',
+        () async {
+      await uno.into(uno.inscripciones).insert(InscripcionesCompanion.insert(
+          mangaId: _manga, equipoId: _equipoA));
+      await _traer(dos, uno);
+      await pausa();
+      await (uno.delete(uno.inscripciones)
+            ..where((t) => t.mangaId.equals(_manga)))
+          .go();
+      await RepositorioMangas(uno).borrar(_manga);
+      final r = await _traer(dos, uno);
+      expect(r.bajas, 1);
+      expect(await tandas(dos), isEmpty);
+      expect(await asignada(dos, _equipoA), isFalse);
     });
   });
 }

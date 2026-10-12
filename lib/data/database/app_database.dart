@@ -70,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 50;
+  int get schemaVersion => 51;
 
   /// Nombre con el que este dispositivo firma sus cambios (lo fija main.dart
   /// con el de la sincronización). Se guarda en `sync_local` al abrir la BD.
@@ -549,6 +549,17 @@ class AppDatabase extends _$AppDatabase {
             }
             await _aplicar(() => m.createTable(syncLocal));
             await _aplicar(() => m.createTable(borradosRegistro));
+          }
+          if (from < 51) {
+            // Sincronización de tandas y carriles entre Controls.
+            for (final c in [
+              'uuid TEXT',
+              'mod_ms INTEGER',
+              'mod_por TEXT',
+            ]) {
+              await _aplicar(() => customStatement(
+                  'ALTER TABLE mangas ADD COLUMN $c'));
+            }
           }
         },
       );

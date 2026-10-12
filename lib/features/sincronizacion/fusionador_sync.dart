@@ -26,6 +26,7 @@
 //  - Equipo del campeonato (por uuid), con sus miembros.
 //  - Perfil del piloto en el campeonato (categoría, créditos iniciales…).
 //  - Inscripción a la prueba (alta y preferencia/notas), o su baja.
+//  - Tanda (por uuid) con su parrilla de carriles, o su borrado.
 //  - Verificación de (manga, equipo), o su borrado.
 //  - Copa de un equipo en la prueba.
 //  - Tesorería de un equipo en la prueba (pago + wildcard + "Coord. total").
@@ -48,6 +49,7 @@ class ResultadoFusionSync {
   int equipos = 0;
   int perfiles = 0;
   int inscritos = 0;
+  int tandas = 0;
   int bajas = 0;
   int verifNuevas = 0;
   int verifActualizadas = 0;
@@ -65,6 +67,7 @@ class ResultadoFusionSync {
       equipos +
       perfiles +
       inscritos +
+      tandas +
       bajas +
       verifNuevas +
       verifActualizadas +
@@ -79,6 +82,7 @@ class ResultadoFusionSync {
       if (equipos > 0) '$equipos equipos',
       if (perfiles > 0) '$perfiles perfiles',
       if (inscritos > 0) '$inscritos inscritos',
+      if (tandas > 0) '$tandas tandas',
       if (bajas > 0) '$bajas bajas',
       if (verifNuevas > 0) '$verifNuevas verificaciones nuevas',
       if (verifActualizadas > 0) '$verifActualizadas actualizadas',
@@ -162,6 +166,8 @@ class FusionadorSync {
           r, camp.id, paquete['equipos'] as List? ?? const [], pilotoPorUuid);
       await _fusionarPerfiles(
           r, camp, paquete['perfiles'] as List? ?? const [], pilotoPorUuid);
+      // Tandas y parrillas (necesitan los equipos ya fusionados).
+      await _fusionarMangas(r, prueba, paquete['mangas'] as List? ?? const []);
 
       final mangas = await (db.select(db.mangas)
             ..where((t) => t.pruebaId.equals(pruebaId)))
@@ -171,8 +177,9 @@ class FusionadorSync {
           .get();
       final coches = await db.select(db.catalogoCoches).get();
 
-      Manga? manga(Object? j) =>
-          casar(RefSync.fromJson(j), mangas, (m) => m.id, (m) => m.nombre);
+      Manga? manga(Object? j) => casar(
+          RefSync.fromJson(j), mangas, (m) => m.id, (m) => m.nombre,
+          uuid: (m) => m.uuid);
       Equipo? equipo(Object? j) => casar(
           RefSync.fromJson(j), equipos, (e) => e.id, (e) => e.nombre,
           uuid: (e) => e.uuid);
@@ -228,8 +235,126 @@ class FusionadorSync {
             (j['borradoMs'] as num).toInt(),
             j['borradoPor'] as String?);
       }
+
+      // «Asignada» (tiene tanda) se deduce de las parrillas de este Control.
+      if (r.tandas > 0 || r.bajas > 0) await _recalcularAsignadas(pruebaId);
     });
     return r;
+  }
+
+  // ----------------------------------------------------------------- tandas
+
+  Future<void> _fusionarMangas(
+      ResultadoFusionSync r, Prueba prueba, List lista) async {
+    final equipoPorUuid = {
+      for (final e in await (db.select(db.equipos)
+            ..where((t) => t.campeonatoId.equals(prueba.campeonatoId)))
+          .get())
+        if (e.uuid != null) e.uuid!: e,
+    };
+    // uuid de la tanda de pisters de cada tanda cambiada, para enlazarlas al
+    // final (la de pisters puede llegar después en la lista).
+    final pistersPendientes = <int, (String?, int, String?)>{};
+    for (final raw in lista) {
+      final j = raw as Map<String, dynamic>;
+      final uuid = j['uuid'] as String;
+      final tsR = (j['modMs'] as num?)?.toInt() ?? 0;
+      final porR = j['modPor'] as String?;
+      final fechaMs = (j['fechaHoraMs'] as num?)?.toInt();
+      final datos = MangasCompanion(
+        nombre: Value(j['nombre'] as String),
+        fechaHora: Value(fechaMs == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(fechaMs)),
+        numCarriles: Value((j['numCarriles'] as num?)?.toInt() ?? 8),
+        estado: Value(j['estado'] as String? ?? 'PROGRAMADA'),
+        modMs: Value(tsR),
+        modPor: Value(porR),
+      );
+      final local = await (db.select(db.mangas)
+            ..where((t) => t.uuid.equals(uuid)))
+          .getSingleOrNull();
+      final int id;
+      if (local == null) {
+        if (await _borradoDespues('mangas', uuid, tsR, porR)) continue;
+        id = await db.into(db.mangas).insert(datos.copyWith(
+            pruebaId: Value(prueba.id), uuid: Value(uuid)));
+      } else if (local.pruebaId == prueba.id &&
+          ganaRemoto(tsR, porR, local.modMs ?? 0, local.modPor)) {
+        id = local.id;
+        await (db.update(db.mangas)..where((t) => t.id.equals(id)))
+            .write(datos);
+      } else {
+        continue;
+      }
+      // Parrilla: se reescribe entera.
+      await (db.delete(db.inscripciones)..where((t) => t.mangaId.equals(id)))
+          .go();
+      for (final c in (j['parrilla'] as List? ?? const [])) {
+        final cj = c as Map<String, dynamic>;
+        final e = equipoPorUuid[cj['equipo']];
+        if (e == null) {
+          r.avisos.add('Tanda «${j['nombre']}»: falta aquí un equipo; '
+              'su carril queda vacío.');
+          continue;
+        }
+        await db.into(db.inscripciones).insert(InscripcionesCompanion.insert(
+              mangaId: id,
+              equipoId: e.id,
+              carrilSalida: Value(cj['carril'] as String?),
+              seedDirecto: Value(cj['seedDirecto'] as bool? ?? false),
+            ));
+      }
+      pistersPendientes[id] = (j['pisters'] as String?, tsR, porR);
+      // Los triggers de la parrilla habrán firmado la tanda con la hora de
+      // ahora: se vuelve a poner la remota.
+      await (db.update(db.mangas)..where((t) => t.id.equals(id)))
+          .write(MangasCompanion(modMs: Value(tsR), modPor: Value(porR)));
+      r.tandas++;
+    }
+    for (final MapEntry(key: id, value: (pistersUuid, tsR, porR))
+        in pistersPendientes.entries) {
+      int? pistersId;
+      if (pistersUuid != null) {
+        pistersId = (await (db.select(db.mangas)
+                  ..where((t) => t.uuid.equals(pistersUuid)))
+                .getSingleOrNull())
+            ?.id;
+      }
+      // Marca provisional y luego la remota junto con el dato: si la marca
+      // ya fuera la remota, el trigger tomaría esto por un cambio local.
+      await (db.update(db.mangas)..where((t) => t.id.equals(id)))
+          .write(const MangasCompanion(modMs: Value(-1)));
+      await (db.update(db.mangas)..where((t) => t.id.equals(id))).write(
+          MangasCompanion(
+              pistersMangaId: Value(pistersId),
+              modMs: Value(tsR),
+              modPor: Value(porR)));
+    }
+  }
+
+  Future<void> _recalcularAsignadas(int pruebaId) async {
+    final mangas = await (db.select(db.mangas)
+          ..where((t) => t.pruebaId.equals(pruebaId)))
+        .get();
+    final enTanda = mangas.isEmpty
+        ? <int>{}
+        : {
+            for (final c in await (db.select(db.inscripciones)
+                  ..where((t) => t.mangaId.isIn(mangas.map((m) => m.id))))
+                .get())
+              c.equipoId,
+          };
+    for (final ins in await (db.select(db.inscripcionesPrueba)
+          ..where((t) => t.pruebaId.equals(pruebaId)))
+        .get()) {
+      final asignada = enTanda.contains(ins.equipoId);
+      if (ins.asignada != asignada) {
+        await (db.update(db.inscripcionesPrueba)
+              ..where((t) => t.id.equals(ins.id)))
+            .write(InscripcionesPruebaCompanion(asignada: Value(asignada)));
+      }
+    }
   }
 
   // ---------------------------------------------------------------- altas
@@ -395,6 +520,24 @@ class FusionadorSync {
       Campeonato camp, String tabla, String clave, int ms, String? por) async {
     var borrado = false;
     switch (tabla) {
+      case 'mangas':
+        final m = await (db.select(db.mangas)
+              ..where((t) => t.uuid.equals(clave)))
+            .getSingleOrNull();
+        if (m != null &&
+            m.pruebaId == prueba.id &&
+            ganaRemoto(ms, por, m.modMs ?? 0, m.modPor)) {
+          // Como al borrar una tanda en la app: fuera su parrilla y las que
+          // la tenían de pisters se quedan sin.
+          await (db.delete(db.inscripciones)
+                ..where((t) => t.mangaId.equals(m.id)))
+              .go();
+          await (db.update(db.mangas)
+                ..where((t) => t.pistersMangaId.equals(m.id)))
+              .write(const MangasCompanion(pistersMangaId: Value(null)));
+          await (db.delete(db.mangas)..where((t) => t.id.equals(m.id))).go();
+          borrado = true;
+        }
       case 'equipos':
         final e = await (db.select(db.equipos)
               ..where((t) => t.uuid.equals(clave)))

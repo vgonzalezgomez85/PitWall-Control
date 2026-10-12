@@ -219,6 +219,12 @@ class Mangas extends Table {
   TextColumn get estado => text().withDefault(const Constant('PROGRAMADA'))();
   /// Manga cuyos pilotos hacen de pisters en esta (solo individuales).
   IntColumn get pistersMangaId => integer().nullable()();
+  /// Identificador global de la tanda (sincronización entre Controls).
+  TextColumn get uuid => text().nullable()();
+  /// Último cambio de la tanda o de su parrilla (`inscripciones`), firmado
+  /// por triggers (ver sync_triggers.dart).
+  IntColumn get modMs => integer().nullable()();
+  TextColumn get modPor => text().nullable()();
 }
 
 class Inscripciones extends Table {

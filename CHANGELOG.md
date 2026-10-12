@@ -14,6 +14,14 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.35.0] — 2026-10-12
+### Añadido
+- **Las tandas y los carriles también viajan entre Controls** («Verificar en equipo (wifi)»). Crear o generar tandas (también «Sustituir tandas existentes»), cambiar su nombre, hora o número de carriles, poner o mover a alguien de carril, los pisters y borrar una tanda llegan solos a los demás Controls. Cada tanda viaja con su parrilla completa: si dos tocan la misma tanda a la vez, gana la última entera. Al llegar, cada Control vuelve a calcular qué inscritos tienen tanda.
+- Las verificaciones de una tanda creada en otro Control encajan aunque allí tenga otro número interno.
+
+### Mejorado
+- Esquema 51: las tandas tienen identificador global y su firma de cambios. Las que ya existían reciben el suyo al actualizar.
+
 ## [1.34.0] — 2026-10-12
 ### Añadido
 - **«Verificar en equipo (wifi)» comparte también las altas.** Además de verificaciones, copa y cobros, ahora viajan solos entre los Controls conectados: **pilotos nuevos** y los cambios en su ficha, **equipos** nuevos o editados (con sus miembros), el **perfil del piloto en el campeonato** (categoría, créditos iniciales…) y las **inscripciones a la prueba**, con sus **bajas** y los equipos borrados. Si dos Controls tocan lo mismo, gana el último cambio; si en uno se da de baja y en otro se vuelve a inscribir después, gana la inscripción. Los créditos actuales los sigue calculando cada Control con sus verificaciones.

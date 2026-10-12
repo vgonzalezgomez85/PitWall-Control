@@ -150,13 +150,13 @@ class _PantallaSincronizacionState
                 'Varios Controls pueden trabajar en esta prueba a la vez. '
                 'Cada uno guarda en su dispositivo y se pasan los cambios por '
                 'la wifi: verificaciones con sus fotos, copa y cobros, y '
-                'también las altas: pilotos, equipos, su categoría en el '
-                'campeonato e inscritos a la prueba (y sus bajas).\n\n'
+                'también las altas (pilotos, equipos, su categoría en el '
+                'campeonato e inscritos a la prueba, y sus bajas) y las '
+                'tandas con sus carriles.\n\n'
                 '• Todos en la misma wifi. No hace falta internet: vale un '
                 'router sin conexión o el punto de acceso de un móvil.\n'
                 '• La primera vez, partid todos de la misma copia de datos. '
-                'Las tandas y los carriles todavía no viajan: montadlos antes '
-                'en un Control y repartid la copia.\n'
+                'Los resultados y los catálogos todavía no viajan.\n'
                 '• La misma clave del evento en todos, y la hora automática '
                 'activada: si dos tocan lo mismo, gana el último cambio.',
                 style: gris,

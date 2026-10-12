@@ -71,6 +71,12 @@ END''';
     'saldo_temporada_anterior', 'palmares_local'
   ];
   const colsInscripcion = ['preferencia_dia', 'notas'];
+  const colsManga = [
+    'nombre', 'fecha_hora', 'num_carriles', 'estado', 'pisters_manga_id'
+  ];
+  const colsCarril = ['manga_id', 'equipo_id', 'carril_salida', 'seed_directo'];
+  String firmarManga(String id) =>
+      'UPDATE mangas SET mod_ms = $_ahora, mod_por = $_yo WHERE id = $id;';
   const pc = 'piloto_id = NEW.piloto_id AND campeonato_id = NEW.campeonato_id';
 
   return [
@@ -98,6 +104,25 @@ END''',
     borrado('inscripciones_prueba',
         "(SELECT uuid FROM pruebas WHERE id = OLD.prueba_id) || '|' || "
         '(SELECT uuid FROM equipos WHERE id = OLD.equipo_id)'),
+    // Tandas: la tanda y su parrilla (inscripciones = carriles) son una
+    // sola unidad; cualquier cambio de carril firma la tanda.
+    firmarInsert('mangas', 'id = NEW.id', uuid: true),
+    firmarUpdate('mangas', colsManga, 'id = NEW.id'),
+    borrado('mangas', 'OLD.uuid'),
+    '''
+CREATE TRIGGER IF NOT EXISTS sync1_inscripciones_ins AFTER INSERT ON inscripciones BEGIN
+  ${firmarManga('NEW.manga_id')}
+END''',
+    '''
+CREATE TRIGGER IF NOT EXISTS sync1_inscripciones_upd AFTER UPDATE OF ${colsCarril.join(', ')} ON inscripciones
+WHEN ${_distinto(colsCarril)} BEGIN
+  ${firmarManga('NEW.manga_id')}
+  ${firmarManga('OLD.manga_id')}
+END''',
+    '''
+CREATE TRIGGER IF NOT EXISTS sync1_inscripciones_del AFTER DELETE ON inscripciones BEGIN
+  ${firmarManga('OLD.manga_id')}
+END''',
     // Campeonatos y pruebas: de momento solo necesitan uuid.
     '''
 CREATE TRIGGER IF NOT EXISTS sync1_campeonatos_ins AFTER INSERT ON campeonatos
@@ -116,7 +141,7 @@ END''',
 /// nombre, para que todos los Controls que partieron de la misma copia le
 /// den el mismo sin hablar entre ellos. Idempotente.
 List<String> sentenciasUuidHeredado() => [
-      for (final t in ['pilotos', 'equipos', 'campeonatos', 'pruebas'])
+      for (final t in ['pilotos', 'equipos', 'campeonatos', 'pruebas', 'mangas'])
         "UPDATE $t SET uuid = 'l:' || id || ':' || lower(trim(nombre)) "
             'WHERE uuid IS NULL',
     ];

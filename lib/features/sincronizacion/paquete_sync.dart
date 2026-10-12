@@ -27,8 +27,9 @@
 // todos se hayan sincronizado entre sí.
 //
 // Pilotos y equipos se identifican por su uuid (igual en todos los Controls,
-// ver sync_triggers.dart). Mangas y coches viajan con su id Y su nombre: si
-// los ids no cuadran se casan por nombre (ver fusionador_sync.dart).
+// ver sync_triggers.dart), igual que las tandas (con su parrilla de carriles
+// desde la v3). Los coches viajan con su id Y su nombre: si los ids no
+// cuadran se casan por nombre (ver fusionador_sync.dart).
 
 import 'dart:convert';
 
@@ -37,7 +38,7 @@ import 'package:drift/drift.dart';
 import '../../data/database/app_database.dart';
 import 'dispositivo_sync.dart';
 
-const schemaPaqueteSync = 'pitwall.sync/v2';
+const schemaPaqueteSync = 'pitwall.sync/v3';
 
 /// Referencia portable a una fila: id en el Control de origen + nombre y,
 /// si la tabla lo tiene, su uuid (que manda al casar).
@@ -58,6 +59,7 @@ class RefSync {
 
 /// Tablas cuyos borrados viajan (ver `borrados_registro`).
 const tablasBorradosSync = [
+  'mangas',
   'equipos',
   'piloto_campeonato',
   'inscripciones_prueba',
@@ -81,6 +83,7 @@ Future<Map<String, dynamic>> generarPaqueteSync(
       .get();
   final equipoPorId = {for (final e in equipos) e.id: e};
   RefSync refEquipo(Equipo e) => RefSync(e.id, e.nombre, e.uuid);
+  RefSync refManga(Manga m) => RefSync(m.id, m.nombre, m.uuid);
 
   // Miembros de cada equipo (tabla de unión; si está vacía, piloto1/2).
   final miembros = await (db.select(db.equipoPilotos)
@@ -104,6 +107,13 @@ Future<Map<String, dynamic>> generarPaqueteSync(
         ..where((t) => t.id.isIn(idsPilotos)))
       .get();
   final pilotoPorId = {for (final p in pilotos) p.id: p};
+  // Parrilla de cada tanda: quién va en qué carril.
+  final carriles = mangaPorId.isEmpty
+      ? <Inscripcione>[]
+      : await (db.select(db.inscripciones)
+            ..where((t) => t.mangaId.isIn(mangaPorId.keys))
+            ..orderBy([(t) => OrderingTerm.asc(t.id)]))
+          .get();
   final registro = await (db.select(db.borradosRegistro)
         ..where((t) => t.tabla.isIn(tablasBorradosSync)))
       .get();
@@ -138,7 +148,7 @@ Future<Map<String, dynamic>> generarPaqueteSync(
     final coche = v.cocheCatalogoId == null ? null : cochePorId[v.cocheCatalogoId];
     fotos.addAll(nombresFotos(v.fotosJson));
     listaVerifs.add({
-      'manga': RefSync(m.id, m.nombre).toJson(),
+      'manga': refManga(m).toJson(),
       'equipo': refEquipo(e).toJson(),
       'coche': coche == null ? null : RefSync(coche.id, coche.nombre).toJson(),
       'datos': v.toJson(),
@@ -196,6 +206,29 @@ Future<Map<String, dynamic>> generarPaqueteSync(
             'modPor': pc.modPor,
           },
     ],
+    'mangas': [
+      for (final m in mangas)
+        if (m.uuid != null)
+          {
+            'uuid': m.uuid,
+            'nombre': m.nombre,
+            'fechaHoraMs': m.fechaHora?.millisecondsSinceEpoch,
+            'numCarriles': m.numCarriles,
+            'estado': m.estado,
+            'pisters': mangaPorId[m.pistersMangaId]?.uuid,
+            'parrilla': [
+              for (final c in carriles)
+                if (c.mangaId == m.id && equipoPorId[c.equipoId]?.uuid != null)
+                  {
+                    'equipo': equipoPorId[c.equipoId]!.uuid,
+                    'carril': c.carrilSalida,
+                    'seedDirecto': c.seedDirecto,
+                  },
+            ],
+            'modMs': m.modMs ?? 0,
+            'modPor': m.modPor,
+          },
+    ],
     'borradosRegistro': [
       for (final b in registro)
         {
@@ -210,7 +243,7 @@ Future<Map<String, dynamic>> generarPaqueteSync(
       for (final b in borrados)
         if (mangaPorId[b.mangaId] != null && equipoPorId[b.equipoId] != null)
           {
-            'manga': RefSync(b.mangaId, mangaPorId[b.mangaId]!.nombre).toJson(),
+            'manga': refManga(mangaPorId[b.mangaId]!).toJson(),
             'equipo': refEquipo(equipoPorId[b.equipoId]!).toJson(),
             'borradoMs': b.borradoMs,
             'borradoPor': b.borradoPor,

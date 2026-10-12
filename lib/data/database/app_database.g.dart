@@ -5260,6 +5260,33 @@ class $MangasTable extends Mangas with TableInfo<$MangasTable, Manga> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _uuidMeta = const VerificationMeta('uuid');
+  @override
+  late final GeneratedColumn<String> uuid = GeneratedColumn<String>(
+    'uuid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modMsMeta = const VerificationMeta('modMs');
+  @override
+  late final GeneratedColumn<int> modMs = GeneratedColumn<int>(
+    'mod_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modPorMeta = const VerificationMeta('modPor');
+  @override
+  late final GeneratedColumn<String> modPor = GeneratedColumn<String>(
+    'mod_por',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -5269,6 +5296,9 @@ class $MangasTable extends Mangas with TableInfo<$MangasTable, Manga> {
     numCarriles,
     estado,
     pistersMangaId,
+    uuid,
+    modMs,
+    modPor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5331,6 +5361,24 @@ class $MangasTable extends Mangas with TableInfo<$MangasTable, Manga> {
         ),
       );
     }
+    if (data.containsKey('uuid')) {
+      context.handle(
+        _uuidMeta,
+        uuid.isAcceptableOrUnknown(data['uuid']!, _uuidMeta),
+      );
+    }
+    if (data.containsKey('mod_ms')) {
+      context.handle(
+        _modMsMeta,
+        modMs.isAcceptableOrUnknown(data['mod_ms']!, _modMsMeta),
+      );
+    }
+    if (data.containsKey('mod_por')) {
+      context.handle(
+        _modPorMeta,
+        modPor.isAcceptableOrUnknown(data['mod_por']!, _modPorMeta),
+      );
+    }
     return context;
   }
 
@@ -5368,6 +5416,18 @@ class $MangasTable extends Mangas with TableInfo<$MangasTable, Manga> {
         DriftSqlType.int,
         data['${effectivePrefix}pisters_manga_id'],
       ),
+      uuid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uuid'],
+      ),
+      modMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}mod_ms'],
+      ),
+      modPor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mod_por'],
+      ),
     );
   }
 
@@ -5387,6 +5447,14 @@ class Manga extends DataClass implements Insertable<Manga> {
 
   /// Manga cuyos pilotos hacen de pisters en esta (solo individuales).
   final int? pistersMangaId;
+
+  /// Identificador global de la tanda (sincronización entre Controls).
+  final String? uuid;
+
+  /// Último cambio de la tanda o de su parrilla (`inscripciones`), firmado
+  /// por triggers (ver sync_triggers.dart).
+  final int? modMs;
+  final String? modPor;
   const Manga({
     required this.id,
     required this.pruebaId,
@@ -5395,6 +5463,9 @@ class Manga extends DataClass implements Insertable<Manga> {
     required this.numCarriles,
     required this.estado,
     this.pistersMangaId,
+    this.uuid,
+    this.modMs,
+    this.modPor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5409,6 +5480,15 @@ class Manga extends DataClass implements Insertable<Manga> {
     map['estado'] = Variable<String>(estado);
     if (!nullToAbsent || pistersMangaId != null) {
       map['pisters_manga_id'] = Variable<int>(pistersMangaId);
+    }
+    if (!nullToAbsent || uuid != null) {
+      map['uuid'] = Variable<String>(uuid);
+    }
+    if (!nullToAbsent || modMs != null) {
+      map['mod_ms'] = Variable<int>(modMs);
+    }
+    if (!nullToAbsent || modPor != null) {
+      map['mod_por'] = Variable<String>(modPor);
     }
     return map;
   }
@@ -5426,6 +5506,13 @@ class Manga extends DataClass implements Insertable<Manga> {
       pistersMangaId: pistersMangaId == null && nullToAbsent
           ? const Value.absent()
           : Value(pistersMangaId),
+      uuid: uuid == null && nullToAbsent ? const Value.absent() : Value(uuid),
+      modMs: modMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modMs),
+      modPor: modPor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modPor),
     );
   }
 
@@ -5442,6 +5529,9 @@ class Manga extends DataClass implements Insertable<Manga> {
       numCarriles: serializer.fromJson<int>(json['numCarriles']),
       estado: serializer.fromJson<String>(json['estado']),
       pistersMangaId: serializer.fromJson<int?>(json['pistersMangaId']),
+      uuid: serializer.fromJson<String?>(json['uuid']),
+      modMs: serializer.fromJson<int?>(json['modMs']),
+      modPor: serializer.fromJson<String?>(json['modPor']),
     );
   }
   @override
@@ -5455,6 +5545,9 @@ class Manga extends DataClass implements Insertable<Manga> {
       'numCarriles': serializer.toJson<int>(numCarriles),
       'estado': serializer.toJson<String>(estado),
       'pistersMangaId': serializer.toJson<int?>(pistersMangaId),
+      'uuid': serializer.toJson<String?>(uuid),
+      'modMs': serializer.toJson<int?>(modMs),
+      'modPor': serializer.toJson<String?>(modPor),
     };
   }
 
@@ -5466,6 +5559,9 @@ class Manga extends DataClass implements Insertable<Manga> {
     int? numCarriles,
     String? estado,
     Value<int?> pistersMangaId = const Value.absent(),
+    Value<String?> uuid = const Value.absent(),
+    Value<int?> modMs = const Value.absent(),
+    Value<String?> modPor = const Value.absent(),
   }) => Manga(
     id: id ?? this.id,
     pruebaId: pruebaId ?? this.pruebaId,
@@ -5476,6 +5572,9 @@ class Manga extends DataClass implements Insertable<Manga> {
     pistersMangaId: pistersMangaId.present
         ? pistersMangaId.value
         : this.pistersMangaId,
+    uuid: uuid.present ? uuid.value : this.uuid,
+    modMs: modMs.present ? modMs.value : this.modMs,
+    modPor: modPor.present ? modPor.value : this.modPor,
   );
   Manga copyWithCompanion(MangasCompanion data) {
     return Manga(
@@ -5490,6 +5589,9 @@ class Manga extends DataClass implements Insertable<Manga> {
       pistersMangaId: data.pistersMangaId.present
           ? data.pistersMangaId.value
           : this.pistersMangaId,
+      uuid: data.uuid.present ? data.uuid.value : this.uuid,
+      modMs: data.modMs.present ? data.modMs.value : this.modMs,
+      modPor: data.modPor.present ? data.modPor.value : this.modPor,
     );
   }
 
@@ -5502,7 +5604,10 @@ class Manga extends DataClass implements Insertable<Manga> {
           ..write('fechaHora: $fechaHora, ')
           ..write('numCarriles: $numCarriles, ')
           ..write('estado: $estado, ')
-          ..write('pistersMangaId: $pistersMangaId')
+          ..write('pistersMangaId: $pistersMangaId, ')
+          ..write('uuid: $uuid, ')
+          ..write('modMs: $modMs, ')
+          ..write('modPor: $modPor')
           ..write(')'))
         .toString();
   }
@@ -5516,6 +5621,9 @@ class Manga extends DataClass implements Insertable<Manga> {
     numCarriles,
     estado,
     pistersMangaId,
+    uuid,
+    modMs,
+    modPor,
   );
   @override
   bool operator ==(Object other) =>
@@ -5527,7 +5635,10 @@ class Manga extends DataClass implements Insertable<Manga> {
           other.fechaHora == this.fechaHora &&
           other.numCarriles == this.numCarriles &&
           other.estado == this.estado &&
-          other.pistersMangaId == this.pistersMangaId);
+          other.pistersMangaId == this.pistersMangaId &&
+          other.uuid == this.uuid &&
+          other.modMs == this.modMs &&
+          other.modPor == this.modPor);
 }
 
 class MangasCompanion extends UpdateCompanion<Manga> {
@@ -5538,6 +5649,9 @@ class MangasCompanion extends UpdateCompanion<Manga> {
   final Value<int> numCarriles;
   final Value<String> estado;
   final Value<int?> pistersMangaId;
+  final Value<String?> uuid;
+  final Value<int?> modMs;
+  final Value<String?> modPor;
   const MangasCompanion({
     this.id = const Value.absent(),
     this.pruebaId = const Value.absent(),
@@ -5546,6 +5660,9 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     this.numCarriles = const Value.absent(),
     this.estado = const Value.absent(),
     this.pistersMangaId = const Value.absent(),
+    this.uuid = const Value.absent(),
+    this.modMs = const Value.absent(),
+    this.modPor = const Value.absent(),
   });
   MangasCompanion.insert({
     this.id = const Value.absent(),
@@ -5555,6 +5672,9 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     this.numCarriles = const Value.absent(),
     this.estado = const Value.absent(),
     this.pistersMangaId = const Value.absent(),
+    this.uuid = const Value.absent(),
+    this.modMs = const Value.absent(),
+    this.modPor = const Value.absent(),
   }) : pruebaId = Value(pruebaId),
        nombre = Value(nombre);
   static Insertable<Manga> custom({
@@ -5565,6 +5685,9 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     Expression<int>? numCarriles,
     Expression<String>? estado,
     Expression<int>? pistersMangaId,
+    Expression<String>? uuid,
+    Expression<int>? modMs,
+    Expression<String>? modPor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -5574,6 +5697,9 @@ class MangasCompanion extends UpdateCompanion<Manga> {
       if (numCarriles != null) 'num_carriles': numCarriles,
       if (estado != null) 'estado': estado,
       if (pistersMangaId != null) 'pisters_manga_id': pistersMangaId,
+      if (uuid != null) 'uuid': uuid,
+      if (modMs != null) 'mod_ms': modMs,
+      if (modPor != null) 'mod_por': modPor,
     });
   }
 
@@ -5585,6 +5711,9 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     Value<int>? numCarriles,
     Value<String>? estado,
     Value<int?>? pistersMangaId,
+    Value<String?>? uuid,
+    Value<int?>? modMs,
+    Value<String?>? modPor,
   }) {
     return MangasCompanion(
       id: id ?? this.id,
@@ -5594,6 +5723,9 @@ class MangasCompanion extends UpdateCompanion<Manga> {
       numCarriles: numCarriles ?? this.numCarriles,
       estado: estado ?? this.estado,
       pistersMangaId: pistersMangaId ?? this.pistersMangaId,
+      uuid: uuid ?? this.uuid,
+      modMs: modMs ?? this.modMs,
+      modPor: modPor ?? this.modPor,
     );
   }
 
@@ -5621,6 +5753,15 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     if (pistersMangaId.present) {
       map['pisters_manga_id'] = Variable<int>(pistersMangaId.value);
     }
+    if (uuid.present) {
+      map['uuid'] = Variable<String>(uuid.value);
+    }
+    if (modMs.present) {
+      map['mod_ms'] = Variable<int>(modMs.value);
+    }
+    if (modPor.present) {
+      map['mod_por'] = Variable<String>(modPor.value);
+    }
     return map;
   }
 
@@ -5633,7 +5774,10 @@ class MangasCompanion extends UpdateCompanion<Manga> {
           ..write('fechaHora: $fechaHora, ')
           ..write('numCarriles: $numCarriles, ')
           ..write('estado: $estado, ')
-          ..write('pistersMangaId: $pistersMangaId')
+          ..write('pistersMangaId: $pistersMangaId, ')
+          ..write('uuid: $uuid, ')
+          ..write('modMs: $modMs, ')
+          ..write('modPor: $modPor')
           ..write(')'))
         .toString();
   }
@@ -24750,6 +24894,9 @@ typedef $$MangasTableCreateCompanionBuilder =
       Value<int> numCarriles,
       Value<String> estado,
       Value<int?> pistersMangaId,
+      Value<String?> uuid,
+      Value<int?> modMs,
+      Value<String?> modPor,
     });
 typedef $$MangasTableUpdateCompanionBuilder =
     MangasCompanion Function({
@@ -24760,6 +24907,9 @@ typedef $$MangasTableUpdateCompanionBuilder =
       Value<int> numCarriles,
       Value<String> estado,
       Value<int?> pistersMangaId,
+      Value<String?> uuid,
+      Value<int?> modMs,
+      Value<String?> modPor,
     });
 
 final class $$MangasTableReferences
@@ -24892,6 +25042,21 @@ class $$MangasTableFilterComposer
 
   ColumnFilters<int> get pistersMangaId => $composableBuilder(
     column: $table.pistersMangaId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uuid => $composableBuilder(
+    column: $table.uuid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get modMs => $composableBuilder(
+    column: $table.modMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get modPor => $composableBuilder(
+    column: $table.modPor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -25058,6 +25223,21 @@ class $$MangasTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get uuid => $composableBuilder(
+    column: $table.uuid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get modMs => $composableBuilder(
+    column: $table.modMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get modPor => $composableBuilder(
+    column: $table.modPor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PruebasTableOrderingComposer get pruebaId {
     final $$PruebasTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -25112,6 +25292,15 @@ class $$MangasTableAnnotationComposer
     column: $table.pistersMangaId,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get uuid =>
+      $composableBuilder(column: $table.uuid, builder: (column) => column);
+
+  GeneratedColumn<int> get modMs =>
+      $composableBuilder(column: $table.modMs, builder: (column) => column);
+
+  GeneratedColumn<String> get modPor =>
+      $composableBuilder(column: $table.modPor, builder: (column) => column);
 
   $$PruebasTableAnnotationComposer get pruebaId {
     final $$PruebasTableAnnotationComposer composer = $composerBuilder(
@@ -25278,6 +25467,9 @@ class $$MangasTableTableManager
                 Value<int> numCarriles = const Value.absent(),
                 Value<String> estado = const Value.absent(),
                 Value<int?> pistersMangaId = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
+                Value<int?> modMs = const Value.absent(),
+                Value<String?> modPor = const Value.absent(),
               }) => MangasCompanion(
                 id: id,
                 pruebaId: pruebaId,
@@ -25286,6 +25478,9 @@ class $$MangasTableTableManager
                 numCarriles: numCarriles,
                 estado: estado,
                 pistersMangaId: pistersMangaId,
+                uuid: uuid,
+                modMs: modMs,
+                modPor: modPor,
               ),
           createCompanionCallback:
               ({
@@ -25296,6 +25491,9 @@ class $$MangasTableTableManager
                 Value<int> numCarriles = const Value.absent(),
                 Value<String> estado = const Value.absent(),
                 Value<int?> pistersMangaId = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
+                Value<int?> modMs = const Value.absent(),
+                Value<String?> modPor = const Value.absent(),
               }) => MangasCompanion.insert(
                 id: id,
                 pruebaId: pruebaId,
@@ -25304,6 +25502,9 @@ class $$MangasTableTableManager
                 numCarriles: numCarriles,
                 estado: estado,
                 pistersMangaId: pistersMangaId,
+                uuid: uuid,
+                modMs: modMs,
+                modPor: modPor,
               ),
           withReferenceMapper: (p0) => p0
               .map(
