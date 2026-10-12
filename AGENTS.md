@@ -18,7 +18,7 @@ The **UI is translated** (ES · CA · EN · FR · IT) with gen-l10n: dictionarie
 ## Database (drift / SQLite)
 
 - Schema lives in `lib/data/database/tables.dart` + `app_database.dart`; `app_database.g.dart` is generated. Never hand-edit the `.g.dart`.
-- `schemaVersion` is currently `52`. Every schema change must bump it **and** add a step in the `onUpgrade` block using the `_aplicar()` helper — the helper swallows `duplicate column` / `already exists` errors because dev DBs can lag behind the declared `user_version`. Use `customStatement('ALTER TABLE ... ADD COLUMN ...')` for new columns, `_aplicar(() => m.createTable(...))` for new tables.
+- `schemaVersion` is currently `52`. Every schema change must bump it **and** add a step in the `onUpgrade` block using the `_aplicar()` helper — the helper swallows `duplicate column` / `already exists` errors because dev DBs can lag behind the declared `user_version`. Use `customStatement('ALTER TABLE ... ADD COLUMN ...')` for new columns, `_aplicar(() => m.createTable(...))` for new tables. For **dropping** a column use `_descartarColumna(tabla, columna)` (comprueba con `PRAGMA table_info` antes): un `DROP COLUMN` de algo que no existe da `no such column` y aborta la migración entera — la app se queda cargando (pasó con bases en `user_version` 29; ver `test/migracion_retrasada_test.dart`).
 - Changes that are purely additive are safe; destructive migrations must be justified (see schema 31 dedup and 33/35 drop+re-add patterns).
 - `Seeds.sembrar(db)` + `limpiarDuplicados()` run on every app start in `main.dart`; both must stay idempotent.
 - Local DB files and `fotos_verificaciones/` (verification photos) are gitignored.

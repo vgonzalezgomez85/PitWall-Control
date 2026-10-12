@@ -98,6 +98,17 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  /// Descarta una columna si existe. En DBs con `user_version` retrasado (o
+  /// llegadas de una copia antigua) puede que ese paso ya esté aplicado y la
+  /// columna no esté: un `DROP COLUMN` de algo que no existe da «no such
+  /// column» y abortaría la migración entera (la app se quedaba cargando).
+  Future<void> _descartarColumna(String tabla, String columna) async {
+    final info = await customSelect('PRAGMA table_info($tabla)').get();
+    if (info.any((r) => r.read<String>('name') == columna)) {
+      await customStatement('ALTER TABLE $tabla DROP COLUMN $columna');
+    }
+  }
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
@@ -120,8 +131,7 @@ class AppDatabase extends _$AppDatabase {
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
-            await _aplicar(() => customStatement(
-                'ALTER TABLE equipos DROP COLUMN coche_catalogo_id'));
+            await _descartarColumna('equipos', 'coche_catalogo_id');
           }
           if (from < 3) {
             await _aplicar(() => m.createTable(inscripcionesPrueba));
@@ -336,10 +346,8 @@ class AppDatabase extends _$AppDatabase {
             // La altura de motor pasa de medida en mm (con mínimo por
             // campeonato) a un check de sí/no con la plancha: conforme o no
             // conforme, sin umbral que configurar.
-            await _aplicar(() => customStatement(
-                'ALTER TABLE campeonatos DROP COLUMN altura_motor_min'));
-            await _aplicar(() => customStatement(
-                'ALTER TABLE verificaciones DROP COLUMN altura_motor'));
+            await _descartarColumna('campeonatos', 'altura_motor_min');
+            await _descartarColumna('verificaciones', 'altura_motor');
             await _aplicar(() => customStatement(
                 'ALTER TABLE verificaciones ADD COLUMN altura_motor_conforme INTEGER'));
           }
@@ -355,8 +363,7 @@ class AppDatabase extends _$AppDatabase {
             // Anchura de eje: separada en delantero/trasero (antes un único
             // valor). Como es una función recién añadida y sin datos reales
             // guardados, se reinicia en vez de migrar el formato antiguo.
-            await _aplicar(() => customStatement(
-                'ALTER TABLE verificaciones DROP COLUMN anchura_eje'));
+            await _descartarColumna('verificaciones', 'anchura_eje');
             await _aplicar(() => customStatement(
                 'ALTER TABLE verificaciones ADD COLUMN anchura_eje_del REAL'));
             await _aplicar(() => customStatement(
@@ -472,8 +479,7 @@ class AppDatabase extends _$AppDatabase {
             // Engranajes: "marca" deja de existir (la hoja real ya no la
             // tiene) y se sustituye por "diámetro". Requiere SQLite 3.35+
             // (incluido en la versión empaquetada con la app).
-            await _aplicar(
-                () => customStatement('ALTER TABLE catalogo_engranajes DROP COLUMN marca'));
+            await _descartarColumna('catalogo_engranajes', 'marca');
             await _aplicar(() => customStatement(
                 'ALTER TABLE catalogo_engranajes ADD COLUMN diametro REAL'));
           }

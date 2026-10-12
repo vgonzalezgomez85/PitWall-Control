@@ -14,6 +14,10 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.41.2] — 2026-10-12
+### Corregido
+- **La app se quedaba cargando al abrir una base de datos de una versión antigua** (con el esquema retrasado): una migración intentaba borrar una columna que ya no estaba y el error abortaba el arranque. Ahora esa migración comprueba antes si la columna existe (y hay un test que lo cubre con una base «antigua» de verdad). Afectaba a cualquier base venida de una versión anterior o restaurada de una copia.
+
 ## [1.41.1] — 2026-10-12
 ### Mejorado
 - El enlace «Ver el manual con capturas» de la configuración de Google abre el manual **en el idioma de la app** (el manual de la web ya tiene las cinco versiones).
