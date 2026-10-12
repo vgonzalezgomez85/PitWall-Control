@@ -23,6 +23,9 @@ import 'package:intl/intl.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../clasificacion/repositorio_clasificacion.dart';
+import '../pruebas/detalle_prueba.dart';
+import '../pruebas/pantalla_inscritos.dart';
+import '../tesoreria/repositorio_tesoreria.dart';
 import 'app_shell.dart';
 
 /// Datos agregados del campeonato activo para el dashboard de inicio.
@@ -74,10 +77,78 @@ final _resumenProvider =
   });
 });
 
-/// Pantalla de inicio del shell: resumen del campeonato + accesos rápidos.
-///
-/// Las tarjetas no abren pantallas nuevas: cambian el módulo activo del
-/// shell mediante [shellIndiceProvider], evitando navegación apilada.
+/// Pendientes del campeonato activo para el Inicio.
+class _DatosPendientes {
+  _DatosPendientes({required this.verifSinValidar, required this.sinResultados});
+
+  /// Equipos inscritos en las tandas de la próxima prueba sin verificación
+  /// validada.
+  final int verifSinValidar;
+
+  /// Pruebas no canceladas con fecha anterior a hoy y ningún resultado.
+  final List<Prueba> sinResultados;
+}
+
+final _pendientesProvider =
+    StreamProvider.autoDispose<_DatosPendientes?>((ref) {
+  final db = ref.watch(dbProvider);
+  final activo = ref.watch(campeonatoActivoProvider);
+  if (activo == null) return Stream.value(null);
+
+  // Se recalcula cuando cambia cualquiera de estas tablas.
+  final disparador = db.customSelect('SELECT 1', readsFrom: {
+    db.pruebas,
+    db.mangas,
+    db.inscripciones,
+    db.verificaciones,
+    db.resultados,
+  }).watch();
+
+  return disparador.asyncMap((_) async {
+    final pruebas = await (db.select(db.pruebas)
+          ..where((t) => t.campeonatoId.equals(activo.id))
+          ..orderBy([(t) => OrderingTerm.asc(t.orden)]))
+        .get();
+    // Misma «próxima prueba» que la tarjeta de arriba.
+    final proxima = pruebas
+        .where((p) => p.estado == 'PROGRAMADA' || p.estado == 'EN_CURSO')
+        .firstOrNull;
+
+    var verifSinValidar = 0;
+    if (proxima != null) {
+      final fila = await db.customSelect(
+        'SELECT COUNT(*) AS n FROM inscripciones i '
+        'JOIN mangas m ON m.id = i.manga_id '
+        'WHERE m.prueba_id = ? AND NOT EXISTS ('
+        '  SELECT 1 FROM verificaciones v '
+        '  WHERE v.manga_id = i.manga_id AND v.equipo_id = i.equipo_id '
+        '  AND v.validado = 1)',
+        variables: [Variable.withInt(proxima.id)],
+      ).getSingle();
+      verifSinValidar = fila.read<int>('n');
+    }
+
+    final hoy = DateTime.now();
+    final inicioHoy = DateTime(hoy.year, hoy.month, hoy.day);
+    final sinResultados = <Prueba>[];
+    for (final p in pruebas) {
+      if (p.estado == 'CANCELADA') continue;
+      if (p.fecha == null || !p.fecha!.isBefore(inicioHoy)) continue;
+      final fila = await db.customSelect(
+        'SELECT COUNT(*) AS n FROM resultados r '
+        'JOIN mangas m ON m.id = r.manga_id WHERE m.prueba_id = ?',
+        variables: [Variable.withInt(p.id)],
+      ).getSingle();
+      if (fila.read<int>('n') == 0) sinResultados.add(p);
+    }
+    return _DatosPendientes(
+        verifSinValidar: verifSinValidar, sinResultados: sinResultados);
+  });
+});
+
+/// Pantalla de inicio del shell: qué toca ahora. Campeonato activo, próxima
+/// prueba con accesos directos (Inscritos · Verificar · Resultados),
+/// pendientes con su número y líder del campeonato.
 class PantallaResumen extends ConsumerWidget {
   const PantallaResumen({super.key});
 
@@ -161,69 +232,20 @@ class PantallaResumen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Próxima prueba + líder, lado a lado si hay anchura.
-          LayoutBuilder(builder: (context, c) {
-            final lider = clasifAsync.asData?.value.filas.firstOrNull;
-            final tarjetas = <Widget>[
-              _TarjetaProxima(prueba: resumen?.proxima),
-              _TarjetaLider(
-                nombre: lider?.pilotoNombre,
-                equipo: lider?.equipoNombre,
-                puntos: lider?.totalNeto,
-              ),
-            ];
-            if (c.maxWidth > 640) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: tarjetas[0]),
-                  const SizedBox(width: 12),
-                  Expanded(child: tarjetas[1]),
-                ],
-              );
-            }
-            return Column(children: [
-              tarjetas[0],
-              const SizedBox(height: 12),
-              tarjetas[1],
-            ]);
-          }),
+          _TarjetaProxima(prueba: resumen?.proxima),
           const SizedBox(height: 24),
-          Text('Accesos rápidos',
-              style: Theme.of(context).textTheme.titleLarge),
+          Text('Pendientes', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: _columnas(context),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.4,
-            children: [
-              // Cada acceso resuelve su índice dentro de la lista de destinos
-              // visible (oculta Tesorería/Créditos si el campeonato no los usa).
-              for (final a in const [
-                (Icons.event_outlined, 'Pruebas', 'Pruebas'),
-                (Icons.people_alt_outlined, 'Participantes', 'Participantes'),
-                (Icons.leaderboard_outlined, 'Clasificación', 'Clasificación'),
-                (Icons.payments_outlined, 'Tesorería', 'Tesorería'),
-                (Icons.savings_outlined, 'Créditos', 'Créditos'),
-              ])
-                if (indiceDestinoVisible(a.$3, activo) >= 0)
-                  _TarjetaAcceso(
-                      a.$1, a.$2, indiceDestinoVisible(a.$3, activo)),
-            ],
+          _Pendientes(proxima: resumen?.proxima),
+          const SizedBox(height: 24),
+          _TarjetaLider(
+            nombre: clasifAsync.asData?.value.filas.firstOrNull?.pilotoNombre,
+            equipo: clasifAsync.asData?.value.filas.firstOrNull?.equipoNombre,
+            puntos: clasifAsync.asData?.value.filas.firstOrNull?.totalNeto,
           ),
         ],
       ),
     );
-  }
-
-  int _columnas(BuildContext context) {
-    final ancho = MediaQuery.sizeOf(context).width;
-    if (ancho > 1100) return 4;
-    if (ancho > 700) return 3;
-    return 2;
   }
 }
 
@@ -271,58 +293,217 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-class _TarjetaProxima extends ConsumerWidget {
+/// Próxima prueba con accesos directos a lo que se hace el día de carrera.
+class _TarjetaProxima extends StatelessWidget {
   const _TarjetaProxima({required this.prueba});
   final Prueba? prueba;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final fmt = DateFormat("EEEE d 'de' MMMM", 'es_ES');
     final p = prueba;
+    void abrir(Widget destino) => Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => destino));
+
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => ref.read(shellIndiceProvider.notifier).ir(
-            indiceDestinoVisible('Pruebas', ref.read(campeonatoActivoProvider))),
+        onTap: p == null ? null : () => abrir(DetallePrueba(pruebaId: p.id)),
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                backgroundColor: cs.secondaryContainer,
-                child: Icon(Icons.flag_outlined,
-                    color: cs.onSecondaryContainer),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Próxima prueba',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelMedium
-                            ?.copyWith(color: cs.outline)),
-                    Text(
-                      p?.nombre ?? 'No hay pruebas pendientes',
-                      style: Theme.of(context).textTheme.titleMedium,
-                      overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: cs.secondaryContainer,
+                    child: Icon(Icons.flag_outlined,
+                        color: cs.onSecondaryContainer),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Próxima prueba',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(color: cs.outline)),
+                        Text(
+                          p?.nombre ?? 'No hay pruebas pendientes',
+                          style: Theme.of(context).textTheme.titleLarge,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (p != null)
+                          Text(
+                            [
+                              if (p.fecha != null) fmt.format(p.fecha!),
+                              if (p.sede != null && p.sede!.isNotEmpty)
+                                p.sede!,
+                            ].join(' · '),
+                            style: TextStyle(color: cs.outline, fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
                     ),
-                    if (p != null)
-                      Text(
-                        [
-                          if (p.fecha != null) fmt.format(p.fecha!),
-                          if (p.sede != null && p.sede!.isNotEmpty) p.sede!,
-                        ].join(' · '),
-                        style: TextStyle(color: cs.outline, fontSize: 13),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                  ),
+                  if (p != null) Icon(Icons.chevron_right, color: cs.outline),
+                ],
+              ),
+              if (p != null) ...[
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.how_to_reg_outlined),
+                      label: const Text('Inscritos'),
+                      onPressed: () =>
+                          abrir(PantallaInscritos(pruebaId: p.id)),
+                    ),
+                    FilledButton.icon(
+                      icon: const Icon(Icons.fact_check_outlined),
+                      label: const Text('Verificar'),
+                      onPressed: () => abrir(DetallePrueba(
+                          pruebaId: p.id,
+                          pestanaInicial: PestanaPrueba.verificar)),
+                    ),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.emoji_events_outlined),
+                      label: const Text('Resultados'),
+                      onPressed: () => abrir(DetallePrueba(
+                          pruebaId: p.id,
+                          pestanaInicial: PestanaPrueba.resultados)),
+                    ),
                   ],
                 ),
-              ),
-              Icon(Icons.chevron_right, color: cs.outline),
+              ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Lo que falta por hacer, con su número. Cada tarjeta lleva a donde se
+/// resuelve.
+class _Pendientes extends ConsumerWidget {
+  const _Pendientes({required this.proxima});
+  final Prueba? proxima;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activo = ref.watch(campeonatoActivoProvider);
+    final datos = ref.watch(_pendientesProvider).asData?.value;
+    final p = proxima;
+    final usaTesoreria = activo?.usaTesoreria ?? true;
+    final pagos = p != null && usaTesoreria
+        ? ref.watch(pagosPruebaProvider(p.id)).asData?.value
+        : null;
+    final sinCobrar = pagos?.where((x) => !x.saldado).length ?? 0;
+    void abrir(Widget destino) => Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => destino));
+
+    final tarjetas = <Widget>[
+      if (p != null && (datos?.verifSinValidar ?? 0) > 0)
+        _TarjetaPendiente(
+          numero: datos!.verifSinValidar,
+          texto: datos.verifSinValidar == 1
+              ? 'verificación sin validar'
+              : 'verificaciones sin validar',
+          detalle: p.nombre,
+          onTap: () => abrir(DetallePrueba(
+              pruebaId: p.id, pestanaInicial: PestanaPrueba.verificar)),
+        ),
+      if (p != null && sinCobrar > 0)
+        _TarjetaPendiente(
+          numero: sinCobrar,
+          texto: sinCobrar == 1 ? 'pago sin cobrar' : 'pagos sin cobrar',
+          detalle: p.nombre,
+          onTap: () => abrir(DetallePrueba(
+              pruebaId: p.id, pestanaInicial: PestanaPrueba.caja)),
+        ),
+      if ((datos?.sinResultados.length ?? 0) > 0)
+        _TarjetaPendiente(
+          numero: datos!.sinResultados.length,
+          texto: datos.sinResultados.length == 1
+              ? 'prueba ya disputada sin resultados'
+              : 'pruebas ya disputadas sin resultados',
+          detalle: datos.sinResultados.map((x) => x.nombre).join(', '),
+          // Con una sola, directo a sus resultados; si hay varias, a la lista.
+          onTap: datos.sinResultados.length == 1
+              ? () => abrir(DetallePrueba(
+                  pruebaId: datos.sinResultados.first.id,
+                  pestanaInicial: PestanaPrueba.resultados))
+              : () => ref.read(shellIndiceProvider.notifier).ir(
+                  indiceDestinoVisible('Pruebas', activo)),
+        ),
+    ];
+
+    if (datos == null) return const SizedBox(height: 48);
+    if (tarjetas.isEmpty) {
+      final cs = Theme.of(context).colorScheme;
+      return Card(
+        child: ListTile(
+          leading: Icon(Icons.check_circle_outline,
+              color: Colors.green.shade700),
+          title: const Text('Todo al día'),
+          subtitle: Text(p == null
+              ? 'No hay pruebas pendientes ni resultados por registrar.'
+              : 'Sin verificaciones ni pagos pendientes en ${p.nombre}.',
+              style: TextStyle(color: cs.outline)),
+        ),
+      );
+    }
+    return Wrap(spacing: 12, runSpacing: 12, children: tarjetas);
+  }
+}
+
+class _TarjetaPendiente extends StatelessWidget {
+  const _TarjetaPendiente({
+    required this.numero,
+    required this.texto,
+    required this.detalle,
+    required this.onTap,
+  });
+
+  final int numero;
+  final String texto;
+  final String detalle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: 240,
+      child: Card(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$numero',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: cs.primary,
+                        )),
+                Text(texto, style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 4),
+                Text(detalle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: cs.outline, fontSize: 13)),
+              ],
+            ),
           ),
         ),
       ),
@@ -347,7 +528,7 @@ class _TarjetaLider extends ConsumerWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => ref.read(shellIndiceProvider.notifier).ir(
-            indiceDestinoVisible('Tesorería', ref.read(campeonatoActivoProvider))),
+            indiceDestinoVisible('Clasificación', ref.read(campeonatoActivoProvider))),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -382,41 +563,6 @@ class _TarjetaLider extends ConsumerWidget {
               ),
               Icon(Icons.chevron_right, color: cs.outline),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TarjetaAcceso extends ConsumerWidget {
-  const _TarjetaAcceso(this.icono, this.titulo, this.indice);
-
-  final IconData icono;
-  final String titulo;
-  final int indice;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final color = Theme.of(context).colorScheme;
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => ref.read(shellIndiceProvider.notifier).ir(indice),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icono, size: 44, color: color.primary),
-                const SizedBox(height: 12),
-                Text(titulo,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-            ),
           ),
         ),
       ),

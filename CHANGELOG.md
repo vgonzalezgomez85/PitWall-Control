@@ -14,6 +14,14 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.27.0] — 2026-10-12
+### Añadido
+- **Inicio dice qué toca ahora.** La tarjeta de la **próxima prueba** tiene botones directos: **Inscritos**, **Verificar** (abre la prueba en la pestaña Verificar) y **Resultados**. Debajo, **Pendientes** con su número: verificaciones sin validar y pagos sin cobrar de la próxima prueba, y pruebas ya disputadas sin resultados. Cada tarjeta lleva a donde se resuelve; si no queda nada, sale «Todo al día».
+### Mejorado
+- Desaparece la cuadrícula de «Accesos rápidos», que repetía el menú lateral.
+### Corregido
+- La tarjeta «Líder del campeonato» llevaba a Tesorería; ahora lleva a Clasificación.
+
 ## [1.26.3] — 2026-10-12
 ### Mejorado
 - **Los botones de las barras superiores llevan texto.** Antes muchos eran solo un icono y había que pasar el ratón para saber qué hacían (en Android, ni eso). Ahora las acciones principales se ven como botón con su nombre y el resto va a un menú «⋯», también con texto. En pantallas estrechas todas pasan a ese menú. Afecta a Clasificación (Exportar PDF, Rellenar a mano; Tabla de puntos e Importar en «⋯»), Créditos (Exportar PDF/CSV; revisión de categorías y bonificación de cierre en «⋯»), la pantalla de una tanda (Verificaciones, Resultados, Editar; Renumerar carriles en «⋯»), Verificación libre (Importar, Exportar, Reglamento; Eliminar sesión en «⋯»), y a Pilotos, Equipos e Inscritos (Importar, Actualizar desde Drive y Añadir).
