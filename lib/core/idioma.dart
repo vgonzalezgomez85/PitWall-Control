@@ -80,4 +80,12 @@ extension TextosEnContexto on BuildContext {
 
   /// Código de idioma activo, para formatos de fecha (`DateFormat`).
   String get idiomaFechas => Localizations.maybeLocaleOf(this)?.languageCode ?? 'es';
+
+  /// URL del manual de la web en el idioma activo, con su ancla (`#google`).
+  /// El manual base (`manual-control.html`) es el español; los demás llevan
+  /// sufijo (`manual-control.ca.html`…).
+  String manualWeb(String ancla) {
+    final sufijo = idiomaFechas == 'es' ? '' : '.$idiomaFechas';
+    return 'https://www.pitwall.es/manual-control$sufijo.html#$ancla';
+  }
 }

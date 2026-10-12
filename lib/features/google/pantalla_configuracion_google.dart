@@ -398,7 +398,7 @@ class _GuiaGoogleCloud extends StatelessWidget {
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () => launchUrl(
-                Uri.parse('https://www.pitwall.es/manual-control.html#google'),
+                Uri.parse(context.manualWeb('google')),
                 mode: LaunchMode.externalApplication),
             icon: const Icon(Icons.menu_book_outlined, size: 16),
             label: Text(l.verManualCapturas),

@@ -14,6 +14,10 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.41.1] — 2026-10-12
+### Mejorado
+- El enlace «Ver el manual con capturas» de la configuración de Google abre el manual **en el idioma de la app** (el manual de la web ya tiene las cinco versiones).
+
 ## [1.41.0] — 2026-10-12
 ### Añadido
 - **La traducción llega a las últimas pantallas (fase 5)**: campeonatos (editor, lista y coches del campeonato), catálogos (coches, marcas, llantas, engranajes, motores, bancadas, chasis, neumáticos, copas y clubs), Google (configuración, copia de seguridad en Drive, importar desde Sheets y subir el catálogo), plantillas CSV, novedades, actualizaciones y los mensajes de error de los servicios (importadores, envíos a PitWall y sincronización). **Con esto la app queda traducida entera** al español, català, English, français e italiano.
