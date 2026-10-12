@@ -968,5 +968,850 @@
         "type": "String"
       }
     }
-  }
+  },
+  "aunNoHayEquiposEnEstaTanda": "Aún no hay equipos en esta tanda",
+  "inscribeEquiposVerificacion": "Inscribe equipos en la tanda para poder hacerles la verificación.",
+  "nConVerificacion": "{n} con verificación",
+  "@nConVerificacion": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nValidadas": "{n} validadas",
+  "@nValidadas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "quitarParticipante": "Quitar participante",
+  "quitarConVerificacionTexto": "Se quitará \"{nombre}\" y se borrará su verificación. ¿Continuar?",
+  "@quitarConVerificacionTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "quitarSinVerificacionTexto": "Se quitará \"{nombre}\". ¿Continuar?",
+  "@quitarSinVerificacionTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "validada": "Validada",
+  "borrador": "Borrador",
+  "enRevision": "En revisión",
+  "pendiente": "Pendiente",
+  "sinCocheAsignado": "Sin coche asignado",
+  "sesionCerrada": "La sesión está cerrada.",
+  "campeonatoFinalizado": "El campeonato está finalizado.",
+  "pruebaTerminada": "La prueba está terminada.",
+  "exportar": "Exportar",
+  "exportarPdf": "Exportar a PDF",
+  "exportarExcel": "Exportar a Excel",
+  "noHayPruebasEnCampeonato": "No hay pruebas en este campeonato.",
+  "noHayInscritosNiVerificaciones": "No hay inscritos ni verificaciones en esta prueba.",
+  "buscarPilotoEquipoCopa": "Buscar piloto, equipo, copa…",
+  "filtroTodos": "Todos ({n})",
+  "@filtroTodos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "filtroConInfraccion": "Con infracción ({n})",
+  "@filtroConInfraccion": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "filtroSinVerificar": "Sin verificar ({n})",
+  "@filtroSinVerificar": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "filtroBorrador": "Borrador ({n})",
+  "@filtroBorrador": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "validadasDeTotal": "{validadas} validadas de {total}",
+  "@validadasDeTotal": {
+    "placeholders": {
+      "validadas": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "nadaConEsteFiltro": "Nada que mostrar con este filtro.",
+  "colPilotoEquipo": "Piloto / equipo",
+  "fueraDeReglamento": "Fuera de reglamento",
+  "copa": "Copa",
+  "coche": "Coche",
+  "colPesoCarroc": "Peso carroc.",
+  "colPesoMin": "Peso mín.",
+  "colPesoCoche": "Peso coche",
+  "motor": "Motor",
+  "alturaMotor": "Altura motor",
+  "colEjeDel": "Eje del.",
+  "colEjeTras": "Eje tras.",
+  "pinon": "Piñón",
+  "corona": "Corona",
+  "llantaDelantera": "Llanta delantera",
+  "llantaTrasera": "Llanta trasera",
+  "trencilla": "Trencilla",
+  "suspension": "Suspensión",
+  "bancada": "Bancada",
+  "chasis": "Chasis",
+  "neumatico": "Neumático",
+  "carroceria": "Carrocería",
+  "observaciones": "Observaciones",
+  "sinVerificar": "Sin verificar",
+  "propio": "Propio",
+  "orgNumero": "Org. nº {n}",
+  "@orgNumero": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "conforme": "Conforme",
+  "noConforme": "No conforme",
+  "toca": "Toca",
+  "bien": "Bien",
+  "faltanPiezas": "Faltan piezas",
+  "faltanPiezasDetalle": "Faltan: {piezas}",
+  "@faltanPiezasDetalle": {
+    "placeholders": {
+      "piezas": {
+        "type": "String"
+      }
+    }
+  },
+  "marcaNoPermitida": "Marca \"{marca}\" no permitida",
+  "@marcaNoPermitida": {
+    "placeholders": {
+      "marca": {
+        "type": "String"
+      }
+    }
+  },
+  "superaMaximoMm": "Supera el máximo de {maximo} mm",
+  "@superaMaximoMm": {
+    "placeholders": {
+      "maximo": {
+        "type": "String"
+      }
+    }
+  },
+  "porDebajoMinimoG": "Por debajo del mínimo de {minimo} g",
+  "@porDebajoMinimoG": {
+    "placeholders": {
+      "minimo": {
+        "type": "String"
+      }
+    }
+  },
+  "alturaMotorNoConforme": "Altura de motor no conforme",
+  "leFaltanPiezas": "Le faltan piezas",
+  "vPesoInicialBajo": "Peso inicial {valor}g por debajo del mínimo {minimo}g.",
+  "@vPesoInicialBajo": {
+    "placeholders": {
+      "valor": {
+        "type": "String"
+      },
+      "minimo": {
+        "type": "String"
+      }
+    }
+  },
+  "vPesoFinalBajo": "Peso final {valor}g por debajo del mínimo {minimo}g.",
+  "@vPesoFinalBajo": {
+    "placeholders": {
+      "valor": {
+        "type": "String"
+      },
+      "minimo": {
+        "type": "String"
+      }
+    }
+  },
+  "vMotorSinCatalogo": "Selecciona el motor del catálogo para comprobar las medidas.",
+  "vMotorRpmAlto": "RPM por encima de la referencia del {motor} (máx {max}, medidas {medido}).",
+  "@vMotorRpmAlto": {
+    "placeholders": {
+      "motor": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      },
+      "medido": {
+        "type": "String"
+      }
+    }
+  },
+  "vMotorUmsAlto": "Imán por encima de la referencia del {motor} (máx {max}, medido {medido}).",
+  "@vMotorUmsAlto": {
+    "placeholders": {
+      "motor": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      },
+      "medido": {
+        "type": "String"
+      }
+    }
+  },
+  "vAlturaNoConforme": "Altura de motor no conforme: toca la pista.",
+  "vEjeDelAncho": "Anchura de eje delantero {medido} mm por encima del máximo {max} mm.",
+  "@vEjeDelAncho": {
+    "placeholders": {
+      "medido": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "vEjeTraAncho": "Anchura de eje trasero {medido} mm por encima del máximo {max} mm.",
+  "@vEjeTraAncho": {
+    "placeholders": {
+      "medido": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "vMarcaNoPermitidaLista": "Marca \"{marca}\" no permitida (solo {lista}).",
+  "@vMarcaNoPermitidaLista": {
+    "placeholders": {
+      "marca": {
+        "type": "String"
+      },
+      "lista": {
+        "type": "String"
+      }
+    }
+  },
+  "vMarcaFueraCatalogo": "Marca \"{marca}\" no está en el catálogo.",
+  "@vMarcaFueraCatalogo": {
+    "placeholders": {
+      "marca": {
+        "type": "String"
+      }
+    }
+  },
+  "vLlantaDelNoCatalogada": "Llanta delantera no catalogada: \"{valor}\".",
+  "@vLlantaDelNoCatalogada": {
+    "placeholders": {
+      "valor": {
+        "type": "String"
+      }
+    }
+  },
+  "vLlantaTraNoCatalogada": "Llanta trasera no catalogada: \"{valor}\".",
+  "@vLlantaTraNoCatalogada": {
+    "placeholders": {
+      "valor": {
+        "type": "String"
+      }
+    }
+  },
+  "vBancadaNoCatalogada": "Bancada no catalogada: \"{valor}\".",
+  "@vBancadaNoCatalogada": {
+    "placeholders": {
+      "valor": {
+        "type": "String"
+      }
+    }
+  },
+  "vNeumaticoNoCatalogado": "Neumático no catalogado: \"{valor}\".",
+  "@vNeumaticoNoCatalogado": {
+    "placeholders": {
+      "valor": {
+        "type": "String"
+      }
+    }
+  },
+  "vBalanceNegativo": "Balance de créditos negativo: equipo {equipo} + coche {coche} = {balance}.",
+  "@vBalanceNegativo": {
+    "placeholders": {
+      "equipo": {
+        "type": "String"
+      },
+      "coche": {
+        "type": "String"
+      },
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
+  "noSePudoGenerarExcel": "No se pudo generar el Excel.",
+  "buscarPuntos": "Buscar…",
+  "sinResultadosPara": "Sin resultados para \"{filtro}\"",
+  "@sinResultadosPara": {
+    "placeholders": {
+      "filtro": {
+        "type": "String"
+      }
+    }
+  },
+  "sinAsignarGuiones": "— sin asignar —",
+  "sorteoEtiqueta": "Sorteo",
+  "mixto": "Mixto",
+  "limitarFabricante": "Limitar fabricante",
+  "noCatalogada": "{nombre} (no catalogada)",
+  "@noCatalogada": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "imagenNoSePuedeLeer": "No se puede leer esa imagen. Usa un PNG o JPG.",
+  "noSePudoAnadirLogo": "No se pudo añadir el logo: {detalle}",
+  "@noSePudoAnadirLogo": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "elegirLogo": "Elegir logo",
+  "cambiarLogo": "Cambiar logo",
+  "repartir": "Repartir",
+  "configuraRangoSesion": "Configura el rango de motores en el reglamento de la sesión para sortear.",
+  "configuraRangoCampeonato": "Configura el rango de motores en el campeonato para sortear.",
+  "sorteoDeMotor": "Sorteo de motor",
+  "otroControl": "Otro Control",
+  "cambiadaFueraTexto": "{quien} ha cambiado esta verificación. Si sigues editando, tus cambios sustituirán a los suyos.",
+  "@cambiadaFueraTexto": {
+    "placeholders": {
+      "quien": {
+        "type": "String"
+      }
+    }
+  },
+  "seguirConLoMio": "Seguir con lo mío",
+  "verLoDe": "Ver lo de {quien}",
+  "@verLoDe": {
+    "placeholders": {
+      "quien": {
+        "type": "String"
+      }
+    }
+  },
+  "actualizadaConCambios": "Actualizada con los cambios de {quien}.",
+  "@actualizadaConCambios": {
+    "placeholders": {
+      "quien": {
+        "type": "String"
+      }
+    }
+  },
+  "noSePudoAnadirFoto": "No se pudo añadir la foto: {detalle}",
+  "@noSePudoAnadirFoto": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "copaEnEstaPrueba": "Copa en esta prueba",
+  "copaEnEstaPruebaTexto": "Cambia la copa solo para esta prueba, sin afectar al equipo ni a otras pruebas.",
+  "copaCategoria": "Copa / categoría",
+  "copaDelEquipo": "Copa del equipo: {copa}",
+  "@copaDelEquipo": {
+    "placeholders": {
+      "copa": {
+        "type": "String"
+      }
+    }
+  },
+  "usarLaDelEquipo": "Usar la del equipo",
+  "usarReglamentoActual": "Usar el reglamento actual",
+  "usarReglamentoActualTexto": "Esta verificación se comprobará con los valores de hoy del catálogo y del campeonato en lugar de con los que tenía al verificarla:",
+  "recalcularanCreditos": "Como está validada, se recalcularán sus créditos.",
+  "usarElActual": "Usar el actual",
+  "desbloquearVerificacion": "Desbloquear la verificación",
+  "desbloquearTexto": "{motivo} Sus verificaciones están bloqueadas para no cambiarlas sin querer.\n\nSi la desbloqueas, los cambios se guardarán como siempre. Seguirá comprobándose con el reglamento con el que se verificó.",
+  "@desbloquearTexto": {
+    "placeholders": {
+      "motivo": {
+        "type": "String"
+      }
+    }
+  },
+  "desbloquear": "Desbloquear",
+  "verificacion": "Verificación",
+  "eliminarVerificacion": "Eliminar verificación",
+  "eliminarVerificacionTexto": "Se perderán los datos introducidos. ¿Continuar?",
+  "modeloCoche": "Modelo de coche",
+  "elegirCoche": "Elegir coche",
+  "noHayCochesConCopa": "No hay coches con la copa {copa} en el catálogo",
+  "@noHayCochesConCopa": {
+    "placeholders": {
+      "copa": {
+        "type": "String"
+      }
+    }
+  },
+  "ayudaSelectorCoche": "Se muestran peso mínimo y créditos del coche al elegirlo",
+  "creditosAbrev": "créd",
+  "pesoGramos": "Peso (gramos)",
+  "pesoCarroceria": "Peso carrocería",
+  "minimoG": "Mínimo: {n}g",
+  "@minimoG": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "estetica": "Estética",
+  "sinComprobar": "Sin comprobar",
+  "quePiezasFaltan": "Qué piezas le faltan",
+  "organizacion": "Organización",
+  "numeroDeMotor": "Número de motor",
+  "motorDelCatalogo": "Motor del catálogo",
+  "elegirMotor": "Elegir motor",
+  "yaNoEnCatalogo": "{nombre} (ya no está en el catálogo)",
+  "@yaNoEnCatalogo": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "refMotor": "Ref: {rpm} RPM · {gauss} gauss",
+  "@refMotor": {
+    "placeholders": {
+      "rpm": {
+        "type": "String"
+      },
+      "gauss": {
+        "type": "String"
+      }
+    }
+  },
+  "motoresHomologadosCopa": "Motores homologados para la copa {copa}",
+  "@motoresHomologadosCopa": {
+    "placeholders": {
+      "copa": {
+        "type": "String"
+      }
+    }
+  },
+  "rpmYGauss": "{rpm} RPM · {gauss} gauss",
+  "@rpmYGauss": {
+    "placeholders": {
+      "rpm": {
+        "type": "String"
+      },
+      "gauss": {
+        "type": "String"
+      }
+    }
+  },
+  "maxN": "Máx {n}",
+  "@maxN": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "alturaMotorAPista": "Altura de motor a pista",
+  "alturaMotorTexto": "Comprobación con la plancha: si toca la pista, no conforme.",
+  "delantero": "Delantero",
+  "trasero": "Trasero",
+  "marca": "Marca",
+  "dimension": "Dimensión",
+  "dientes": "Dientes",
+  "diametro": "Diámetro",
+  "material": "Material",
+  "pesoCocheEntero": "Peso coche entero (gramos)",
+  "inicial": "Inicial",
+  "cocheEntero": "Coche entero",
+  "otros": "Otros",
+  "notasOAvisos": "Notas o avisos",
+  "fotosHasta4": "Fotos (hasta 4)",
+  "marcarComoValidada": "Marcar como validada",
+  "marcarComoValidadaTexto": "Indica que la verificación está revisada y aprobada.",
+  "autoguardadoTexto": "Se guarda solo como borrador con cada cambio.",
+  "validar": "Validar",
+  "noPuedesValidar": "No puedes validar mientras haya infracciones marcadas en rojo arriba.",
+  "fotoReferenciaTexto": "Foto de referencia del catálogo: comprueba que coincide.",
+  "sinFotoCocheTexto": "Este coche no tiene foto en el catálogo. Añádela en Catálogos → Coches para poder comparar el modelo entregado.",
+  "sinGuardar": "Sin guardar…",
+  "guardando": "Guardando…",
+  "guardado": "Guardado",
+  "errorCorto": "Error",
+  "soloLecturaTexto": "{motivo} Verificación en solo lectura.",
+  "@soloLecturaTexto": {
+    "placeholders": {
+      "motivo": {
+        "type": "String"
+      }
+    }
+  },
+  "desbloqueadaTexto": "{motivo} Desbloqueada: los cambios se guardan.",
+  "@desbloqueadaTexto": {
+    "placeholders": {
+      "motivo": {
+        "type": "String"
+      }
+    }
+  },
+  "reglamentoCongelado": "Reglamento congelado el {fecha}: se comprueba con los valores de cuando se verificó.",
+  "@reglamentoCongelado": {
+    "placeholders": {
+      "fecha": {
+        "type": "String"
+      }
+    }
+  },
+  "reglamentoCongeladoSinFecha": "Reglamento congelado: se comprueba con los valores de cuando se verificó.",
+  "haCambiadoDesdeEntonces": "Ha cambiado desde entonces (no se aplica):",
+  "todoCumple": "Todo cumple las normas. Puedes validar.",
+  "infraccionesN": "Infracciones: {n}",
+  "@infraccionesN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "avisosN": "Avisos: {n}",
+  "@avisosN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "pendienteHechosDeTotal": "Pendiente {hechos}/{total}",
+  "@pendienteHechosDeTotal": {
+    "placeholders": {
+      "hechos": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "hecho": "Hecho",
+  "revisar": "Revisar",
+  "bloquesCompletos": "Bloques completos: {hechos} de {total}",
+  "@bloquesCompletos": {
+    "placeholders": {
+      "hechos": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "faltaLista": "Falta: {lista}",
+  "@faltaLista": {
+    "placeholders": {
+      "lista": {
+        "type": "String"
+      }
+    }
+  },
+  "fueraDeLaLista": "{valor} (fuera de la lista)",
+  "@fueraDeLaLista": {
+    "placeholders": {
+      "valor": {
+        "type": "String"
+      }
+    }
+  },
+  "noCatalogado": "{valor} (no catalogado)",
+  "@noCatalogado": {
+    "placeholders": {
+      "valor": {
+        "type": "String"
+      }
+    }
+  },
+  "conEsteCoche": "Con este coche ({creditos} créd):",
+  "@conEsteCoche": {
+    "placeholders": {
+      "creditos": {
+        "type": "String"
+      }
+    }
+  },
+  "total": "Total",
+  "nCreditos": "{n} créditos",
+  "@nCreditos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "sinCreditosSuficientes": "⚠ No tienen créditos suficientes para cubrir el coche.",
+  "hacerFoto": "Hacer foto",
+  "elegirDeGaleria": "Elegir de galería",
+  "anadir": "Añadir",
+  "equipoNoInscritoPrueba": "El equipo no está inscrito en la prueba: inscríbelo para poder cobrarle.",
+  "etiquetaFinal": "Final",
+  "anchuraEjeMm": "Anchura de eje (mm)",
+  "nombreDelClub": "Nombre del club",
+  "clubEjemplo": "Ej: Club Slot Barcelona",
+  "limitarFabricanteTexto": "En la verificación, los desplegables de marca (piñón, corona, llantas y trencilla) solo muestran las marcas elegidas; cualquier otra es infracción.",
+  "eligeAlMenosUnaMarca": "Elige al menos una marca.",
+  "tipoMotorSorteoTexto": "La organización sortea los motores: en la verificación solo se apunta el número de motor.",
+  "tipoMotorPropioTexto": "Cada equipo trae su motor: en la verificación se elige del catálogo y se comprueban RPM.",
+  "tipoMotorMixtoTexto": "En cada verificación se marca si el motor es de organización o propio.",
+  "tipoMotorEligeTexto": "Elige de dónde salen los motores.",
+  "noPagaEstaPrueba": "no paga esta prueba",
+  "quitarWildcard": "Quitar wildcard",
+  "quitarCoordTotal": "Quitar \"Coord. total\" (vuelve a pagar)",
+  "coordinadoraEnFicha": "Los pilotos están marcados como coordinadora en su ficha; cámbialo allí",
+  "marcarWildcard": "Marcar como wildcard (no paga)",
+  "desglosePagados": "Desglose de los €{total} pagados",
+  "@desglosePagados": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "pagat": "Pagat",
+  "coordinadora": "Coordinadora",
+  "club": "Club",
+  "observacionesOpcional": "Observaciones (opcional)",
+  "descuadreTexto": "Coordinadora + Club ({suma}) no suma el Pagat ({total}).",
+  "@descuadreTexto": {
+    "placeholders": {
+      "suma": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "pagoRapido": "Pago rápido:",
+  "coordYPiloto": "Coord. + piloto",
+  "coordYPilotoTooltip": "Un piloto es de coordinadora: paga la mitad de todo (€{monto})",
+  "@coordYPilotoTooltip": {
+    "placeholders": {
+      "monto": {
+        "type": "String"
+      }
+    }
+  },
+  "coordTotal": "Coord. total",
+  "coordTotalTooltip": "Todos los pilotos son de coordinadora: no paga",
+  "observacionMitad": "Mitad — un piloto de coordinadora",
+  "nuevaSesion": "Nueva sesión",
+  "aunNoHaySesiones": "Aún no hay sesiones",
+  "sesionesVaciasTexto": "Verifica coches sin montar un campeonato: una carrera esporádica, un control en el club… Crea una sesión, añade participantes y exporta el PDF.",
+  "nParticipantes": "{n} participantes",
+  "@nParticipantes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "sesionYaNoExiste": "La sesión ya no existe.",
+  "aunNoHayParticipantes": "Aún no hay participantes",
+  "pulsaAnadirParticipante": "Pulsa \"Añadir participante\" para verificar su coche, o impórtalos desde un archivo o Google Sheets con «Importar» de arriba.",
+  "anadirParticipante": "Añadir participante",
+  "desdeArchivoCsvExcelParentesis": "Desde archivo (CSV / Excel)",
+  "desdeGoogleSheets": "Desde Google Sheets",
+  "excelConFotos": "Excel con fotos",
+  "reglamento": "Reglamento",
+  "eliminarSesion": "Eliminar sesión",
+  "configuraCopasAntes": "Configura antes las copas en el reglamento de la sesión.",
+  "anadidosParticipantes": "Añadidos {n} participantes.",
+  "@anadidosParticipantes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "eliminarSesionTexto": "Se borrarán \"{nombre}\", sus participantes y todas sus verificaciones. No se puede deshacer.",
+  "@eliminarSesionTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "pilotoObligatorio": "Piloto *",
+  "obligatorio": "Obligatorio",
+  "segundoPiloto": "Segundo piloto (opcional)",
+  "equipoOpcional": "Equipo (opcional)",
+  "equipoOpcionalAyuda": "Si se deja vacío, se usa el nombre del piloto",
+  "anadirYVerificar": "Añadir y verificar",
+  "seleccionaUnaCopa": "Selecciona al menos una copa / categoría.",
+  "eligeTipoMotor": "Motor: elige si es de sorteo, propio o mixto.",
+  "limitarFabricanteError": "Limitar fabricante: elige al menos una marca o desactívalo.",
+  "nuevaSesionVerificacion": "Nueva sesión de verificación",
+  "editarSesion": "Editar sesión",
+  "nombreSesionObligatorio": "Nombre de la sesión *",
+  "nombreSesionAyuda": "Ej: Control club jueves, Carrera GT Sant Joan",
+  "lugarOpcional": "Lugar (opcional)",
+  "sinFecha": "Sin fecha",
+  "fechaSesion": "Fecha de la sesión",
+  "clubOrganizador": "Club organizador",
+  "clubOrganizadorAyuda": "Aparece en la cabecera de los PDF de la sesión.",
+  "copasCategorias": "Copas / categorías",
+  "copasCategoriasAyuda": "Las que se pueden verificar en esta sesión. La copa de cada participante filtra el catálogo y las comprobaciones, igual que en un campeonato.",
+  "anchuraEje": "Anchura de eje",
+  "anchuraEjeAyuda": "Anchura máxima de eje (mm) por copa. Deja vacío si en esa copa no se comprueba.",
+  "maxDelanteroMm": "Máx delantero (mm)",
+  "maxTraseroMm": "Máx trasero (mm)",
+  "fabricante": "Fabricante",
+  "fabricanteAyuda": "Para sesiones monomarca: limita las marcas que se pueden elegir en la verificación.",
+  "rangoMotorTexto": "Rango de números de motor para sortear desde la verificación. Déjalo vacío si no hay sorteo.",
+  "motorDesde": "Motor desde",
+  "motorHasta": "Motor hasta",
+  "indicaAmbos": "Indica ambos",
+  "hastaMayorQueDesde": "Hasta ≥ desde",
+  "crearSesion": "Crear sesión",
+  "importarParticipantesArchivo": "Importar participantes (archivo)",
+  "importarParticipantesSheets": "Importar participantes (Google Sheets)",
+  "errorAlImportar": "Error al importar: {detalle}",
+  "@errorAlImportar": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "pasoEligeArchivoN": "{n}. Elige el archivo",
+  "@pasoEligeArchivoN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "pasoEligeLaHoja": "{n}. Elige la hoja",
+  "@pasoEligeLaHoja": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "pasoEligeLaPestana": "{n}. Elige la pestaña",
+  "@pasoEligeLaPestana": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "pasoAsignaColumnasN": "{n}. Asigna columnas",
+  "@pasoAsignaColumnasN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "pasoVistaPreviaN": "{n}. Vista previa",
+  "@pasoVistaPreviaN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "csvPlantillaTexto": "CSV o Excel con una fila de cabecera. Columnas reconocidas: Piloto 1 (o Piloto / Nombre), Piloto 2, Equipo y Copa. Hay una plantilla en \"Plantillas CSV\".",
+  "buscarEnTusHojas": "Buscar en tus hojas…",
+  "buscar": "Buscar",
+  "pestana": "Pestaña",
+  "piloto1Obligatorio": "Piloto 1 *",
+  "piloto2": "Piloto 2",
+  "copaPorDefecto": "Copa por defecto",
+  "copaPorDefectoAyuda": "Para filas sin copa o con una copa que no está en la sesión",
+  "asignaColumnaPiloto1": "Asigna al menos la columna del piloto 1.",
+  "noHayFilasConPiloto": "No hay filas con piloto.",
+  "anadirNParticipantes": "Añadir {n, plural, =1{1 participante} other{{n} participantes}}",
+  "@anadirNParticipantes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "noConectadoGoogle": "Aún no estás conectado con Google",
+  "conectaCuentaTexto": "Conecta tu cuenta una vez para poder leer tus hojas de cálculo.",
+  "configurarGoogle": "Configurar Google",
+  "noSePudieronListarHojas": "No se pudieron listar tus hojas: {detalle}",
+  "@noSePudieronListarHojas": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "noSePudieronListarPestanas": "No se pudieron listar las pestañas: {detalle}",
+  "@noSePudieronListarPestanas": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "noSePudoLeerPestana": "No se pudo leer la pestaña: {detalle}",
+  "@noSePudoLeerPestana": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "yaEstaEnLaSesion": "Ya está en la sesión",
+  "copaNoEnSesion": "Copa \"{copa}\" no está en la sesión: se usa {defecto}",
+  "@copaNoEnSesion": {
+    "placeholders": {
+      "copa": {
+        "type": "String"
+      },
+      "defecto": {
+        "type": "String"
+      }
+    }
+  },
+  "fotoCatalogo": "Foto catálogo"
 }

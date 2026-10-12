@@ -203,8 +203,11 @@ void main() {
       expect(filas.map((f) => f.nombreEquipo),
           ['Ana', 'Luis / Eva', 'Rojos', 'ana', 'Marc']);
       expect(filas.map((f) => f.copa), ['LMP2', 'GT', 'GT', 'GT', 'GT']);
-      expect(filas[1].aviso, contains('F1'));
-      expect(filas[2].aviso, isNull);
+      // La copa de la tabla no está en la sesión: se queda con la original
+      // para que la pantalla avise de que se usará la de por defecto.
+      expect(filas[1].copaOriginal, 'F1');
+      expect(filas[1].copa, 'GT');
+      expect(filas[2].copaOriginal, isNull);
       expect(filas.map((f) => f.importar), [true, true, true, false, false]);
     });
 

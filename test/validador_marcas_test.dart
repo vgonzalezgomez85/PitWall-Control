@@ -29,7 +29,7 @@ void main() {
       marcasPermitidas: {'SIT'},
     ));
     final fabricante = r.hallazgos
-        .where((h) => h.mensaje.contains('no permitida'))
+        .where((h) => h.codigo == 'marcaNoPermitidaLista')
         .toList();
     expect(fabricante.map((h) => h.campo), ['coronaMarca', 'trencilla']);
     expect(fabricante.every((h) => h.nivel == NivelValidacion.infraccion),
@@ -41,7 +41,7 @@ void main() {
       coronaMarca: 'SCA',
       marcasValidas: {'SIT', 'SCA'},
     ));
-    expect(r.hallazgos.where((h) => h.mensaje.contains('no permitida')),
+    expect(r.hallazgos.where((h) => h.codigo == 'marcaNoPermitidaLista'),
         isEmpty);
   });
 

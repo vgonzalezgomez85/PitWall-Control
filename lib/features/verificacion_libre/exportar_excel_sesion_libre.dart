@@ -19,6 +19,7 @@ import 'dart:convert';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import '../../core/idioma.dart';
 import '../../data/database/app_database.dart';
 import '../../services/fotos_verificacion.dart';
 import '../../services/xlsx_con_fotos.dart';
@@ -39,13 +40,16 @@ Future<Uint8List> generarExcelSesionLibre(
       if (c.fotoPath != null) c.id: c.fotoPath!,
   };
 
+  // El Excel va con los textos en español (diccionario propio pendiente).
+  final l = textosEspanol;
+  final cols = columnasRejilla(l);
   final celdas = <List<CeldaXlsx>>[];
   final fotos = <List<Uint8List>>[];
   final fotosCatalogo = <Uint8List?>[];
   for (final f in filas) {
     final motivos = <String>[];
     final fila = <CeldaXlsx>[CeldaXlsx(nombreFilaRejilla(f))];
-    for (final col in columnasRejilla) {
+    for (final col in cols) {
       final c = col.celda(f, camp);
       if (c.infraccion != null) motivos.add('${col.titulo}: ${c.infraccion}');
       fila.add(CeldaXlsx(c.texto, mal: c.infraccion != null));
@@ -60,16 +64,16 @@ Future<Uint8List> generarExcelSesionLibre(
   final hoja = HojaConFotos(
     nombre: sesion.nombre,
     cabecera: [
-      'Piloto / equipo',
-      for (final c in columnasRejilla) c.titulo,
-      'Fuera de reglamento',
+      l.colPilotoEquipo,
+      for (final c in cols) c.titulo,
+      l.fueraDeReglamento,
     ],
     // Anchos aproximados a los de la pantalla (px → caracteres).
-    anchos: [32, for (final c in columnasRejilla) c.ancho / 7, 50],
+    anchos: [32, for (final c in cols) c.ancho / 7, 50],
     filas: celdas,
     fotos: fotos,
     fotoReferencia: fotosCatalogo,
-    tituloReferencia: 'Foto catálogo',
+    tituloReferencia: l.fotoCatalogo,
   );
   return _enOtroHilo(hoja);
 }

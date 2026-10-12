@@ -22,6 +22,7 @@ import 'package:drift/drift.dart' as d;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
@@ -73,9 +74,11 @@ class CeldaRejilla {
   final String? infraccion;
 }
 
-/// Una columna de la rejilla: cabecera, ancho y cómo se rellena.
+/// Una columna de la rejilla: cabecera, ancho y cómo se rellena. [id] es
+/// estable (no cambia con el idioma) para las comprobaciones internas.
 class ColumnaRejilla {
-  const ColumnaRejilla(this.titulo, this.ancho, this.celda);
+  const ColumnaRejilla(this.id, this.titulo, this.ancho, this.celda);
+  final String id;
   final String titulo;
   final double ancho;
   final CeldaRejilla Function(FilaRejilla f, Campeonato c) celda;
@@ -234,6 +237,7 @@ String _juntar(List<Object?> partes) => partes
     .join(' · ');
 
 CeldaRejilla _marca(
+  Textos l,
   String? marca,
   Set<String> permitidas,
   List<Object?> resto,
@@ -244,53 +248,55 @@ CeldaRejilla _marca(
       marca.isNotEmpty &&
       permitidas.isNotEmpty &&
       !permitidas.contains(marca);
-  return CeldaRejilla(texto, mala ? 'Marca "$marca" no permitida' : null);
+  return CeldaRejilla(texto, mala ? l.marcaNoPermitida(marca) : null);
 }
 
 CeldaRejilla _dientes(
+  Textos l,
   String? marca,
   int? dientes,
   String? material,
   Set<String> permitidas,
 ) {
-  return _marca(marca, permitidas, [
+  return _marca(l, marca, permitidas, [
     dientes == null ? null : '${dientes}d',
     material,
   ]);
 }
 
-CeldaRejilla _eje(double? medida, double? maximo) {
+CeldaRejilla _eje(Textos l, double? medida, double? maximo) {
   if (medida == null) return const CeldaRejilla('');
   if (maximo != null && medida > maximo) {
-    return CeldaRejilla(_num(medida), 'Supera el máximo de ${_num(maximo)} mm');
+    return CeldaRejilla(_num(medida), l.superaMaximoMm(_num(maximo)));
   }
   return CeldaRejilla(_num(medida));
 }
 
-final columnasRejilla = <ColumnaRejilla>[
-  ColumnaRejilla('Estado', 96, (f, c) {
+List<ColumnaRejilla> columnasRejilla(Textos l) => [
+  ColumnaRejilla('estado', l.estado, 96, (f, c) {
     final v = f.v;
-    if (v == null) return const CeldaRejilla('Sin verificar');
-    return CeldaRejilla(v.validado ? 'Validada' : 'Borrador');
+    if (v == null) return CeldaRejilla(l.sinVerificar);
+    return CeldaRejilla(v.validado ? l.validada : l.borrador);
   }),
-  ColumnaRejilla('Copa', 110, (f, c) => CeldaRejilla(f.copa)),
-  ColumnaRejilla('Coche', 170, (f, c) => CeldaRejilla(f.coche ?? '')),
-  ColumnaRejilla('Peso carroc.', 96, (f, c) {
+  ColumnaRejilla('copa', l.copa, 110, (f, c) => CeldaRejilla(f.copa)),
+  ColumnaRejilla('coche', l.coche, 170, (f, c) => CeldaRejilla(f.coche ?? '')),
+  ColumnaRejilla('pesoCarroc', l.colPesoCarroc, 96, (f, c) {
     final v = f.v;
     if (v?.pesoInicial == null) return const CeldaRejilla('');
     final min = v!.pesoMin;
     final t = _num(v.pesoInicial, 'g');
     if (min != null && v.pesoInicial! < min) {
-      return CeldaRejilla(t, 'Por debajo del mínimo de ${_num(min)} g');
+      return CeldaRejilla(t, l.porDebajoMinimoG(_num(min)));
     }
     return CeldaRejilla(t);
   }),
   ColumnaRejilla(
-    'Peso mín.',
+    'pesoMin',
+    l.colPesoMin,
     80,
     (f, c) => CeldaRejilla(_num(f.v?.pesoMin, 'g')),
   ),
-  ColumnaRejilla('Peso coche', 120, (f, c) {
+  ColumnaRejilla('pesoCoche', l.colPesoCoche, 120, (f, c) {
     final v = f.v;
     if (v == null) return const CeldaRejilla('');
     final ini = v.pesoInicialCoche, fin = v.pesoFinalCoche;
@@ -298,49 +304,54 @@ final columnasRejilla = <ColumnaRejilla>[
     if (fin == null || fin == ini) return CeldaRejilla(_num(ini, 'g'));
     return CeldaRejilla('${_num(ini)} / ${_num(fin)} g');
   }),
-  ColumnaRejilla('Motor', 150, (f, c) {
+  ColumnaRejilla('motor', l.motor, 150, (f, c) {
     final v = f.v;
     if (v == null) return const CeldaRejilla('');
     if (v.motorTipo == 'PROPIO') {
       return CeldaRejilla(
         _juntar([
-          'Propio',
+          l.propio,
           v.motorRpm == null ? null : '${v.motorRpm} rpm',
           v.motorUms == null ? null : '${_num(v.motorUms)} uMs',
         ]),
       );
     }
-    return CeldaRejilla((v.motor ?? '').isEmpty ? '' : 'Org. nº ${v.motor}');
+    return CeldaRejilla(
+        (v.motor ?? '').isEmpty ? '' : l.orgNumero(v.motor!));
   }),
-  ColumnaRejilla('Altura motor', 96, (f, c) {
+  ColumnaRejilla('alturaMotor', l.alturaMotor, 96, (f, c) {
     final ok = f.v?.alturaMotorConforme;
     if (ok == null) return const CeldaRejilla('');
     return ok
-        ? const CeldaRejilla('Conforme')
-        : const CeldaRejilla('Toca', 'Altura de motor no conforme');
+        ? CeldaRejilla(l.conforme)
+        : CeldaRejilla(l.toca, l.alturaMotorNoConforme);
   }),
   ColumnaRejilla(
-    'Eje del.',
+    'ejeDel',
+    l.colEjeDel,
     72,
-    (f, c) => _eje(f.v?.anchuraEjeDel, f.ejeDelMax),
+    (f, c) => _eje(l, f.v?.anchuraEjeDel, f.ejeDelMax),
   ),
   ColumnaRejilla(
-    'Eje tras.',
+    'ejeTras',
+    l.colEjeTras,
     72,
-    (f, c) => _eje(f.v?.anchuraEjeTra, f.ejeTraMax),
+    (f, c) => _eje(l, f.v?.anchuraEjeTra, f.ejeTraMax),
   ),
-  ColumnaRejilla('Piñón', 150, (f, c) {
+  ColumnaRejilla('pinon', l.pinon, 150, (f, c) {
     final v = f.v;
     return _dientes(
+      l,
       v?.pinonMarca,
       v?.pinonDientes,
       v?.pinonMaterial,
       f.marcasPermitidas(c),
     );
   }),
-  ColumnaRejilla('Corona', 150, (f, c) {
+  ColumnaRejilla('corona', l.corona, 150, (f, c) {
     final v = f.v;
     return _dientes(
+      l,
       v?.coronaMarca,
       v?.coronaDientes,
       v?.coronaMaterial,
@@ -348,65 +359,84 @@ final columnasRejilla = <ColumnaRejilla>[
     );
   }),
   ColumnaRejilla(
-    'Llanta del.',
+    'llantaDel',
+    l.llantaDelantera,
     140,
     (f, c) => _marca(
+      l,
       f.v?.llantaDelMarca,
       f.marcasPermitidas(c),
       [f.v?.llantaDelDimension],
     ),
   ),
   ColumnaRejilla(
-    'Llanta tras.',
+    'llantaTras',
+    l.llantaTrasera,
     140,
     (f, c) => _marca(
+      l,
       f.v?.llantaTraMarca,
       f.marcasPermitidas(c),
       [f.v?.llantaTraDimension],
     ),
   ),
   ColumnaRejilla(
-    'Trencilla',
+    'trencilla',
+    l.trencilla,
     110,
     (f, c) => _marca(
+      l,
       f.v?.trencilla,
       f.marcasPermitidas(c),
       const [],
     ),
   ),
   ColumnaRejilla(
-    'Suspensión',
+    'suspension',
+    l.suspension,
     110,
     (f, c) => CeldaRejilla(f.v?.suspension ?? ''),
   ),
-  ColumnaRejilla('Bancada', 120, (f, c) => CeldaRejilla(f.v?.bancada ?? '')),
-  ColumnaRejilla('Chasis', 120, (f, c) => CeldaRejilla(f.v?.chasis ?? '')),
   ColumnaRejilla(
-    'Neumático',
+    'bancada',
+    l.bancada,
+    120,
+    (f, c) => CeldaRejilla(f.v?.bancada ?? ''),
+  ),
+  ColumnaRejilla(
+    'chasis',
+    l.chasis,
+    120,
+    (f, c) => CeldaRejilla(f.v?.chasis ?? ''),
+  ),
+  ColumnaRejilla(
+    'neumatico',
+    l.neumatico,
     120,
     (f, c) => CeldaRejilla(f.v?.neumatico ?? ''),
   ),
-  ColumnaRejilla('Carrocería', 140, (f, c) {
+  ColumnaRejilla('carroceria', l.carroceria, 140, (f, c) {
     final ok = f.v?.carroceriaConforme;
     if (ok == null) return const CeldaRejilla('');
-    if (ok) return const CeldaRejilla('Bien');
+    if (ok) return CeldaRejilla(l.bien);
     final faltan = f.v?.carroceriaPiezasFaltantes?.trim() ?? '';
     return CeldaRejilla(
-      faltan.isEmpty ? 'Faltan piezas' : 'Faltan: $faltan',
-      'Le faltan piezas',
+      faltan.isEmpty ? l.faltanPiezas : l.faltanPiezasDetalle(faltan),
+      l.leFaltanPiezas,
     );
   }),
   ColumnaRejilla(
-    'Observaciones',
+    'observaciones',
+    l.observaciones,
     260,
     (f, c) => CeldaRejilla(f.v?.observaciones ?? ''),
   ),
 ];
 
 /// Si alguna celda de la fila está fuera de reglamento.
-bool tieneInfraccion(FilaRejilla f, Campeonato c) =>
+bool tieneInfraccion(Textos l, FilaRejilla f, Campeonato c) =>
     f.v != null &&
-    columnasRejilla.any((col) => col.celda(f, c).infraccion != null);
+    columnasRejilla(l).any((col) => col.celda(f, c).infraccion != null);
 
 /// Texto de la primera columna: pilotos y, si se llama distinto, el equipo.
 String nombreFilaRejilla(FilaRejilla f) => f.equipo.nombre == f.pilotos
@@ -479,7 +509,7 @@ class _PantallaRejillaVerificacionesState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Resumen de verificaciones'),
+        title: Text(context.l.resumenVerificaciones),
         actions: [
           if (pruebas.isNotEmpty)
             Padding(
@@ -497,24 +527,24 @@ class _PantallaRejillaVerificacionesState
             ),
           if (pruebas.any((p) => p.id == _pruebaId))
             PopupMenuButton<String>(
-              tooltip: 'Exportar',
+              tooltip: context.l.exportar,
               icon: const Icon(Icons.file_download_outlined),
               onSelected: (f) =>
                   _exportar(f, pruebas.firstWhere((p) => p.id == _pruebaId)),
-              itemBuilder: (_) => const [
+              itemBuilder: (_) => [
                 PopupMenuItem(
                   value: 'pdf',
                   child: ListTile(
-                    leading: Icon(Icons.picture_as_pdf_outlined),
-                    title: Text('Exportar a PDF'),
+                    leading: const Icon(Icons.picture_as_pdf_outlined),
+                    title: Text(context.l.exportarPdf),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
                 PopupMenuItem(
                   value: 'excel',
                   child: ListTile(
-                    leading: Icon(Icons.grid_on_outlined),
-                    title: Text('Exportar a Excel'),
+                    leading: const Icon(Icons.grid_on_outlined),
+                    title: Text(context.l.exportarExcel),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
@@ -523,13 +553,14 @@ class _PantallaRejillaVerificacionesState
         ],
       ),
       body: activo == null || _pruebaId == null
-          ? const Center(child: Text('No hay pruebas en este campeonato.'))
+          ? Center(child: Text(context.l.noHayPruebasEnCampeonato))
           : ref
                 .watch(_rejillaProvider(_pruebaId!))
                 .when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
+                  error: (e, _) =>
+                      Center(child: Text(context.l.errorDetalle('$e'))),
                   data: (filas) => _contenido(filas, activo),
                 ),
     );
@@ -541,7 +572,7 @@ class _PantallaRejillaVerificacionesState
       filas.where((f) {
         final ok = switch (_filtro) {
           _Filtro.todos => true,
-          _Filtro.conInfraccion => tieneInfraccion(f, c),
+          _Filtro.conInfraccion => tieneInfraccion(context.l, f, c),
           _Filtro.sinVerificar => f.v == null,
           _Filtro.borrador => f.v != null && !f.v!.validado,
         };
@@ -574,17 +605,19 @@ class _PantallaRejillaVerificacionesState
 
   Widget _contenido(List<FilaRejilla> filas, Campeonato c) {
     final cs = Theme.of(context).colorScheme;
+    final l = context.l;
     if (filas.isEmpty) {
       return Center(
         child: Text(
-          'No hay inscritos ni verificaciones en esta prueba.',
+          l.noHayInscritosNiVerificaciones,
           style: TextStyle(color: cs.outline),
         ),
       );
     }
     final verificadas = filas.where((f) => f.v != null).length;
     final validadas = filas.where((f) => f.v?.validado ?? false).length;
-    final conInfraccion = filas.where((f) => tieneInfraccion(f, c)).length;
+    final conInfraccion =
+        filas.where((f) => tieneInfraccion(l, f, c)).length;
 
     final visibles = _filtrar(filas, c);
 
@@ -601,24 +634,27 @@ class _PantallaRejillaVerificacionesState
               SizedBox(
                 width: 260,
                 child: TextField(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     isDense: true,
-                    prefixIcon: Icon(Icons.search),
-                    hintText: 'Buscar piloto, equipo, copa…',
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: l.buscarPilotoEquipoCopa,
                   ),
                   onChanged: (t) =>
                       setState(() => _busqueda = t.trim().toLowerCase()),
                 ),
               ),
-              _chip('Todos (${filas.length})', _Filtro.todos),
-              _chip('Con infracción ($conInfraccion)', _Filtro.conInfraccion),
+              _chip(l.filtroTodos(filas.length), _Filtro.todos),
+              _chip(l.filtroConInfraccion(conInfraccion), _Filtro.conInfraccion),
               _chip(
-                'Sin verificar (${filas.length - verificadas})',
+                l.filtroSinVerificar(filas.length - verificadas),
                 _Filtro.sinVerificar,
               ),
-              _chip('Borrador (${verificadas - validadas})', _Filtro.borrador),
+              _chip(
+                l.filtroBorrador(verificadas - validadas),
+                _Filtro.borrador,
+              ),
               Text(
-                '$validadas validadas de ${filas.length}',
+                l.validadasDeTotal(validadas, filas.length),
                 style: TextStyle(color: cs.outline),
               ),
             ],
@@ -639,8 +675,9 @@ class _PantallaRejillaVerificacionesState
   /// Rejilla con cabecera y primera columna (piloto/equipo) fijas.
   Widget _tabla(List<FilaRejilla> filas, Campeonato c) {
     final cs = Theme.of(context).colorScheme;
+    final cols = columnasRejilla(context.l);
     final borde = BorderSide(color: cs.outlineVariant, width: 0.5);
-    final anchoResto = columnasRejilla.fold<double>(
+    final anchoResto = cols.fold<double>(
       0,
       (s, col) => s + col.ancho,
     );
@@ -682,7 +719,7 @@ class _PantallaRejillaVerificacionesState
         i.isOdd ? cs.surfaceContainerHighest.withValues(alpha: 0.35) : null;
 
     final cabeceraFija = celda(
-      'Piloto / equipo',
+      context.l.colPilotoEquipo,
       ancho: _anchoEquipo,
       fondo: cs.surfaceContainerHigh,
       estiloTexto: estiloCab,
@@ -702,11 +739,11 @@ class _PantallaRejillaVerificacionesState
 
     Widget restoFila(FilaRejilla f, int i) => Row(
       children: [
-        for (final col in columnasRejilla)
+        for (final col in cols)
           Builder(
             builder: (_) {
               final cel = col.celda(f, c);
-              final esEstado = col.titulo == 'Estado';
+              final esEstado = col.id == 'estado';
               return celda(
                 cel.texto,
                 ancho: col.ancho,
@@ -731,7 +768,7 @@ class _PantallaRejillaVerificacionesState
     if (filas.isEmpty) {
       return Center(
         child: Text(
-          'Nada que mostrar con este filtro.',
+          context.l.nadaConEsteFiltro,
           style: TextStyle(color: cs.outline),
         ),
       );
@@ -749,7 +786,7 @@ class _PantallaRejillaVerificacionesState
             physics: const NeverScrollableScrollPhysics(),
             child: Row(
               children: [
-                for (final col in columnasRejilla)
+                for (final col in cols)
                   celda(
                     col.titulo,
                     ancho: col.ancho,

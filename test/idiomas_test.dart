@@ -25,6 +25,7 @@ import 'package:pitwall/core/proveedores.dart';
 import 'package:pitwall/data/database/app_database.dart';
 import 'package:pitwall/features/home/app_shell.dart';
 import 'package:pitwall/features/pruebas/detalle_prueba.dart';
+import 'package:pitwall/features/verificaciones/lista_verificaciones.dart';
 import 'package:pitwall/services/almacen_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -65,9 +66,29 @@ Future<void> _desmontar(WidgetTester tester) async {
   await tester.pump(const Duration(seconds: 1));
 }
 
-/// Monta la pantalla de una prueba (con una tanda y un equipo) en [idioma],
-/// para comprobar que la fase 2 (pruebas, tandas y resultados) sale traducida.
-Future<void> _montarDetallePrueba(WidgetTester tester, Locale idioma) async {
+/// Monta una pantalla con un campeonato de prueba sembrado (con una tanda y
+/// un equipo inscritos), para comprobar que sale traducida.
+Future<void> _montarPantalla(
+    WidgetTester tester, Locale idioma, Widget Function(int pruebaId, int mangaId) pantalla) async {
+  final (contenedor, pruebaId, mangaId) = await _sembrar(tester);
+  await tester.pumpWidget(UncontrolledProviderScope(
+    container: contenedor,
+    child: MaterialApp(
+      locale: idioma,
+      supportedLocales: Textos.supportedLocales,
+      localizationsDelegates: Textos.localizationsDelegates,
+      home: pantalla(pruebaId, mangaId),
+    ),
+  ));
+  for (var i = 0; i < 5; i++) {
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await tester.pump(const Duration(milliseconds: 300));
+  }
+}
+
+/// Deja en memoria una BD con campeonato, prueba, tanda y un equipo inscrito.
+Future<(ProviderContainer, int, int)> _sembrar(WidgetTester tester) async {
   tester.view.physicalSize = const Size(1400, 1000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -75,6 +96,7 @@ Future<void> _montarDetallePrueba(WidgetTester tester, Locale idioma) async {
   final db = AppDatabase.forTesting(NativeDatabase.memory());
   late Campeonato camp;
   late int pruebaId;
+  late int mangaId;
   await tester.runAsync(() async {
     final campId = await db.into(db.campeonatos).insert(
         CampeonatosCompanion.insert(
@@ -84,7 +106,7 @@ Future<void> _montarDetallePrueba(WidgetTester tester, Locale idioma) async {
         .getSingle();
     pruebaId = await db.into(db.pruebas).insert(PruebasCompanion.insert(
         campeonatoId: campId, nombre: 'Prueba 1', orden: 1));
-    final manga = await db.into(db.mangas).insert(
+    mangaId = await db.into(db.mangas).insert(
         MangasCompanion.insert(pruebaId: pruebaId, nombre: 'Jueves'));
     final p = await db
         .into(db.pilotos)
@@ -95,7 +117,7 @@ Future<void> _montarDetallePrueba(WidgetTester tester, Locale idioma) async {
         InscripcionesPruebaCompanion.insert(pruebaId: pruebaId, equipoId: e));
     await db
         .into(db.inscripciones)
-        .insert(InscripcionesCompanion.insert(mangaId: manga, equipoId: e));
+        .insert(InscripcionesCompanion.insert(mangaId: mangaId, equipoId: e));
   });
 
   SharedPreferences.setMockInitialValues({});
@@ -106,20 +128,7 @@ Future<void> _montarDetallePrueba(WidgetTester tester, Locale idioma) async {
   ]);
   addTearDown(contenedor.dispose);
   contenedor.read(campeonatoActivoProvider.notifier).seleccionar(camp);
-  await tester.pumpWidget(UncontrolledProviderScope(
-    container: contenedor,
-    child: MaterialApp(
-      locale: idioma,
-      supportedLocales: Textos.supportedLocales,
-      localizationsDelegates: Textos.localizationsDelegates,
-      home: DetallePrueba(pruebaId: pruebaId),
-    ),
-  ));
-  for (var i = 0; i < 5; i++) {
-    await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 50)));
-    await tester.pump(const Duration(milliseconds: 300));
-  }
+  return (contenedor, pruebaId, mangaId);
 }
 
 void main() {
@@ -176,7 +185,8 @@ void main() {
 
   testWidgets('la pantalla de la prueba (fase 2) sale traducida',
       (tester) async {
-    await _montarDetallePrueba(tester, const Locale('en'));
+    await _montarPantalla(tester, const Locale('en'),
+        (pruebaId, _) => DetallePrueba(pruebaId: pruebaId));
     expect(find.text('Prepare'), findsOneWidget);
     expect(find.text('Scrutineer'), findsOneWidget);
     expect(find.text('Results'), findsOneWidget);
@@ -186,10 +196,30 @@ void main() {
     expect(tester.takeException(), isNull);
     await _desmontar(tester);
 
-    await _montarDetallePrueba(tester, const Locale('ca'));
+    await _montarPantalla(tester, const Locale('ca'),
+        (pruebaId, _) => DetallePrueba(pruebaId: pruebaId));
     expect(find.text('Inscrits'), findsOneWidget);
     expect(find.text('Sorteig de motors'), findsOneWidget);
     expect(find.text('Nova tanda'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await _desmontar(tester);
+  });
+
+  testWidgets('la lista de verificaciones (fase 3) sale traducida',
+      (tester) async {
+    await _montarPantalla(tester, const Locale('en'),
+        (_, mangaId) => PantallaVerificaciones(mangaId: mangaId));
+    expect(find.text('Scrutineering'), findsOneWidget);
+    expect(find.text('Pending'), findsOneWidget);
+    expect(find.text('1 teams'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await _desmontar(tester);
+
+    await _montarPantalla(tester, const Locale('ca'),
+        (_, mangaId) => PantallaVerificaciones(mangaId: mangaId));
+    expect(find.text('Verificacions'), findsOneWidget);
+    expect(find.text('Pendent'), findsOneWidget);
+    expect(find.text('1 equips'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await _desmontar(tester);
   });

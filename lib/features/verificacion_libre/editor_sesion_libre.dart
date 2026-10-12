@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../campeonatos/selector_club_logo.dart';
 import '../campeonatos/selector_marcas_permitidas.dart';
@@ -155,21 +156,21 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
   }
 
   Future<void> _guardar() async {
+    final l = context.l;
     if (!_formKey.currentState!.validate()) return;
     if (_copasSel.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Selecciona al menos una copa / categoría.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.seleccionaUnaCopa)));
       return;
     }
     if (_tipoMotor == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Motor: elige si es de sorteo, propio o mixto.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.eligeTipoMotor)));
       return;
     }
     if (_limitarMarcas && _marcasPermitidas.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Limitar fabricante: elige al menos una marca o desactívalo.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.limitarFabricanteError)));
       return;
     }
     setState(() => _guardando = true);
@@ -212,8 +213,8 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l.noSePudoGuardar('$e'))));
         setState(() => _guardando = false);
       }
     }
@@ -246,7 +247,9 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(esNueva ? 'Nueva sesión de verificación' : 'Editar sesión'),
+        title: Text(esNueva
+            ? context.l.nuevaSesionVerificacion
+            : context.l.editarSesion),
       ),
       body: Form(
         key: _formKey,
@@ -256,20 +259,21 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
             TextFormField(
               controller: _nombre,
               autofocus: esNueva,
-              decoration: const InputDecoration(
-                labelText: 'Nombre de la sesión *',
-                helperText: 'Ej: Control club jueves, Carrera GT Sant Joan',
-                prefixIcon: Icon(Icons.fact_check_outlined),
+              decoration: InputDecoration(
+                labelText: context.l.nombreSesionObligatorio,
+                helperText: context.l.nombreSesionAyuda,
+                prefixIcon: const Icon(Icons.fact_check_outlined),
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Obligatorio' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? context.l.obligatorio
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _sede,
-              decoration: const InputDecoration(
-                labelText: 'Lugar (opcional)',
-                prefixIcon: Icon(Icons.place_outlined),
+              decoration: InputDecoration(
+                labelText: context.l.lugarOpcional,
+                prefixIcon: const Icon(Icons.place_outlined),
               ),
             ),
             const SizedBox(height: 12),
@@ -277,34 +281,32 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.event_outlined),
               title: Text(_fecha == null
-                  ? 'Sin fecha'
+                  ? context.l.sinFecha
                   : DateFormat('dd/MM/yyyy').format(_fecha!)),
-              subtitle: const Text('Fecha de la sesión'),
+              subtitle: Text(context.l.fechaSesion),
               trailing: _fecha == null
                   ? null
                   : IconButton(
-                      tooltip: 'Quitar fecha',
+                      tooltip: context.l.quitarFecha,
                       icon: const Icon(Icons.close),
                       onPressed: () => setState(() => _fecha = null),
                     ),
               onTap: _elegirFecha,
             ),
 
-            seccion('Club organizador',
-                'Aparece en la cabecera de los PDF de la sesión.'),
+            seccion(context.l.clubOrganizador,
+                context.l.clubOrganizadorAyuda),
             SelectorClubLogo(
               club: _club,
               logo: _logoClub,
               onLogo: (l) => setState(() => _logoClub = l),
             ),
 
-            seccion('Copas / categorías',
-                'Las que se pueden verificar en esta sesión. La copa de cada '
-                'participante filtra el catálogo y las comprobaciones, igual '
-                'que en un campeonato.'),
+            seccion(context.l.copasCategorias,
+                context.l.copasCategoriasAyuda),
             catalogoAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text('Error: $e'),
+              error: (e, _) => Text(context.l.errorDetalle('$e')),
               data: (copas) {
                 final todas = {...copas, ..._copasSel}.toList()..sort();
                 return Wrap(
@@ -324,21 +326,20 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
             ),
 
             if (_copasSel.isNotEmpty) ...[
-              seccion('Anchura de eje',
-                  'Anchura máxima de eje (mm) por copa. Deja vacío si en esa '
-                  'copa no se comprueba.'),
+              seccion(context.l.anchuraEje, context.l.anchuraEjeAyuda),
               for (final copa in _copasSel.toList()..sort()) ...[
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
-                  child: Text('Copa $copa', style: tt.labelMedium),
+                  child: Text(context.l.copaTexto(copa),
+                      style: tt.labelMedium),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
                       for (final (lado, etiqueta) in [
-                        ('del', 'Máx delantero (mm)'),
-                        ('tra', 'Máx trasero (mm)'),
+                        ('del', context.l.maxDelanteroMm),
+                        ('tra', context.l.maxTraseroMm),
                       ]) ...[
                         if (lado == 'tra') const SizedBox(width: 8),
                         Expanded(
@@ -361,9 +362,7 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
               ],
             ],
 
-            seccion('Fabricante',
-                'Para sesiones monomarca: limita las marcas que se pueden '
-                'elegir en la verificación.'),
+            seccion(context.l.fabricante, context.l.fabricanteAyuda),
             SelectorMarcasPermitidas(
               activo: _limitarMarcas,
               seleccion: _marcasPermitidas,
@@ -371,26 +370,23 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
               onCambio: (sel) => setState(() => _marcasPermitidas = sel),
             ),
 
-            seccion('Motor', ''),
+            seccion(context.l.motor, ''),
             SelectorTipoMotor(
               valor: _tipoMotor,
               onCambio: (v) => setState(() => _tipoMotor = v),
             ),
             if (tipoMotorConSorteo(_tipoMotor)) ...[
             const SizedBox(height: 16),
-            Text(
-                'Rango de números de motor para sortear desde la '
-                'verificación. Déjalo vacío si no hay sorteo.',
-                style: tt.bodySmall),
+            Text(context.l.rangoMotorTexto, style: tt.bodySmall),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     controller: _motorMin,
-                    decoration: const InputDecoration(
-                      labelText: 'Motor desde',
-                      prefixIcon: Icon(Icons.tag),
+                    decoration: InputDecoration(
+                      labelText: context.l.motorDesde,
+                      prefixIcon: const Icon(Icons.tag),
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -399,14 +395,17 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
                 Expanded(
                   child: TextFormField(
                     controller: _motorMax,
-                    decoration: const InputDecoration(labelText: 'Motor hasta'),
+                    decoration:
+                        InputDecoration(labelText: context.l.motorHasta),
                     keyboardType: TextInputType.number,
                     validator: (v) {
                       final min = int.tryParse(_motorMin.text.trim());
                       final max = int.tryParse(v?.trim() ?? '');
                       if (min == null && max == null) return null;
-                      if (min == null || max == null) return 'Indica ambos';
-                      if (max < min) return 'Hasta ≥ desde';
+                      if (min == null || max == null) {
+                        return context.l.indicaAmbos;
+                      }
+                      if (max < min) return context.l.hastaMayorQueDesde;
                       return null;
                     },
                   ),
@@ -418,7 +417,8 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
             FilledButton.icon(
               onPressed: _guardando ? null : _guardar,
               icon: const Icon(Icons.save_outlined),
-              label: Text(esNueva ? 'Crear sesión' : 'Guardar'),
+              label: Text(
+                  esNueva ? context.l.crearSesion : context.l.guardar),
             ),
           ],
         ),

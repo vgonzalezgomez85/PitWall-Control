@@ -18,12 +18,17 @@
 /// Estado de una validación: nivel (ok/aviso/infraccion) y mensaje en cristiano.
 enum NivelValidacion { ok, aviso, infraccion }
 
+/// Un hallazgo del validador: [campo] (a qué bloque pertenece), [nivel],
+/// [codigo] (la regla que ha saltado) y [datos] (los valores del texto). El
+/// texto lo compone la pantalla, en su idioma (`textoHallazgo`).
 class HallazgoValidacion {
   final String campo;
   final NivelValidacion nivel;
-  final String mensaje;
+  final String codigo;
+  final Map<String, Object?> datos;
 
-  HallazgoValidacion(this.campo, this.nivel, this.mensaje);
+  HallazgoValidacion(this.campo, this.nivel, this.codigo,
+      [this.datos = const {}]);
 }
 
 /// Resultado completo de validar una verificación.
@@ -148,7 +153,11 @@ class ValidadorVerificacion {
         hallazgos.add(HallazgoValidacion(
           'pesoInicial',
           NivelValidacion.infraccion,
-          'Peso inicial ${d.pesoInicial!.toStringAsFixed(2)}g por debajo del mínimo ${d.pesoMinCoche!.toStringAsFixed(2)}g.',
+          'pesoInicialBajo',
+          {
+            'valor': d.pesoInicial!.toStringAsFixed(2),
+            'minimo': d.pesoMinCoche!.toStringAsFixed(2),
+          },
         ));
       }
     }
@@ -157,7 +166,11 @@ class ValidadorVerificacion {
         hallazgos.add(HallazgoValidacion(
           'pesoFinal',
           NivelValidacion.infraccion,
-          'Peso final ${d.pesoFinal!.toStringAsFixed(2)}g por debajo del mínimo ${d.pesoMinCoche!.toStringAsFixed(2)}g.',
+          'pesoFinalBajo',
+          {
+            'valor': d.pesoFinal!.toStringAsFixed(2),
+            'minimo': d.pesoMinCoche!.toStringAsFixed(2),
+          },
         ));
       }
     }
@@ -170,7 +183,7 @@ class ValidadorVerificacion {
           hallazgos.add(HallazgoValidacion(
             'motor',
             NivelValidacion.aviso,
-            'Selecciona el motor del catálogo para comprobar las medidas.',
+            'motorSinCatalogo',
           ));
         }
       } else {
@@ -179,8 +192,12 @@ class ValidadorVerificacion {
           hallazgos.add(HallazgoValidacion(
             'motorRpm',
             NivelValidacion.infraccion,
-            'RPM por encima de la referencia del ${d.motorRefNombre} '
-            '(máx ${d.motorRefRpm}, medidas ${d.motorRpm}).',
+            'motorRpmAlto',
+            {
+              'motor': d.motorRefNombre,
+              'max': d.motorRefRpm,
+              'medido': d.motorRpm,
+            },
           ));
         }
         if (d.motorUms != null && d.motorRefGauss != null &&
@@ -188,8 +205,12 @@ class ValidadorVerificacion {
           hallazgos.add(HallazgoValidacion(
             'motorUms',
             NivelValidacion.infraccion,
-            'Imán por encima de la referencia del ${d.motorRefNombre} '
-            '(máx ${d.motorRefGauss}, medido ${d.motorUms}).',
+            'motorUmsAlto',
+            {
+              'motor': d.motorRefNombre,
+              'max': d.motorRefGauss,
+              'medido': d.motorUms,
+            },
           ));
         }
       }
@@ -201,7 +222,7 @@ class ValidadorVerificacion {
       hallazgos.add(HallazgoValidacion(
         'alturaMotorConforme',
         NivelValidacion.infraccion,
-        'Altura de motor no conforme: toca la pista.',
+        'alturaNoConforme',
       ));
     }
 
@@ -211,7 +232,8 @@ class ValidadorVerificacion {
       hallazgos.add(HallazgoValidacion(
         'anchuraEjeDel',
         NivelValidacion.infraccion,
-        'Anchura de eje delantero ${d.anchuraEjeDel} mm por encima del máximo ${d.anchuraEjeDelMax} mm.',
+        'ejeDelAncho',
+        {'medido': d.anchuraEjeDel, 'max': d.anchuraEjeDelMax},
       ));
     }
     if (d.anchuraEjeTra != null && d.anchuraEjeTraMax != null &&
@@ -219,7 +241,8 @@ class ValidadorVerificacion {
       hallazgos.add(HallazgoValidacion(
         'anchuraEjeTra',
         NivelValidacion.infraccion,
-        'Anchura de eje trasero ${d.anchuraEjeTra} mm por encima del máximo ${d.anchuraEjeTraMax} mm.',
+        'ejeTraAncho',
+        {'medido': d.anchuraEjeTra, 'max': d.anchuraEjeTraMax},
       ));
     }
 
@@ -242,13 +265,13 @@ class ValidadorVerificacion {
 
     // Llantas en catálogo
     _verCatalogo(hallazgos, 'llantaDelDimension', d.llantaDelDimension,
-        d.llantasDelValidas, 'Llanta delantera no catalogada');
+        d.llantasDelValidas, 'llantaDelNoCatalogada');
     _verCatalogo(hallazgos, 'llantaTraDimension', d.llantaTraDimension,
-        d.llantasTraValidas, 'Llanta trasera no catalogada');
+        d.llantasTraValidas, 'llantaTraNoCatalogada');
     _verCatalogo(hallazgos, 'bancada', d.bancada, d.bancadasValidas,
-        'Bancada no catalogada');
+        'bancadaNoCatalogada');
     _verCatalogo(hallazgos, 'neumatico', d.neumatico, d.neumaticosValidos,
-        'Neumático no catalogado');
+        'neumaticoNoCatalogado');
 
     // Créditos: solo informativo, sin infracción
     if (d.creditosCoche != null && d.creditosEquipo != null) {
@@ -257,7 +280,12 @@ class ValidadorVerificacion {
         hallazgos.add(HallazgoValidacion(
           'balance',
           NivelValidacion.aviso,
-          'Balance de créditos negativo: equipo ${d.creditosEquipo} + coche ${d.creditosCoche} = $balance.',
+          'balanceNegativo',
+          {
+            'equipo': d.creditosEquipo,
+            'coche': d.creditosCoche,
+            'balance': balance,
+          },
         ));
       }
     }
@@ -273,7 +301,11 @@ class ValidadorVerificacion {
       out.add(HallazgoValidacion(
         campo,
         NivelValidacion.infraccion,
-        'Marca "$valor" no permitida (solo ${(permitidas.toList()..sort()).join(", ")}).',
+        'marcaNoPermitidaLista',
+        {
+          'marca': valor,
+          'lista': (permitidas.toList()..sort()).join(', '),
+        },
       ));
     }
   }
@@ -285,17 +317,18 @@ class ValidadorVerificacion {
       out.add(HallazgoValidacion(
         campo,
         NivelValidacion.aviso,
-        'Marca "$valor" no está en el catálogo.',
+        'marcaFueraCatalogo',
+        {'marca': valor},
       ));
     }
   }
 
   static void _verCatalogo(List<HallazgoValidacion> out, String campo,
-      String? valor, Set<String> validos, String mensaje) {
+      String? valor, Set<String> validos, String codigo) {
     if (valor == null || valor.isEmpty || validos.isEmpty) return;
     if (!validos.contains(valor)) {
       out.add(HallazgoValidacion(
-          campo, NivelValidacion.aviso, '$mensaje: "$valor".'));
+          campo, NivelValidacion.aviso, codigo, {'valor': valor}));
     }
   }
 }

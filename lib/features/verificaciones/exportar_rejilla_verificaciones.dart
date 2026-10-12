@@ -22,6 +22,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../core/idioma.dart';
 import '../../data/database/app_database.dart';
 import '../../services/exportar_config.dart';
 import '../../services/pdf_marca.dart';
@@ -54,6 +55,10 @@ Future<Uint8List> generarPdfRejilla({
       ? null
       : DateFormat('d MMM y', 'es_ES').format(prueba.fecha!);
   final validadas = filas.where((f) => f.v?.validado ?? false).length;
+  // Los exportadores van con su propio diccionario (aún sin catalán): de
+  // momento usan los textos en español.
+  final l = textosEspanol;
+  final cols = columnasRejilla(l);
 
   const tam = 6.5;
   final estiloCab = pw.TextStyle(
@@ -75,8 +80,8 @@ Future<Uint8List> generarPdfRejilla({
   // Cada columna mide lo que su contenido; Observaciones se queda con el
   // sobrante. Si no cabe, pdfUnaHoja escala la hoja entera.
   final anchos = <int, pw.TableColumnWidth>{
-    for (var i = 0; i <= columnasRejilla.length; i++)
-      i: i == columnasRejilla.length
+    for (var i = 0; i <= cols.length; i++)
+      i: i == cols.length
           ? const pw.IntrinsicColumnWidth(flex: 1)
           : const pw.IntrinsicColumnWidth(),
   };
@@ -88,8 +93,8 @@ Future<Uint8List> generarPdfRejilla({
       pw.TableRow(
         decoration: const pw.BoxDecoration(color: MarcaPdf.rojoOscuro),
         children: [
-          celda('Piloto / equipo', st: estiloCab),
-          for (final col in columnasRejilla) celda(col.titulo, st: estiloCab),
+          celda(l.colPilotoEquipo, st: estiloCab),
+          for (final col in cols) celda(col.titulo, st: estiloCab),
         ],
       ),
       for (var i = 0; i < filas.length; i++)
@@ -98,10 +103,10 @@ Future<Uint8List> generarPdfRejilla({
             celda(nombreFilaRejilla(filas[i]),
                 fondo: i.isOdd ? MarcaPdf.fondoZebra : null,
                 st: estilo.copyWith(fontWeight: pw.FontWeight.bold)),
-            for (final col in columnasRejilla)
+            for (final col in cols)
               () {
                 final c = col.celda(filas[i], campeonato);
-                final esEstado = col.titulo == 'Estado';
+                final esEstado = col.id == 'estado';
                 return celda(
                   c.texto,
                   fondo: i.isOdd ? MarcaPdf.fondoZebra : null,
@@ -118,7 +123,7 @@ Future<Uint8List> generarPdfRejilla({
 
   return pdfUnaHoja(
     filas: filas.length,
-    columnas: columnasRejilla.length + 1,
+    columnas: cols.length + 1,
     preferApaisado: true,
     contenido: (ctx) => pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
@@ -149,9 +154,11 @@ Uint8List generarExcelRejilla({
   required Campeonato campeonato,
   required Prueba prueba,
 }) {
+  final l = textosEspanol;
+  final cols = columnasRejilla(l);
   final libro = Excel.createExcel();
   final porDefecto = libro.getDefaultSheet();
-  final nombreHoja = _nombreHoja(prueba.nombre);
+  final nombreHoja = _nombreHoja(l, prueba.nombre);
   final hoja = libro[nombreHoja];
 
   final estiloCab = CellStyle(
@@ -165,9 +172,9 @@ Uint8List generarExcelRejilla({
   );
 
   final cabecera = [
-    'Piloto / equipo',
-    for (final c in columnasRejilla) c.titulo,
-    'Fuera de reglamento',
+    l.colPilotoEquipo,
+    for (final c in cols) c.titulo,
+    l.fueraDeReglamento,
   ];
   for (var x = 0; x < cabecera.length; x++) {
     hoja.updateCell(CellIndex.indexByColumnRow(columnIndex: x, rowIndex: 0),
@@ -181,8 +188,8 @@ Uint8List generarExcelRejilla({
     hoja.updateCell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: fila),
         TextCellValue(nombreFilaRejilla(f)));
     final motivos = <String>[];
-    for (var x = 0; x < columnasRejilla.length; x++) {
-      final col = columnasRejilla[x];
+    for (var x = 0; x < cols.length; x++) {
+      final col = cols[x];
       final c = col.celda(f, campeonato);
       if (c.infraccion != null) motivos.add('${col.titulo}: ${c.infraccion}');
       if (c.texto.isEmpty && c.infraccion == null) continue;
@@ -194,7 +201,7 @@ Uint8List generarExcelRejilla({
     if (motivos.isNotEmpty) {
       hoja.updateCell(
           CellIndex.indexByColumnRow(
-              columnIndex: columnasRejilla.length + 1, rowIndex: fila),
+              columnIndex: cols.length + 1, rowIndex: fila),
           TextCellValue(motivos.join('; ')),
           cellStyle: estiloMal);
     }
@@ -202,25 +209,25 @@ Uint8List generarExcelRejilla({
 
   // Anchos aproximados a los de la pantalla (px → caracteres).
   hoja.setColumnWidth(0, 32);
-  for (var x = 0; x < columnasRejilla.length; x++) {
-    hoja.setColumnWidth(x + 1, columnasRejilla[x].ancho / 7);
+  for (var x = 0; x < cols.length; x++) {
+    hoja.setColumnWidth(x + 1, cols[x].ancho / 7);
   }
-  hoja.setColumnWidth(columnasRejilla.length + 1, 50);
+  hoja.setColumnWidth(cols.length + 1, 50);
 
   if (porDefecto != null && porDefecto != nombreHoja) {
     libro.delete(porDefecto);
   }
   final bytes = libro.save();
-  if (bytes == null) throw 'No se pudo generar el Excel.';
+  if (bytes == null) throw l.noSePudoGenerarExcel;
   return Uint8List.fromList(bytes);
 }
 
 /// Nombre de pestaña válido en Excel: sin []:*?/\ y como mucho 31 caracteres.
-String _nombreHoja(String nombre) {
+String _nombreHoja(Textos l, String nombre) {
   final limpio = nombre
       .replaceAll(RegExp(r'[\[\]:*?/\\]'), ' ')
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();
-  if (limpio.isEmpty) return 'Verificaciones';
+  if (limpio.isEmpty) return l.verificaciones;
   return limpio.length > 31 ? limpio.substring(0, 31) : limpio;
 }

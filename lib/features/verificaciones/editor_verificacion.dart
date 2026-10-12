@@ -27,6 +27,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/selector_buscable.dart';
@@ -143,7 +144,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
 
   /// Bloqueo (campeonato finalizado o prueba terminada): la verificación
   /// se abre en solo lectura hasta que se desbloquea a propósito.
-  String? _motivoBloqueo;
+  MotivoBloqueo? _motivoBloqueo;
   bool _desbloqueada = false;
 
   bool _cargando = true;
@@ -265,6 +266,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   /// Sortea un nº de motor de organización entre los disponibles de la prueba
   /// (rango del campeonato menos los ya asignados), sin salir de la verificación.
   Future<void> _sortearMotor() async {
+    final l = context.l;
     final pruebaId = _pruebaId;
     if (pruebaId == null) return;
     final db = ref.read(dbProvider);
@@ -280,8 +282,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     if (min == null || max == null || max < min) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(camp?.esVerificacionLibre ?? false
-              ? 'Configura el rango de motores en el reglamento de la sesión para sortear.'
-              : 'Configura el rango de motores en el campeonato para sortear.')));
+              ? l.configuraRangoSesion
+              : l.configuraRangoCampeonato)));
       return;
     }
     // Motores ya asignados en la prueba (verificaciones de organización).
@@ -312,7 +314,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     if (!mounted) return;
     if (candidatos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No quedan motores disponibles.')),
+        SnackBar(content: Text(l.noQuedanMotores)),
       );
       return;
     }
@@ -323,11 +325,11 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
         var n = candidatos[rng.nextInt(candidatos.length)];
         return StatefulBuilder(
           builder: (ctx, setSt) => AlertDialog(
-            title: const Text('Sorteo de motor'),
+            title: Text(l.sorteoDeMotor),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Motor sorteado',
+                Text(l.motorSorteado,
                     style: Theme.of(ctx).textTheme.labelLarge),
                 const SizedBox(height: 8),
                 Text('$n',
@@ -339,17 +341,17 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancelar')),
+                  child: Text(l.cancelar)),
               if (candidatos.length > 1)
                 TextButton.icon(
                   onPressed: () =>
                       setSt(() => n = candidatos[rng.nextInt(candidatos.length)]),
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Repetir'),
+                  label: Text(l.repetir),
                 ),
               FilledButton(
                   onPressed: () => Navigator.pop(ctx, n),
-                  child: const Text('Asignar')),
+                  child: Text(l.asignar)),
             ],
           ),
         );
@@ -538,11 +540,11 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     if (!mounted || _cargando) return;
     final ms = v.modificadoMs ?? 0;
     if (v.modificadoPor == DispositivoSync.nombre || ms <= _msVisto) return;
-    final quien = v.modificadoPor ?? 'Otro Control';
+    final l = context.l;
+    final quien = v.modificadoPor ?? l.otroControl;
     if (_dirty || _autoguardando || _guardando) {
       _messenger?.showMaterialBanner(MaterialBanner(
-        content: Text('$quien ha cambiado esta verificación. Si sigues '
-            'editando, tus cambios sustituirán a los suyos.'),
+        content: Text(l.cambiadaFueraTexto(quien)),
         leading: const Icon(Icons.sync_problem_outlined),
         actions: [
           TextButton(
@@ -550,14 +552,14 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               _messenger?.hideCurrentMaterialBanner();
               _msVisto = ms;
             },
-            child: const Text('Seguir con lo mío'),
+            child: Text(l.seguirConLoMio),
           ),
           TextButton(
             onPressed: () {
               _messenger?.hideCurrentMaterialBanner();
               _recargarDesde(v);
             },
-            child: Text('Ver lo de $quien'),
+            child: Text(l.verLoDe(quien)),
           ),
         ],
       ));
@@ -565,7 +567,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     }
     _recargarDesde(v);
     _messenger?.showSnackBar(SnackBar(
-        content: Text('Actualizada con los cambios de $quien.')));
+        content: Text(l.actualizadaConCambios(quien))));
   }
 
   void _recargarDesde(Verificacione v) {
@@ -609,7 +611,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo añadir la foto: $e')),
+        SnackBar(content: Text(context.l.noSePudoAnadirFoto('$e'))),
       );
     }
   }
@@ -737,7 +739,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo guardar: $e')),
+          SnackBar(content: Text(context.l.noSePudoGuardar('$e'))),
         );
         setState(() => _guardando = false);
       }
@@ -760,27 +762,27 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
     final copas = _campeonato == null
         ? ref.read(copasProvider)
         : _copasDe(_campeonato!);
+    final l = context.l;
     String? seleccion = _copaPrueba ?? equipo.copa;
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSt) => AlertDialog(
-          title: const Text('Copa en esta prueba'),
+          title: Text(l.copaEnEstaPrueba),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Cambia la copa solo para esta prueba, sin afectar al '
-                'equipo ni a otras pruebas.',
+                l.copaEnEstaPruebaTexto,
                 style: Theme.of(ctx).textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: seleccion,
-                decoration: const InputDecoration(
-                  labelText: 'Copa / categoría',
-                  prefixIcon: Icon(Icons.flag_outlined),
+                decoration: InputDecoration(
+                  labelText: l.copaCategoria,
+                  prefixIcon: const Icon(Icons.flag_outlined),
                 ),
                 items: copas
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -789,7 +791,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               ),
               if (_copaPrueba != null) ...[
                 const SizedBox(height: 8),
-                Text('Copa del equipo: ${equipo.copa}',
+                Text(l.copaDelEquipo(equipo.copa),
                     style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                         color: Theme.of(ctx).colorScheme.outline)),
               ],
@@ -808,11 +810,11 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   if (mounted) _alCambiarCopa(null);
                   if (ctx.mounted) Navigator.pop(ctx);
                 },
-                child: const Text('Usar la del equipo'),
+                child: Text(l.usarLaDelEquipo),
               ),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar'),
+              child: Text(l.cancelar),
             ),
             FilledButton(
               onPressed: seleccion == null
@@ -827,7 +829,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                       if (mounted) _alCambiarCopa(seleccion);
                       if (ctx.mounted) Navigator.pop(ctx);
                     },
-              child: const Text('Guardar'),
+              child: Text(l.guardar),
             ),
           ],
         ),
@@ -847,32 +849,31 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   /// campeonato de hoy), previa confirmación. Si estaba validada, también
   /// se recalculan sus créditos.
   Future<void> _usarReglamentoActual(List<String> diferencias) async {
+    final l = context.l;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Usar el reglamento actual'),
+        title: Text(l.usarReglamentoActual),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Esta verificación se comprobará con los valores de '
-                'hoy del catálogo y del campeonato en lugar de con los que '
-                'tenía al verificarla:'),
+            Text(l.usarReglamentoActualTexto),
             const SizedBox(height: 8),
             for (final d in diferencias) Text('• $d'),
             if (_validadaGuardada) ...[
               const SizedBox(height: 8),
-              const Text('Como está validada, se recalcularán sus créditos.'),
+              Text(l.recalcularanCreditos),
             ],
           ],
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+              child: Text(l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Usar el actual')),
+              child: Text(l.usarElActual)),
         ],
       ),
     );
@@ -895,21 +896,19 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
   /// Quita el bloqueo de solo lectura (campeonato finalizado / prueba
   /// terminada) para corregir algo, previa confirmación.
   Future<void> _desbloquear() async {
+    final l = context.l;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Desbloquear la verificación'),
-        content: Text('${_motivoBloqueo ?? ''} Sus verificaciones están '
-            'bloqueadas para no cambiarlas sin querer.\n\n'
-            'Si la desbloqueas, los cambios se guardarán como siempre. '
-            'Seguirá comprobándose con el reglamento con el que se verificó.'),
+        title: Text(l.desbloquearVerificacion),
+        content: Text(l.desbloquearTexto(_motivoBloqueo?.texto(l) ?? '')),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+              child: Text(l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Desbloquear')),
+              child: Text(l.desbloquear)),
         ],
       ),
     );
@@ -979,7 +978,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_equipo?.nombre ?? 'Verificación'),
+            Text(_equipo?.nombre ?? context.l.verificacion),
             if (_equipo != null)
               InkWell(
                 onTap: _pruebaId == null || _soloLectura ? null : _editarCopa,
@@ -988,7 +987,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Copa ${_copaPrueba ?? _equipo!.copa}',
+                      context.l.copaTexto(_copaPrueba ?? _equipo!.copa),
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.w600,
@@ -1014,22 +1013,22 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             ),
           if (_verifId != null && !_soloLectura)
             IconButton(
-              tooltip: 'Eliminar verificación',
+              tooltip: context.l.eliminarVerificacion,
               icon: const Icon(Icons.delete_outline),
               onPressed: () async {
+                final l = context.l;
                 final ok = await showDialog<bool>(
                   context: context,
                   builder: (_) => AlertDialog(
-                    title: const Text('Eliminar verificación'),
-                    content: const Text(
-                        'Se perderán los datos introducidos. ¿Continuar?'),
+                    title: Text(l.eliminarVerificacion),
+                    content: Text(l.eliminarVerificacionTexto),
                     actions: [
                       TextButton(
                           onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancelar')),
+                          child: Text(l.cancelar)),
                       FilledButton(
                           onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Eliminar')),
+                          child: Text(l.eliminar)),
                     ],
                   ),
                 );
@@ -1050,7 +1049,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
       ),
       body: cochesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
         data: (cochesCopa) {
           // El coche guardado sigue apareciendo aunque ya no esté activo o
           // no tenga la copa (verificaciones antiguas).
@@ -1111,13 +1110,15 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           // Qué le falta a cada bloque, para marcarlo y no saltarse nada.
           bool lleno(TextEditingController c) => c.text.trim().isNotEmpty;
           bool hay(Object? v) => v != null && '$v'.isNotEmpty;
+          // Las claves son estables (no dependen del idioma): el nombre
+          // visible lo pone _etiquetaBloque.
           final bloques = <String, _InfoBloque>{
-            'Coche': _InfoBloque.de(res, [_cocheId != null], const []),
-            'Peso (gramos)': _InfoBloque.de(
+            'coche': _InfoBloque.de(res, [_cocheId != null], const []),
+            'peso': _InfoBloque.de(
                 res, [lleno(_pesoIni)], const ['pesoInicial', 'pesoFinal']),
-            'Estética':
+            'estetica':
                 _InfoBloque.de(res, [_carroceriaConforme != null], const []),
-            'Motor': _InfoBloque.de(
+            'motor': _InfoBloque.de(
               res,
               [
                 lleno(_motor),
@@ -1130,7 +1131,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               const ['motor', 'motorRpm', 'motorUms', 'alturaMotorConforme'],
             ),
             // Solo cuenta el lado con máximo configurado para la copa.
-            'Anchura de eje (mm)': _InfoBloque.de(
+            'eje': _InfoBloque.de(
               res,
               [
                 if (anchuraEjeDelMax != null) lleno(_anchuraEjeDel),
@@ -1138,27 +1139,27 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               ],
               const ['anchuraEjeDel', 'anchuraEjeTra'],
             ),
-            'Llanta delantera': _InfoBloque.de(
+            'llantaDel': _InfoBloque.de(
                 res,
                 [hay(_llantaDelMarca), hay(_llantaDelDim)],
                 const ['llantaDelMarca', 'llantaDelDimension']),
-            'Llanta trasera': _InfoBloque.de(
+            'llantaTra': _InfoBloque.de(
                 res,
                 [hay(_llantaTraMarca), hay(_llantaTraDim)],
                 const ['llantaTraMarca', 'llantaTraDimension']),
-            'Piñón': _InfoBloque.de(
+            'pinon': _InfoBloque.de(
                 res,
                 [hay(_pinonMarca), hay(_pinonDientes), hay(_pinonMaterial)],
                 const ['pinonMarca', 'pinonDientes']),
-            'Corona': _InfoBloque.de(
+            'corona': _InfoBloque.de(
                 res,
                 [hay(_coronaMarca), hay(_coronaDientes), hay(_coronaMaterial)],
                 const ['coronaMarca', 'coronaDientes']),
-            'Bancada': _InfoBloque.de(res, [hay(_bancada)], const ['bancada']),
-            'Chasis': _InfoBloque.de(res, [hay(_chasis)], const []),
-            'Peso coche entero (gramos)':
+            'bancada': _InfoBloque.de(res, [hay(_bancada)], const ['bancada']),
+            'chasis': _InfoBloque.de(res, [hay(_chasis)], const []),
+            'pesoCoche':
                 _InfoBloque.de(res, [lleno(_pesoIniCoche)], const []),
-            'Otros': _InfoBloque.de(
+            'otros': _InfoBloque.de(
                 res,
                 [hay(_neumatico), hay(_trencilla), lleno(_suspension)],
                 const ['neumatico', 'trencilla']),
@@ -1174,7 +1175,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
             children: [
               if (_motivoBloqueo != null) ...[
                 _AvisoBloqueo(
-                  motivo: _motivoBloqueo!,
+                  motivo: _motivoBloqueo!.texto(context.l),
                   soloLectura: _soloLectura,
                   onDesbloquear: _desbloquear,
                 ),
@@ -1218,7 +1219,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   (campActivo?.usaTesoreria ?? false) &&
                   !(campActivo?.esVerificacionLibre ?? false)) ...[
                 _Bloque(
-                  titulo: 'Tesorería',
+                  titulo: context.l.menuTesoreria,
                   info: null,
                   children: [
                     _PagoEnVerificacion(
@@ -1232,21 +1233,23 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               ],
 
               _Bloque(
-                titulo: 'Coche',
-                info: bloques['Coche'],
+                titulo: context.l.coche,
+                info: bloques['coche'],
                 children: [
                 SelectorBuscable<CatalogoCoche>(
-                  etiqueta: 'Modelo de coche',
-                  titulo: 'Elegir coche',
+                  etiqueta: context.l.modeloCoche,
+                  titulo: context.l.elegirCoche,
                   icono: Icons.directions_car_outlined,
                   helper: coches.isEmpty && copaEquipo != null
-                      ? 'No hay coches con la copa $copaEquipo en el catálogo'
-                      : 'Se muestran peso mínimo y créditos del coche al elegirlo',
+                      ? context.l.noHayCochesConCopa(copaEquipo)
+                      : context.l.ayudaSelectorCoche,
                   valor: coches.where((c) => c.id == _cocheId).firstOrNull,
                   opciones: uso.ordenar('coche', coches, (c) => c.id),
                   etiquetaOpcion: (c) => c.nombre,
                   subtituloOpcion: (c) =>
-                      '${_pesoMinDe(c).toStringAsFixed(2)}g · ${_creditosDe(c) >= 0 ? "+" : ""}${_creditosDe(c)} créd',
+                      '${_pesoMinDe(c).toStringAsFixed(2)}g · '
+                      '${_creditosDe(c) >= 0 ? "+" : ""}${_creditosDe(c)} '
+                      '${context.l.creditosAbrev}',
                   onCambio: (c) =>
                       _cambiar(() => _cocheId = c?.id, reglas: true),
                 ),
@@ -1261,22 +1264,23 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               ),
               const SizedBox(height: 16),
 
-              _SecHead('Carrocería'),
+              _SecHead(context.l.carroceria),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: _Bloque(
-                      titulo: 'Peso (gramos)',
-                      info: bloques['Peso (gramos)'],
+                      titulo: context.l.pesoGramos,
+                      info: bloques['peso'],
                       children: [
                         TextField(
                           controller: _pesoIni,
                           decoration: InputDecoration(
-                            labelText: 'Peso carrocería',
+                            labelText: context.l.pesoCarroceria,
                             helperText: cocheSel.id < 0 || reglas?.pesoMin == null
                                 ? null
-                                : 'Mínimo: ${reglas!.pesoMin!.toStringAsFixed(2)}g',
+                                : context.l.minimoG(
+                                    reglas!.pesoMin!.toStringAsFixed(2)),
                           ),
                           keyboardType:
                               const TextInputType.numberWithOptions(
@@ -1289,24 +1293,24 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _Bloque(
-                      titulo: 'Estética',
-                      info: bloques['Estética'],
+                      titulo: context.l.estetica,
+                      info: bloques['estetica'],
                       children: [
                         SegmentedButton<bool?>(
-                          segments: const [
+                          segments: [
                             ButtonSegment(
                               value: null,
-                              label: Text('Sin comprobar'),
+                              label: Text(context.l.sinComprobar),
                             ),
                             ButtonSegment(
                               value: true,
-                              label: Text('Bien'),
-                              icon: Icon(Icons.check_circle_outline),
+                              label: Text(context.l.bien),
+                              icon: const Icon(Icons.check_circle_outline),
                             ),
                             ButtonSegment(
                               value: false,
-                              label: Text('Faltan piezas'),
-                              icon: Icon(Icons.report_problem_outlined),
+                              label: Text(context.l.faltanPiezas),
+                              icon: const Icon(Icons.report_problem_outlined),
                             ),
                           ],
                           selected: {_carroceriaConforme},
@@ -1317,8 +1321,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                           const SizedBox(height: 8),
                           TextField(
                             controller: _carroceriaPiezasFaltantes,
-                            decoration: const InputDecoration(
-                              labelText: 'Qué piezas le faltan',
+                            decoration: InputDecoration(
+                              labelText: context.l.quePiezasFaltan,
                             ),
                             maxLines: 2,
                           ),
@@ -1341,23 +1345,23 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                 children: [
                   Expanded(
                     child: _Bloque(
-                      titulo: 'Motor',
-                      info: bloques['Motor'],
+                      titulo: context.l.motor,
+                      info: bloques['motor'],
                       children: [
                         // El campeonato puede fijar el tipo; solo en los
                         // mixtos se elige aquí.
                         if (campActivo?.tipoMotor == null)
                         SegmentedButton<String>(
-                          segments: const [
+                          segments: [
                             ButtonSegment(
                               value: 'ORGANIZACION',
-                              label: Text('Organización'),
-                              icon: Icon(Icons.business_outlined),
+                              label: Text(context.l.organizacion),
+                              icon: const Icon(Icons.business_outlined),
                             ),
                             ButtonSegment(
                               value: 'PROPIO',
-                              label: Text('Propio'),
-                              icon: Icon(Icons.engineering_outlined),
+                              label: Text(context.l.propio),
+                              icon: const Icon(Icons.engineering_outlined),
                             ),
                           ],
                           selected: {_motorTipo},
@@ -1374,9 +1378,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               Expanded(
                                 child: TextField(
                                   controller: _motor,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Número de motor',
-                                    prefixIcon: Icon(Icons.tag),
+                                  decoration: InputDecoration(
+                                    labelText: context.l.numeroDeMotor,
+                                    prefixIcon: const Icon(Icons.tag),
                                   ),
                                   keyboardType: TextInputType.number,
                                 ),
@@ -1385,24 +1389,24 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               FilledButton.tonalIcon(
                                 onPressed: _sortearMotor,
                                 icon: const Icon(Icons.casino_outlined),
-                                label: const Text('Sortear'),
+                                label: Text(context.l.sortear),
                               ),
                             ],
                           )
                         else ...[
                           SelectorBuscable<CatalogoMotore>(
-                            etiqueta: 'Motor del catálogo',
-                            titulo: 'Elegir motor',
+                            etiqueta: context.l.motorDelCatalogo,
+                            titulo: context.l.elegirMotor,
                             icono: Icons.bolt_outlined,
                             helper: reglas?.motorRefNombre != null
-                                ? '${motorSel == null ? '${reglas!.motorRefNombre} (ya no está en el catálogo) · ' : ''}'
-                                    'Ref: ${reglas!.motorRefRpm ?? "—"} RPM · ${reglas.motorRefGauss ?? "—"} gauss'
-                                : 'Motores homologados para la copa $copaEquipo',
+                                ? '${motorSel == null ? '${context.l.yaNoEnCatalogo(reglas!.motorRefNombre!)} · ' : ''}'
+                                    '${context.l.refMotor('${reglas!.motorRefRpm ?? "—"}', '${reglas.motorRefGauss ?? "—"}')}'
+                                : context.l.motoresHomologadosCopa(copaEquipo ?? ''),
                             valor: motorSel,
                             opciones: uso.ordenar('motor', motores, (m) => m.nombre),
                             etiquetaOpcion: (m) => m.nombre,
-                            subtituloOpcion: (m) =>
-                                '${m.rpm ?? "—"} RPM · ${m.gauss ?? "—"} gauss',
+                            subtituloOpcion: (m) => context.l.rpmYGauss(
+                                '${m.rpm ?? "—"}', '${m.gauss ?? "—"}'),
                             onCambio: (m) => _cambiar(
                                 () => _motor.text = m?.nombre ?? '',
                                 reglas: true),
@@ -1419,7 +1423,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                         const Icon(Icons.speed_outlined),
                                     helperText: reglas?.motorRefRpm == null
                                         ? null
-                                        : 'Máx ${reglas!.motorRefRpm}',
+                                        : context.l
+                                            .maxN('${reglas!.motorRefRpm}'),
                                     // ✓/✗ en vivo contra la referencia del
                                     // catálogo (la infracción real, si la
                                     // hay, también sale en el resumen de
@@ -1443,7 +1448,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                     labelText: 'uMs',
                                     helperText: reglas?.motorRefGauss == null
                                         ? null
-                                        : 'Máx ${reglas!.motorRefGauss}',
+                                        : context.l
+                                            .maxN('${reglas!.motorRefGauss}'),
                                     suffixIcon: _iconoCumpleMotor(
                                         context,
                                         cs,
@@ -1461,30 +1467,29 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                           ),
                         ],
                         const SizedBox(height: 12),
-                        Text('Altura de motor a pista',
+                        Text(context.l.alturaMotorAPista,
                             style: Theme.of(context).textTheme.labelLarge),
                         const SizedBox(height: 4),
                         Text(
-                          'Comprobación con la plancha: si toca la pista, no '
-                          'conforme.',
+                          context.l.alturaMotorTexto,
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 8),
                         SegmentedButton<bool?>(
-                          segments: const [
+                          segments: [
                             ButtonSegment(
                               value: null,
-                              label: Text('Sin comprobar'),
+                              label: Text(context.l.sinComprobar),
                             ),
                             ButtonSegment(
                               value: true,
-                              label: Text('Conforme'),
-                              icon: Icon(Icons.check_circle_outline),
+                              label: Text(context.l.conforme),
+                              icon: const Icon(Icons.check_circle_outline),
                             ),
                             ButtonSegment(
                               value: false,
-                              label: Text('No conforme'),
-                              icon: Icon(Icons.cancel_outlined),
+                              label: Text(context.l.noConforme),
+                              icon: const Icon(Icons.cancel_outlined),
                             ),
                           ],
                           selected: {_alturaMotorConforme},
@@ -1497,8 +1502,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _Bloque(
-                      titulo: 'Anchura de eje (mm)',
-                      info: bloques['Anchura de eje (mm)'],
+                      titulo: context.l.anchuraEjeMm,
+                      info: bloques['eje'],
                       children: [
                         Row(
                           children: [
@@ -1506,12 +1511,12 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               child: TextField(
                                 controller: _anchuraEjeDel,
                                 decoration: InputDecoration(
-                                  labelText: 'Delantero',
+                                  labelText: context.l.delantero,
                                   prefixIcon:
                                       const Icon(Icons.straighten_outlined),
                                   helperText: anchuraEjeDelMax == null
                                       ? null
-                                      : 'Máx $anchuraEjeDelMax',
+                                      : context.l.maxN('$anchuraEjeDelMax'),
                                   suffixIcon: _iconoCumpleMotor(
                                       context,
                                       cs,
@@ -1530,10 +1535,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               child: TextField(
                                 controller: _anchuraEjeTra,
                                 decoration: InputDecoration(
-                                  labelText: 'Trasero',
+                                  labelText: context.l.trasero,
                                   helperText: anchuraEjeTraMax == null
                                       ? null
-                                      : 'Máx $anchuraEjeTraMax',
+                                      : context.l.maxN('$anchuraEjeTraMax'),
                                   suffixIcon: _iconoCumpleMotor(
                                       context,
                                       cs,
@@ -1562,17 +1567,18 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                 children: [
                   Expanded(
                     child: _Bloque(
-                      titulo: 'Llanta delantera',
-                      info: bloques['Llanta delantera'],
+                      titulo: context.l.llantaDelantera,
+                      info: bloques['llantaDel'],
                       children: [
                         Row(
                           children: [
                             Expanded(
                               child: marcasSelAsync.when(
                                 loading: () => const SizedBox.shrink(),
-                                error: (e, _) => Text('Error: $e'),
+                                error: (e, _) =>
+                                    Text(context.l.errorDetalle('$e')),
                                 data: (marcas) => _MarcaSelector(
-                                  label: 'Marca',
+                                  label: context.l.marca,
                                   valor: _llantaDelMarca,
                                   marcas: uso.ordenar('llantaDelMarca', marcas.toList()..sort()),
                                   onChange: (v) =>
@@ -1585,9 +1591,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               flex: 2,
                               child: llantasDelAsync.when(
                                 loading: () => const SizedBox.shrink(),
-                                error: (e, _) => Text('Error: $e'),
+                                error: (e, _) =>
+                                    Text(context.l.errorDetalle('$e')),
                                 data: (lls) => _DimensionSelector(
-                                  label: 'Dimensión',
+                                  label: context.l.dimension,
                                   valor: _llantaDelDim,
                                   opciones: uso.ordenar('llantaDelDimension',
                                       lls.map((l) => l.dimension)),
@@ -1604,17 +1611,18 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _Bloque(
-                      titulo: 'Llanta trasera',
-                      info: bloques['Llanta trasera'],
+                      titulo: context.l.llantaTrasera,
+                      info: bloques['llantaTra'],
                       children: [
                         Row(
                           children: [
                             Expanded(
                               child: marcasSelAsync.when(
                                 loading: () => const SizedBox.shrink(),
-                                error: (e, _) => Text('Error: $e'),
+                                error: (e, _) =>
+                                    Text(context.l.errorDetalle('$e')),
                                 data: (marcas) => _MarcaSelector(
-                                  label: 'Marca',
+                                  label: context.l.marca,
                                   valor: _llantaTraMarca,
                                   marcas: uso.ordenar('llantaTraMarca', marcas.toList()..sort()),
                                   onChange: (v) =>
@@ -1627,9 +1635,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               flex: 2,
                               child: llantasTraAsync.when(
                                 loading: () => const SizedBox.shrink(),
-                                error: (e, _) => Text('Error: $e'),
+                                error: (e, _) =>
+                                    Text(context.l.errorDetalle('$e')),
                                 data: (lls) => _DimensionSelector(
-                                  label: 'Dimensión',
+                                  label: context.l.dimension,
                                   valor: _llantaTraDim,
                                   opciones: uso.ordenar('llantaTraDimension',
                                       lls.map((l) => l.dimension)),
@@ -1653,8 +1662,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                 children: [
                   Expanded(
                     child: _Bloque(
-                      titulo: 'Piñón',
-                      info: bloques['Piñón'],
+                      titulo: context.l.pinon,
+                      info: bloques['pinon'],
                       children: [
                         Row(
                           children: [
@@ -1662,9 +1671,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               flex: 3,
                               child: marcasSelAsync.when(
                                 loading: () => const SizedBox.shrink(),
-                                error: (e, _) => Text('Error: $e'),
+                                error: (e, _) =>
+                                    Text(context.l.errorDetalle('$e')),
                                 data: (marcas) => _MarcaSelector(
-                                  label: 'Marca',
+                                  label: context.l.marca,
                                   valor: _pinonMarca,
                                   marcas: uso.ordenar('pinonMarca', marcas.toList()..sort()),
                                   onChange: (v) =>
@@ -1676,7 +1686,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             Expanded(
                               flex: 2,
                               child: _DientesSelector(
-                                label: 'Dientes',
+                                label: context.l.dientes,
                                 valor: _pinonDientes,
                                 opciones: uso.ordenar(
                                     'pinonDientes', _dientesDe(pinonesAsync)),
@@ -1692,14 +1702,14 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             Expanded(
                               child: TextField(
                                 controller: _pinonDiametro,
-                                decoration: const InputDecoration(
-                                    labelText: 'Diámetro'),
+                                decoration: InputDecoration(
+                                    labelText: context.l.diametro),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: _DimensionSelector(
-                                label: 'Material',
+                                label: context.l.material,
                                 valor: _pinonMaterial,
                                 opciones: uso.ordenar('pinonMaterial', _materialesPinon),
                                 onChange: (v) =>
@@ -1714,8 +1724,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _Bloque(
-                      titulo: 'Corona',
-                      info: bloques['Corona'],
+                      titulo: context.l.corona,
+                      info: bloques['corona'],
                       children: [
                         Row(
                           children: [
@@ -1723,9 +1733,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                               flex: 3,
                               child: marcasSelAsync.when(
                                 loading: () => const SizedBox.shrink(),
-                                error: (e, _) => Text('Error: $e'),
+                                error: (e, _) =>
+                                    Text(context.l.errorDetalle('$e')),
                                 data: (marcas) => _MarcaSelector(
-                                  label: 'Marca',
+                                  label: context.l.marca,
                                   valor: _coronaMarca,
                                   marcas: uso.ordenar('coronaMarca', marcas.toList()..sort()),
                                   onChange: (v) =>
@@ -1737,7 +1748,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             Expanded(
                               flex: 2,
                               child: _DientesSelector(
-                                label: 'Dientes',
+                                label: context.l.dientes,
                                 valor: _coronaDientes,
                                 opciones: uso.ordenar(
                                     'coronaDientes', _dientesDe(coronasAsync)),
@@ -1753,14 +1764,14 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                             Expanded(
                               child: TextField(
                                 controller: _coronaDiametro,
-                                decoration: const InputDecoration(
-                                    labelText: 'Diámetro'),
+                                decoration: InputDecoration(
+                                    labelText: context.l.diametro),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: _DimensionSelector(
-                                label: 'Material',
+                                label: context.l.material,
                                 valor: _coronaMaterial,
                                 opciones: uso.ordenar('coronaMaterial', _materialesCorona),
                                 onChange: (v) =>
@@ -1782,14 +1793,15 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                 children: [
                   Expanded(
                     child: _Bloque(
-                      titulo: 'Bancada',
-                      info: bloques['Bancada'],
+                      titulo: context.l.bancada,
+                      info: bloques['bancada'],
                       children: [
                         bancadasFiltAsync.when(
                           loading: () => const SizedBox.shrink(),
-                          error: (e, _) => Text('Error: $e'),
+                          error: (e, _) =>
+                              Text(context.l.errorDetalle('$e')),
                           data: (bs) => _DimensionSelector(
-                            label: 'Bancada',
+                            label: context.l.bancada,
                             valor: _bancada,
                             opciones: uso.ordenar('bancada', bs.map((b) => b.nombre)),
                             onChange: (v) => _cambiar(() => _bancada = v),
@@ -1801,17 +1813,18 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _Bloque(
-                      titulo: 'Chasis',
-                      info: bloques['Chasis'],
+                      titulo: context.l.chasis,
+                      info: bloques['chasis'],
                       children: [
                         Consumer(builder: (context, ref, _) {
                           // Chasis sin copa: siempre la lista completa.
                           final chasisAsync = ref.watch(chasisProvider);
                           return chasisAsync.when(
                             loading: () => const SizedBox.shrink(),
-                            error: (e, _) => Text('Error: $e'),
+                            error: (e, _) =>
+                                Text(context.l.errorDetalle('$e')),
                             data: (cs) => _DimensionSelector(
-                              label: 'Chasis',
+                              label: context.l.chasis,
                               valor: _chasis,
                               opciones: uso.ordenar('chasis', cs.map((c) => c.nombre)),
                               onChange: (v) => _cambiar(() => _chasis = v),
@@ -1827,17 +1840,17 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
 
               // 5) Peso coche entero
               _Bloque(
-                titulo: 'Peso coche entero (gramos)',
-                info: bloques['Peso coche entero (gramos)'],
+                titulo: context.l.pesoCocheEntero,
+                info: bloques['pesoCoche'],
                 children: [
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
                         controller: _pesoIniCoche,
-                        decoration: const InputDecoration(
-                          labelText: 'Inicial',
-                          helperText: 'Coche entero',
+                        decoration: InputDecoration(
+                          labelText: context.l.inicial,
+                          helperText: context.l.cocheEntero,
                         ),
                         keyboardType:
                             const TextInputType.numberWithOptions(decimal: true),
@@ -1847,7 +1860,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                     Expanded(
                       child: TextField(
                         controller: _pesoFinCoche,
-                        decoration: const InputDecoration(labelText: 'Final'),
+                        decoration:
+                            InputDecoration(labelText: context.l.etiquetaFinal),
                         keyboardType:
                             const TextInputType.numberWithOptions(decimal: true),
                       ),
@@ -1860,17 +1874,18 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
 
               // 6) Otros: neumático + trencilla + suspensión (campos menores)
               _Bloque(
-                titulo: 'Otros',
-                info: bloques['Otros'],
+                titulo: context.l.otros,
+                info: bloques['otros'],
                 children: [
                 Row(
                   children: [
                     Expanded(
                       child: neumaticosAsync.when(
                         loading: () => const SizedBox.shrink(),
-                        error: (e, _) => Text('Error: $e'),
+                        error: (e, _) =>
+                            Text(context.l.errorDetalle('$e')),
                         data: (ns) => _DimensionSelector(
-                          label: 'Neumático',
+                          label: context.l.neumatico,
                           valor: _neumatico,
                           opciones: uso.ordenar('neumatico', ns.map((n) => n.nombre)),
                           onChange: (v) => _cambiar(() => _neumatico = v),
@@ -1881,9 +1896,10 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                     Expanded(
                       child: marcasSelAsync.when(
                         loading: () => const SizedBox.shrink(),
-                        error: (e, _) => Text('Error: $e'),
+                        error: (e, _) =>
+                            Text(context.l.errorDetalle('$e')),
                         data: (marcas) => _DimensionSelector(
-                          label: 'Trencilla',
+                          label: context.l.trencilla,
                           valor: _trencilla,
                           opciones: uso.ordenar('trencilla', marcas.toList()..sort()),
                           onChange: (v) => _cambiar(() => _trencilla = v),
@@ -1894,8 +1910,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                     Expanded(
                       child: TextField(
                         controller: _suspension,
-                        decoration:
-                            const InputDecoration(labelText: 'Suspensión'),
+                        decoration: InputDecoration(
+                            labelText: context.l.suspension),
                       ),
                     ),
                   ],
@@ -1906,13 +1922,13 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
 
               // 7) Observaciones
               _Bloque(
-                titulo: 'Observaciones',
-                info: bloques['Observaciones'],
+                titulo: context.l.observaciones,
+                info: bloques['observaciones'],
                 children: [
                 TextField(
                   controller: _observaciones,
-                  decoration: const InputDecoration(
-                    labelText: 'Notas o avisos',
+                  decoration: InputDecoration(
+                    labelText: context.l.notasOAvisos,
                     alignLabelWithHint: true,
                   ),
                   minLines: 2,
@@ -1924,8 +1940,8 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
 
               // 8) Fotos
               _Bloque(
-                titulo: 'Fotos (hasta 4)',
-                info: bloques['Fotos (hasta 4)'],
+                titulo: context.l.fotosHasta4,
+                info: bloques['fotos'],
                 children: [
                 _GridFotos(
                   fotos: _fotos,
@@ -1940,10 +1956,9 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
               CheckboxListTile(
                 value: _validada,
                 onChanged: (v) => setState(() => _validada = v ?? false),
-                title: const Text('Marcar como validada',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: const Text(
-                    'Indica que la verificación está revisada y aprobada.'),
+                title: Text(context.l.marcarComoValidada,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text(context.l.marcarComoValidadaTexto),
                 controlAffinity: ListTileControlAffinity.leading,
               ),
               const SizedBox(height: 8),
@@ -1953,7 +1968,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                       size: 18, color: cs.outline),
                   const SizedBox(width: 6),
                   Text(
-                    'Se guarda solo como borrador con cada cambio.',
+                    context.l.autoguardadoTexto,
                     style: TextStyle(color: cs.outline, fontSize: 13),
                   ),
                 ],
@@ -1970,13 +1985,13 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                           width: 18, height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.check),
-                  label: const Text('Validar'),
+                  label: Text(context.l.validar),
                 ),
               ),
               if (res.hayInfracciones) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'No puedes validar mientras haya infracciones marcadas en rojo arriba.',
+                  context.l.noPuedesValidar,
                   style: TextStyle(color: cs.error, fontSize: 13),
                 ),
               ],
@@ -2023,7 +2038,7 @@ class _FotoCocheReferencia extends StatelessWidget {
                         size: 16, color: cs.outline),
                     const SizedBox(width: 6),
                     Text(
-                      'Foto de referencia del catálogo: comprueba que coincide.',
+                      context.l.fotoReferenciaTexto,
                       style: TextStyle(color: cs.outline, fontSize: 12),
                     ),
                   ],
@@ -2055,8 +2070,7 @@ class _SinFotoCoche extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Este coche no tiene foto en el catálogo. Añádela en '
-                'Catálogos → Coches para poder comparar el modelo entregado.',
+                context.l.sinFotoCocheTexto,
                 style: TextStyle(color: cs.outline, fontSize: 12),
               ),
             ),
@@ -2078,12 +2092,15 @@ class _IndicadorGuardado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = context.l;
     final (IconData? icono, String texto, Color color) = switch (estado) {
       _EstadoAuto.idle => (null, '', cs.outline),
-      _EstadoAuto.pendiente => (Icons.edit_outlined, 'Sin guardar…', cs.outline),
-      _EstadoAuto.guardando => (null, 'Guardando…', cs.outline),
-      _EstadoAuto.guardado => (Icons.cloud_done_outlined, 'Guardado', cs.primary),
-      _EstadoAuto.error => (Icons.error_outline, 'Error', cs.error),
+      _EstadoAuto.pendiente =>
+        (Icons.edit_outlined, l.sinGuardar, cs.outline),
+      _EstadoAuto.guardando => (null, l.guardando, cs.outline),
+      _EstadoAuto.guardado =>
+        (Icons.cloud_done_outlined, l.guardado, cs.primary),
+      _EstadoAuto.error => (Icons.error_outline, l.errorCorto, cs.error),
     };
     if (estado == _EstadoAuto.idle) return const SizedBox.shrink();
     return Padding(
@@ -2140,8 +2157,8 @@ class _AvisoBloqueo extends StatelessWidget {
             Expanded(
               child: Text(
                 soloLectura
-                    ? '$motivo Verificación en solo lectura.'
-                    : '$motivo Desbloqueada: los cambios se guardan.',
+                    ? context.l.soloLecturaTexto(motivo)
+                    : context.l.desbloqueadaTexto(motivo),
                 style: TextStyle(color: texto),
               ),
             ),
@@ -2149,7 +2166,7 @@ class _AvisoBloqueo extends StatelessWidget {
               TextButton.icon(
                 onPressed: onDesbloquear,
                 icon: const Icon(Icons.lock_open_outlined),
-                label: const Text('Desbloquear'),
+                label: Text(context.l.desbloquear),
               ),
           ],
         ),
@@ -2190,8 +2207,9 @@ class _AvisoReglamento extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Reglamento congelado${fecha == null ? '' : ' el $fecha'}: '
-                    'se comprueba con los valores de cuando se verificó.',
+                    fecha == null
+                        ? context.l.reglamentoCongeladoSinFecha
+                        : context.l.reglamentoCongelado(fecha),
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -2199,7 +2217,7 @@ class _AvisoReglamento extends StatelessWidget {
             ),
             if (diferencias.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text('Ha cambiado desde entonces (no se aplica):',
+              Text(context.l.haCambiadoDesdeEntonces,
                   style: TextStyle(color: cs.outline, fontSize: 13)),
               const SizedBox(height: 4),
               for (final d in diferencias)
@@ -2211,7 +2229,7 @@ class _AvisoReglamento extends StatelessWidget {
                   child: TextButton.icon(
                     onPressed: onUsarActual,
                     icon: const Icon(Icons.update),
-                    label: const Text('Usar el reglamento actual'),
+                    label: Text(context.l.usarReglamentoActual),
                   ),
                 ),
               ],
@@ -2241,8 +2259,8 @@ class _Resumen extends StatelessWidget {
             children: [
               Icon(Icons.check_circle, color: context.estado.exito),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Text('Todo cumple las normas. Puedes validar.'),
+              Expanded(
+                child: Text(context.l.todoCumple),
               ),
             ],
           ),
@@ -2271,8 +2289,8 @@ class _Resumen extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   resultado.hayInfracciones
-                      ? 'Infracciones: ${resultado.numInfracciones}'
-                      : 'Avisos: ${resultado.numAvisos}',
+                      ? context.l.infraccionesN(resultado.numInfracciones)
+                      : context.l.avisosN(resultado.numAvisos),
                   style: TextStyle(
                       color: colorTexto, fontWeight: FontWeight.w700),
                 ),
@@ -2295,7 +2313,7 @@ class _Resumen extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Text(h.mensaje,
+                        child: Text(textoHallazgo(context.l, h),
                             style: TextStyle(color: colorTexto, fontSize: 13)),
                       ),
                     ],
@@ -2327,6 +2345,55 @@ Widget? _iconoCumpleMotor(
 // ----- Mini-componentes reutilizables -----
 
 enum _EstadoBloque { neutro, pendiente, hecho, infraccion }
+
+/// Nombre visible de un bloque de la verificación (las claves de `bloques`
+/// son estables y no dependen del idioma).
+String _etiquetaBloque(Textos l, String id) => switch (id) {
+      'coche' => l.coche,
+      'peso' => l.pesoGramos,
+      'estetica' => l.estetica,
+      'motor' => l.motor,
+      'eje' => l.anchuraEjeMm,
+      'llantaDel' => l.llantaDelantera,
+      'llantaTra' => l.llantaTrasera,
+      'pinon' => l.pinon,
+      'corona' => l.corona,
+      'bancada' => l.bancada,
+      'chasis' => l.chasis,
+      'pesoCoche' => l.pesoCocheEntero,
+      'otros' => l.otros,
+      'observaciones' => l.observaciones,
+      'fotos' => l.fotosHasta4,
+      _ => id,
+    };
+
+/// Texto de un hallazgo del validador, en el idioma de la app.
+String textoHallazgo(Textos l, HallazgoValidacion h) => switch (h.codigo) {
+      'pesoInicialBajo' => l.vPesoInicialBajo(
+          '${h.datos['valor']}', '${h.datos['minimo']}'),
+      'pesoFinalBajo' => l.vPesoFinalBajo(
+          '${h.datos['valor']}', '${h.datos['minimo']}'),
+      'motorSinCatalogo' => l.vMotorSinCatalogo,
+      'motorRpmAlto' => l.vMotorRpmAlto('${h.datos['motor']}',
+          '${h.datos['max']}', '${h.datos['medido']}'),
+      'motorUmsAlto' => l.vMotorUmsAlto('${h.datos['motor']}',
+          '${h.datos['max']}', '${h.datos['medido']}'),
+      'alturaNoConforme' => l.vAlturaNoConforme,
+      'ejeDelAncho' =>
+        l.vEjeDelAncho('${h.datos['medido']}', '${h.datos['max']}'),
+      'ejeTraAncho' =>
+        l.vEjeTraAncho('${h.datos['medido']}', '${h.datos['max']}'),
+      'marcaNoPermitidaLista' =>
+        l.vMarcaNoPermitidaLista('${h.datos['marca']}', '${h.datos['lista']}'),
+      'marcaFueraCatalogo' => l.vMarcaFueraCatalogo('${h.datos['marca']}'),
+      'llantaDelNoCatalogada' => l.vLlantaDelNoCatalogada('${h.datos['valor']}'),
+      'llantaTraNoCatalogada' => l.vLlantaTraNoCatalogada('${h.datos['valor']}'),
+      'bancadaNoCatalogada' => l.vBancadaNoCatalogada('${h.datos['valor']}'),
+      'neumaticoNoCatalogado' => l.vNeumaticoNoCatalogado('${h.datos['valor']}'),
+      'balanceNegativo' => l.vBalanceNegativo('${h.datos['equipo']}',
+          '${h.datos['coche']}', '${h.datos['balance']}'),
+      _ => h.codigo,
+    };
 
 /// Lo que lleva rellenado un bloque de la verificación y si tiene algún
 /// dato fuera de reglamento.
@@ -2373,14 +2440,13 @@ class _PagoEnVerificacion extends ConsumerWidget {
     final eur = NumberFormat.currency(locale: 'es_ES', symbol: '€');
     return ref.watch(pagosPruebaProvider(pruebaId)).when(
           loading: () => const LinearProgressIndicator(),
-          error: (e, _) => Text('Error: $e'),
+          error: (e, _) => Text(context.l.errorDetalle('$e')),
           data: (lista) {
             final pago =
                 lista.where((p) => p.equipoId == equipoId).firstOrNull;
             if (pago == null) {
               return Text(
-                'El equipo no está inscrito en la prueba: inscríbelo para '
-                'poder cobrarle.',
+                context.l.equipoNoInscritoPrueba,
                 style: TextStyle(
                     color: Theme.of(context).colorScheme.outline),
               );
@@ -2418,10 +2484,12 @@ class _Bloque extends StatelessWidget {
       _EstadoBloque.pendiente => (
           ambar,
           Icons.radio_button_unchecked,
-          'Pendiente ${info!.hechos}/${info!.total}',
+          context.l.pendienteHechosDeTotal(info!.hechos, info!.total),
         ),
-      _EstadoBloque.hecho => (verde, Icons.check_circle, 'Hecho'),
-      _EstadoBloque.infraccion => (cs.error, Icons.error, 'Revisar'),
+      _EstadoBloque.hecho =>
+        (verde, Icons.check_circle, context.l.hecho),
+      _EstadoBloque.infraccion =>
+        (cs.error, Icons.error, context.l.revisar),
       _EstadoBloque.neutro => (cs.outlineVariant, null, null),
     };
     final fondo = estado == _EstadoBloque.neutro
@@ -2488,7 +2556,7 @@ class _ProgresoBloques extends StatelessWidget {
         cuentan.where((e) => e.value.estado == _EstadoBloque.hecho).length;
     final faltan = cuentan
         .where((e) => e.value.estado == _EstadoBloque.pendiente)
-        .map((e) => e.key.replaceAll(RegExp(r' \(.*\)'), ''))
+        .map((e) => _etiquetaBloque(context.l, e.key))
         .toList();
     final completo = cuentan.isNotEmpty && faltan.isEmpty;
     final color = completo ? context.estado.exito : context.estado.aviso;
@@ -2497,7 +2565,8 @@ class _ProgresoBloques extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text('Bloques completos: $hechos de ${cuentan.length}',
+            Text(
+                context.l.bloquesCompletos(hechos, cuentan.length),
                 style: const TextStyle(fontWeight: FontWeight.w700)),
           ],
         ),
@@ -2513,7 +2582,7 @@ class _ProgresoBloques extends StatelessWidget {
         ),
         if (faltan.isNotEmpty) ...[
           const SizedBox(height: 6),
-          Text('Falta: ${faltan.join(' · ')}',
+          Text(context.l.faltaLista(faltan.join(' · ')),
               style: TextStyle(color: cs.outline, fontSize: 13)),
         ],
       ],
@@ -2561,10 +2630,11 @@ class _MarcaSelector extends StatelessWidget {
       isExpanded: true,
       decoration: InputDecoration(labelText: label),
       items: [
-        const DropdownMenuItem(value: null, child: Text('— sin asignar —')),
+        DropdownMenuItem(
+            value: null, child: Text(context.l.sinAsignarGuiones)),
         if (desconocido)
           DropdownMenuItem(
-              value: valor, child: Text('$valor (fuera de la lista)')),
+              value: valor, child: Text(context.l.fueraDeLaLista(valor!))),
         ...lista.map((m) => DropdownMenuItem(value: m, child: Text(m))),
       ],
       onChanged: onChange,
@@ -2602,7 +2672,8 @@ class _DientesSelector extends StatelessWidget {
       items: [
         const DropdownMenuItem(value: null, child: Text('—')),
         if (desconocido)
-          DropdownMenuItem(value: valor, child: Text('$valor (no catalogado)')),
+          DropdownMenuItem(
+              value: valor, child: Text(context.l.noCatalogado('$valor'))),
         ...lista.map((d) => DropdownMenuItem(value: d, child: Text('$d'))),
       ],
       onChanged: onChange,
@@ -2637,10 +2708,11 @@ class _DimensionSelector extends StatelessWidget {
       isExpanded: true,
       decoration: InputDecoration(labelText: label),
       items: [
-        const DropdownMenuItem(value: null, child: Text('— sin asignar —')),
+        DropdownMenuItem(
+            value: null, child: Text(context.l.sinAsignarGuiones)),
         if (desconocido)
           DropdownMenuItem(
-              value: valor, child: Text('$valor (no catalogado)')),
+              value: valor, child: Text(context.l.noCatalogado(valor!))),
         ...lista.map((o) => DropdownMenuItem(value: o, child: Text(o))),
       ],
       onChanged: onChange,
@@ -2713,7 +2785,7 @@ class _BloqueEquipoCreditos extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '$total créditos',
+                    context.l.nCreditos(total),
                     style: TextStyle(
                       color: cs.primaryContainer,
                       fontWeight: FontWeight.w800,
@@ -2755,11 +2827,10 @@ class _BloqueEquipoCreditos extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Con este coche '
-                      '(${valor > 0 ? '+' : ''}$valor créd): '
+                      '${context.l.conEsteCoche('${valor > 0 ? '+' : ''}$valor')} '
                       '${piloto1.nombre} $creditosP1→${creditosP1 + reparto.delta1}'
                       '${piloto2 == null ? '' : ' · ${piloto2!.nombre} $creditosP2→${creditosP2 + reparto.delta2}'}'
-                      ' · Total $total→${total + reparto.delta1 + reparto.delta2}',
+                      ' · ${context.l.total} $total→${total + reparto.delta1 + reparto.delta2}',
                       style: TextStyle(
                         color: cs.onPrimaryContainer,
                         fontWeight: FontWeight.w600,
@@ -2773,7 +2844,7 @@ class _BloqueEquipoCreditos extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
-                    '⚠ No tienen créditos suficientes para cubrir el coche.',
+                    context.l.sinCreditosSuficientes,
                     style: TextStyle(
                       color: cs.onPrimaryContainer,
                       fontWeight: FontWeight.w700,
@@ -2812,7 +2883,7 @@ class _FilaPiloto extends StatelessWidget {
           ),
         ),
         Text(
-          '$creditos créd',
+          '$creditos ${context.l.creditosAbrev}',
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.w700,
@@ -2945,12 +3016,12 @@ class _SlotAnadir extends StatelessWidget {
                 children: [
                   ListTile(
                     leading: const Icon(Icons.camera_alt_outlined),
-                    title: const Text('Hacer foto'),
+                    title: Text(context.l.hacerFoto),
                     onTap: () => Navigator.pop(context, 'camara'),
                   ),
                   ListTile(
                     leading: const Icon(Icons.photo_library_outlined),
-                    title: const Text('Elegir de galería'),
+                    title: Text(context.l.elegirDeGaleria),
                     onTap: () => Navigator.pop(context, 'galeria'),
                   ),
                 ],
@@ -2966,7 +3037,7 @@ class _SlotAnadir extends StatelessWidget {
             Icon(Icons.add_a_photo_outlined,
                 size: 32, color: cs.onPrimaryContainer),
             const SizedBox(height: 4),
-            Text('Añadir',
+            Text(context.l.anadir,
                 style: TextStyle(
                     color: cs.onPrimaryContainer,
                     fontWeight: FontWeight.w700)),

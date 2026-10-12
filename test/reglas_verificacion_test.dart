@@ -138,7 +138,7 @@ void main() {
   test('motivoBloqueo: campeonato finalizado o prueba terminada', () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     final e = await _escenario(db);
-    Future<String?> motivo() async {
+    Future<MotivoBloqueo?> motivo() async {
       final c = await (db.select(db.campeonatos)
             ..where((t) => t.id.equals(e.camp)))
           .getSingle();
@@ -151,10 +151,10 @@ void main() {
     expect(await motivo(), isNull);
     await (db.update(db.pruebas)..where((t) => t.id.equals(e.prueba)))
         .write(const PruebasCompanion(estado: Value('TERMINADA')));
-    expect(await motivo(), contains('prueba'));
+    expect(await motivo(), MotivoBloqueo.pruebaTerminada);
     await (db.update(db.campeonatos)..where((t) => t.id.equals(e.camp)))
         .write(const CampeonatosCompanion(finalizado: Value(true)));
-    expect(await motivo(), contains('campeonato'));
+    expect(await motivo(), MotivoBloqueo.campeonatoFinalizado);
     await db.close();
   });
 

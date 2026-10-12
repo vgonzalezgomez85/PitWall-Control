@@ -2418,6 +2418,1728 @@ abstract class Textos {
   /// In es, this message translates to:
   /// **'Copa: {copa}'**
   String copaDosPuntos(String copa);
+
+  /// No description provided for @aunNoHayEquiposEnEstaTanda.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay equipos en esta tanda'**
+  String get aunNoHayEquiposEnEstaTanda;
+
+  /// No description provided for @inscribeEquiposVerificacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Inscribe equipos en la tanda para poder hacerles la verificación.'**
+  String get inscribeEquiposVerificacion;
+
+  /// No description provided for @nConVerificacion.
+  ///
+  /// In es, this message translates to:
+  /// **'{n} con verificación'**
+  String nConVerificacion(int n);
+
+  /// No description provided for @nValidadas.
+  ///
+  /// In es, this message translates to:
+  /// **'{n} validadas'**
+  String nValidadas(int n);
+
+  /// No description provided for @quitarParticipante.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar participante'**
+  String get quitarParticipante;
+
+  /// No description provided for @quitarConVerificacionTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Se quitará \"{nombre}\" y se borrará su verificación. ¿Continuar?'**
+  String quitarConVerificacionTexto(String nombre);
+
+  /// No description provided for @quitarSinVerificacionTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Se quitará \"{nombre}\". ¿Continuar?'**
+  String quitarSinVerificacionTexto(String nombre);
+
+  /// No description provided for @validada.
+  ///
+  /// In es, this message translates to:
+  /// **'Validada'**
+  String get validada;
+
+  /// No description provided for @borrador.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrador'**
+  String get borrador;
+
+  /// No description provided for @enRevision.
+  ///
+  /// In es, this message translates to:
+  /// **'En revisión'**
+  String get enRevision;
+
+  /// No description provided for @pendiente.
+  ///
+  /// In es, this message translates to:
+  /// **'Pendiente'**
+  String get pendiente;
+
+  /// No description provided for @sinCocheAsignado.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin coche asignado'**
+  String get sinCocheAsignado;
+
+  /// No description provided for @sesionCerrada.
+  ///
+  /// In es, this message translates to:
+  /// **'La sesión está cerrada.'**
+  String get sesionCerrada;
+
+  /// No description provided for @campeonatoFinalizado.
+  ///
+  /// In es, this message translates to:
+  /// **'El campeonato está finalizado.'**
+  String get campeonatoFinalizado;
+
+  /// No description provided for @pruebaTerminada.
+  ///
+  /// In es, this message translates to:
+  /// **'La prueba está terminada.'**
+  String get pruebaTerminada;
+
+  /// No description provided for @exportar.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar'**
+  String get exportar;
+
+  /// No description provided for @exportarPdf.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar a PDF'**
+  String get exportarPdf;
+
+  /// No description provided for @exportarExcel.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar a Excel'**
+  String get exportarExcel;
+
+  /// No description provided for @noHayPruebasEnCampeonato.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay pruebas en este campeonato.'**
+  String get noHayPruebasEnCampeonato;
+
+  /// No description provided for @noHayInscritosNiVerificaciones.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay inscritos ni verificaciones en esta prueba.'**
+  String get noHayInscritosNiVerificaciones;
+
+  /// No description provided for @buscarPilotoEquipoCopa.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar piloto, equipo, copa…'**
+  String get buscarPilotoEquipoCopa;
+
+  /// No description provided for @filtroTodos.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos ({n})'**
+  String filtroTodos(int n);
+
+  /// No description provided for @filtroConInfraccion.
+  ///
+  /// In es, this message translates to:
+  /// **'Con infracción ({n})'**
+  String filtroConInfraccion(int n);
+
+  /// No description provided for @filtroSinVerificar.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin verificar ({n})'**
+  String filtroSinVerificar(int n);
+
+  /// No description provided for @filtroBorrador.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrador ({n})'**
+  String filtroBorrador(int n);
+
+  /// No description provided for @validadasDeTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'{validadas} validadas de {total}'**
+  String validadasDeTotal(int validadas, int total);
+
+  /// No description provided for @nadaConEsteFiltro.
+  ///
+  /// In es, this message translates to:
+  /// **'Nada que mostrar con este filtro.'**
+  String get nadaConEsteFiltro;
+
+  /// No description provided for @colPilotoEquipo.
+  ///
+  /// In es, this message translates to:
+  /// **'Piloto / equipo'**
+  String get colPilotoEquipo;
+
+  /// No description provided for @fueraDeReglamento.
+  ///
+  /// In es, this message translates to:
+  /// **'Fuera de reglamento'**
+  String get fueraDeReglamento;
+
+  /// No description provided for @copa.
+  ///
+  /// In es, this message translates to:
+  /// **'Copa'**
+  String get copa;
+
+  /// No description provided for @coche.
+  ///
+  /// In es, this message translates to:
+  /// **'Coche'**
+  String get coche;
+
+  /// No description provided for @colPesoCarroc.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso carroc.'**
+  String get colPesoCarroc;
+
+  /// No description provided for @colPesoMin.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso mín.'**
+  String get colPesoMin;
+
+  /// No description provided for @colPesoCoche.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso coche'**
+  String get colPesoCoche;
+
+  /// No description provided for @motor.
+  ///
+  /// In es, this message translates to:
+  /// **'Motor'**
+  String get motor;
+
+  /// No description provided for @alturaMotor.
+  ///
+  /// In es, this message translates to:
+  /// **'Altura motor'**
+  String get alturaMotor;
+
+  /// No description provided for @colEjeDel.
+  ///
+  /// In es, this message translates to:
+  /// **'Eje del.'**
+  String get colEjeDel;
+
+  /// No description provided for @colEjeTras.
+  ///
+  /// In es, this message translates to:
+  /// **'Eje tras.'**
+  String get colEjeTras;
+
+  /// No description provided for @pinon.
+  ///
+  /// In es, this message translates to:
+  /// **'Piñón'**
+  String get pinon;
+
+  /// No description provided for @corona.
+  ///
+  /// In es, this message translates to:
+  /// **'Corona'**
+  String get corona;
+
+  /// No description provided for @llantaDelantera.
+  ///
+  /// In es, this message translates to:
+  /// **'Llanta delantera'**
+  String get llantaDelantera;
+
+  /// No description provided for @llantaTrasera.
+  ///
+  /// In es, this message translates to:
+  /// **'Llanta trasera'**
+  String get llantaTrasera;
+
+  /// No description provided for @trencilla.
+  ///
+  /// In es, this message translates to:
+  /// **'Trencilla'**
+  String get trencilla;
+
+  /// No description provided for @suspension.
+  ///
+  /// In es, this message translates to:
+  /// **'Suspensión'**
+  String get suspension;
+
+  /// No description provided for @bancada.
+  ///
+  /// In es, this message translates to:
+  /// **'Bancada'**
+  String get bancada;
+
+  /// No description provided for @chasis.
+  ///
+  /// In es, this message translates to:
+  /// **'Chasis'**
+  String get chasis;
+
+  /// No description provided for @neumatico.
+  ///
+  /// In es, this message translates to:
+  /// **'Neumático'**
+  String get neumatico;
+
+  /// No description provided for @carroceria.
+  ///
+  /// In es, this message translates to:
+  /// **'Carrocería'**
+  String get carroceria;
+
+  /// No description provided for @observaciones.
+  ///
+  /// In es, this message translates to:
+  /// **'Observaciones'**
+  String get observaciones;
+
+  /// No description provided for @sinVerificar.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin verificar'**
+  String get sinVerificar;
+
+  /// No description provided for @propio.
+  ///
+  /// In es, this message translates to:
+  /// **'Propio'**
+  String get propio;
+
+  /// No description provided for @orgNumero.
+  ///
+  /// In es, this message translates to:
+  /// **'Org. nº {n}'**
+  String orgNumero(String n);
+
+  /// No description provided for @conforme.
+  ///
+  /// In es, this message translates to:
+  /// **'Conforme'**
+  String get conforme;
+
+  /// No description provided for @noConforme.
+  ///
+  /// In es, this message translates to:
+  /// **'No conforme'**
+  String get noConforme;
+
+  /// No description provided for @toca.
+  ///
+  /// In es, this message translates to:
+  /// **'Toca'**
+  String get toca;
+
+  /// No description provided for @bien.
+  ///
+  /// In es, this message translates to:
+  /// **'Bien'**
+  String get bien;
+
+  /// No description provided for @faltanPiezas.
+  ///
+  /// In es, this message translates to:
+  /// **'Faltan piezas'**
+  String get faltanPiezas;
+
+  /// No description provided for @faltanPiezasDetalle.
+  ///
+  /// In es, this message translates to:
+  /// **'Faltan: {piezas}'**
+  String faltanPiezasDetalle(String piezas);
+
+  /// No description provided for @marcaNoPermitida.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca \"{marca}\" no permitida'**
+  String marcaNoPermitida(String marca);
+
+  /// No description provided for @superaMaximoMm.
+  ///
+  /// In es, this message translates to:
+  /// **'Supera el máximo de {maximo} mm'**
+  String superaMaximoMm(String maximo);
+
+  /// No description provided for @porDebajoMinimoG.
+  ///
+  /// In es, this message translates to:
+  /// **'Por debajo del mínimo de {minimo} g'**
+  String porDebajoMinimoG(String minimo);
+
+  /// No description provided for @alturaMotorNoConforme.
+  ///
+  /// In es, this message translates to:
+  /// **'Altura de motor no conforme'**
+  String get alturaMotorNoConforme;
+
+  /// No description provided for @leFaltanPiezas.
+  ///
+  /// In es, this message translates to:
+  /// **'Le faltan piezas'**
+  String get leFaltanPiezas;
+
+  /// No description provided for @vPesoInicialBajo.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso inicial {valor}g por debajo del mínimo {minimo}g.'**
+  String vPesoInicialBajo(String valor, String minimo);
+
+  /// No description provided for @vPesoFinalBajo.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso final {valor}g por debajo del mínimo {minimo}g.'**
+  String vPesoFinalBajo(String valor, String minimo);
+
+  /// No description provided for @vMotorSinCatalogo.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona el motor del catálogo para comprobar las medidas.'**
+  String get vMotorSinCatalogo;
+
+  /// No description provided for @vMotorRpmAlto.
+  ///
+  /// In es, this message translates to:
+  /// **'RPM por encima de la referencia del {motor} (máx {max}, medidas {medido}).'**
+  String vMotorRpmAlto(String motor, String max, String medido);
+
+  /// No description provided for @vMotorUmsAlto.
+  ///
+  /// In es, this message translates to:
+  /// **'Imán por encima de la referencia del {motor} (máx {max}, medido {medido}).'**
+  String vMotorUmsAlto(String motor, String max, String medido);
+
+  /// No description provided for @vAlturaNoConforme.
+  ///
+  /// In es, this message translates to:
+  /// **'Altura de motor no conforme: toca la pista.'**
+  String get vAlturaNoConforme;
+
+  /// No description provided for @vEjeDelAncho.
+  ///
+  /// In es, this message translates to:
+  /// **'Anchura de eje delantero {medido} mm por encima del máximo {max} mm.'**
+  String vEjeDelAncho(String medido, String max);
+
+  /// No description provided for @vEjeTraAncho.
+  ///
+  /// In es, this message translates to:
+  /// **'Anchura de eje trasero {medido} mm por encima del máximo {max} mm.'**
+  String vEjeTraAncho(String medido, String max);
+
+  /// No description provided for @vMarcaNoPermitidaLista.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca \"{marca}\" no permitida (solo {lista}).'**
+  String vMarcaNoPermitidaLista(String marca, String lista);
+
+  /// No description provided for @vMarcaFueraCatalogo.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca \"{marca}\" no está en el catálogo.'**
+  String vMarcaFueraCatalogo(String marca);
+
+  /// No description provided for @vLlantaDelNoCatalogada.
+  ///
+  /// In es, this message translates to:
+  /// **'Llanta delantera no catalogada: \"{valor}\".'**
+  String vLlantaDelNoCatalogada(String valor);
+
+  /// No description provided for @vLlantaTraNoCatalogada.
+  ///
+  /// In es, this message translates to:
+  /// **'Llanta trasera no catalogada: \"{valor}\".'**
+  String vLlantaTraNoCatalogada(String valor);
+
+  /// No description provided for @vBancadaNoCatalogada.
+  ///
+  /// In es, this message translates to:
+  /// **'Bancada no catalogada: \"{valor}\".'**
+  String vBancadaNoCatalogada(String valor);
+
+  /// No description provided for @vNeumaticoNoCatalogado.
+  ///
+  /// In es, this message translates to:
+  /// **'Neumático no catalogado: \"{valor}\".'**
+  String vNeumaticoNoCatalogado(String valor);
+
+  /// No description provided for @vBalanceNegativo.
+  ///
+  /// In es, this message translates to:
+  /// **'Balance de créditos negativo: equipo {equipo} + coche {coche} = {balance}.'**
+  String vBalanceNegativo(String equipo, String coche, String balance);
+
+  /// No description provided for @noSePudoGenerarExcel.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo generar el Excel.'**
+  String get noSePudoGenerarExcel;
+
+  /// No description provided for @buscarPuntos.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar…'**
+  String get buscarPuntos;
+
+  /// No description provided for @sinResultadosPara.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin resultados para \"{filtro}\"'**
+  String sinResultadosPara(String filtro);
+
+  /// No description provided for @sinAsignarGuiones.
+  ///
+  /// In es, this message translates to:
+  /// **'— sin asignar —'**
+  String get sinAsignarGuiones;
+
+  /// No description provided for @sorteoEtiqueta.
+  ///
+  /// In es, this message translates to:
+  /// **'Sorteo'**
+  String get sorteoEtiqueta;
+
+  /// No description provided for @mixto.
+  ///
+  /// In es, this message translates to:
+  /// **'Mixto'**
+  String get mixto;
+
+  /// No description provided for @limitarFabricante.
+  ///
+  /// In es, this message translates to:
+  /// **'Limitar fabricante'**
+  String get limitarFabricante;
+
+  /// No description provided for @noCatalogada.
+  ///
+  /// In es, this message translates to:
+  /// **'{nombre} (no catalogada)'**
+  String noCatalogada(String nombre);
+
+  /// No description provided for @imagenNoSePuedeLeer.
+  ///
+  /// In es, this message translates to:
+  /// **'No se puede leer esa imagen. Usa un PNG o JPG.'**
+  String get imagenNoSePuedeLeer;
+
+  /// No description provided for @noSePudoAnadirLogo.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo añadir el logo: {detalle}'**
+  String noSePudoAnadirLogo(String detalle);
+
+  /// No description provided for @elegirLogo.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir logo'**
+  String get elegirLogo;
+
+  /// No description provided for @cambiarLogo.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar logo'**
+  String get cambiarLogo;
+
+  /// No description provided for @repartir.
+  ///
+  /// In es, this message translates to:
+  /// **'Repartir'**
+  String get repartir;
+
+  /// No description provided for @configuraRangoSesion.
+  ///
+  /// In es, this message translates to:
+  /// **'Configura el rango de motores en el reglamento de la sesión para sortear.'**
+  String get configuraRangoSesion;
+
+  /// No description provided for @configuraRangoCampeonato.
+  ///
+  /// In es, this message translates to:
+  /// **'Configura el rango de motores en el campeonato para sortear.'**
+  String get configuraRangoCampeonato;
+
+  /// No description provided for @sorteoDeMotor.
+  ///
+  /// In es, this message translates to:
+  /// **'Sorteo de motor'**
+  String get sorteoDeMotor;
+
+  /// No description provided for @otroControl.
+  ///
+  /// In es, this message translates to:
+  /// **'Otro Control'**
+  String get otroControl;
+
+  /// No description provided for @cambiadaFueraTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'{quien} ha cambiado esta verificación. Si sigues editando, tus cambios sustituirán a los suyos.'**
+  String cambiadaFueraTexto(String quien);
+
+  /// No description provided for @seguirConLoMio.
+  ///
+  /// In es, this message translates to:
+  /// **'Seguir con lo mío'**
+  String get seguirConLoMio;
+
+  /// No description provided for @verLoDe.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver lo de {quien}'**
+  String verLoDe(String quien);
+
+  /// No description provided for @actualizadaConCambios.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualizada con los cambios de {quien}.'**
+  String actualizadaConCambios(String quien);
+
+  /// No description provided for @noSePudoAnadirFoto.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo añadir la foto: {detalle}'**
+  String noSePudoAnadirFoto(String detalle);
+
+  /// No description provided for @copaEnEstaPrueba.
+  ///
+  /// In es, this message translates to:
+  /// **'Copa en esta prueba'**
+  String get copaEnEstaPrueba;
+
+  /// No description provided for @copaEnEstaPruebaTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambia la copa solo para esta prueba, sin afectar al equipo ni a otras pruebas.'**
+  String get copaEnEstaPruebaTexto;
+
+  /// No description provided for @copaCategoria.
+  ///
+  /// In es, this message translates to:
+  /// **'Copa / categoría'**
+  String get copaCategoria;
+
+  /// No description provided for @copaDelEquipo.
+  ///
+  /// In es, this message translates to:
+  /// **'Copa del equipo: {copa}'**
+  String copaDelEquipo(String copa);
+
+  /// No description provided for @usarLaDelEquipo.
+  ///
+  /// In es, this message translates to:
+  /// **'Usar la del equipo'**
+  String get usarLaDelEquipo;
+
+  /// No description provided for @usarReglamentoActual.
+  ///
+  /// In es, this message translates to:
+  /// **'Usar el reglamento actual'**
+  String get usarReglamentoActual;
+
+  /// No description provided for @usarReglamentoActualTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta verificación se comprobará con los valores de hoy del catálogo y del campeonato en lugar de con los que tenía al verificarla:'**
+  String get usarReglamentoActualTexto;
+
+  /// No description provided for @recalcularanCreditos.
+  ///
+  /// In es, this message translates to:
+  /// **'Como está validada, se recalcularán sus créditos.'**
+  String get recalcularanCreditos;
+
+  /// No description provided for @usarElActual.
+  ///
+  /// In es, this message translates to:
+  /// **'Usar el actual'**
+  String get usarElActual;
+
+  /// No description provided for @desbloquearVerificacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Desbloquear la verificación'**
+  String get desbloquearVerificacion;
+
+  /// No description provided for @desbloquearTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'{motivo} Sus verificaciones están bloqueadas para no cambiarlas sin querer.\n\nSi la desbloqueas, los cambios se guardarán como siempre. Seguirá comprobándose con el reglamento con el que se verificó.'**
+  String desbloquearTexto(String motivo);
+
+  /// No description provided for @desbloquear.
+  ///
+  /// In es, this message translates to:
+  /// **'Desbloquear'**
+  String get desbloquear;
+
+  /// No description provided for @verificacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Verificación'**
+  String get verificacion;
+
+  /// No description provided for @eliminarVerificacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar verificación'**
+  String get eliminarVerificacion;
+
+  /// No description provided for @eliminarVerificacionTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Se perderán los datos introducidos. ¿Continuar?'**
+  String get eliminarVerificacionTexto;
+
+  /// No description provided for @modeloCoche.
+  ///
+  /// In es, this message translates to:
+  /// **'Modelo de coche'**
+  String get modeloCoche;
+
+  /// No description provided for @elegirCoche.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir coche'**
+  String get elegirCoche;
+
+  /// No description provided for @noHayCochesConCopa.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay coches con la copa {copa} en el catálogo'**
+  String noHayCochesConCopa(String copa);
+
+  /// No description provided for @ayudaSelectorCoche.
+  ///
+  /// In es, this message translates to:
+  /// **'Se muestran peso mínimo y créditos del coche al elegirlo'**
+  String get ayudaSelectorCoche;
+
+  /// No description provided for @creditosAbrev.
+  ///
+  /// In es, this message translates to:
+  /// **'créd'**
+  String get creditosAbrev;
+
+  /// No description provided for @pesoGramos.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso (gramos)'**
+  String get pesoGramos;
+
+  /// No description provided for @pesoCarroceria.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso carrocería'**
+  String get pesoCarroceria;
+
+  /// No description provided for @minimoG.
+  ///
+  /// In es, this message translates to:
+  /// **'Mínimo: {n}g'**
+  String minimoG(String n);
+
+  /// No description provided for @estetica.
+  ///
+  /// In es, this message translates to:
+  /// **'Estética'**
+  String get estetica;
+
+  /// No description provided for @sinComprobar.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin comprobar'**
+  String get sinComprobar;
+
+  /// No description provided for @quePiezasFaltan.
+  ///
+  /// In es, this message translates to:
+  /// **'Qué piezas le faltan'**
+  String get quePiezasFaltan;
+
+  /// No description provided for @organizacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Organización'**
+  String get organizacion;
+
+  /// No description provided for @numeroDeMotor.
+  ///
+  /// In es, this message translates to:
+  /// **'Número de motor'**
+  String get numeroDeMotor;
+
+  /// No description provided for @motorDelCatalogo.
+  ///
+  /// In es, this message translates to:
+  /// **'Motor del catálogo'**
+  String get motorDelCatalogo;
+
+  /// No description provided for @elegirMotor.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir motor'**
+  String get elegirMotor;
+
+  /// No description provided for @yaNoEnCatalogo.
+  ///
+  /// In es, this message translates to:
+  /// **'{nombre} (ya no está en el catálogo)'**
+  String yaNoEnCatalogo(String nombre);
+
+  /// No description provided for @refMotor.
+  ///
+  /// In es, this message translates to:
+  /// **'Ref: {rpm} RPM · {gauss} gauss'**
+  String refMotor(String rpm, String gauss);
+
+  /// No description provided for @motoresHomologadosCopa.
+  ///
+  /// In es, this message translates to:
+  /// **'Motores homologados para la copa {copa}'**
+  String motoresHomologadosCopa(String copa);
+
+  /// No description provided for @rpmYGauss.
+  ///
+  /// In es, this message translates to:
+  /// **'{rpm} RPM · {gauss} gauss'**
+  String rpmYGauss(String rpm, String gauss);
+
+  /// No description provided for @maxN.
+  ///
+  /// In es, this message translates to:
+  /// **'Máx {n}'**
+  String maxN(String n);
+
+  /// No description provided for @alturaMotorAPista.
+  ///
+  /// In es, this message translates to:
+  /// **'Altura de motor a pista'**
+  String get alturaMotorAPista;
+
+  /// No description provided for @alturaMotorTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Comprobación con la plancha: si toca la pista, no conforme.'**
+  String get alturaMotorTexto;
+
+  /// No description provided for @delantero.
+  ///
+  /// In es, this message translates to:
+  /// **'Delantero'**
+  String get delantero;
+
+  /// No description provided for @trasero.
+  ///
+  /// In es, this message translates to:
+  /// **'Trasero'**
+  String get trasero;
+
+  /// No description provided for @marca.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca'**
+  String get marca;
+
+  /// No description provided for @dimension.
+  ///
+  /// In es, this message translates to:
+  /// **'Dimensión'**
+  String get dimension;
+
+  /// No description provided for @dientes.
+  ///
+  /// In es, this message translates to:
+  /// **'Dientes'**
+  String get dientes;
+
+  /// No description provided for @diametro.
+  ///
+  /// In es, this message translates to:
+  /// **'Diámetro'**
+  String get diametro;
+
+  /// No description provided for @material.
+  ///
+  /// In es, this message translates to:
+  /// **'Material'**
+  String get material;
+
+  /// No description provided for @pesoCocheEntero.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso coche entero (gramos)'**
+  String get pesoCocheEntero;
+
+  /// No description provided for @inicial.
+  ///
+  /// In es, this message translates to:
+  /// **'Inicial'**
+  String get inicial;
+
+  /// No description provided for @cocheEntero.
+  ///
+  /// In es, this message translates to:
+  /// **'Coche entero'**
+  String get cocheEntero;
+
+  /// No description provided for @otros.
+  ///
+  /// In es, this message translates to:
+  /// **'Otros'**
+  String get otros;
+
+  /// No description provided for @notasOAvisos.
+  ///
+  /// In es, this message translates to:
+  /// **'Notas o avisos'**
+  String get notasOAvisos;
+
+  /// No description provided for @fotosHasta4.
+  ///
+  /// In es, this message translates to:
+  /// **'Fotos (hasta 4)'**
+  String get fotosHasta4;
+
+  /// No description provided for @marcarComoValidada.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar como validada'**
+  String get marcarComoValidada;
+
+  /// No description provided for @marcarComoValidadaTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Indica que la verificación está revisada y aprobada.'**
+  String get marcarComoValidadaTexto;
+
+  /// No description provided for @autoguardadoTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Se guarda solo como borrador con cada cambio.'**
+  String get autoguardadoTexto;
+
+  /// No description provided for @validar.
+  ///
+  /// In es, this message translates to:
+  /// **'Validar'**
+  String get validar;
+
+  /// No description provided for @noPuedesValidar.
+  ///
+  /// In es, this message translates to:
+  /// **'No puedes validar mientras haya infracciones marcadas en rojo arriba.'**
+  String get noPuedesValidar;
+
+  /// No description provided for @fotoReferenciaTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Foto de referencia del catálogo: comprueba que coincide.'**
+  String get fotoReferenciaTexto;
+
+  /// No description provided for @sinFotoCocheTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Este coche no tiene foto en el catálogo. Añádela en Catálogos → Coches para poder comparar el modelo entregado.'**
+  String get sinFotoCocheTexto;
+
+  /// No description provided for @sinGuardar.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin guardar…'**
+  String get sinGuardar;
+
+  /// No description provided for @guardando.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardando…'**
+  String get guardando;
+
+  /// No description provided for @guardado.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardado'**
+  String get guardado;
+
+  /// No description provided for @errorCorto.
+  ///
+  /// In es, this message translates to:
+  /// **'Error'**
+  String get errorCorto;
+
+  /// No description provided for @soloLecturaTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'{motivo} Verificación en solo lectura.'**
+  String soloLecturaTexto(String motivo);
+
+  /// No description provided for @desbloqueadaTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'{motivo} Desbloqueada: los cambios se guardan.'**
+  String desbloqueadaTexto(String motivo);
+
+  /// No description provided for @reglamentoCongelado.
+  ///
+  /// In es, this message translates to:
+  /// **'Reglamento congelado el {fecha}: se comprueba con los valores de cuando se verificó.'**
+  String reglamentoCongelado(String fecha);
+
+  /// No description provided for @reglamentoCongeladoSinFecha.
+  ///
+  /// In es, this message translates to:
+  /// **'Reglamento congelado: se comprueba con los valores de cuando se verificó.'**
+  String get reglamentoCongeladoSinFecha;
+
+  /// No description provided for @haCambiadoDesdeEntonces.
+  ///
+  /// In es, this message translates to:
+  /// **'Ha cambiado desde entonces (no se aplica):'**
+  String get haCambiadoDesdeEntonces;
+
+  /// No description provided for @todoCumple.
+  ///
+  /// In es, this message translates to:
+  /// **'Todo cumple las normas. Puedes validar.'**
+  String get todoCumple;
+
+  /// No description provided for @infraccionesN.
+  ///
+  /// In es, this message translates to:
+  /// **'Infracciones: {n}'**
+  String infraccionesN(int n);
+
+  /// No description provided for @avisosN.
+  ///
+  /// In es, this message translates to:
+  /// **'Avisos: {n}'**
+  String avisosN(int n);
+
+  /// No description provided for @pendienteHechosDeTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Pendiente {hechos}/{total}'**
+  String pendienteHechosDeTotal(int hechos, int total);
+
+  /// No description provided for @hecho.
+  ///
+  /// In es, this message translates to:
+  /// **'Hecho'**
+  String get hecho;
+
+  /// No description provided for @revisar.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisar'**
+  String get revisar;
+
+  /// No description provided for @bloquesCompletos.
+  ///
+  /// In es, this message translates to:
+  /// **'Bloques completos: {hechos} de {total}'**
+  String bloquesCompletos(int hechos, int total);
+
+  /// No description provided for @faltaLista.
+  ///
+  /// In es, this message translates to:
+  /// **'Falta: {lista}'**
+  String faltaLista(String lista);
+
+  /// No description provided for @fueraDeLaLista.
+  ///
+  /// In es, this message translates to:
+  /// **'{valor} (fuera de la lista)'**
+  String fueraDeLaLista(String valor);
+
+  /// No description provided for @noCatalogado.
+  ///
+  /// In es, this message translates to:
+  /// **'{valor} (no catalogado)'**
+  String noCatalogado(String valor);
+
+  /// No description provided for @conEsteCoche.
+  ///
+  /// In es, this message translates to:
+  /// **'Con este coche ({creditos} créd):'**
+  String conEsteCoche(String creditos);
+
+  /// No description provided for @total.
+  ///
+  /// In es, this message translates to:
+  /// **'Total'**
+  String get total;
+
+  /// No description provided for @nCreditos.
+  ///
+  /// In es, this message translates to:
+  /// **'{n} créditos'**
+  String nCreditos(int n);
+
+  /// No description provided for @sinCreditosSuficientes.
+  ///
+  /// In es, this message translates to:
+  /// **'⚠ No tienen créditos suficientes para cubrir el coche.'**
+  String get sinCreditosSuficientes;
+
+  /// No description provided for @hacerFoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Hacer foto'**
+  String get hacerFoto;
+
+  /// No description provided for @elegirDeGaleria.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir de galería'**
+  String get elegirDeGaleria;
+
+  /// No description provided for @anadir.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir'**
+  String get anadir;
+
+  /// No description provided for @equipoNoInscritoPrueba.
+  ///
+  /// In es, this message translates to:
+  /// **'El equipo no está inscrito en la prueba: inscríbelo para poder cobrarle.'**
+  String get equipoNoInscritoPrueba;
+
+  /// No description provided for @etiquetaFinal.
+  ///
+  /// In es, this message translates to:
+  /// **'Final'**
+  String get etiquetaFinal;
+
+  /// No description provided for @anchuraEjeMm.
+  ///
+  /// In es, this message translates to:
+  /// **'Anchura de eje (mm)'**
+  String get anchuraEjeMm;
+
+  /// No description provided for @nombreDelClub.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre del club'**
+  String get nombreDelClub;
+
+  /// No description provided for @clubEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Club Slot Barcelona'**
+  String get clubEjemplo;
+
+  /// No description provided for @limitarFabricanteTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'En la verificación, los desplegables de marca (piñón, corona, llantas y trencilla) solo muestran las marcas elegidas; cualquier otra es infracción.'**
+  String get limitarFabricanteTexto;
+
+  /// No description provided for @eligeAlMenosUnaMarca.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige al menos una marca.'**
+  String get eligeAlMenosUnaMarca;
+
+  /// No description provided for @tipoMotorSorteoTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'La organización sortea los motores: en la verificación solo se apunta el número de motor.'**
+  String get tipoMotorSorteoTexto;
+
+  /// No description provided for @tipoMotorPropioTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada equipo trae su motor: en la verificación se elige del catálogo y se comprueban RPM.'**
+  String get tipoMotorPropioTexto;
+
+  /// No description provided for @tipoMotorMixtoTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'En cada verificación se marca si el motor es de organización o propio.'**
+  String get tipoMotorMixtoTexto;
+
+  /// No description provided for @tipoMotorEligeTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige de dónde salen los motores.'**
+  String get tipoMotorEligeTexto;
+
+  /// No description provided for @noPagaEstaPrueba.
+  ///
+  /// In es, this message translates to:
+  /// **'no paga esta prueba'**
+  String get noPagaEstaPrueba;
+
+  /// No description provided for @quitarWildcard.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar wildcard'**
+  String get quitarWildcard;
+
+  /// No description provided for @quitarCoordTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar \"Coord. total\" (vuelve a pagar)'**
+  String get quitarCoordTotal;
+
+  /// No description provided for @coordinadoraEnFicha.
+  ///
+  /// In es, this message translates to:
+  /// **'Los pilotos están marcados como coordinadora en su ficha; cámbialo allí'**
+  String get coordinadoraEnFicha;
+
+  /// No description provided for @marcarWildcard.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar como wildcard (no paga)'**
+  String get marcarWildcard;
+
+  /// No description provided for @desglosePagados.
+  ///
+  /// In es, this message translates to:
+  /// **'Desglose de los €{total} pagados'**
+  String desglosePagados(String total);
+
+  /// No description provided for @pagat.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagat'**
+  String get pagat;
+
+  /// No description provided for @coordinadora.
+  ///
+  /// In es, this message translates to:
+  /// **'Coordinadora'**
+  String get coordinadora;
+
+  /// No description provided for @club.
+  ///
+  /// In es, this message translates to:
+  /// **'Club'**
+  String get club;
+
+  /// No description provided for @observacionesOpcional.
+  ///
+  /// In es, this message translates to:
+  /// **'Observaciones (opcional)'**
+  String get observacionesOpcional;
+
+  /// No description provided for @descuadreTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Coordinadora + Club ({suma}) no suma el Pagat ({total}).'**
+  String descuadreTexto(String suma, String total);
+
+  /// No description provided for @pagoRapido.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago rápido:'**
+  String get pagoRapido;
+
+  /// No description provided for @coordYPiloto.
+  ///
+  /// In es, this message translates to:
+  /// **'Coord. + piloto'**
+  String get coordYPiloto;
+
+  /// No description provided for @coordYPilotoTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Un piloto es de coordinadora: paga la mitad de todo (€{monto})'**
+  String coordYPilotoTooltip(String monto);
+
+  /// No description provided for @coordTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Coord. total'**
+  String get coordTotal;
+
+  /// No description provided for @coordTotalTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los pilotos son de coordinadora: no paga'**
+  String get coordTotalTooltip;
+
+  /// No description provided for @observacionMitad.
+  ///
+  /// In es, this message translates to:
+  /// **'Mitad — un piloto de coordinadora'**
+  String get observacionMitad;
+
+  /// No description provided for @nuevaSesion.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva sesión'**
+  String get nuevaSesion;
+
+  /// No description provided for @aunNoHaySesiones.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay sesiones'**
+  String get aunNoHaySesiones;
+
+  /// No description provided for @sesionesVaciasTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Verifica coches sin montar un campeonato: una carrera esporádica, un control en el club… Crea una sesión, añade participantes y exporta el PDF.'**
+  String get sesionesVaciasTexto;
+
+  /// No description provided for @nParticipantes.
+  ///
+  /// In es, this message translates to:
+  /// **'{n} participantes'**
+  String nParticipantes(int n);
+
+  /// No description provided for @sesionYaNoExiste.
+  ///
+  /// In es, this message translates to:
+  /// **'La sesión ya no existe.'**
+  String get sesionYaNoExiste;
+
+  /// No description provided for @aunNoHayParticipantes.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay participantes'**
+  String get aunNoHayParticipantes;
+
+  /// No description provided for @pulsaAnadirParticipante.
+  ///
+  /// In es, this message translates to:
+  /// **'Pulsa \"Añadir participante\" para verificar su coche, o impórtalos desde un archivo o Google Sheets con «Importar» de arriba.'**
+  String get pulsaAnadirParticipante;
+
+  /// No description provided for @anadirParticipante.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir participante'**
+  String get anadirParticipante;
+
+  /// No description provided for @desdeArchivoCsvExcelParentesis.
+  ///
+  /// In es, this message translates to:
+  /// **'Desde archivo (CSV / Excel)'**
+  String get desdeArchivoCsvExcelParentesis;
+
+  /// No description provided for @desdeGoogleSheets.
+  ///
+  /// In es, this message translates to:
+  /// **'Desde Google Sheets'**
+  String get desdeGoogleSheets;
+
+  /// No description provided for @excelConFotos.
+  ///
+  /// In es, this message translates to:
+  /// **'Excel con fotos'**
+  String get excelConFotos;
+
+  /// No description provided for @reglamento.
+  ///
+  /// In es, this message translates to:
+  /// **'Reglamento'**
+  String get reglamento;
+
+  /// No description provided for @eliminarSesion.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar sesión'**
+  String get eliminarSesion;
+
+  /// No description provided for @configuraCopasAntes.
+  ///
+  /// In es, this message translates to:
+  /// **'Configura antes las copas en el reglamento de la sesión.'**
+  String get configuraCopasAntes;
+
+  /// No description provided for @anadidosParticipantes.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadidos {n} participantes.'**
+  String anadidosParticipantes(int n);
+
+  /// No description provided for @eliminarSesionTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Se borrarán \"{nombre}\", sus participantes y todas sus verificaciones. No se puede deshacer.'**
+  String eliminarSesionTexto(String nombre);
+
+  /// No description provided for @pilotoObligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Piloto *'**
+  String get pilotoObligatorio;
+
+  /// No description provided for @obligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Obligatorio'**
+  String get obligatorio;
+
+  /// No description provided for @segundoPiloto.
+  ///
+  /// In es, this message translates to:
+  /// **'Segundo piloto (opcional)'**
+  String get segundoPiloto;
+
+  /// No description provided for @equipoOpcional.
+  ///
+  /// In es, this message translates to:
+  /// **'Equipo (opcional)'**
+  String get equipoOpcional;
+
+  /// No description provided for @equipoOpcionalAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Si se deja vacío, se usa el nombre del piloto'**
+  String get equipoOpcionalAyuda;
+
+  /// No description provided for @anadirYVerificar.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir y verificar'**
+  String get anadirYVerificar;
+
+  /// No description provided for @seleccionaUnaCopa.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona al menos una copa / categoría.'**
+  String get seleccionaUnaCopa;
+
+  /// No description provided for @eligeTipoMotor.
+  ///
+  /// In es, this message translates to:
+  /// **'Motor: elige si es de sorteo, propio o mixto.'**
+  String get eligeTipoMotor;
+
+  /// No description provided for @limitarFabricanteError.
+  ///
+  /// In es, this message translates to:
+  /// **'Limitar fabricante: elige al menos una marca o desactívalo.'**
+  String get limitarFabricanteError;
+
+  /// No description provided for @nuevaSesionVerificacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva sesión de verificación'**
+  String get nuevaSesionVerificacion;
+
+  /// No description provided for @editarSesion.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar sesión'**
+  String get editarSesion;
+
+  /// No description provided for @nombreSesionObligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre de la sesión *'**
+  String get nombreSesionObligatorio;
+
+  /// No description provided for @nombreSesionAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Control club jueves, Carrera GT Sant Joan'**
+  String get nombreSesionAyuda;
+
+  /// No description provided for @lugarOpcional.
+  ///
+  /// In es, this message translates to:
+  /// **'Lugar (opcional)'**
+  String get lugarOpcional;
+
+  /// No description provided for @sinFecha.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin fecha'**
+  String get sinFecha;
+
+  /// No description provided for @fechaSesion.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha de la sesión'**
+  String get fechaSesion;
+
+  /// No description provided for @clubOrganizador.
+  ///
+  /// In es, this message translates to:
+  /// **'Club organizador'**
+  String get clubOrganizador;
+
+  /// No description provided for @clubOrganizadorAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Aparece en la cabecera de los PDF de la sesión.'**
+  String get clubOrganizadorAyuda;
+
+  /// No description provided for @copasCategorias.
+  ///
+  /// In es, this message translates to:
+  /// **'Copas / categorías'**
+  String get copasCategorias;
+
+  /// No description provided for @copasCategoriasAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Las que se pueden verificar en esta sesión. La copa de cada participante filtra el catálogo y las comprobaciones, igual que en un campeonato.'**
+  String get copasCategoriasAyuda;
+
+  /// No description provided for @anchuraEje.
+  ///
+  /// In es, this message translates to:
+  /// **'Anchura de eje'**
+  String get anchuraEje;
+
+  /// No description provided for @anchuraEjeAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Anchura máxima de eje (mm) por copa. Deja vacío si en esa copa no se comprueba.'**
+  String get anchuraEjeAyuda;
+
+  /// No description provided for @maxDelanteroMm.
+  ///
+  /// In es, this message translates to:
+  /// **'Máx delantero (mm)'**
+  String get maxDelanteroMm;
+
+  /// No description provided for @maxTraseroMm.
+  ///
+  /// In es, this message translates to:
+  /// **'Máx trasero (mm)'**
+  String get maxTraseroMm;
+
+  /// No description provided for @fabricante.
+  ///
+  /// In es, this message translates to:
+  /// **'Fabricante'**
+  String get fabricante;
+
+  /// No description provided for @fabricanteAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Para sesiones monomarca: limita las marcas que se pueden elegir en la verificación.'**
+  String get fabricanteAyuda;
+
+  /// No description provided for @rangoMotorTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Rango de números de motor para sortear desde la verificación. Déjalo vacío si no hay sorteo.'**
+  String get rangoMotorTexto;
+
+  /// No description provided for @motorDesde.
+  ///
+  /// In es, this message translates to:
+  /// **'Motor desde'**
+  String get motorDesde;
+
+  /// No description provided for @motorHasta.
+  ///
+  /// In es, this message translates to:
+  /// **'Motor hasta'**
+  String get motorHasta;
+
+  /// No description provided for @indicaAmbos.
+  ///
+  /// In es, this message translates to:
+  /// **'Indica ambos'**
+  String get indicaAmbos;
+
+  /// No description provided for @hastaMayorQueDesde.
+  ///
+  /// In es, this message translates to:
+  /// **'Hasta ≥ desde'**
+  String get hastaMayorQueDesde;
+
+  /// No description provided for @crearSesion.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear sesión'**
+  String get crearSesion;
+
+  /// No description provided for @importarParticipantesArchivo.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar participantes (archivo)'**
+  String get importarParticipantesArchivo;
+
+  /// No description provided for @importarParticipantesSheets.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar participantes (Google Sheets)'**
+  String get importarParticipantesSheets;
+
+  /// No description provided for @errorAlImportar.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al importar: {detalle}'**
+  String errorAlImportar(String detalle);
+
+  /// No description provided for @pasoEligeArchivoN.
+  ///
+  /// In es, this message translates to:
+  /// **'{n}. Elige el archivo'**
+  String pasoEligeArchivoN(int n);
+
+  /// No description provided for @pasoEligeLaHoja.
+  ///
+  /// In es, this message translates to:
+  /// **'{n}. Elige la hoja'**
+  String pasoEligeLaHoja(int n);
+
+  /// No description provided for @pasoEligeLaPestana.
+  ///
+  /// In es, this message translates to:
+  /// **'{n}. Elige la pestaña'**
+  String pasoEligeLaPestana(int n);
+
+  /// No description provided for @pasoAsignaColumnasN.
+  ///
+  /// In es, this message translates to:
+  /// **'{n}. Asigna columnas'**
+  String pasoAsignaColumnasN(int n);
+
+  /// No description provided for @pasoVistaPreviaN.
+  ///
+  /// In es, this message translates to:
+  /// **'{n}. Vista previa'**
+  String pasoVistaPreviaN(int n);
+
+  /// No description provided for @csvPlantillaTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'CSV o Excel con una fila de cabecera. Columnas reconocidas: Piloto 1 (o Piloto / Nombre), Piloto 2, Equipo y Copa. Hay una plantilla en \"Plantillas CSV\".'**
+  String get csvPlantillaTexto;
+
+  /// No description provided for @buscarEnTusHojas.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar en tus hojas…'**
+  String get buscarEnTusHojas;
+
+  /// No description provided for @buscar.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar'**
+  String get buscar;
+
+  /// No description provided for @pestana.
+  ///
+  /// In es, this message translates to:
+  /// **'Pestaña'**
+  String get pestana;
+
+  /// No description provided for @piloto1Obligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Piloto 1 *'**
+  String get piloto1Obligatorio;
+
+  /// No description provided for @piloto2.
+  ///
+  /// In es, this message translates to:
+  /// **'Piloto 2'**
+  String get piloto2;
+
+  /// No description provided for @copaPorDefecto.
+  ///
+  /// In es, this message translates to:
+  /// **'Copa por defecto'**
+  String get copaPorDefecto;
+
+  /// No description provided for @copaPorDefectoAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Para filas sin copa o con una copa que no está en la sesión'**
+  String get copaPorDefectoAyuda;
+
+  /// No description provided for @asignaColumnaPiloto1.
+  ///
+  /// In es, this message translates to:
+  /// **'Asigna al menos la columna del piloto 1.'**
+  String get asignaColumnaPiloto1;
+
+  /// No description provided for @noHayFilasConPiloto.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay filas con piloto.'**
+  String get noHayFilasConPiloto;
+
+  /// No description provided for @anadirNParticipantes.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir {n, plural, =1{1 participante} other{{n} participantes}}'**
+  String anadirNParticipantes(int n);
+
+  /// No description provided for @noConectadoGoogle.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no estás conectado con Google'**
+  String get noConectadoGoogle;
+
+  /// No description provided for @conectaCuentaTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Conecta tu cuenta una vez para poder leer tus hojas de cálculo.'**
+  String get conectaCuentaTexto;
+
+  /// No description provided for @configurarGoogle.
+  ///
+  /// In es, this message translates to:
+  /// **'Configurar Google'**
+  String get configurarGoogle;
+
+  /// No description provided for @noSePudieronListarHojas.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron listar tus hojas: {detalle}'**
+  String noSePudieronListarHojas(String detalle);
+
+  /// No description provided for @noSePudieronListarPestanas.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron listar las pestañas: {detalle}'**
+  String noSePudieronListarPestanas(String detalle);
+
+  /// No description provided for @noSePudoLeerPestana.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo leer la pestaña: {detalle}'**
+  String noSePudoLeerPestana(String detalle);
+
+  /// No description provided for @yaEstaEnLaSesion.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya está en la sesión'**
+  String get yaEstaEnLaSesion;
+
+  /// No description provided for @copaNoEnSesion.
+  ///
+  /// In es, this message translates to:
+  /// **'Copa \"{copa}\" no está en la sesión: se usa {defecto}'**
+  String copaNoEnSesion(String copa, String defecto);
+
+  /// No description provided for @fotoCatalogo.
+  ///
+  /// In es, this message translates to:
+  /// **'Foto catálogo'**
+  String get fotoCatalogo;
 }
 
 class _TextosDelegate extends LocalizationsDelegate<Textos> {

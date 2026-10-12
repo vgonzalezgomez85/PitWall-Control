@@ -14,6 +14,14 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.39.0] — 2026-10-12
+### Añadido
+- **La traducción avanza a las verificaciones (fase 3)**: se traducen el editor de verificación (ficha completa: coche, pesos, motor, carrocería, llantas, piñón y corona, bancada, chasis, otros, observaciones, fotos y validación, con el autoguardado y los avisos de bloqueo y reglamento congelado), el resumen en rejilla, la verificación libre (sesiones, reglamento de la sesión, alta de participantes e importación desde archivo o Google Sheets) y los mensajes de validación (infracciones y avisos), que ahora se componen en el idioma activo. El resto de pantallas se irá traduciendo por fases y, mientras tanto, sigue en español.
+
+### Mejorado
+- Los avisos del validador y el motivo de bloqueo («El campeonato está finalizado», «La prueba está terminada»…) dejan de ser texto fijo en español: cada pantalla los escribe en su idioma.
+- Las exportaciones de PDF y Excel de la rejilla siguen con su propio diccionario (todavía sin catalán), como el resto de exportaciones.
+
 ## [1.38.0] — 2026-10-12
 ### Añadido
 - **La traducción avanza a las pruebas y los resultados (fase 2)**: se traducen la pantalla de la prueba con sus pestañas (Preparar, Verificar, Resultados y Caja), los inscritos (alta a mano e importación de CSV/Excel), las tandas (crear con «Generar tandas», editar y la pantalla de cada tanda, con carriles, seeds directos, pisters y avisos), los resultados (por prueba y por tanda, e importación del cronometraje), el sorteo de motores y los envíos a PitWall (tandas y verificaciones). El resto de pantallas se irá traduciendo por fases y, mientras tanto, sigue en español.

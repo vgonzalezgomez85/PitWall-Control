@@ -59,7 +59,7 @@ class DatosSorteo {
   final int total; // tamaño del rango
   /// Campeonato finalizado o prueba terminada: no se sortea ni se quita
   /// nada (null = se puede).
-  final String? bloqueo;
+  final MotivoBloqueo? bloqueo;
 
   DatosSorteo({
     required this.campeonato,
@@ -250,7 +250,8 @@ class PantallaSorteoMotores extends ConsumerWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            context.l.sorteoBloqueadoTexto(d.bloqueo!),
+                            context.l.sorteoBloqueadoTexto(
+                                d.bloqueo!.texto(context.l)),
                             style: TextStyle(color: cs.outline),
                           ),
                         ),

@@ -40,7 +40,6 @@ class ParticipanteImportado {
     this.copaOriginal,
     required this.copa,
     required this.estado,
-    this.aviso,
   }) : importar = estado == 'nuevo';
 
   final String piloto1;
@@ -55,7 +54,6 @@ class ParticipanteImportado {
 
   /// 'nuevo' | 'duplicado' (ya en la sesión o repetido en la tabla).
   final String estado;
-  final String? aviso;
   bool importar;
 
   /// Nombre con el que quedará el equipo (mismo criterio que el alta manual).
@@ -155,11 +153,6 @@ class ImportadorParticipantes {
         copaOriginal: copaTabla,
         copa: copaSesion ?? copaPorDefecto,
         estado: duplicado ? 'duplicado' : 'nuevo',
-        aviso: duplicado
-            ? 'Ya está en la sesión'
-            : (copaTabla != null && copaSesion == null)
-                ? 'Copa "$copaTabla" no está en la sesión: se usa $copaPorDefecto'
-                : null,
       ));
     }
     return out;

@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
@@ -164,16 +165,15 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
               style: const TextStyle(fontWeight: FontWeight.w700)),
           subtitle: Text(
             '${p.pilotosTexto}\n'
-            '${p.motivoExencion!} — no paga esta prueba',
+            '${p.motivoExencion!} — ${context.l.noPagaEstaPrueba}',
           ),
           isThreeLine: true,
           trailing: IconButton(
             tooltip: p.wildcard
-                ? 'Quitar wildcard'
+                ? context.l.quitarWildcard
                 : p.exentoCoordinadora
-                    ? 'Quitar "Coord. total" (vuelve a pagar)'
-                    : 'Los pilotos están marcados como coordinadora en su '
-                        'ficha; cámbialo allí',
+                    ? context.l.quitarCoordTotal
+                    : context.l.coordinadoraEnFicha,
             icon: Icon(quitable ? Icons.close : Icons.info_outline),
             onPressed: !quitable
                 ? null
@@ -227,7 +227,7 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
                           style: TextStyle(
                               color: cs.outline, fontSize: 13)),
                       Text(
-                          'Copa ${p.copa}'
+                          '${context.l.copaTexto(p.copa)}'
                           '${p.mangaNombre == null ? '' : '  ·  ${p.mangaNombre}'}',
                           style: TextStyle(
                               color: cs.outline, fontSize: 12)),
@@ -241,7 +241,7 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
                       fontSize: 18,
                     )),
                 IconButton(
-                  tooltip: 'Marcar como wildcard (no paga)',
+                  tooltip: context.l.marcarWildcard,
                   icon: const Icon(Icons.card_giftcard_outlined),
                   onPressed: () =>
                       ref.read(repoTesoreriaProvider).marcarWildcard(
@@ -254,7 +254,7 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Desglose de los €${total.toStringAsFixed(2)} pagados',
+              context.l.desglosePagados(total.toStringAsFixed(2)),
               style: TextStyle(color: cs.outline, fontSize: 12),
             ),
             const SizedBox(height: 6),
@@ -263,8 +263,8 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
                 Expanded(
                   child: TextField(
                     controller: _pagat,
-                    decoration: const InputDecoration(
-                      labelText: 'Pagat',
+                    decoration: InputDecoration(
+                      labelText: context.l.pagat,
                       isDense: true,
                       prefixText: '€ ',
                     ),
@@ -278,8 +278,8 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
                 Expanded(
                   child: TextField(
                     controller: _coord,
-                    decoration: const InputDecoration(
-                      labelText: 'Coordinadora',
+                    decoration: InputDecoration(
+                      labelText: context.l.coordinadora,
                       isDense: true,
                       prefixText: '€ ',
                     ),
@@ -293,8 +293,8 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
                 Expanded(
                   child: TextField(
                     controller: _club,
-                    decoration: const InputDecoration(
-                      labelText: 'Club',
+                    decoration: InputDecoration(
+                      labelText: context.l.club,
                       isDense: true,
                       prefixText: '€ ',
                     ),
@@ -309,8 +309,8 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
             const SizedBox(height: 8),
             TextField(
               controller: _obs,
-              decoration: const InputDecoration(
-                labelText: 'Observaciones (opcional)',
+              decoration: InputDecoration(
+                labelText: context.l.observacionesOpcional,
                 isDense: true,
               ),
               onTapOutside: (_) => _salir(),
@@ -325,9 +325,9 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Coordinadora + Club '
-                      '(${widget.eur.format(_p(_coord) + _p(_club))}) '
-                      'no suma el Pagat (${widget.eur.format(total)}).',
+                      context.l.descuadreTexto(
+                          widget.eur.format(_p(_coord) + _p(_club)),
+                          widget.eur.format(total)),
                       style: TextStyle(color: cs.error, fontSize: 12),
                     ),
                   ),
@@ -340,7 +340,7 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
                       _club.text = cl.toStringAsFixed(2);
                       _guardar();
                     },
-                    child: const Text('Repartir'),
+                    child: Text(context.l.repartir),
                   ),
                 ],
               ),
@@ -373,7 +373,7 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Text('Pago rápido:',
+                Text(context.l.pagoRapido,
                     style: TextStyle(color: cs.outline, fontSize: 13)),
                 const SizedBox(width: 8),
                 Expanded(
@@ -396,23 +396,21 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
                       // Mitad de todo: un piloto del equipo es de coordinadora.
                       ActionChip(
                         avatar: const Icon(Icons.group_outlined, size: 16),
-                        label: const Text('Coord. + piloto'),
-                        tooltip:
-                            'Un piloto es de coordinadora: paga la mitad de todo '
-                            '(€${(_cuotaPagat / 2).toStringAsFixed(2)})',
+                        label: Text(context.l.coordYPiloto),
+                        tooltip: context.l.coordYPilotoTooltip(
+                            (_cuotaPagat / 2).toStringAsFixed(2)),
                         onPressed: () => _rellenarRapido(
                           _cuotaPagat / 2,
                           _cuotaCoord / 2,
                           _cuotaClub / 2,
-                          observacion: 'Mitad — un piloto de coordinadora',
+                          observacion: context.l.observacionMitad,
                         ),
                       ),
                       // Todo el equipo es de coordinadora: no paga.
                       ActionChip(
                         avatar: const Icon(Icons.groups_outlined, size: 16),
-                        label: const Text('Coord. total'),
-                        tooltip:
-                            'Todos los pilotos son de coordinadora: no paga',
+                        label: Text(context.l.coordTotal),
+                        tooltip: context.l.coordTotalTooltip,
                         // Se guarda como exención de la prueba (igual que el
                         // wildcard), no como un pago de 0 €.
                         onPressed: () => ref
@@ -424,7 +422,7 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
                             ),
                       ),
                       ActionChip(
-                        label: const Text('Limpiar'),
+                        label: Text(context.l.limpiar),
                         onPressed: () {
                           setState(() {
                             _pagat.clear();

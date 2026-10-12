@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/acciones_barra.dart';
 import '../../services/exportar_pdf.dart';
@@ -51,16 +52,16 @@ class PantallaVerificacionLibre extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Verificación libre')),
+      appBar: AppBar(title: Text(context.l.menuVerificacionLibre)),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab_sesion_libre',
         onPressed: () => _nuevaSesion(context),
         icon: const Icon(Icons.add),
-        label: const Text('Nueva sesión'),
+        label: Text(context.l.nuevaSesion),
       ),
       body: sesionesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
         data: (sesiones) {
           if (sesiones.isEmpty) {
             return Center(
@@ -72,13 +73,11 @@ class PantallaVerificacionLibre extends ConsumerWidget {
                     Icon(Icons.fact_check_outlined,
                         size: 96, color: cs.outline),
                     const SizedBox(height: 16),
-                    Text('Aún no hay sesiones',
+                    Text(context.l.aunNoHaySesiones,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     Text(
-                      'Verifica coches sin montar un campeonato: una carrera '
-                      'esporádica, un control en el club… Crea una sesión, '
-                      'añade participantes y exporta el PDF.',
+                      context.l.sesionesVaciasTexto,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -101,8 +100,8 @@ class PantallaVerificacionLibre extends ConsumerWidget {
                     title: Text(s.nombre),
                     subtitle: Text([
                       describirSesion(s),
-                      '${s.participantes} participantes · '
-                          '${s.validadas} validadas',
+                      '${context.l.nParticipantes(s.participantes)} · '
+                          '${context.l.nValidadas(s.validadas)}',
                     ].where((t) => t.isNotEmpty).join('\n')),
                     isThreeLine: describirSesion(s).isNotEmpty,
                     trailing: const Icon(Icons.chevron_right),
@@ -141,26 +140,25 @@ class PantallaSesionLibre extends ConsumerWidget {
     return sesionAsync.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
+      error: (e, _) =>
+          Scaffold(body: Center(child: Text(context.l.errorDetalle('$e')))),
       data: (s) {
         if (s == null) {
-          return const Scaffold(
-              body: Center(child: Text('La sesión ya no existe.')));
+          return Scaffold(
+              body: Center(child: Text(context.l.sesionYaNoExiste)));
         }
         final descripcion = describirSesion(s);
         return PantallaVerificaciones(
           mangaId: s.mangaId,
           titulo: s.nombre,
           subtitulo: descripcion.isEmpty ? null : descripcion,
-          vacioTitulo: 'Aún no hay participantes',
-          vacioTexto: 'Pulsa "Añadir participante" para verificar su coche, '
-              'o impórtalos desde un archivo o Google Sheets con «Importar» '
-              'de arriba.',
+          vacioTitulo: context.l.aunNoHayParticipantes,
+          vacioTexto: context.l.pulsaAnadirParticipante,
           botonFlotante: FloatingActionButton.extended(
             heroTag: 'fab_participante_libre',
             onPressed: () => _anadirParticipante(context, ref, s),
             icon: const Icon(Icons.person_add_alt_1),
-            label: const Text('Añadir participante'),
+            label: Text(context.l.anadirParticipante),
           ),
           onQuitar: (fila) => ref
               .read(repoVerificacionLibreProvider)
@@ -169,17 +167,21 @@ class PantallaSesionLibre extends ConsumerWidget {
             AccionesBarra([
               AccionBarra(
                 icono: Icons.group_add_outlined,
-                etiqueta: 'Importar',
+                etiqueta: context.l.importar,
                 opciones: [
-                  OpcionAccion(Icons.upload_file, 'Desde archivo (CSV / Excel)',
+                  OpcionAccion(
+                      Icons.upload_file,
+                      context.l.desdeArchivoCsvExcelParentesis,
                       () => _importar(context, s, OrigenParticipantes.archivo)),
-                  OpcionAccion(Icons.cloud_outlined, 'Desde Google Sheets',
+                  OpcionAccion(
+                      Icons.cloud_outlined,
+                      context.l.desdeGoogleSheets,
                       () => _importar(context, s, OrigenParticipantes.sheets)),
                 ],
               ),
               AccionBarra(
                 icono: Icons.ios_share,
-                etiqueta: 'Exportar',
+                etiqueta: context.l.exportar,
                 habilitada: s.conVerificacion > 0,
                 opciones: [
                   OpcionAccion(Icons.picture_as_pdf_outlined, 'PDF', () async {
@@ -195,7 +197,7 @@ class PantallaSesionLibre extends ConsumerWidget {
                   }),
                   OpcionAccion(
                       Icons.table_view_outlined,
-                      'Excel con fotos',
+                      context.l.excelConFotos,
                       () => guardarExcel(
                             context,
                             sugerido:
@@ -207,14 +209,14 @@ class PantallaSesionLibre extends ConsumerWidget {
               ),
               AccionBarra(
                 icono: Icons.tune,
-                etiqueta: 'Reglamento',
+                etiqueta: context.l.reglamento,
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => EditorSesionLibre(pruebaId: pruebaId),
                 )),
               ),
               AccionBarra(
                 icono: Icons.delete_outline,
-                etiqueta: 'Eliminar sesión',
+                etiqueta: context.l.eliminarSesion,
                 principal: false,
                 onPressed: () => _borrar(context, ref, s),
               ),
@@ -227,11 +229,11 @@ class PantallaSesionLibre extends ConsumerWidget {
 
   Future<void> _importar(BuildContext context, SesionLibre s,
       OrigenParticipantes origen) async {
+    final l = context.l;
     final messenger = ScaffoldMessenger.of(context);
     if (s.copas.isEmpty) {
-      messenger.showSnackBar(const SnackBar(
-          content: Text('Configura antes las copas en el reglamento de la '
-              'sesión.')));
+      messenger.showSnackBar(
+          SnackBar(content: Text(l.configuraCopasAntes)));
       return;
     }
     final n = await Navigator.of(context).push<int>(MaterialPageRoute(
@@ -239,25 +241,25 @@ class PantallaSesionLibre extends ConsumerWidget {
     ));
     if (n != null) {
       messenger.showSnackBar(
-          SnackBar(content: Text('Añadidos $n participantes.')));
+          SnackBar(content: Text(l.anadidosParticipantes(n))));
     }
   }
 
   Future<void> _borrar(
       BuildContext context, WidgetRef ref, SesionLibre s) async {
+    final l = context.l;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar sesión'),
-        content: Text('Se borrarán "${s.nombre}", sus participantes y '
-            'todas sus verificaciones. No se puede deshacer.'),
+        title: Text(l.eliminarSesion),
+        content: Text(l.eliminarSesionTexto(s.nombre)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+              child: Text(l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Eliminar')),
+              child: Text(l.eliminar)),
         ],
       ),
     );
@@ -270,9 +272,8 @@ class PantallaSesionLibre extends ConsumerWidget {
   Future<void> _anadirParticipante(
       BuildContext context, WidgetRef ref, SesionLibre s) async {
     if (s.copas.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Configura antes las copas en el reglamento de la '
-              'sesión.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l.configuraCopasAntes)));
       return;
     }
     final db = ref.read(dbProvider);
@@ -361,7 +362,8 @@ class _DialogoParticipanteState extends State<_DialogoParticipante> {
         textCapitalization: TextCapitalization.words,
         onChanged: onChanged,
         validator: obligatorio
-            ? (v) => (v == null || v.trim().isEmpty) ? 'Obligatorio' : null
+            ? (v) =>
+                (v == null || v.trim().isEmpty) ? context.l.obligatorio : null
             : null,
       ),
     );
@@ -381,7 +383,7 @@ class _DialogoParticipanteState extends State<_DialogoParticipante> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Añadir participante'),
+      title: Text(context.l.anadirParticipante),
       content: SizedBox(
         width: 420,
         child: Form(
@@ -390,31 +392,31 @@ class _DialogoParticipanteState extends State<_DialogoParticipante> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _campoPiloto(
-                etiqueta: 'Piloto *',
+                etiqueta: context.l.pilotoObligatorio,
                 obligatorio: true,
                 autofocus: true,
                 onChanged: (v) => _piloto1 = v,
               ),
               const SizedBox(height: 12),
               _campoPiloto(
-                etiqueta: 'Segundo piloto (opcional)',
+                etiqueta: context.l.segundoPiloto,
                 onChanged: (v) => _piloto2 = v,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _equipo,
-                decoration: const InputDecoration(
-                  labelText: 'Equipo (opcional)',
-                  helperText: 'Si se deja vacío, se usa el nombre del piloto',
-                  prefixIcon: Icon(Icons.groups_outlined),
+                decoration: InputDecoration(
+                  labelText: context.l.equipoOpcional,
+                  helperText: context.l.equipoOpcionalAyuda,
+                  prefixIcon: const Icon(Icons.groups_outlined),
                 ),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _copa,
-                decoration: const InputDecoration(
-                  labelText: 'Copa / categoría',
-                  prefixIcon: Icon(Icons.flag_outlined),
+                decoration: InputDecoration(
+                  labelText: context.l.copaCategoria,
+                  prefixIcon: const Icon(Icons.flag_outlined),
                 ),
                 items: [
                   for (final c in widget.copas)
@@ -429,11 +431,11 @@ class _DialogoParticipanteState extends State<_DialogoParticipante> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+          child: Text(context.l.cancelar),
         ),
         FilledButton(
           onPressed: _aceptar,
-          child: const Text('Añadir y verificar'),
+          child: Text(context.l.anadirYVerificar),
         ),
       ],
     );

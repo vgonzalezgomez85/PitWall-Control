@@ -1481,4 +1481,1054 @@ class TextosEn extends Textos {
   String copaDosPuntos(String copa) {
     return 'Cup: $copa';
   }
+
+  @override
+  String get aunNoHayEquiposEnEstaTanda => 'No teams in this round yet';
+
+  @override
+  String get inscribeEquiposVerificacion =>
+      'Enter teams in the round so they can be scrutineered.';
+
+  @override
+  String nConVerificacion(int n) {
+    return '$n with scrutineering';
+  }
+
+  @override
+  String nValidadas(int n) {
+    return '$n validated';
+  }
+
+  @override
+  String get quitarParticipante => 'Remove participant';
+
+  @override
+  String quitarConVerificacionTexto(String nombre) {
+    return '\"$nombre\" will be removed and their scrutineering deleted. Continue?';
+  }
+
+  @override
+  String quitarSinVerificacionTexto(String nombre) {
+    return '\"$nombre\" will be removed. Continue?';
+  }
+
+  @override
+  String get validada => 'Validated';
+
+  @override
+  String get borrador => 'Draft';
+
+  @override
+  String get enRevision => 'In progress';
+
+  @override
+  String get pendiente => 'Pending';
+
+  @override
+  String get sinCocheAsignado => 'No car assigned';
+
+  @override
+  String get sesionCerrada => 'The session is closed.';
+
+  @override
+  String get campeonatoFinalizado => 'The championship is finished.';
+
+  @override
+  String get pruebaTerminada => 'The race is over.';
+
+  @override
+  String get exportar => 'Export';
+
+  @override
+  String get exportarPdf => 'Export to PDF';
+
+  @override
+  String get exportarExcel => 'Export to Excel';
+
+  @override
+  String get noHayPruebasEnCampeonato =>
+      'There are no races in this championship.';
+
+  @override
+  String get noHayInscritosNiVerificaciones =>
+      'No entries or scrutineering in this race.';
+
+  @override
+  String get buscarPilotoEquipoCopa => 'Search driver, team, cup…';
+
+  @override
+  String filtroTodos(int n) {
+    return 'All ($n)';
+  }
+
+  @override
+  String filtroConInfraccion(int n) {
+    return 'With infraction ($n)';
+  }
+
+  @override
+  String filtroSinVerificar(int n) {
+    return 'Not scrutineered ($n)';
+  }
+
+  @override
+  String filtroBorrador(int n) {
+    return 'Draft ($n)';
+  }
+
+  @override
+  String validadasDeTotal(int validadas, int total) {
+    return '$validadas of $total validated';
+  }
+
+  @override
+  String get nadaConEsteFiltro => 'Nothing to show with this filter.';
+
+  @override
+  String get colPilotoEquipo => 'Driver / team';
+
+  @override
+  String get fueraDeReglamento => 'Out of regulations';
+
+  @override
+  String get copa => 'Cup';
+
+  @override
+  String get coche => 'Car';
+
+  @override
+  String get colPesoCarroc => 'Body wt.';
+
+  @override
+  String get colPesoMin => 'Min. wt.';
+
+  @override
+  String get colPesoCoche => 'Car weight';
+
+  @override
+  String get motor => 'Motor';
+
+  @override
+  String get alturaMotor => 'Motor height';
+
+  @override
+  String get colEjeDel => 'Front axle';
+
+  @override
+  String get colEjeTras => 'Rear axle';
+
+  @override
+  String get pinon => 'Pinion';
+
+  @override
+  String get corona => 'Crown';
+
+  @override
+  String get llantaDelantera => 'Front rim';
+
+  @override
+  String get llantaTrasera => 'Rear rim';
+
+  @override
+  String get trencilla => 'Braid';
+
+  @override
+  String get suspension => 'Suspension';
+
+  @override
+  String get bancada => 'Motor mount';
+
+  @override
+  String get chasis => 'Chassis';
+
+  @override
+  String get neumatico => 'Tyre';
+
+  @override
+  String get carroceria => 'Bodywork';
+
+  @override
+  String get observaciones => 'Notes';
+
+  @override
+  String get sinVerificar => 'Not scrutineered';
+
+  @override
+  String get propio => 'Own';
+
+  @override
+  String orgNumero(String n) {
+    return 'Org. no. $n';
+  }
+
+  @override
+  String get conforme => 'Compliant';
+
+  @override
+  String get noConforme => 'Non-compliant';
+
+  @override
+  String get toca => 'Must touch';
+
+  @override
+  String get bien => 'Good';
+
+  @override
+  String get faltanPiezas => 'Missing parts';
+
+  @override
+  String faltanPiezasDetalle(String piezas) {
+    return 'Missing: $piezas';
+  }
+
+  @override
+  String marcaNoPermitida(String marca) {
+    return 'Brand \"$marca\" not allowed';
+  }
+
+  @override
+  String superaMaximoMm(String maximo) {
+    return 'Over the maximum of $maximo mm';
+  }
+
+  @override
+  String porDebajoMinimoG(String minimo) {
+    return 'Below the minimum of $minimo g';
+  }
+
+  @override
+  String get alturaMotorNoConforme => 'Motor height non-compliant';
+
+  @override
+  String get leFaltanPiezas => 'Missing parts';
+
+  @override
+  String vPesoInicialBajo(String valor, String minimo) {
+    return 'Initial weight ${valor}g below the minimum ${minimo}g.';
+  }
+
+  @override
+  String vPesoFinalBajo(String valor, String minimo) {
+    return 'Final weight ${valor}g below the minimum ${minimo}g.';
+  }
+
+  @override
+  String get vMotorSinCatalogo =>
+      'Select the catalogue motor to check the measurements.';
+
+  @override
+  String vMotorRpmAlto(String motor, String max, String medido) {
+    return 'RPM above the $motor reference (max $max, measured $medido).';
+  }
+
+  @override
+  String vMotorUmsAlto(String motor, String max, String medido) {
+    return 'Magnet above the $motor reference (max $max, measured $medido).';
+  }
+
+  @override
+  String get vAlturaNoConforme =>
+      'Motor height non-compliant: it touches the track.';
+
+  @override
+  String vEjeDelAncho(String medido, String max) {
+    return 'Front axle width $medido mm over the maximum $max mm.';
+  }
+
+  @override
+  String vEjeTraAncho(String medido, String max) {
+    return 'Rear axle width $medido mm over the maximum $max mm.';
+  }
+
+  @override
+  String vMarcaNoPermitidaLista(String marca, String lista) {
+    return 'Brand \"$marca\" not allowed (only $lista).';
+  }
+
+  @override
+  String vMarcaFueraCatalogo(String marca) {
+    return 'Brand \"$marca\" is not in the catalogue.';
+  }
+
+  @override
+  String vLlantaDelNoCatalogada(String valor) {
+    return 'Front rim not in the catalogue: \"$valor\".';
+  }
+
+  @override
+  String vLlantaTraNoCatalogada(String valor) {
+    return 'Rear rim not in the catalogue: \"$valor\".';
+  }
+
+  @override
+  String vBancadaNoCatalogada(String valor) {
+    return 'Motor mount not in the catalogue: \"$valor\".';
+  }
+
+  @override
+  String vNeumaticoNoCatalogado(String valor) {
+    return 'Tyre not in the catalogue: \"$valor\".';
+  }
+
+  @override
+  String vBalanceNegativo(String equipo, String coche, String balance) {
+    return 'Negative credit balance: team $equipo + car $coche = $balance.';
+  }
+
+  @override
+  String get noSePudoGenerarExcel => 'Could not generate the Excel file.';
+
+  @override
+  String get buscarPuntos => 'Search…';
+
+  @override
+  String sinResultadosPara(String filtro) {
+    return 'No results for \"$filtro\"';
+  }
+
+  @override
+  String get sinAsignarGuiones => '— unassigned —';
+
+  @override
+  String get sorteoEtiqueta => 'Draw';
+
+  @override
+  String get mixto => 'Mixed';
+
+  @override
+  String get limitarFabricante => 'Limit manufacturer';
+
+  @override
+  String noCatalogada(String nombre) {
+    return '$nombre (not in the catalogue)';
+  }
+
+  @override
+  String get imagenNoSePuedeLeer =>
+      'That image cannot be read. Use a PNG or JPG.';
+
+  @override
+  String noSePudoAnadirLogo(String detalle) {
+    return 'Could not add the logo: $detalle';
+  }
+
+  @override
+  String get elegirLogo => 'Choose logo';
+
+  @override
+  String get cambiarLogo => 'Change logo';
+
+  @override
+  String get repartir => 'Split';
+
+  @override
+  String get configuraRangoSesion =>
+      'Set the engine range in the session rules to be able to draw.';
+
+  @override
+  String get configuraRangoCampeonato =>
+      'Set the engine range in the championship to be able to draw.';
+
+  @override
+  String get sorteoDeMotor => 'Engine draw';
+
+  @override
+  String get otroControl => 'Another Control';
+
+  @override
+  String cambiadaFueraTexto(String quien) {
+    return '$quien has changed this scrutineering sheet. If you keep editing, your changes will replace theirs.';
+  }
+
+  @override
+  String get seguirConLoMio => 'Keep mine';
+
+  @override
+  String verLoDe(String quien) {
+    return 'See $quien\'s';
+  }
+
+  @override
+  String actualizadaConCambios(String quien) {
+    return 'Updated with the changes from $quien.';
+  }
+
+  @override
+  String noSePudoAnadirFoto(String detalle) {
+    return 'Could not add the photo: $detalle';
+  }
+
+  @override
+  String get copaEnEstaPrueba => 'Cup in this race';
+
+  @override
+  String get copaEnEstaPruebaTexto =>
+      'Changes the cup only for this race, without affecting the team or other races.';
+
+  @override
+  String get copaCategoria => 'Cup / category';
+
+  @override
+  String copaDelEquipo(String copa) {
+    return 'Team cup: $copa';
+  }
+
+  @override
+  String get usarLaDelEquipo => 'Use the team\'s';
+
+  @override
+  String get usarReglamentoActual => 'Use the current rules';
+
+  @override
+  String get usarReglamentoActualTexto =>
+      'This scrutineering sheet will be checked against today\'s catalogue and championship values instead of the ones it had when it was scrutinised:';
+
+  @override
+  String get recalcularanCreditos =>
+      'As it is validated, its credits will be recalculated.';
+
+  @override
+  String get usarElActual => 'Use the current one';
+
+  @override
+  String get desbloquearVerificacion => 'Unlock scrutineering';
+
+  @override
+  String desbloquearTexto(String motivo) {
+    return '$motivo Their scrutineering sheets are locked so they are not changed by accident.\n\nIf you unlock it, changes are saved as usual. It will still be checked against the rules it was scrutinised with.';
+  }
+
+  @override
+  String get desbloquear => 'Unlock';
+
+  @override
+  String get verificacion => 'Scrutineering';
+
+  @override
+  String get eliminarVerificacion => 'Delete scrutineering';
+
+  @override
+  String get eliminarVerificacionTexto =>
+      'The data entered will be lost. Continue?';
+
+  @override
+  String get modeloCoche => 'Car model';
+
+  @override
+  String get elegirCoche => 'Choose car';
+
+  @override
+  String noHayCochesConCopa(String copa) {
+    return 'There are no cars with the $copa cup in the catalogue';
+  }
+
+  @override
+  String get ayudaSelectorCoche =>
+      'The car\'s minimum weight and credits are shown when you choose it';
+
+  @override
+  String get creditosAbrev => 'cred';
+
+  @override
+  String get pesoGramos => 'Weight (grams)';
+
+  @override
+  String get pesoCarroceria => 'Bodywork weight';
+
+  @override
+  String minimoG(String n) {
+    return 'Minimum: ${n}g';
+  }
+
+  @override
+  String get estetica => 'Appearance';
+
+  @override
+  String get sinComprobar => 'Not checked';
+
+  @override
+  String get quePiezasFaltan => 'Which parts are missing';
+
+  @override
+  String get organizacion => 'Organization';
+
+  @override
+  String get numeroDeMotor => 'Engine number';
+
+  @override
+  String get motorDelCatalogo => 'Catalogue motor';
+
+  @override
+  String get elegirMotor => 'Choose motor';
+
+  @override
+  String yaNoEnCatalogo(String nombre) {
+    return '$nombre (no longer in the catalogue)';
+  }
+
+  @override
+  String refMotor(String rpm, String gauss) {
+    return 'Ref: $rpm RPM · $gauss gauss';
+  }
+
+  @override
+  String motoresHomologadosCopa(String copa) {
+    return 'Motors approved for the $copa cup';
+  }
+
+  @override
+  String rpmYGauss(String rpm, String gauss) {
+    return '$rpm RPM · $gauss gauss';
+  }
+
+  @override
+  String maxN(String n) {
+    return 'Max $n';
+  }
+
+  @override
+  String get alturaMotorAPista => 'Motor height on track';
+
+  @override
+  String get alturaMotorTexto =>
+      'Checked with the plate: if it touches the track, non-compliant.';
+
+  @override
+  String get delantero => 'Front';
+
+  @override
+  String get trasero => 'Rear';
+
+  @override
+  String get marca => 'Brand';
+
+  @override
+  String get dimension => 'Size';
+
+  @override
+  String get dientes => 'Teeth';
+
+  @override
+  String get diametro => 'Diameter';
+
+  @override
+  String get material => 'Material';
+
+  @override
+  String get pesoCocheEntero => 'Full car weight (grams)';
+
+  @override
+  String get inicial => 'Initial';
+
+  @override
+  String get cocheEntero => 'Full car';
+
+  @override
+  String get otros => 'Others';
+
+  @override
+  String get notasOAvisos => 'Notes or warnings';
+
+  @override
+  String get fotosHasta4 => 'Photos (up to 4)';
+
+  @override
+  String get marcarComoValidada => 'Mark as validated';
+
+  @override
+  String get marcarComoValidadaTexto =>
+      'Marks the scrutineering sheet as reviewed and approved.';
+
+  @override
+  String get autoguardadoTexto => 'Saved as a draft on every change.';
+
+  @override
+  String get validar => 'Validate';
+
+  @override
+  String get noPuedesValidar =>
+      'You cannot validate while there are infractions marked in red above.';
+
+  @override
+  String get fotoReferenciaTexto =>
+      'Catalogue reference photo: check that it matches.';
+
+  @override
+  String get sinFotoCocheTexto =>
+      'This car has no photo in the catalogue. Add one in Catalogues → Cars to be able to compare the delivered model.';
+
+  @override
+  String get sinGuardar => 'Unsaved…';
+
+  @override
+  String get guardando => 'Saving…';
+
+  @override
+  String get guardado => 'Saved';
+
+  @override
+  String get errorCorto => 'Error';
+
+  @override
+  String soloLecturaTexto(String motivo) {
+    return '$motivo Scrutineering is read-only.';
+  }
+
+  @override
+  String desbloqueadaTexto(String motivo) {
+    return '$motivo Unlocked: changes are saved.';
+  }
+
+  @override
+  String reglamentoCongelado(String fecha) {
+    return 'Rules frozen on $fecha: it is checked against the values from when it was scrutinised.';
+  }
+
+  @override
+  String get reglamentoCongeladoSinFecha =>
+      'Rules frozen: it is checked against the values from when it was scrutinised.';
+
+  @override
+  String get haCambiadoDesdeEntonces => 'Changed since then (not applied):';
+
+  @override
+  String get todoCumple => 'Everything meets the rules. You can validate.';
+
+  @override
+  String infraccionesN(int n) {
+    return 'Infractions: $n';
+  }
+
+  @override
+  String avisosN(int n) {
+    return 'Warnings: $n';
+  }
+
+  @override
+  String pendienteHechosDeTotal(int hechos, int total) {
+    return '$hechos/$total pending';
+  }
+
+  @override
+  String get hecho => 'Done';
+
+  @override
+  String get revisar => 'Review';
+
+  @override
+  String bloquesCompletos(int hechos, int total) {
+    return 'Blocks complete: $hechos of $total';
+  }
+
+  @override
+  String faltaLista(String lista) {
+    return 'Missing: $lista';
+  }
+
+  @override
+  String fueraDeLaLista(String valor) {
+    return '$valor (not in the list)';
+  }
+
+  @override
+  String noCatalogado(String valor) {
+    return '$valor (not in the catalogue)';
+  }
+
+  @override
+  String conEsteCoche(String creditos) {
+    return 'With this car ($creditos cred):';
+  }
+
+  @override
+  String get total => 'Total';
+
+  @override
+  String nCreditos(int n) {
+    return '$n credits';
+  }
+
+  @override
+  String get sinCreditosSuficientes =>
+      '⚠ They do not have enough credits to cover the car.';
+
+  @override
+  String get hacerFoto => 'Take photo';
+
+  @override
+  String get elegirDeGaleria => 'Choose from gallery';
+
+  @override
+  String get anadir => 'Add';
+
+  @override
+  String get equipoNoInscritoPrueba =>
+      'The team is not entered in the race: enter it to be able to charge it.';
+
+  @override
+  String get etiquetaFinal => 'Final';
+
+  @override
+  String get anchuraEjeMm => 'Axle width (mm)';
+
+  @override
+  String get nombreDelClub => 'Club name';
+
+  @override
+  String get clubEjemplo => 'E.g. Club Slot Barcelona';
+
+  @override
+  String get limitarFabricanteTexto =>
+      'In scrutineering, the brand dropdowns (pinion, crown, rims and braid) only show the chosen brands; any other one is an infraction.';
+
+  @override
+  String get eligeAlMenosUnaMarca => 'Choose at least one brand.';
+
+  @override
+  String get tipoMotorSorteoTexto =>
+      'The organisation draws the engines: scrutineering only records the engine number.';
+
+  @override
+  String get tipoMotorPropioTexto =>
+      'Each team brings its own motor: scrutineering picks it from the catalogue and checks the RPM.';
+
+  @override
+  String get tipoMotorMixtoTexto =>
+      'Each scrutineering sheet marks whether the engine is the organisation\'s or the team\'s own.';
+
+  @override
+  String get tipoMotorEligeTexto => 'Choose where the engines come from.';
+
+  @override
+  String get noPagaEstaPrueba => 'does not pay this race';
+
+  @override
+  String get quitarWildcard => 'Remove wildcard';
+
+  @override
+  String get quitarCoordTotal => 'Remove \"Coord. total\" (pays again)';
+
+  @override
+  String get coordinadoraEnFicha =>
+      'The drivers are marked as coordinators in their profile; change it there';
+
+  @override
+  String get marcarWildcard => 'Mark as wildcard (does not pay)';
+
+  @override
+  String desglosePagados(String total) {
+    return 'Breakdown of the €$total paid';
+  }
+
+  @override
+  String get pagat => 'Paid';
+
+  @override
+  String get coordinadora => 'Coordination';
+
+  @override
+  String get club => 'Club';
+
+  @override
+  String get observacionesOpcional => 'Notes (optional)';
+
+  @override
+  String descuadreTexto(String suma, String total) {
+    return 'Coordination + Club ($suma) does not add up to Paid ($total).';
+  }
+
+  @override
+  String get pagoRapido => 'Quick payment:';
+
+  @override
+  String get coordYPiloto => 'Coord. + driver';
+
+  @override
+  String coordYPilotoTooltip(String monto) {
+    return 'One driver is a coordinator: pays half of everything (€$monto)';
+  }
+
+  @override
+  String get coordTotal => 'Coord. total';
+
+  @override
+  String get coordTotalTooltip => 'All drivers are coordinators: does not pay';
+
+  @override
+  String get observacionMitad => 'Half — one coordinator driver';
+
+  @override
+  String get nuevaSesion => 'New session';
+
+  @override
+  String get aunNoHaySesiones => 'No sessions yet';
+
+  @override
+  String get sesionesVaciasTexto =>
+      'Scrutineer cars without setting up a championship: a one-off race, a club check… Create a session, add participants and export the PDF.';
+
+  @override
+  String nParticipantes(int n) {
+    return '$n participants';
+  }
+
+  @override
+  String get sesionYaNoExiste => 'The session no longer exists.';
+
+  @override
+  String get aunNoHayParticipantes => 'No participants yet';
+
+  @override
+  String get pulsaAnadirParticipante =>
+      'Tap \"Add participant\" to scrutineer their car, or import them from a file or Google Sheets with \"Import\" above.';
+
+  @override
+  String get anadirParticipante => 'Add participant';
+
+  @override
+  String get desdeArchivoCsvExcelParentesis => 'From file (CSV / Excel)';
+
+  @override
+  String get desdeGoogleSheets => 'From Google Sheets';
+
+  @override
+  String get excelConFotos => 'Excel with photos';
+
+  @override
+  String get reglamento => 'Rules';
+
+  @override
+  String get eliminarSesion => 'Delete session';
+
+  @override
+  String get configuraCopasAntes => 'Set the cups in the session rules first.';
+
+  @override
+  String anadidosParticipantes(int n) {
+    return '$n participants added.';
+  }
+
+  @override
+  String eliminarSesionTexto(String nombre) {
+    return '\"$nombre\", its participants and all its scrutineering sheets will be deleted. This cannot be undone.';
+  }
+
+  @override
+  String get pilotoObligatorio => 'Driver *';
+
+  @override
+  String get obligatorio => 'Required';
+
+  @override
+  String get segundoPiloto => 'Second driver (optional)';
+
+  @override
+  String get equipoOpcional => 'Team (optional)';
+
+  @override
+  String get equipoOpcionalAyuda => 'If left empty, the driver\'s name is used';
+
+  @override
+  String get anadirYVerificar => 'Add and scrutineer';
+
+  @override
+  String get seleccionaUnaCopa => 'Select at least one cup / category.';
+
+  @override
+  String get eligeTipoMotor =>
+      'Motor: choose whether it is drawn, the team\'s own or mixed.';
+
+  @override
+  String get limitarFabricanteError =>
+      'Limit manufacturer: choose at least one brand or turn it off.';
+
+  @override
+  String get nuevaSesionVerificacion => 'New scrutineering session';
+
+  @override
+  String get editarSesion => 'Edit session';
+
+  @override
+  String get nombreSesionObligatorio => 'Session name *';
+
+  @override
+  String get nombreSesionAyuda => 'E.g. Thursday club check, GT Sant Joan race';
+
+  @override
+  String get lugarOpcional => 'Venue (optional)';
+
+  @override
+  String get sinFecha => 'No date';
+
+  @override
+  String get fechaSesion => 'Session date';
+
+  @override
+  String get clubOrganizador => 'Organising club';
+
+  @override
+  String get clubOrganizadorAyuda =>
+      'Appears in the header of the session\'s PDFs.';
+
+  @override
+  String get copasCategorias => 'Cups / categories';
+
+  @override
+  String get copasCategoriasAyuda =>
+      'The ones that can be scrutineered in this session. Each participant\'s cup filters the catalogue and the checks, as in a championship.';
+
+  @override
+  String get anchuraEje => 'Axle width';
+
+  @override
+  String get anchuraEjeAyuda =>
+      'Maximum axle width (mm) per cup. Leave empty if it is not checked in that cup.';
+
+  @override
+  String get maxDelanteroMm => 'Front max. (mm)';
+
+  @override
+  String get maxTraseroMm => 'Rear max. (mm)';
+
+  @override
+  String get fabricante => 'Manufacturer';
+
+  @override
+  String get fabricanteAyuda =>
+      'For single-brand sessions: limits the brands that can be chosen in scrutineering.';
+
+  @override
+  String get rangoMotorTexto =>
+      'Engine number range for drawing from scrutineering. Leave it empty if there is no draw.';
+
+  @override
+  String get motorDesde => 'Motor from';
+
+  @override
+  String get motorHasta => 'Motor to';
+
+  @override
+  String get indicaAmbos => 'Enter both';
+
+  @override
+  String get hastaMayorQueDesde => 'To ≥ from';
+
+  @override
+  String get crearSesion => 'Create session';
+
+  @override
+  String get importarParticipantesArchivo => 'Import participants (file)';
+
+  @override
+  String get importarParticipantesSheets =>
+      'Import participants (Google Sheets)';
+
+  @override
+  String errorAlImportar(String detalle) {
+    return 'Error importing: $detalle';
+  }
+
+  @override
+  String pasoEligeArchivoN(int n) {
+    return '$n. Choose the file';
+  }
+
+  @override
+  String pasoEligeLaHoja(int n) {
+    return '$n. Choose the sheet';
+  }
+
+  @override
+  String pasoEligeLaPestana(int n) {
+    return '$n. Choose the tab';
+  }
+
+  @override
+  String pasoAsignaColumnasN(int n) {
+    return '$n. Map columns';
+  }
+
+  @override
+  String pasoVistaPreviaN(int n) {
+    return '$n. Preview';
+  }
+
+  @override
+  String get csvPlantillaTexto =>
+      'CSV or Excel with a header row. Recognised columns: Driver 1 (or Driver / Name), Driver 2, Team and Cup. There is a template in \"CSV templates\".';
+
+  @override
+  String get buscarEnTusHojas => 'Search your sheets…';
+
+  @override
+  String get buscar => 'Search';
+
+  @override
+  String get pestana => 'Tab';
+
+  @override
+  String get piloto1Obligatorio => 'Driver 1 *';
+
+  @override
+  String get piloto2 => 'Driver 2';
+
+  @override
+  String get copaPorDefecto => 'Default cup';
+
+  @override
+  String get copaPorDefectoAyuda =>
+      'For rows without a cup or with a cup that is not in the session';
+
+  @override
+  String get asignaColumnaPiloto1 => 'Map at least the driver 1 column.';
+
+  @override
+  String get noHayFilasConPiloto => 'There are no rows with a driver.';
+
+  @override
+  String anadirNParticipantes(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n participants',
+      one: '1 participant',
+    );
+    return 'Add $_temp0';
+  }
+
+  @override
+  String get noConectadoGoogle => 'You are not connected to Google yet';
+
+  @override
+  String get conectaCuentaTexto =>
+      'Connect your account once to be able to read your spreadsheets.';
+
+  @override
+  String get configurarGoogle => 'Set up Google';
+
+  @override
+  String noSePudieronListarHojas(String detalle) {
+    return 'Could not list your sheets: $detalle';
+  }
+
+  @override
+  String noSePudieronListarPestanas(String detalle) {
+    return 'Could not list the tabs: $detalle';
+  }
+
+  @override
+  String noSePudoLeerPestana(String detalle) {
+    return 'Could not read the tab: $detalle';
+  }
+
+  @override
+  String get yaEstaEnLaSesion => 'Already in the session';
+
+  @override
+  String copaNoEnSesion(String copa, String defecto) {
+    return 'Cup \"$copa\" is not in the session: $defecto is used';
+  }
+
+  @override
+  String get fotoCatalogo => 'Catalogue photo';
 }

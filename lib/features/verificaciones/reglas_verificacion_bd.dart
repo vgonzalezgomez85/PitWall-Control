@@ -19,6 +19,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
+import '../../core/idioma.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/reglas_verificacion.dart';
 import '../campeonatos/selector_marcas_permitidas.dart';
@@ -59,15 +60,27 @@ bool copaAplica(String copasJson, String copa) {
   return (null, null);
 }
 
+/// Motivos por los que unas verificaciones quedan en solo lectura.
+enum MotivoBloqueo { sesionCerrada, campeonatoFinalizado, pruebaTerminada }
+
+/// Texto del motivo, en el idioma de la app.
+extension MotivoBloqueoTexto on MotivoBloqueo {
+  String texto(Textos l) => switch (this) {
+        MotivoBloqueo.sesionCerrada => l.sesionCerrada,
+        MotivoBloqueo.campeonatoFinalizado => l.campeonatoFinalizado,
+        MotivoBloqueo.pruebaTerminada => l.pruebaTerminada,
+      };
+}
+
 /// Por qué no se deben tocar las verificaciones de una prueba (campeonato
 /// finalizado o prueba terminada); null = se pueden editar.
-String? motivoBloqueo(Campeonato? campeonato, Prueba? prueba) {
+MotivoBloqueo? motivoBloqueo(Campeonato? campeonato, Prueba? prueba) {
   if (campeonato?.finalizado ?? false) {
     return campeonato!.esVerificacionLibre
-        ? 'La sesión está cerrada.'
-        : 'El campeonato está finalizado.';
+        ? MotivoBloqueo.sesionCerrada
+        : MotivoBloqueo.campeonatoFinalizado;
   }
-  if (prueba?.estado == 'TERMINADA') return 'La prueba está terminada.';
+  if (prueba?.estado == 'TERMINADA') return MotivoBloqueo.pruebaTerminada;
   return null;
 }
 

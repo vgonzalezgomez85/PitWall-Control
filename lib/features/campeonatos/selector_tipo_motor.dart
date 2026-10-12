@@ -17,6 +17,8 @@
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'package:flutter/material.dart';
 
+import '../../core/idioma.dart';
+
 /// Tipo de motor de un campeonato (o sesión libre) en el editor: 'ORGANIZACION'
 /// (sorteo), 'PROPIO' o 'MIXTO' (en BD se guarda null). Null = sin elegir.
 String? tipoMotorDeBd(String? tipoMotor) => tipoMotor ?? 'MIXTO';
@@ -47,37 +49,31 @@ class SelectorTipoMotor extends StatelessWidget {
       children: [
         Text(
           switch (valor) {
-            'ORGANIZACION' =>
-              'La organización sortea los motores: en la verificación solo '
-                  'se apunta el número de motor.',
-            'PROPIO' =>
-              'Cada equipo trae su motor: en la verificación se elige del '
-                  'catálogo y se comprueban RPM.',
-            'MIXTO' =>
-              'En cada verificación se marca si el motor es de '
-                  'organización o propio.',
-            _ => 'Elige de dónde salen los motores.',
+            'ORGANIZACION' => context.l.tipoMotorSorteoTexto,
+            'PROPIO' => context.l.tipoMotorPropioTexto,
+            'MIXTO' => context.l.tipoMotorMixtoTexto,
+            _ => context.l.tipoMotorEligeTexto,
           },
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
         SegmentedButton<String>(
           emptySelectionAllowed: true,
-          segments: const [
+          segments: [
             ButtonSegment(
               value: 'ORGANIZACION',
-              label: Text('Sorteo'),
-              icon: Icon(Icons.casino_outlined),
+              label: Text(context.l.sorteoEtiqueta),
+              icon: const Icon(Icons.casino_outlined),
             ),
             ButtonSegment(
               value: 'PROPIO',
-              label: Text('Propio'),
-              icon: Icon(Icons.engineering_outlined),
+              label: Text(context.l.propio),
+              icon: const Icon(Icons.engineering_outlined),
             ),
             ButtonSegment(
               value: 'MIXTO',
-              label: Text('Mixto'),
-              icon: Icon(Icons.shuffle),
+              label: Text(context.l.mixto),
+              icon: const Icon(Icons.shuffle),
             ),
           ],
           selected: {?valor},

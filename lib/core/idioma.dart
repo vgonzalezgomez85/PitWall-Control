@@ -68,6 +68,10 @@ Locale resolverIdioma(Locale? sistema, Iterable<Locale> soportados) {
   return const Locale('es');
 }
 
+/// Textos en español, para código sin contexto (exportaciones de PDF y Excel,
+/// que llevan su propio diccionario — ver `exportar_config.dart`).
+Textos get textosEspanol => lookupTextos(const Locale('es'));
+
 /// Textos traducidos: `context.l.menuInicio`. Sin traducciones cargadas (p.
 /// ej. un widget de test sin delegados) devuelve los de español.
 extension TextosEnContexto on BuildContext {

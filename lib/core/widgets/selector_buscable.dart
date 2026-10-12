@@ -17,6 +17,8 @@
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'package:flutter/material.dart';
 
+import '../idioma.dart';
+
 /// Campo de formulario con apariencia de dropdown que abre un diálogo
 /// con buscador. Pensado para reemplazar a `DropdownButtonFormField` cuando
 /// la lista de opciones es larga (pilotos, coches, equipos…).
@@ -45,7 +47,7 @@ class SelectorBuscable<T> extends StatelessWidget {
     this.subtituloOpcion,
     this.helper,
     this.permitirVacio = true,
-    this.textoVacio = '— sin asignar —',
+    this.textoVacio,
     this.titulo,
     this.validator,
   });
@@ -59,14 +61,17 @@ class SelectorBuscable<T> extends StatelessWidget {
   final String? Function(T)? subtituloOpcion;
   final void Function(T?) onCambio;
   final bool permitirVacio;
-  final String textoVacio;
+
+  /// Texto del hueco vacío; null = «— sin asignar —» traducido.
+  final String? textoVacio;
   final String? titulo;
   final String? Function(T?)? validator;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final texto = valor == null ? textoVacio : etiquetaOpcion(valor as T);
+    final vacio = textoVacio ?? context.l.sinAsignarGuiones;
+    final texto = valor == null ? vacio : etiquetaOpcion(valor as T);
     final controlador = TextEditingController(text: texto);
     return InkWell(
       borderRadius: BorderRadius.circular(8),
@@ -101,7 +106,7 @@ class SelectorBuscable<T> extends StatelessWidget {
         etiquetaOpcion: etiquetaOpcion,
         subtituloOpcion: subtituloOpcion,
         permitirVacio: permitirVacio,
-        textoVacio: textoVacio,
+        textoVacio: textoVacio ?? context.l.sinAsignarGuiones,
       ),
     );
   }
@@ -184,7 +189,7 @@ class _DialogoBuscadorState<T> extends State<_DialogoBuscador<T>> {
                 autofocus: true,
                 onChanged: (v) => setState(() => _filtro = v),
                 decoration: InputDecoration(
-                  hintText: 'Buscar…',
+                  hintText: context.l.buscarPuntos,
                   prefixIcon: const Icon(Icons.search),
                   isDense: true,
                   border: OutlineInputBorder(
@@ -198,7 +203,7 @@ class _DialogoBuscadorState<T> extends State<_DialogoBuscador<T>> {
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.all(24),
-                        child: Text('Sin resultados para "$_filtro"',
+                        child: Text(context.l.sinResultadosPara(_filtro),
                             style: TextStyle(color: cs.outline)),
                       ),
                     )

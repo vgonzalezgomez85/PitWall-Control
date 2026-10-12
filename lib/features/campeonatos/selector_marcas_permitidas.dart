@@ -21,6 +21,7 @@ import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 
@@ -72,11 +73,8 @@ class SelectorMarcasPermitidas extends ConsumerWidget {
       children: [
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Limitar fabricante'),
-          subtitle: const Text(
-              'En la verificación, los desplegables de marca (piñón, corona, '
-              'llantas y trencilla) solo muestran las marcas elegidas; '
-              'cualquier otra es infracción.'),
+          title: Text(context.l.limitarFabricante),
+          subtitle: Text(context.l.limitarFabricanteTexto),
           value: activo,
           onChanged: onActivo,
         ),
@@ -84,7 +82,7 @@ class SelectorMarcasPermitidas extends ConsumerWidget {
           ref.watch(_catalogoMarcasProvider).when(
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Text('Error: $e'),
+                error: (e, _) => Text(context.l.errorDetalle('$e')),
                 data: (marcas) {
                   final codigos = marcas.map((m) => m.codigo).toSet();
                   return Column(
@@ -107,7 +105,7 @@ class SelectorMarcasPermitidas extends ConsumerWidget {
                           // Códigos guardados que ya no están en el catálogo.
                           for (final c in seleccion.difference(codigos))
                             FilterChip(
-                              label: Text('$c (no catalogada)'),
+                              label: Text(context.l.noCatalogada(c)),
                               selected: true,
                               onSelected: (_) =>
                                   onCambio({...seleccion}..remove(c)),
@@ -117,7 +115,7 @@ class SelectorMarcasPermitidas extends ConsumerWidget {
                       if (seleccion.isEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
-                          child: Text('Elige al menos una marca.',
+                          child: Text(context.l.eligeAlMenosUnaMarca,
                               style: TextStyle(color: cs.error)),
                         ),
                     ],

@@ -20,32 +20,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'editor_verificacion.dart';
 import 'repositorio_verificaciones.dart';
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 
 class PantallaVerificaciones extends ConsumerWidget {
   const PantallaVerificaciones({
     super.key,
     required this.mangaId,
-    this.titulo = 'Verificaciones',
+    this.titulo,
     this.subtitulo,
     this.acciones = const [],
     this.botonFlotante,
-    this.vacioTitulo = 'Aún no hay equipos en esta tanda',
-    this.vacioTexto =
-        'Inscribe equipos en la tanda para poder hacerles la verificación.',
+    this.vacioTitulo,
+    this.vacioTexto,
     this.onQuitar,
   });
 
   final int mangaId;
 
   // Personalización para reutilizar la lista fuera de una prueba (sesiones
-  // de verificación libre).
-  final String titulo;
+  // de verificación libre). Null = los textos de la tanda.
+  final String? titulo;
   final String? subtitulo;
   final List<Widget> acciones;
   final Widget? botonFlotante;
-  final String vacioTitulo;
-  final String vacioTexto;
+  final String? vacioTitulo;
+  final String? vacioTexto;
 
   /// Si no es null, mantener pulsada una tarjeta ofrece quitar el equipo.
   final Future<void> Function(VerificacionConEquipo fila)? onQuitar;
@@ -54,6 +54,10 @@ class PantallaVerificaciones extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lista = ref.watch(verificacionesMangaProvider(mangaId));
     final cs = Theme.of(context).colorScheme;
+    final l = context.l;
+    final titulo = this.titulo ?? l.verificaciones;
+    final vacioTitulo = this.vacioTitulo ?? l.aunNoHayEquiposEnEstaTanda;
+    final vacioTexto = this.vacioTexto ?? l.inscribeEquiposVerificacion;
 
     return Scaffold(
       appBar: AppBar(
@@ -73,7 +77,7 @@ class PantallaVerificaciones extends ConsumerWidget {
       floatingActionButton: botonFlotante,
       body: lista.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(l.errorDetalle('$e'))),
         data: (filas) {
           if (filas.isEmpty) {
             return Center(
@@ -115,19 +119,19 @@ class PantallaVerificaciones extends ConsumerWidget {
                     children: [
                       _Pildora(
                         icono: Icons.groups,
-                        label: '${filas.length} equipos',
+                        label: '${filas.length} ${l.statEquipos}',
                         color: cs.primary,
                       ),
                       const SizedBox(width: 8),
                       _Pildora(
                         icono: Icons.edit_outlined,
-                        label: '$hechas con verificación',
+                        label: l.nConVerificacion(hechas),
                         color: cs.secondary,
                       ),
                       const SizedBox(width: 8),
                       _Pildora(
                         icono: Icons.check_circle_outline,
-                        label: '$validadas validadas',
+                        label: l.nValidadas(validadas),
                         color: context.estado.exito,
                       ),
                     ],
@@ -160,21 +164,21 @@ class PantallaVerificaciones extends ConsumerWidget {
 extension on PantallaVerificaciones {
   Future<void> _confirmarQuitar(
       BuildContext context, VerificacionConEquipo fila) async {
+    final l = context.l;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Quitar participante'),
+        title: Text(l.quitarParticipante),
         content: Text(fila.tieneVerificacion
-            ? 'Se quitará "${fila.equipo.nombre}" y se borrará su verificación. '
-                '¿Continuar?'
-            : 'Se quitará "${fila.equipo.nombre}". ¿Continuar?'),
+            ? l.quitarConVerificacionTexto(fila.equipo.nombre)
+            : l.quitarSinVerificacionTexto(fila.equipo.nombre)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+              child: Text(l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Quitar')),
+              child: Text(l.quitar)),
         ],
       ),
     );
@@ -230,15 +234,15 @@ class TarjetaVerificacion extends StatelessWidget {
     if (fila.validada) {
       icono = Icons.check_circle;
       color = context.estado.exito;
-      etiqueta = 'Validada';
+      etiqueta = context.l.validada;
     } else if (fila.tieneVerificacion) {
       icono = Icons.edit_note;
       color = cs.secondary;
-      etiqueta = 'En revisión';
+      etiqueta = context.l.enRevision;
     } else {
       icono = Icons.hourglass_empty;
       color = cs.outline;
-      etiqueta = 'Pendiente';
+      etiqueta = context.l.pendiente;
     }
 
     return Card(
@@ -249,7 +253,9 @@ class TarjetaVerificacion extends StatelessWidget {
         ),
         title: Text(fila.equipo.nombre),
         subtitle: Text(
-            '${fila.pilotosTexto}\n${fila.coche?.modelo ?? "Sin coche asignado"}  ·  Copa ${fila.copa}'),
+            '${fila.pilotosTexto}\n'
+            '${fila.coche?.modelo ?? context.l.sinCocheAsignado}  ·  '
+            '${context.l.copaTexto(fila.copa)}'),
         isThreeLine: true,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -266,7 +272,7 @@ class TarjetaVerificacion extends StatelessWidget {
             ),
             if (onLongPress != null)
               IconButton(
-                tooltip: 'Quitar participante',
+                tooltip: context.l.quitarParticipante,
                 icon: const Icon(Icons.delete_outline),
                 onPressed: onLongPress,
               ),

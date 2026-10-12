@@ -19,6 +19,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../../core/idioma.dart';
 import '../../services/elegir_imagen.dart';
 import '../../services/logo_club.dart';
 
@@ -38,20 +39,21 @@ class SelectorClubLogo extends StatelessWidget {
   final ValueChanged<Uint8List?> onLogo;
 
   Future<void> _elegir(BuildContext context) async {
+    final l = context.l;
     final messenger = ScaffoldMessenger.of(context);
     try {
       final xfile = await elegirImagenDeArchivo();
       if (xfile == null) return;
       final preparado = prepararLogoClub(await xfile.readAsBytes());
       if (preparado == null) {
-        messenger.showSnackBar(const SnackBar(
-            content: Text('No se puede leer esa imagen. Usa un PNG o JPG.')));
+        messenger.showSnackBar(
+            SnackBar(content: Text(l.imagenNoSePuedeLeer)));
         return;
       }
       onLogo(preparado);
     } catch (e) {
       messenger.showSnackBar(
-          SnackBar(content: Text('No se pudo añadir el logo: $e')));
+          SnackBar(content: Text(l.noSePudoAnadirLogo('$e'))));
     }
   }
 
@@ -63,10 +65,10 @@ class SelectorClubLogo extends StatelessWidget {
       children: [
         TextFormField(
           controller: club,
-          decoration: const InputDecoration(
-            labelText: 'Nombre del club',
-            hintText: 'Ej: Club Slot Barcelona',
-            prefixIcon: Icon(Icons.flag_outlined),
+          decoration: InputDecoration(
+            labelText: context.l.nombreDelClub,
+            hintText: context.l.clubEjemplo,
+            prefixIcon: const Icon(Icons.flag_outlined),
           ),
           textCapitalization: TextCapitalization.words,
         ),
@@ -95,13 +97,15 @@ class SelectorClubLogo extends StatelessWidget {
                 children: [
                   OutlinedButton.icon(
                     icon: const Icon(Icons.upload_outlined),
-                    label: Text(logo == null ? 'Elegir logo' : 'Cambiar logo'),
+                    label: Text(logo == null
+                        ? context.l.elegirLogo
+                        : context.l.cambiarLogo),
                     onPressed: () => _elegir(context),
                   ),
                   if (logo != null)
                     TextButton.icon(
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Quitar'),
+                      label: Text(context.l.quitar),
                       onPressed: () => onLogo(null),
                     ),
                 ],
