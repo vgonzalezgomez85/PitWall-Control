@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
+import '../../core/widgets/acciones_barra.dart';
 import '../../data/database/app_database.dart';
 import '../equipos/repositorio_equipos.dart';
 import '../resultados/pantalla_resultados_manga.dart';
@@ -54,48 +55,46 @@ class DetalleManga extends ConsumerWidget {
           mangaAsync.maybeWhen(
             data: (m) => m == null
                 ? const SizedBox.shrink()
-                : Row(
-                    children: [
-                      if (esIndividual)
-                        IconButton(
-                          tooltip: 'Renumerar carriles',
-                          icon: const Icon(Icons.format_list_numbered),
-                          onPressed: () => _renumerar(context, ref, m),
+                : AccionesBarra([
+                    AccionBarra(
+                      icono: Icons.fact_check_outlined,
+                      etiqueta: 'Verificaciones',
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => PantallaVerificaciones(mangaId: m.id),
                         ),
-                      IconButton(
-                        tooltip: 'Verificaciones',
-                        icon: const Icon(Icons.fact_check_outlined),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                PantallaVerificaciones(mangaId: m.id),
+                      ),
+                    ),
+                    AccionBarra(
+                      icono: Icons.emoji_events_outlined,
+                      etiqueta: 'Resultados',
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              PantallaResultadosManga(mangaId: m.id),
+                        ),
+                      ),
+                    ),
+                    AccionBarra(
+                      icono: Icons.edit_outlined,
+                      etiqueta: 'Editar',
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => EditorManga(
+                            pruebaId: m.pruebaId,
+                            mangaId: m.id,
                           ),
                         ),
                       ),
-                      IconButton(
-                        tooltip: 'Resultados',
-                        icon: const Icon(Icons.emoji_events_outlined),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                PantallaResultadosManga(mangaId: m.id),
-                          ),
-                        ),
+                    ),
+                    if (esIndividual)
+                      AccionBarra(
+                        icono: Icons.format_list_numbered,
+                        etiqueta: 'Renumerar carriles',
+                        principal: false,
+                        onPressed: () => _renumerar(context, ref, m),
                       ),
-                      IconButton(
-                        tooltip: 'Editar tanda',
-                        icon: const Icon(Icons.edit_outlined),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => EditorManga(
-                              pruebaId: m.pruebaId,
-                              mangaId: m.id,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  ]),
             orElse: () => const SizedBox.shrink(),
           ),
         ],

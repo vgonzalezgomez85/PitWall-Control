@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
+import '../../core/widgets/acciones_barra.dart';
 import '../../data/database/app_database.dart';
 import '../equipos/editor_equipo.dart';
 import '../equipos/repositorio_equipos.dart';
@@ -70,72 +71,52 @@ class PantallaInscritos extends ConsumerWidget {
         title: const Text('Inscritos a la prueba'),
         actions: [
           Consumer(builder: (context, ref, _) {
-            final vinculoAsync = ref.watch(vinculoInscripcionesProvider(pruebaId));
-            return vinculoAsync.maybeWhen(
-              data: (v) => v == null
-                  ? const SizedBox.shrink()
-                  : IconButton(
-                      tooltip:
-                          'Actualizar desde Drive (${v.fila.hojaNombre})',
-                      icon: const Icon(Icons.sync),
-                      onPressed: () async {
-                        final m = ScaffoldMessenger.of(context);
-                        m.showSnackBar(const SnackBar(
-                          content: Text('Actualizando desde Drive…'),
-                          duration: Duration(seconds: 2),
-                        ));
-                        final r = await ref
-                            .read(actualizadorDriveProvider)
-                            .actualizarInscripciones(v);
-                        m.showSnackBar(SnackBar(
-                          content: Text(
-                              r.ok ? '✓ ${r.mensaje}' : '✗ ${r.mensaje}'),
-                          duration: const Duration(seconds: 5),
-                        ));
-                      },
-                    ),
-              orElse: () => const SizedBox.shrink(),
-            );
+            final v =
+                ref.watch(vinculoInscripcionesProvider(pruebaId)).asData?.value;
+            void abrir(Widget destino) => Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => destino));
+            return AccionesBarra([
+              if (v != null)
+                AccionBarra(
+                  icono: Icons.sync,
+                  etiqueta: 'Actualizar desde Drive',
+                  onPressed: () async {
+                    final m = ScaffoldMessenger.of(context);
+                    m.showSnackBar(const SnackBar(
+                      content: Text('Actualizando desde Drive…'),
+                      duration: Duration(seconds: 2),
+                    ));
+                    final r = await ref
+                        .read(actualizadorDriveProvider)
+                        .actualizarInscripciones(v);
+                    m.showSnackBar(SnackBar(
+                      content:
+                          Text(r.ok ? '✓ ${r.mensaje}' : '✗ ${r.mensaje}'),
+                      duration: const Duration(seconds: 5),
+                    ));
+                  },
+                ),
+              // Siempre visible: con inscritos, el FAB pasa a "Generar tandas".
+              AccionBarra(
+                icono: Icons.person_add_alt_1_outlined,
+                etiqueta: esIndividual ? 'Añadir piloto' : 'Añadir equipo',
+                onPressed: () => _abrirAnadirManual(context, ref),
+              ),
+              AccionBarra(
+                icono: Icons.file_upload_outlined,
+                etiqueta: 'Importar',
+                opciones: [
+                  OpcionAccion(Icons.cloud_outlined, 'Vincular Google Sheet',
+                      () => abrir(ImportarInscripcionesSheets(pruebaId: pruebaId))),
+                  OpcionAccion(
+                      Icons.upload_file_outlined,
+                      'Desde archivo CSV / Excel',
+                      () => abrir(
+                          _PantallaImportarInscripciones(pruebaId: pruebaId))),
+                ],
+              ),
+            ]);
           }),
-          // Siempre visible: con inscritos, el FAB pasa a "Generar mangas".
-          IconButton(
-            tooltip: esIndividual ? 'Añadir piloto' : 'Añadir equipo',
-            icon: const Icon(Icons.person_add_alt_1_outlined),
-            onPressed: () => _abrirAnadirManual(context, ref),
-          ),
-          PopupMenuButton<String>(
-            tooltip: 'Importar',
-            icon: const Icon(Icons.file_upload_outlined),
-            onSelected: (op) {
-              if (op == 'archivo') {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => _PantallaImportarInscripciones(pruebaId: pruebaId),
-                ));
-              } else if (op == 'sheets') {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => ImportarInscripcionesSheets(pruebaId: pruebaId),
-                ));
-              }
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: 'sheets',
-                child: ListTile(
-                  leading: Icon(Icons.cloud_outlined),
-                  title: Text('Vincular Google Sheet'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              PopupMenuItem(
-                value: 'archivo',
-                child: ListTile(
-                  leading: Icon(Icons.upload_file_outlined),
-                  title: Text('Desde archivo CSV / Excel'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
       floatingActionButton: inscritosAsync.maybeWhen(

@@ -16,7 +16,7 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 
-// Pantalla "Verificar entre varios": varios Controls verifican la misma
+// Pantalla "Verificar en equipo (wifi)": varios Controls verifican la misma
 // prueba a la vez, cada uno con su BD, y se sincronizan por la wifi (no hace
 // falta internet). Ver proveedor_sync.dart.
 
@@ -135,7 +135,7 @@ class _PantallaSincronizacionState
         .any((c) => c.nombre == DispositivoSync.nombre);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Verificar entre varios')),
+      appBar: AppBar(title: const Text('Verificar en equipo (wifi)')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -362,15 +362,15 @@ class BotonSincronizacion extends ConsumerWidget {
       return OutlinedButton.icon(
         icon: icono,
         label: Text(activaAqui
-            ? 'Verificar entre varios · $conectados'
-            : 'Verificar entre varios'),
+            ? 'Verificar en equipo · $conectados'
+            : 'Verificar en equipo (wifi)'),
         onPressed: abrir,
       );
     }
     return IconButton(
       tooltip: activaAqui
-          ? 'Verificar entre varios · $conectados conectados'
-          : 'Verificar entre varios',
+          ? 'Verificar en equipo · $conectados conectados'
+          : 'Verificar en equipo (wifi)',
       icon: icono,
       onPressed: abrir,
     );

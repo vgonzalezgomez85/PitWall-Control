@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
+import '../../core/widgets/acciones_barra.dart';
 import '../google/actualizador_drive.dart';
 import '../google/importar_pilotos_sheets.dart';
 import '../google/repositorio_hojas_vinculadas.dart';
@@ -41,6 +42,9 @@ class PantallaPilotos extends ConsumerStatefulWidget {
 class _PantallaPilotosState extends ConsumerState<PantallaPilotos> {
   String _busqueda = '';
 
+  void _abrir(Widget destino) => Navigator.of(context)
+      .push(MaterialPageRoute(builder: (_) => destino));
+
   @override
   Widget build(BuildContext context) {
     final activo = ref.watch(campeonatoActivoProvider);
@@ -52,62 +56,29 @@ class _PantallaPilotosState extends ConsumerState<PantallaPilotos> {
       appBar: AppBar(
         title: Text(widget.pestanas == null ? 'Pilotos' : 'Participantes'),
         actions: [
-          vinculoAsync.maybeWhen(
-            data: (v) => v == null
-                ? const SizedBox.shrink()
-                : IconButton(
-                    tooltip:
-                        'Actualizar desde Drive (${v.fila.hojaNombre} · ${v.fila.pestanaTitulo})',
-                    icon: const Icon(Icons.sync),
-                    onPressed: () => _actualizarDesdeDrive(v),
-                  ),
-            orElse: () => const SizedBox.shrink(),
-          ),
-          PopupMenuButton<String>(
-            tooltip: 'Importar',
-            icon: const Icon(Icons.file_upload_outlined),
-            onSelected: (op) {
-              if (op == 'archivo') {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const PantallaImportarPilotos(),
-                ));
-              } else if (op == 'sheets') {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const ImportarPilotosSheets(),
-                ));
-              } else if (op == 'puntuacion') {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const PantallaImportarPuntuacion(),
-                ));
-              }
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: 'sheets',
-                child: ListTile(
-                  leading: Icon(Icons.cloud_outlined),
-                  title: Text('Vincular Google Sheet'),
-                  contentPadding: EdgeInsets.zero,
-                ),
+          AccionesBarra([
+            if (vinculoAsync.asData?.value case final v?)
+              AccionBarra(
+                icono: Icons.sync,
+                etiqueta: 'Actualizar desde Drive',
+                onPressed: () => _actualizarDesdeDrive(v),
               ),
-              PopupMenuItem(
-                value: 'archivo',
-                child: ListTile(
-                  leading: Icon(Icons.upload_file_outlined),
-                  title: Text('Desde archivo CSV / Excel'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              PopupMenuItem(
-                value: 'puntuacion',
-                child: ListTile(
-                  leading: Icon(Icons.leaderboard_outlined),
-                  title: Text('Puntuación previa (1ª prueba)'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
+            AccionBarra(
+              icono: Icons.file_upload_outlined,
+              etiqueta: 'Importar',
+              opciones: [
+                OpcionAccion(Icons.cloud_outlined, 'Vincular Google Sheet',
+                    () => _abrir(const ImportarPilotosSheets())),
+                OpcionAccion(Icons.upload_file_outlined,
+                    'Desde archivo CSV / Excel',
+                    () => _abrir(const PantallaImportarPilotos())),
+                OpcionAccion(
+                    Icons.leaderboard_outlined,
+                    'Puntuación previa (1ª prueba)',
+                    () => _abrir(const PantallaImportarPuntuacion())),
+              ],
+            ),
+          ]),
         ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(

@@ -23,6 +23,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/proveedores.dart';
+import '../../core/widgets/acciones_barra.dart';
 import '../../data/database/app_database.dart';
 import '../../services/exportar_pdf.dart';
 import '../../services/generador_pdf_creditos.dart';
@@ -120,39 +121,43 @@ class _PantallaCreditosState extends ConsumerState<PantallaCreditos> {
       appBar: AppBar(
         title: const Text('Créditos'),
         actions: [
-          IconButton(
-            tooltip: 'Revisión de categorías (cierre)',
-            icon: const Icon(Icons.military_tech_outlined),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => const PantallaRevisionCategorias(),
-            )),
-          ),
-          if (activo.finalizado)
-            IconButton(
-              tooltip: 'Aplicar bonificación de cierre',
-              icon: const Icon(Icons.workspace_premium_outlined),
-              onPressed: () => _aplicarBonificacionCierre(context, ref, activo),
+          AccionesBarra([
+            AccionBarra(
+              icono: Icons.ios_share,
+              etiqueta: 'Exportar',
+              opciones: [
+                OpcionAccion(Icons.picture_as_pdf_outlined, 'PDF', () async {
+                  final idi = await elegirIdiomaExport(context, ref);
+                  if (idi == null || !context.mounted) return;
+                  await guardarPdf(
+                    context,
+                    sugerido: 'creditos-${slugArchivo(activo.nombre)}.pdf',
+                    generar: () => ref
+                        .read(generadorPdfCreditosProvider)
+                        .generar(idioma: idi),
+                  );
+                }),
+                OpcionAccion(Icons.table_view_outlined, 'CSV',
+                    () => _exportarCsv(context, ref, activo)),
+              ],
             ),
-          IconButton(
-            tooltip: 'Exportar CSV',
-            icon: const Icon(Icons.table_view_outlined),
-            onPressed: () => _exportarCsv(context, ref, activo),
-          ),
-          IconButton(
-            tooltip: 'Exportar PDF',
-            icon: const Icon(Icons.picture_as_pdf_outlined),
-            onPressed: () async {
-              final idi = await elegirIdiomaExport(context, ref);
-              if (idi == null || !context.mounted) return;
-              await guardarPdf(
-                context,
-                sugerido: 'creditos-${slugArchivo(activo.nombre)}.pdf',
-                generar: () => ref
-                    .read(generadorPdfCreditosProvider)
-                    .generar(idioma: idi),
-              );
-            },
-          ),
+            AccionBarra(
+              icono: Icons.military_tech_outlined,
+              etiqueta: 'Revisión de categorías (cierre)',
+              principal: false,
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const PantallaRevisionCategorias(),
+              )),
+            ),
+            if (activo.finalizado)
+              AccionBarra(
+                icono: Icons.workspace_premium_outlined,
+                etiqueta: 'Aplicar bonificación de cierre',
+                principal: false,
+                onPressed: () =>
+                    _aplicarBonificacionCierre(context, ref, activo),
+              ),
+          ]),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(72),

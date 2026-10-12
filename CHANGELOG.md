@@ -14,6 +14,11 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.26.3] — 2026-10-12
+### Mejorado
+- **Los botones de las barras superiores llevan texto.** Antes muchos eran solo un icono y había que pasar el ratón para saber qué hacían (en Android, ni eso). Ahora las acciones principales se ven como botón con su nombre y el resto va a un menú «⋯», también con texto. En pantallas estrechas todas pasan a ese menú. Afecta a Clasificación (Exportar PDF, Rellenar a mano; Tabla de puntos e Importar en «⋯»), Créditos (Exportar PDF/CSV; revisión de categorías y bonificación de cierre en «⋯»), la pantalla de una tanda (Verificaciones, Resultados, Editar; Renumerar carriles en «⋯»), Verificación libre (Importar, Exportar, Reglamento; Eliminar sesión en «⋯»), y a Pilotos, Equipos e Inscritos (Importar, Actualizar desde Drive y Añadir).
+- **«Verificar entre varios» pasa a llamarse «Verificar en equipo (wifi)».**
+
 ## [1.26.2] — 2026-10-12
 ### Corregido
 - **«Tanda», no «manga», como en PitWall Manager.** El grupo de pilotos que corre junto (p. ej. «Jueves 21:00») es una **tanda**; cada tanda tiene tantas **mangas** como pilotos (una por rotación de carril). En toda la app se decía «manga» donde iba «tanda»: «Nueva tanda», «Generar tandas», «Editar tandas», «PDF de tandas», «Enviar tandas a PitWall», etc. Las tandas nuevas sin nombre se llaman «Tanda 1, 2…». En los PDF: *Tandas · Rounds · Batterie · Séries*. Los nombres ya guardados no cambian.

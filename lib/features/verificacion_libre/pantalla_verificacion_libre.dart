@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/proveedores.dart';
+import '../../core/widgets/acciones_barra.dart';
 import '../../services/exportar_pdf.dart';
 import '../../services/generador_pdf_verificaciones.dart';
 import '../verificaciones/editor_verificacion.dart';
@@ -153,8 +154,8 @@ class PantallaSesionLibre extends ConsumerWidget {
           subtitulo: descripcion.isEmpty ? null : descripcion,
           vacioTitulo: 'Aún no hay participantes',
           vacioTexto: 'Pulsa "Añadir participante" para verificar su coche, '
-              'o impórtalos desde un archivo o Google Sheets con el botón '
-              'de importar de arriba.',
+              'o impórtalos desde un archivo o Google Sheets con «Importar» '
+              'de arriba.',
           botonFlotante: FloatingActionButton.extended(
             heroTag: 'fab_participante_libre',
             onPressed: () => _anadirParticipante(context, ref, s),
@@ -165,72 +166,59 @@ class PantallaSesionLibre extends ConsumerWidget {
               .read(repoVerificacionLibreProvider)
               .quitarParticipante(sesion: s, equipoId: fila.equipo.id),
           acciones: [
-            PopupMenuButton<OrigenParticipantes>(
-              tooltip: 'Importar participantes',
-              icon: const Icon(Icons.group_add_outlined),
-              onSelected: (origen) => _importar(context, s, origen),
-              itemBuilder: (_) => const [
-                PopupMenuItem(
-                  value: OrigenParticipantes.archivo,
-                  child: ListTile(
-                    leading: Icon(Icons.upload_file),
-                    title: Text('Desde archivo (CSV / Excel)'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-                PopupMenuItem(
-                  value: OrigenParticipantes.sheets,
-                  child: ListTile(
-                    leading: Icon(Icons.cloud_outlined),
-                    title: Text('Desde Google Sheets'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ],
-            ),
-            IconButton(
-              tooltip: 'Reglamento y datos de la sesión',
-              icon: const Icon(Icons.tune),
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => EditorSesionLibre(pruebaId: pruebaId),
-              )),
-            ),
-            IconButton(
-              tooltip: 'Exportar verificaciones (PDF)',
-              icon: const Icon(Icons.picture_as_pdf_outlined),
-              onPressed: s.conVerificacion == 0
-                  ? null
-                  : () async {
-                      final idi = await elegirIdiomaExport(context, ref);
-                      if (idi == null || !context.mounted) return;
-                      guardarPdf(
-                        context,
-                        sugerido:
-                            'verificaciones-${slugArchivo(s.nombre)}.pdf',
-                        generar: () => ref
-                            .read(generadorPdfVerificacionesProvider)
-                            .generar(pruebaId: pruebaId, idioma: idi),
-                      );
-                    },
-            ),
-            IconButton(
-              tooltip: 'Exportar verificaciones (Excel con fotos)',
-              icon: const Icon(Icons.table_view_outlined),
-              onPressed: s.conVerificacion == 0
-                  ? null
-                  : () => guardarExcel(
-                        context,
-                        sugerido:
-                            'verificaciones-${slugArchivo(s.nombre)}.xlsx',
-                        generar: () => generarExcelSesionLibre(
-                            ref.read(dbProvider), s),
-                      ),
-            ),
-            IconButton(
-              tooltip: 'Eliminar sesión',
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () => _borrar(context, ref, s),
-            ),
+            AccionesBarra([
+              AccionBarra(
+                icono: Icons.group_add_outlined,
+                etiqueta: 'Importar',
+                opciones: [
+                  OpcionAccion(Icons.upload_file, 'Desde archivo (CSV / Excel)',
+                      () => _importar(context, s, OrigenParticipantes.archivo)),
+                  OpcionAccion(Icons.cloud_outlined, 'Desde Google Sheets',
+                      () => _importar(context, s, OrigenParticipantes.sheets)),
+                ],
+              ),
+              AccionBarra(
+                icono: Icons.ios_share,
+                etiqueta: 'Exportar',
+                habilitada: s.conVerificacion > 0,
+                opciones: [
+                  OpcionAccion(Icons.picture_as_pdf_outlined, 'PDF', () async {
+                    final idi = await elegirIdiomaExport(context, ref);
+                    if (idi == null || !context.mounted) return;
+                    guardarPdf(
+                      context,
+                      sugerido: 'verificaciones-${slugArchivo(s.nombre)}.pdf',
+                      generar: () => ref
+                          .read(generadorPdfVerificacionesProvider)
+                          .generar(pruebaId: pruebaId, idioma: idi),
+                    );
+                  }),
+                  OpcionAccion(
+                      Icons.table_view_outlined,
+                      'Excel con fotos',
+                      () => guardarExcel(
+                            context,
+                            sugerido:
+                                'verificaciones-${slugArchivo(s.nombre)}.xlsx',
+                            generar: () => generarExcelSesionLibre(
+                                ref.read(dbProvider), s),
+                          )),
+                ],
+              ),
+              AccionBarra(
+                icono: Icons.tune,
+                etiqueta: 'Reglamento',
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => EditorSesionLibre(pruebaId: pruebaId),
+                )),
+              ),
+              AccionBarra(
+                icono: Icons.delete_outline,
+                etiqueta: 'Eliminar sesión',
+                principal: false,
+                onPressed: () => _borrar(context, ref, s),
+              ),
+            ]),
           ],
         );
       },

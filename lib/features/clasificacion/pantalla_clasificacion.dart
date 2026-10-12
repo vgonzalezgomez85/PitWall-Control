@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
+import '../../core/widgets/acciones_barra.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/calculo_clasificacion.dart';
 import '../../services/exportar_pdf.dart';
@@ -50,13 +51,15 @@ class PantallaClasificacion extends ConsumerWidget {
         appBar: AppBar(
           title: const Text('Clasificación'),
           actions: [
-            IconButton(
-              tooltip: 'Tabla de puntos',
-              icon: const Icon(Icons.format_list_numbered_outlined),
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const PantallaEditorTablaPuntos(),
-              )),
-            ),
+            AccionesBarra([
+              AccionBarra(
+                icono: Icons.format_list_numbered_outlined,
+                etiqueta: 'Tabla de puntos',
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const PantallaEditorTablaPuntos(),
+                )),
+              ),
+            ]),
           ],
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -65,16 +68,18 @@ class PantallaClasificacion extends ConsumerWidget {
         appBar: AppBar(
           title: const Text('Clasificación'),
           actions: [
-            IconButton(
-              tooltip: 'Tabla de puntos',
-              icon: const Icon(Icons.format_list_numbered_outlined),
-              onPressed: () async {
-                await Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const PantallaEditorTablaPuntos(),
-                ));
-                ref.invalidate(clasificacionProvider);
-              },
-            ),
+            AccionesBarra([
+              AccionBarra(
+                icono: Icons.format_list_numbered_outlined,
+                etiqueta: 'Tabla de puntos',
+                onPressed: () async {
+                  await Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const PantallaEditorTablaPuntos(),
+                  ));
+                  ref.invalidate(clasificacionProvider);
+                },
+              ),
+            ]),
           ],
         ),
         body: Center(child: Text('Error: $e')),
@@ -85,31 +90,36 @@ class PantallaClasificacion extends ConsumerWidget {
             appBar: AppBar(
               title: const Text('Clasificación'),
               actions: [
-                IconButton(
-                  tooltip: 'Clasificación a mano',
-                  icon: const Icon(Icons.edit_note_outlined),
-                  onPressed: () async {
-                    await Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) =>
-                          const PantallaEditorClasificacionManual(),
-                    ));
-                    ref.invalidate(clasificacionProvider);
-                  },
-                ),
-                IconButton(
-                  tooltip: 'Tabla de puntos',
-                  icon: const Icon(Icons.format_list_numbered_outlined),
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const PantallaEditorTablaPuntos(),
-                  )),
-                ),
-                IconButton(
-                  tooltip: 'Importar clasificación',
-                  icon: const Icon(Icons.upload_outlined),
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const PantallaImportarClasificacion(),
-                  )),
-                ),
+                AccionesBarra([
+                  AccionBarra(
+                    icono: Icons.edit_note_outlined,
+                    etiqueta: 'Rellenar a mano',
+                    onPressed: () async {
+                      await Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) =>
+                            const PantallaEditorClasificacionManual(),
+                      ));
+                      ref.invalidate(clasificacionProvider);
+                    },
+                  ),
+                  AccionBarra(
+                    icono: Icons.upload_outlined,
+                    etiqueta: 'Importar',
+                    onPressed: () =>
+                        Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const PantallaImportarClasificacion(),
+                    )),
+                  ),
+                  AccionBarra(
+                    icono: Icons.format_list_numbered_outlined,
+                    etiqueta: 'Tabla de puntos',
+                    principal: false,
+                    onPressed: () =>
+                        Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const PantallaEditorTablaPuntos(),
+                    )),
+                  ),
+                ]),
               ],
             ),
             body: Center(
@@ -172,33 +182,9 @@ class PantallaClasificacion extends ConsumerWidget {
             appBar: AppBar(
               title: const Text('Clasificación'),
               actions: [
+                // Builder: «Rellenar a mano» abre la copa de la pestaña activa.
                 Builder(builder: (context) {
-                  return IconButton(
-                    tooltip: 'Clasificación a mano',
-                    icon: const Icon(Icons.edit_note_outlined),
-                    onPressed: () async {
-                      // Copa de la pestaña activa: 0 = General (null).
-                      final idx = DefaultTabController.of(context).index;
-                      final copa = idx == 0
-                          ? null
-                          : copasDelCampeonato[idx - 1];
-                      await Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => PantallaEditorClasificacionManual(
-                            copa: copa),
-                      ));
-                      // Recalcular al volver, por si el stream no refrescó.
-                      ref.invalidate(clasificacionProvider);
-                    },
-                  );
-                }),
-                PopupMenuButton<String>(
-                  tooltip: 'Exportar PDF',
-                  icon: const Icon(Icons.picture_as_pdf_outlined),
-                  onSelected: (sel) async {
-                    // '*' = clasificación general (un PopupMenuItem con
-                    // value null no dispara onSelected, así que usamos
-                    // un centinela).
-                    final copa = sel == '*' ? null : sel;
+                  Future<void> exportarPdf(String? copa) async {
                     final sufijo = copa == null
                         ? 'general'
                         : slugArchivo(copa).toLowerCase();
@@ -217,46 +203,58 @@ class PantallaClasificacion extends ConsumerWidget {
                             idioma: idi,
                           ),
                     );
-                  },
-                  itemBuilder: (_) => [
-                    const PopupMenuItem<String>(
-                      value: '*',
-                      child: ListTile(
-                        leading: Icon(Icons.leaderboard_outlined),
-                        title: Text('General'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
+                  }
+
+                  return AccionesBarra([
+                    AccionBarra(
+                      icono: Icons.picture_as_pdf_outlined,
+                      etiqueta: 'Exportar PDF',
+                      opciones: [
+                        OpcionAccion(Icons.leaderboard_outlined, 'General',
+                            () => exportarPdf(null)),
+                        for (final c in copasDelCampeonato)
+                          OpcionAccion(Icons.emoji_events_outlined, 'Copa $c',
+                              () => exportarPdf(c)),
+                      ],
                     ),
-                    if (copasDelCampeonato.isNotEmpty)
-                      const PopupMenuDivider(),
-                    for (final c in copasDelCampeonato)
-                      PopupMenuItem<String>(
-                        value: c,
-                        child: ListTile(
-                          leading: const Icon(Icons.emoji_events_outlined),
-                          title: Text('Copa $c'),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                  ],
-                ),
-                IconButton(
-                  tooltip: 'Tabla de puntos',
-                  icon: const Icon(Icons.format_list_numbered_outlined),
-                  onPressed: () async {
-                    await Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const PantallaEditorTablaPuntos(),
-                    ));
-                    ref.invalidate(clasificacionProvider);
-                  },
-                ),
-                IconButton(
-                  tooltip: 'Importar clasificación',
-                  icon: const Icon(Icons.upload_outlined),
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const PantallaImportarClasificacion(),
-                  )),
-                ),
+                    AccionBarra(
+                      icono: Icons.edit_note_outlined,
+                      etiqueta: 'Rellenar a mano',
+                      onPressed: () async {
+                        // Copa de la pestaña activa: 0 = General (null).
+                        final idx = DefaultTabController.of(context).index;
+                        final copa =
+                            idx == 0 ? null : copasDelCampeonato[idx - 1];
+                        await Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) =>
+                              PantallaEditorClasificacionManual(copa: copa),
+                        ));
+                        // Recalcular al volver, por si el stream no refrescó.
+                        ref.invalidate(clasificacionProvider);
+                      },
+                    ),
+                    AccionBarra(
+                      icono: Icons.format_list_numbered_outlined,
+                      etiqueta: 'Tabla de puntos',
+                      principal: false,
+                      onPressed: () async {
+                        await Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const PantallaEditorTablaPuntos(),
+                        ));
+                        ref.invalidate(clasificacionProvider);
+                      },
+                    ),
+                    AccionBarra(
+                      icono: Icons.upload_outlined,
+                      etiqueta: 'Importar clasificación',
+                      principal: false,
+                      onPressed: () =>
+                          Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const PantallaImportarClasificacion(),
+                      )),
+                    ),
+                  ]);
+                }),
               ],
               bottom: TabBar(
                 isScrollable: true,

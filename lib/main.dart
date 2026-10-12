@@ -74,7 +74,7 @@ class _AppPitWallState extends ConsumerState<AppPitWall> {
     // tesorería).
     await ref.read(repoInscripcionesProvider).repararInscripcionesPrueba();
     if (mounted) setState(() => _semillaLista = true);
-    // Verificar entre varios: si estaba conectado, se vuelve a conectar.
+    // Verificar en equipo (wifi): si estaba conectado, se vuelve a conectar.
     await ref.read(sincronizacionProvider.notifier).reanudarSiEstabaActiva();
   }
 
