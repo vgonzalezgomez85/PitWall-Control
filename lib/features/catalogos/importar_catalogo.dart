@@ -100,11 +100,19 @@ class _PantallaImportarCatalogoState
   String? _archivo;
   bool _trabajando = false;
   String? _error;
+  /// Nº de fichas que este catálogo ya tiene en la app (se cuenta al abrir).
+  int _filasLocales = 0;
 
   List<String> _columnas = [];
   List<Map<String, String>> _filas = [];
   MapeoCatalogo _mapeo = MapeoCatalogo();
   bool _reemplazar = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _contarFilasLocales();
+  }
 
   // Fuente Google Sheets (mismo flujo que pilotos/equipos/inscripciones).
   bool _modoSheets = false;
@@ -138,6 +146,127 @@ class _PantallaImportarCatalogoState
         return 'Copas';
       case TipoCatalogo.clubs:
         return 'Clubs';
+    }
+  }
+
+  /// Cuenta las fichas que ya tiene este catálogo, para avisar de duplicados
+  /// al importar y ofrecer vincular sin importar.
+  Future<void> _contarFilasLocales() async {
+    final db = ref.read(repoCatalogosProvider).db;
+    final n = switch (widget.tipo) {
+      TipoCatalogo.coches => (await db.select(db.catalogoCoches).get()).length,
+      TipoCatalogo.marcas => (await db.select(db.catalogoMarcas).get()).length,
+      TipoCatalogo.llantas => (await db.select(db.catalogoLlantas).get()).length,
+      TipoCatalogo.engranajes =>
+        (await db.select(db.catalogoEngranajes).get()).length,
+      TipoCatalogo.motores =>
+        (await db.select(db.catalogoMotores).get()).length,
+      TipoCatalogo.bancadas =>
+        (await db.select(db.catalogoBancadas).get()).length,
+      TipoCatalogo.chasis => (await db.select(db.catalogoChasis).get()).length,
+      TipoCatalogo.neumaticos =>
+        (await db.select(db.catalogoNeumaticos).get()).length,
+      TipoCatalogo.copas => (await db.select(db.catalogoCopas).get()).length,
+      TipoCatalogo.clubs => (await db.select(db.catalogoClubs).get()).length,
+    };
+    if (mounted) setState(() => _filasLocales = n);
+  }
+
+  /// Mapeo de columnas que se guarda en el vínculo (lo comparten importar y
+  /// vincular sin importar).
+  Map<String, String?> _mapeoParaGuardar() => {
+        'colNombre': _mapeo.colNombre,
+        'colCopa': _mapeo.colCopa,
+        'colMarca': _mapeo.colMarca,
+        'colModelo': _mapeo.colModelo,
+        'colPesoMin': _mapeo.colPesoMin,
+        'colCreditos': _mapeo.colCreditos,
+        'colCodigo': _mapeo.colCodigo,
+        'colDimension': _mapeo.colDimension,
+        'colTipo': _mapeo.colTipo,
+        'colReferencia': _mapeo.colReferencia,
+        'colDientes': _mapeo.colDientes,
+        'colDiametro': _mapeo.colDiametro,
+        'colRpm': _mapeo.colRpm,
+        'colGauss': _mapeo.colGauss,
+        'colFoto': _mapeo.colFoto,
+        'colId': _mapeo.colId,
+      };
+
+  /// Confirma la importación cuando puede duplicar (el catálogo ya tiene
+  /// fichas) o vaciar (Sustituir) lo que ya hay. Sin riesgo no pregunta.
+  Future<bool> _confirmarImportacion() async {
+    if (_filasLocales == 0) return true;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title:
+            Text(_reemplazar ? 'Sustituir el catálogo' : 'Añadir al catálogo'),
+        content: Text(_reemplazar
+            ? 'Se vaciarán las $_filasLocales fichas actuales antes de importar '
+                'las ${_filas.length} de la hoja.\n\n'
+                'Se pierden los ID de sincronización, las fotos locales de los '
+                'coches y los valores fijados en campeonatos. Lo que solo '
+                'exista en la app y no esté en la hoja desaparece.'
+            : 'Se añadirán las ${_filas.length} filas de la hoja a las '
+                '$_filasLocales fichas que ya tienes.\n\n'
+                'Las filas que ya existan (mismo nombre o clave) quedarán '
+                'duplicadas. Si solo quieres conectar la hoja para traer '
+                'cambios, cancela y usa «Vincular sin importar».'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(_reemplazar ? 'Sí, sustituir' : 'Sí, añadir'),
+          ),
+        ],
+      ),
+    );
+    return ok == true;
+  }
+
+  /// Guarda el vínculo con la hoja SIN tocar el catálogo local: la vía segura
+  /// cuando el catálogo ya tiene fichas. Después, «Actualizar desde Drive»
+  /// trae los cambios sin duplicar (empareja por ID o por nombre).
+  Future<void> _vincularSinImportar() async {
+    final hoja = _hojaSel;
+    final pestana = _pestanaSel;
+    if (hoja == null || pestana == null) return;
+    setState(() => _trabajando = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(repoHojasVinculadasProvider).guardarVinculo(
+            entidad: 'catalogo_${widget.tipo.name}',
+            hojaId: hoja.id,
+            hojaNombre: hoja.nombre,
+            pestanaTitulo: pestana.titulo,
+            mapeo: _mapeoParaGuardar(),
+          );
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Hoja vinculada'),
+          content: Text(
+              'No se ha importado nada ni se ha tocado ninguna ficha del '
+              'catálogo.\n\n'
+              'En la pestaña «$_titulo» ya aparece el botón de sincronización: '
+              '«Actualizar desde Drive» traerá los cambios de la hoja '
+              'emparejando por la columna ID (si la hay) o por nombre, sin '
+              'duplicar las fichas que ya tienes.'),
+          actions: [
+            FilledButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK')),
+          ],
+        ),
+      );
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Error al vincular: $e')));
+      if (mounted) setState(() => _trabajando = false);
     }
   }
 
@@ -422,6 +551,7 @@ class _PantallaImportarCatalogoState
   }
 
   Future<void> _importar() async {
+    if (!await _confirmarImportacion()) return;
     setState(() => _trabajando = true);
     int ok = 0, saltados = 0;
     try {
@@ -533,24 +663,7 @@ class _PantallaImportarCatalogoState
               hojaId: _hojaSel!.id,
               hojaNombre: _hojaSel!.nombre,
               pestanaTitulo: _pestanaSel!.titulo,
-              mapeo: {
-                'colNombre': _mapeo.colNombre,
-                'colCopa': _mapeo.colCopa,
-                'colMarca': _mapeo.colMarca,
-                'colModelo': _mapeo.colModelo,
-                'colPesoMin': _mapeo.colPesoMin,
-                'colCreditos': _mapeo.colCreditos,
-                'colCodigo': _mapeo.colCodigo,
-                'colDimension': _mapeo.colDimension,
-                'colTipo': _mapeo.colTipo,
-                'colReferencia': _mapeo.colReferencia,
-                'colDientes': _mapeo.colDientes,
-                'colDiametro': _mapeo.colDiametro,
-                'colRpm': _mapeo.colRpm,
-                'colGauss': _mapeo.colGauss,
-                'colFoto': _mapeo.colFoto,
-                'colId': _mapeo.colId,
-              },
+              mapeo: _mapeoParaGuardar(),
             );
         vinculada = true;
       }
@@ -666,6 +779,10 @@ class _PantallaImportarCatalogoState
             const SizedBox(height: 12),
             _seccionSheets(context),
           ],
+          if (_filasLocales > 0) ...[
+            const SizedBox(height: 12),
+            _avisoCatalogoLleno(context),
+          ],
           if (_error != null) ...[
             const SizedBox(height: 12),
             Card(
@@ -715,8 +832,50 @@ class _PantallaImportarCatalogoState
                   : const Icon(Icons.cloud_download_outlined),
               label: Text('Importar ${_filas.length} filas'),
             ),
+            if (_hojaSel != null && _pestanaSel != null) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: (_trabajando || !_mapeo.esValidoPara(widget.tipo))
+                    ? null
+                    : _vincularSinImportar,
+                icon: const Icon(Icons.link),
+                label: const Text('Vincular sin importar'),
+              ),
+            ],
           ],
         ],
+      ),
+    );
+  }
+
+  /// Aviso cuando el catálogo ya tiene fichas: importar puede duplicarlas
+  /// (o, marcando Sustituir, vaciarlas) — con el atajo seguro bien visible.
+  Widget _avisoCatalogoLleno(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final conHoja = _hojaSel != null && _pestanaSel != null;
+    return Card(
+      color: cs.surfaceContainerHighest,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.warning_amber_outlined, color: cs.tertiary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Este catálogo ya tiene $_filasLocales fichas en la app.\n'
+                '• «Importar» añadirá las filas de la hoja como nuevas: las '
+                'que ya existan quedarán duplicadas.\n'
+                '${conHoja ? '• Si solo quieres conectar la hoja, usa «Vincular sin importar»; después, «Actualizar desde Drive» trae los cambios sin duplicar.\n' : ''}'
+                '• «Sustituir el catálogo existente» vacía el catálogo actual: '
+                'se pierden los ID de sincronización, las fotos locales y los '
+                'valores fijados en campeonatos.',
+                style: TextStyle(color: cs.onSurface, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

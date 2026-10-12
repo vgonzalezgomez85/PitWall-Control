@@ -15,6 +15,9 @@
 //
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
+import 'dart:io';
+
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -41,9 +44,12 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
       builder: (_) => AlertDialog(
         title: const Text('Subir copia a Drive'),
         content: const Text(
-          'Se subirá una copia actual (BD + fotos) a tu Drive como '
-          '"pitwall-backup.zip". Si ya había una versión anterior, se '
-          'reemplaza por la nueva.\n\n¿Continuar?',
+          'Se subirá una copia actual a tu Drive como "pitwall-backup.zip". '
+          'Incluye la base de datos, las fotos de verificaciones y la '
+          'configuración del programa (credenciales de Google, tema y '
+          'preferencias); nunca la sesión conectada.\n\n'
+          'Si ya había una versión anterior, se reemplaza por la nueva.'
+          '\n\n¿Continuar?',
         ),
         actions: [
           TextButton(
@@ -72,41 +78,114 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
     }
   }
 
-  Future<void> _descargar() async {
+  /// Confirmación de restauración con la casilla de restaurar también la
+  /// configuración que traiga la copia. Devuelve null si se cancela.
+  Future<({bool aplicarConfig})?> _confirmarRestauracion({
+    required String titulo,
+    required String cuerpo,
+    required bool configPorDefecto,
+  }) async {
+    var aplicarConfig = configPorDefecto;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Descargar y restaurar'),
-        content: const Text(
-          'Se reemplazará tu base de datos local con la copia que hay en Drive. '
-          '⚠️ Cualquier cambio local que no hayas subido se perderá.\n\n'
-          'Después tendrás que cerrar y volver a abrir la app.',
+      builder: (_) => StatefulBuilder(
+        builder: (_, setEstadoDialogo) => AlertDialog(
+          title: Text(titulo),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(cuerpo),
+              const SizedBox(height: 12),
+              CheckboxListTile(
+                value: aplicarConfig,
+                onChanged: (v) =>
+                    setEstadoDialogo(() => aplicarConfig = v ?? false),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title:
+                    const Text('Restaurar también la configuración de la copia'),
+                subtitle: const Text(
+                    'Credenciales de Google, tema y preferencias. Nunca la '
+                    'sesión conectada.'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancelar')),
+            FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Sí, restaurar')),
+          ],
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Sí, restaurar')),
-        ],
       ),
     );
-    if (ok != true) return;
-    setState(() {
-      _trabajando = true;
-      _mensajeOk = null;
-      _mensajeError = null;
-    });
-    final r =
-        await ref.read(driveBackupServiceProvider).descargarYRestaurar();
-    if (mounted) {
-      setState(() {
+    if (ok != true) return null;
+    return (aplicarConfig: aplicarConfig);
+  }
+
+  /// En un equipo sin credenciales de Google configuradas la casilla sale
+  /// marcada; si ya hay unas propias, la copia solo las sustituye si el
+  /// usuario lo marca a propósito.
+  Future<bool> _configPorDefecto() async {
+    final auth = ref.read(googleAuthServiceProvider);
+    final id = await auth.obtenerClientId();
+    final secret = await auth.obtenerClientSecret();
+    return id == null || secret == null;
+  }
+
+  void _empezar() => setState(() {
+        _trabajando = true;
+        _mensajeOk = null;
+        _mensajeError = null;
+      });
+
+  void _terminar(ResultadoBackup r) => setState(() {
         _trabajando = false;
         _mensajeOk = r.ok ? r.mensaje : null;
         _mensajeError = r.ok ? null : r.mensaje;
       });
-    }
+
+  Future<void> _descargar() async {
+    final r = await _confirmarRestauracion(
+      titulo: 'Descargar y restaurar',
+      cuerpo: 'Se reemplazará tu base de datos local con la copia que hay en '
+          'Drive. ⚠️ Cualquier cambio local que no hayas subido se perderá.'
+          '\n\nDespués tendrás que cerrar y volver a abrir la app.',
+      configPorDefecto: await _configPorDefecto(),
+    );
+    if (r == null) return;
+    _empezar();
+    final res = await ref
+        .read(driveBackupServiceProvider)
+        .descargarYRestaurar(aplicarConfig: r.aplicarConfig);
+    if (mounted) _terminar(res);
+  }
+
+  /// Restaura una copia guardada como archivo (.zip o .db), sin Google.
+  Future<void> _restaurarArchivo() async {
+    final xfile = await openFile(acceptedTypeGroups: [
+      const XTypeGroup(label: 'Copia de PitWall', extensions: ['zip', 'db']),
+    ]);
+    if (xfile == null || !mounted) return;
+    final nombre = xfile.name;
+    final r = await _confirmarRestauracion(
+      titulo: 'Restaurar desde archivo',
+      cuerpo: 'Se reemplazará tu base de datos local con la copia de '
+          '«$nombre». ⚠️ Cualquier cambio local que no hayas subido se '
+          'perderá.\n\nNo hace falta conexión con Google para esto.'
+          '\n\nDespués tendrás que cerrar y volver a abrir la app.',
+      configPorDefecto: await _configPorDefecto(),
+    );
+    if (r == null) return;
+    _empezar();
+    final bytes = await File(xfile.path).readAsBytes();
+    final res = await ref
+        .read(driveBackupServiceProvider)
+        .restaurarDesdeBytes(bytes, aplicarConfig: r.aplicarConfig);
+    if (mounted) _terminar(res);
   }
 
   @override
@@ -122,7 +201,14 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (estado) {
-          if (!estado.conectado) return const _NoConectado();
+          if (!estado.conectado) {
+            return _NoConectado(
+              onRestaurarArchivo: _restaurarArchivo,
+              trabajando: _trabajando,
+              mensajeOk: _mensajeOk,
+              mensajeError: _mensajeError,
+            );
+          }
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -192,6 +278,16 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
                         child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.cloud_download_outlined),
                 label: const Text('Descargar y restaurar'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _trabajando ? null : _restaurarArchivo,
+                icon: _trabajando
+                    ? const SizedBox(
+                        width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.folder_open_outlined),
+                label: const Text('Restaurar desde archivo…'),
               ),
               if (_mensajeOk != null) ...[
                 const SizedBox(height: 16),
@@ -268,23 +364,36 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
 }
 
 class _NoConectado extends StatelessWidget {
-  const _NoConectado();
+  const _NoConectado({
+    required this.onRestaurarArchivo,
+    required this.trabajando,
+    this.mensajeOk,
+    this.mensajeError,
+  });
+
+  final VoidCallback onRestaurarArchivo;
+  final bool trabajando;
+  final String? mensajeOk;
+  final String? mensajeError;
+
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_off_outlined,
-                size: 96, color: Theme.of(context).colorScheme.outline),
+            Icon(Icons.cloud_off_outlined, size: 96, color: cs.outline),
             const SizedBox(height: 16),
             Text('Sin conexión con Google',
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             const Text(
-              'Conéctate con Google para poder subir o descargar la copia.',
+              'Conéctate con Google para poder subir o descargar la copia.\n\n'
+              'También puedes restaurar una copia guardada como archivo '
+              '(.zip), sin conexión.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -294,6 +403,27 @@ class _NoConectado extends StatelessWidget {
               icon: const Icon(Icons.settings_outlined),
               label: const Text('Configurar Google'),
             ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: trabajando ? null : onRestaurarArchivo,
+              icon: trabajando
+                  ? const SizedBox(
+                      width: 18, height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.folder_open_outlined),
+              label: const Text('Restaurar desde archivo…'),
+            ),
+            if (mensajeOk != null) ...[
+              const SizedBox(height: 16),
+              Text(mensajeOk!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.green.shade700)),
+            ],
+            if (mensajeError != null) ...[
+              const SizedBox(height: 16),
+              Text(mensajeError!,
+                  textAlign: TextAlign.center, style: TextStyle(color: cs.error)),
+            ],
           ],
         ),
       ),

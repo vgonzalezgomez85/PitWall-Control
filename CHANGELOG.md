@@ -14,6 +14,19 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.24.1] — 2026-10-08
+
+### Corregido
+- **En un campeonato recién creado, «Créditos» ya no aparece vacío.** La pantalla solo listaba pilotos con alguna inscripción en pruebas del campeonato, así que al empezar una temporada —típicamente tras crear el campeonato importando los pilotos del anterior con su saldo de cierre— la lista salía vacía aunque los créditos ya estuvieran guardados. Ahora, mientras no haya ningún inscrito, se listan todos los pilotos del campeonato con sus créditos.
+
+## [1.24.0] — 2026-10-08
+### Añadido
+- **La copia en Drive incluye la configuración del programa.** Además de la base de datos y las fotos, la copia guarda las credenciales del proyecto Google Cloud (Client ID y Secret) y preferencias básicas (tema, idioma de exportación y última conexión con PitWall Manager). Al restaurar se pregunta si aplicarla en este equipo; en un equipo nuevo sin credenciales la casilla viene marcada. Nunca viaja la sesión conectada — cada dispositivo conecta su cuenta de Google (si la copia trae credenciales distintas, la app pide reconectar al reabrir).
+- **Restaurar una copia desde un archivo.** Botón nuevo en «Copia compartida en Drive» para restaurar un `.zip` (o un `.db` antiguo) guardado como archivo, sin conexión con Google. También aparece en la pantalla de "Sin conexión".
+- **«Vincular sin importar» en el importador de catálogos.** Conecta un catálogo con su pestaña de Google Sheets sin importar ninguna fila: después, «Actualizar desde Drive» trae los cambios emparejando por ID (o por nombre) y sin duplicar. Es la vía recomendada cuando el catálogo ya tiene fichas (por ejemplo, tras restaurar una copia).
+### Mejorado
+- **Al importar un catálogo que ya tiene fichas, la app avisa antes.** El importador explica qué va a pasar (las filas importadas pueden duplicar las existentes; «Sustituir» vacía el catálogo y pierde los ID de sincronización, las fotos locales y los valores fijados en campeonatos) y pide confirmación antes de importar cuando hay riesgo.
+
 ## [1.23.5] — 2026-10-07
 ### Corregido
 - **Cambiar la foto de un coche ya sincronizado ahora se sube al Sheet.** Si la hoja ya tenía un enlace en FOTO, la foto nueva se ignoraba y «Subir al Sheet» decía que no había cambios. Ahora sale como diferencia: se sube la foto a Drive y sustituye al enlace. Si falla la subida de la foto, el enlace anterior se conserva en vez de borrarse.

@@ -26,6 +26,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../core/entorno.dart';
 import '../core/proveedores.dart';
+import 'almacen_local.dart';
+import 'config_backup.dart';
 import 'fotos_verificacion.dart';
 import 'google_auth_service.dart';
 
@@ -138,6 +140,11 @@ class DriveBackupService {
         }
       }
 
+      // Configuración del programa (credenciales de Google y preferencias).
+      final configBytes = ConfigBackup.construir(ref.read(almacenSyncProvider));
+      archive.addFile(ArchiveFile(
+          ConfigBackup.nombreEnZip, configBytes.length, configBytes));
+
       final zipped = Uint8List.fromList(ZipEncoder().encode(archive) ?? []);
       final stream = Stream<List<int>>.fromIterable([zipped]);
 
@@ -192,7 +199,9 @@ class DriveBackupService {
   /// Descarga el backup de Drive y reemplaza el archivo local.
   /// Importante: tras restaurar hay que reiniciar la app para que Drift
   /// reabra la conexión sobre el archivo nuevo.
-  Future<ResultadoBackup> descargarYRestaurar() async {
+  /// [aplicarConfig] restaura además la configuración del programa
+  /// (credenciales de Google, preferencias) que traiga la copia.
+  Future<ResultadoBackup> descargarYRestaurar({bool aplicarConfig = true}) async {
     try {
       final info = await obtenerBackup();
       if (info == null) {
@@ -220,78 +229,103 @@ class DriveBackupService {
             .timeout(const Duration(seconds: 60))) {
           builder.add(chunk);
         }
-        final bytes = builder.takeBytes();
-
-        // Determinar si es ZIP (backup nuevo) o .db crudo (backup viejo).
-        final esZip = info.nombre.toLowerCase().endsWith('.zip') ||
-            (bytes.length > 4 &&
-                bytes[0] == 0x50 &&
-                bytes[1] == 0x4B); // "PK"
-
-        Uint8List dbBytes;
-        int numFotos = 0;
-        Map<String, Uint8List> fotos = {};
-        if (esZip) {
-          final archive = ZipDecoder().decodeBytes(bytes);
-          ArchiveFile? dbEntry;
-          for (final f in archive) {
-            if (!f.isFile) continue;
-            final nm = f.name;
-            if (nm == 'pitwall.sqlite' ||
-                nm.endsWith('/pitwall.sqlite') ||
-                nm == 'resisbarna.sqlite' ||
-                nm.endsWith('/resisbarna.sqlite')) {
-              dbEntry = f;
-            } else if (nm.startsWith('fotos/')) {
-              fotos[p.basename(f.name)] =
-                  Uint8List.fromList(f.content as List<int>);
-              numFotos++;
-            }
-          }
-          if (dbEntry == null) {
-            throw 'El ZIP de backup no contiene la base de datos.';
-          }
-          dbBytes = Uint8List.fromList(dbEntry.content as List<int>);
-        } else {
-          dbBytes = bytes;
-        }
-
-        // Escribir BD a archivo TEMPORAL primero.
-        final local = await _archivoBdLocal();
-        final tmpRestore = File('${local.path}.restoring');
-        await tmpRestore.writeAsBytes(dbBytes, flush: true);
-
-        // Cerrar la BD para liberar el archivo y reemplazarlo.
-        final db = ref.read(dbProvider);
-        try {
-          await db.close().timeout(const Duration(seconds: 5));
-        } catch (_) {}
-
-        if (await local.exists()) await local.delete();
-        await tmpRestore.rename(local.path);
-
-        // Volcar fotos a la carpeta local.
-        if (fotos.isNotEmpty) {
-          final dirFotos = await FotosVerificacion.carpeta();
-          for (final e in fotos.entries) {
-            await File(p.join(dirFotos.path, e.key))
-                .writeAsBytes(e.value, flush: true);
-          }
-        }
-
-        // Invalidar provider para que se reabra al re-acceder.
-        ref.invalidate(dbProvider);
-
-        final extra = numFotos > 0 ? ' · $numFotos fotos' : '';
-        return ResultadoBackup(
-          ok: true,
-          mensaje:
-              'Copia restaurada (${(bytes.length / 1024).toStringAsFixed(1)} KB$extra). '
-              'Cierra y vuelve a abrir la app para que los cambios surtan efecto.',
-        );
+        return await restaurarDesdeBytes(builder.takeBytes(),
+            aplicarConfig: aplicarConfig);
       } finally {
         cli.close();
       }
+    } catch (e) {
+      return ResultadoBackup(ok: false, mensaje: '$e');
+    }
+  }
+
+  /// Restaura una copia ya descargada (de Drive) o elegida como archivo
+  /// local: reemplaza la BD y las fotos, y aplica la configuración si se
+  /// pide y la copia la trae. No necesita conexión con Google.
+  Future<ResultadoBackup> restaurarDesdeBytes(
+    Uint8List bytes, {
+    bool aplicarConfig = true,
+  }) async {
+    try {
+      // Determinar si es ZIP (backup nuevo) o .db crudo (backup viejo).
+      final esZip = bytes.length > 4 &&
+          bytes[0] == 0x50 &&
+          bytes[1] == 0x4B; // "PK"
+
+      Uint8List dbBytes;
+      int numFotos = 0;
+      Map<String, Uint8List> fotos = {};
+      Map<String, dynamic>? configJson;
+      if (esZip) {
+        final archive = ZipDecoder().decodeBytes(bytes);
+        ArchiveFile? dbEntry;
+        for (final f in archive) {
+          if (!f.isFile) continue;
+          final nm = f.name;
+          if (nm == 'pitwall.sqlite' ||
+              nm.endsWith('/pitwall.sqlite') ||
+              nm == 'resisbarna.sqlite' ||
+              nm.endsWith('/resisbarna.sqlite')) {
+            dbEntry = f;
+          } else if (nm.startsWith('fotos/')) {
+            fotos[p.basename(f.name)] =
+                Uint8List.fromList(f.content as List<int>);
+            numFotos++;
+          }
+        }
+        if (dbEntry == null) {
+          throw 'El ZIP de backup no contiene la base de datos.';
+        }
+        dbBytes = Uint8List.fromList(dbEntry.content as List<int>);
+        configJson = ConfigBackup.leerDeZip(archive);
+      } else {
+        dbBytes = bytes;
+      }
+
+      // Escribir BD a archivo TEMPORAL primero.
+      final local = await _archivoBdLocal();
+      final tmpRestore = File('${local.path}.restoring');
+      await tmpRestore.writeAsBytes(dbBytes, flush: true);
+
+      // Cerrar la BD para liberar el archivo y reemplazarlo.
+      final db = ref.read(dbProvider);
+      try {
+        await db.close().timeout(const Duration(seconds: 5));
+      } catch (_) {}
+
+      if (await local.exists()) await local.delete();
+      await tmpRestore.rename(local.path);
+
+      // Volcar fotos a la carpeta local.
+      if (fotos.isNotEmpty) {
+        final dirFotos = await FotosVerificacion.carpeta();
+        for (final e in fotos.entries) {
+          await File(p.join(dirFotos.path, e.key))
+              .writeAsBytes(e.value, flush: true);
+        }
+      }
+
+      // Configuración del programa (credenciales de Google, preferencias).
+      var extraConfig = '';
+      if (aplicarConfig && configJson != null) {
+        final reconectar = await ConfigBackup.aplicar(
+            ref.read(almacenSyncProvider), configJson);
+        extraConfig = ' · Configuración restaurada';
+        if (reconectar) {
+          extraConfig += ' — reconecta con Google al reabrir';
+        }
+      }
+
+      // Invalidar provider para que se reabra al re-acceder.
+      ref.invalidate(dbProvider);
+
+      final extra = numFotos > 0 ? ' · $numFotos fotos' : '';
+      return ResultadoBackup(
+        ok: true,
+        mensaje:
+            'Copia restaurada (${(bytes.length / 1024).toStringAsFixed(1)} KB$extra$extraConfig). '
+            'Cierra y vuelve a abrir la app para que los cambios surtan efecto.',
+      );
     } catch (e) {
       return ResultadoBackup(ok: false, mensaje: '$e');
     }

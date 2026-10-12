@@ -40,9 +40,11 @@ class _ResumenPiloto {
   int get usados => inicial - actual;
 }
 
-/// Solo pilotos que han participado al menos en una prueba del campeonato
-/// (vía inscripción de su equipo). Para el listado general ya está la
-/// pantalla de Pilotos.
+/// Pilotos que han participado al menos en una prueba del campeonato (vía
+/// inscripción de su equipo). Mientras no haya ningún participante —campeonato
+/// recién creado o temporada por empezar— se listan todos: si no, los créditos
+/// recién importados del campeonato anterior quedarían invisibles hasta la
+/// primera inscripción. Para el listado general ya está la pantalla de Pilotos.
 final _pilotosCampeonatoProvider =
     StreamProvider.autoDispose<List<_ResumenPiloto>>((ref) {
   final db = ref.watch(dbProvider);
@@ -67,7 +69,7 @@ final _pilotosCampeonatoProvider =
     }
     final out = <_ResumenPiloto>[];
     for (final pc in pcs) {
-      if (!participantes.contains(pc.pilotoId)) continue;
+      if (participantes.isNotEmpty && !participantes.contains(pc.pilotoId)) continue;
       final p = await (db.select(db.pilotos)
             ..where((t) => t.id.equals(pc.pilotoId)))
           .getSingleOrNull();

@@ -39,24 +39,36 @@ class GoogleAuthService {
   GoogleAuthService(this._storage);
   final AlmacenLocal _storage;
 
-  static const _kClientId = 'google_client_id';
-  static const _kClientSecret = 'google_client_secret';
+  // Públicas: las usa la copia de configuración (ConfigBackup). La copia
+  // incluye estas dos credenciales del proyecto, nunca la sesión.
+  static const claveClientId = 'google_client_id';
+  static const claveClientSecret = 'google_client_secret';
   static const _kAccessToken = 'google_access_token';
   static const _kRefreshToken = 'google_refresh_token';
   static const _kExpiry = 'google_token_expiry';
   static const _kAccountEmail = 'google_account_email';
 
+  /// Claves de la sesión conectada (tokens + cuenta). Al restaurar unas
+  /// credenciales de Google distintas hay que borrarlas: esos tokens ya no
+  /// valen y dejarían la app "conectada" de mentira.
+  static const clavesSesion = [
+    _kAccessToken,
+    _kRefreshToken,
+    _kExpiry,
+    _kAccountEmail,
+  ];
+
   // ----- Credenciales del proyecto Google Cloud -----
 
-  Future<String?> obtenerClientId() => _storage.read(key: _kClientId);
-  Future<String?> obtenerClientSecret() => _storage.read(key: _kClientSecret);
+  Future<String?> obtenerClientId() => _storage.read(key: claveClientId);
+  Future<String?> obtenerClientSecret() => _storage.read(key: claveClientSecret);
 
   Future<void> guardarCredencialesProyecto({
     required String clientId,
     required String clientSecret,
   }) async {
-    await _storage.write(key: _kClientId, value: clientId);
-    await _storage.write(key: _kClientSecret, value: clientSecret);
+    await _storage.write(key: claveClientId, value: clientId);
+    await _storage.write(key: claveClientSecret, value: clientSecret);
   }
 
   // ----- Estado de la sesión -----
