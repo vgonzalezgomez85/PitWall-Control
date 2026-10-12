@@ -21,6 +21,7 @@ import 'package:intl/intl.dart';
 
 import 'fila_pago_equipo.dart';
 import 'repositorio_tesoreria.dart';
+import '../../core/tema.dart';
 
 /// Minúsculas y sin acentos, para buscar "diaz" y encontrar "Díaz".
 String _normalizar(String s) => s
@@ -160,7 +161,7 @@ class _PantallaTesoreriaPruebaState
                         Text('$pagados / $aPagar pagados',
                             style: TextStyle(
                                 color: pagados >= aPagar
-                                    ? Colors.green.shade700
+                                    ? context.estado.exito
                                     : cs.outline)),
                         if (exentos > 0)
                           Text('$exentos no pagan',

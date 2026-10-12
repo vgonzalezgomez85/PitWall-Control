@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import 'repositorio_tesoreria.dart';
@@ -207,11 +208,11 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
               children: [
                 CircleAvatar(
                   backgroundColor: total > 0
-                      ? Colors.green.shade100
+                      ? context.estado.exitoSuave
                       : cs.surfaceContainerHighest,
                   child: Icon(
                     total > 0 ? Icons.check : Icons.attach_money,
-                    color: total > 0 ? Colors.green.shade700 : cs.outline,
+                    color: total > 0 ? context.estado.exito : cs.outline,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -235,7 +236,7 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
                 ),
                 Text(widget.eur.format(total),
                     style: TextStyle(
-                      color: total > 0 ? Colors.green.shade700 : cs.outline,
+                      color: total > 0 ? context.estado.exito : cs.outline,
                       fontWeight: FontWeight.w700,
                       fontSize: 18,
                     )),

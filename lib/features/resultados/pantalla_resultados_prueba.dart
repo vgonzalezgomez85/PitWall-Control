@@ -19,6 +19,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/copas_en_prueba.dart';
@@ -290,13 +291,13 @@ class _FilaResultadoPruebaState extends ConsumerState<_FilaResultadoPrueba> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade50,
+                  color: context.estado.exitoSuave,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '${fila.puntos ?? 0} pts',
                   style: TextStyle(
-                      color: Colors.green.shade700,
+                      color: context.estado.exito,
                       fontWeight: FontWeight.w700),
                 ),
               ),

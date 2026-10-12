@@ -20,6 +20,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import 'pantalla_tesoreria_prueba.dart';
@@ -368,7 +369,7 @@ Future<void> _editarMovimiento(
             TextButton.icon(
               icon: const Icon(Icons.delete_outline),
               label: const Text('Eliminar'),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
               onPressed: () async {
                 await ref
                     .read(repoTesoreriaProvider)
@@ -452,7 +453,7 @@ class _SeccionMovimientos extends StatelessWidget {
         else
           ...movimientos.map((m) {
             final esIngreso = m.importe >= 0;
-            final color = esIngreso ? Colors.green.shade700 : Colors.red.shade700;
+            final color = esIngreso ? context.estado.exito : Theme.of(context).colorScheme.error;
             return Card(
               child: ListTile(
                 leading: CircleAvatar(
@@ -653,7 +654,7 @@ class _TarjetaPrueba extends StatelessWidget {
                         backgroundColor: cs.surfaceContainerHighest,
                         valueColor: AlwaysStoppedAnimation(
                           progreso >= 1
-                              ? Colors.green.shade700
+                              ? context.estado.exito
                               : cs.primary,
                         ),
                       ),

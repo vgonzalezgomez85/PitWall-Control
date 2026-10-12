@@ -437,7 +437,8 @@ class _ItemMenu extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final icono = Icon(
       seleccionado ? destino.iconoSel : destino.icono,
-      color: seleccionado ? cs.onSecondaryContainer : cs.onSurfaceVariant,
+      // Seleccionado: icono en rojo de marca, como en la barra del móvil.
+      color: seleccionado ? cs.primary : cs.onSurfaceVariant,
     );
     final fondo = seleccionado ? cs.secondaryContainer : Colors.transparent;
 

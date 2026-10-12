@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../clasificacion/repositorio_clasificacion.dart';
@@ -462,7 +463,7 @@ class _Pendientes extends ConsumerWidget {
       return Card(
         child: ListTile(
           leading: Icon(Icons.check_circle_outline,
-              color: Colors.green.shade700),
+              color: context.estado.exito),
           title: const Text('Todo al día'),
           subtitle: Text(p == null
               ? 'No hay pruebas pendientes ni resultados por registrar.'
@@ -545,7 +546,7 @@ class _TarjetaLider extends ConsumerWidget {
           child: Row(
             children: [
               const CircleAvatar(
-                backgroundColor: Color(0xFFFFF3CD),
+                backgroundColor: Color(0x33E6A700),
                 child: Icon(Icons.emoji_events, color: Color(0xFFE6A700)),
               ),
               const SizedBox(width: 12),

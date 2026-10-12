@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'editor_verificacion.dart';
 import 'repositorio_verificaciones.dart';
+import '../../core/tema.dart';
 
 class PantallaVerificaciones extends ConsumerWidget {
   const PantallaVerificaciones({
@@ -127,7 +128,7 @@ class PantallaVerificaciones extends ConsumerWidget {
                       _Pildora(
                         icono: Icons.check_circle_outline,
                         label: '$validadas validadas',
-                        color: Colors.green.shade700,
+                        color: context.estado.exito,
                       ),
                     ],
                   ),
@@ -228,7 +229,7 @@ class TarjetaVerificacion extends StatelessWidget {
     String etiqueta;
     if (fila.validada) {
       icono = Icons.check_circle;
-      color = Colors.green.shade700;
+      color = context.estado.exito;
       etiqueta = 'Validada';
     } else if (fila.tieneVerificacion) {
       icono = Icons.edit_note;

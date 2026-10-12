@@ -181,9 +181,9 @@ class _EnviarVerificacionesDialogState
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Se envían a modo de consulta: en PitWall se podrán ver pero no editar.',
-          style: TextStyle(fontSize: 12, color: Colors.grey),
+          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outline),
         ),
         const SizedBox(height: 8),
         SelectorPitwall(hostCtrl: _hostCtrl),

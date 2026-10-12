@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/tema.dart';
 import '../../services/drive_backup_service.dart';
 import '../../services/google_auth_service.dart';
 import 'pantalla_configuracion_google.dart';
@@ -292,13 +293,13 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
               if (_mensajeOk != null) ...[
                 const SizedBox(height: 16),
                 Card(
-                  color: Colors.green.shade50,
+                  color: context.estado.exitoSuave,
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
                         Icon(Icons.check_circle_outline,
-                            color: Colors.green.shade700),
+                            color: context.estado.exito),
                         const SizedBox(width: 8),
                         Expanded(child: Text(_mensajeOk!)),
                       ],
@@ -417,7 +418,7 @@ class _NoConectado extends StatelessWidget {
               const SizedBox(height: 16),
               Text(mensajeOk!,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.green.shade700)),
+                  style: TextStyle(color: context.estado.exito)),
             ],
             if (mensajeError != null) ...[
               const SizedBox(height: 16),

@@ -14,6 +14,12 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.32.0] — 2026-10-12
+### Mejorado
+- **Colores de PitWall.** La app usa la misma paleta que PitWall Lap y la web: fondo azul-negro con superficies escalonadas y bordes finos en modo oscuro, tarjetas blancas sobre gris claro en modo claro, y el **rojo de marca** como acento (más profundo en botones y botones flotantes, para que el texto blanco se lea bien). Desaparecen los tonos rosados y granates que generaba Material.
+- **Colores de estado coherentes** en toda la app (validado, pendiente, aviso, información), con su versión para modo claro y oscuro, en lugar de verdes y naranjas sueltos. Las medallas (oro, plata, bronce) y las categorías de piloto mantienen sus colores.
+- El destino seleccionado del menú lateral se marca con el icono en rojo, como en la barra inferior del móvil.
+
 ## [1.31.0] — 2026-10-12
 ### Añadido
 - **Club organizador y logo en la verificación libre.** El reglamento de cada sesión tiene ahora la sección «Club organizador», igual que el campeonato: el nombre y el logo salen en la cabecera de los PDF de la sesión.

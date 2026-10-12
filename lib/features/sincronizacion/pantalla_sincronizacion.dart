@@ -26,6 +26,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/tema.dart';
 import '../../services/almacen_local.dart';
 import 'dispositivo_sync.dart';
 import 'proveedor_sync.dart';
@@ -260,7 +261,7 @@ class _PantallaSincronizacionState
                   color: c.error != null || !c.claveOk
                       ? cs.error
                       : c.ultimaSync != null
-                          ? Colors.green
+                          ? context.estado.exito
                           : null,
                 ),
                 title: Text(c.nombre),

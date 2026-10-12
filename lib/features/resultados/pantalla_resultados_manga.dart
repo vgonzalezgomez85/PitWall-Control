@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import 'repositorio_resultados.dart';
 
@@ -226,7 +227,7 @@ class _FilaResultadoState extends ConsumerState<_FilaResultado> {
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   decoration: BoxDecoration(
                     color: tienePos
-                        ? Colors.green.shade50
+                        ? context.estado.exitoSuave
                         : cs.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -238,7 +239,7 @@ class _FilaResultadoState extends ConsumerState<_FilaResultado> {
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: tienePos
-                              ? Colors.green.shade700
+                              ? context.estado.exito
                               : cs.outline,
                         ),
                       ),

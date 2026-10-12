@@ -22,6 +22,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/acciones_barra.dart';
 import '../../data/database/app_database.dart';
@@ -273,7 +274,7 @@ class _TarjetaPiloto extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final r = resumen;
     final crit = r.actual < 0 || (r.inicial > 0 && r.actual < r.inicial * 0.2);
-    final color = crit ? Colors.red.shade700 : cs.primary;
+    final color = crit ? Theme.of(context).colorScheme.error : cs.primary;
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -498,18 +499,18 @@ class _PantallaHistorialPiloto extends ConsumerWidget {
               ),
               if (huecoCreditos != 0)
                 Card(
-                  color: Colors.orange.shade50,
+                  color: context.estado.avisoSuave,
                   shape: RoundedRectangleBorder(
-                    side: BorderSide(color: Colors.orange.shade300),
+                    side: BorderSide(color: context.estado.aviso),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ListTile(
                     leading: Icon(Icons.warning_amber_outlined,
-                        color: Colors.orange.shade800),
+                        color: context.estado.aviso),
                     title: Text(
                       '${huecoCreditos.abs()} créd. sin justificar',
                       style: TextStyle(
-                          color: Colors.orange.shade900,
+                          color: context.estado.aviso,
                           fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(
@@ -518,7 +519,7 @@ class _PantallaHistorialPiloto extends ConsumerWidget {
                       'Probablemente venía así al importar o se editó a mano antes '
                       'de activar el log.',
                       style: TextStyle(
-                          color: Colors.orange.shade900, fontSize: 12),
+                          color: context.estado.aviso, fontSize: 12),
                     ),
                   ),
                 ),
@@ -594,7 +595,7 @@ class _FilaTimeline extends StatelessWidget {
     final positivo = delta >= 0;
     final color = inicial
         ? cs.primary
-        : (positivo ? Colors.green.shade700 : Colors.red.shade700);
+        : (positivo ? context.estado.exito : Theme.of(context).colorScheme.error);
     return Card(
       child: ListTile(
         leading: CircleAvatar(

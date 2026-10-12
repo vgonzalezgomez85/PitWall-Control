@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/tema.dart';
 import '../../services/google_auth_service.dart';
 import 'pantalla_backup.dart';
 
@@ -233,13 +234,13 @@ class _PantallaConfiguracionGoogleState
           if (_ultimoExito != null) ...[
             const SizedBox(height: 12),
             Card(
-              color: Colors.green.shade50,
+              color: context.estado.exitoSuave,
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
                     Icon(Icons.check_circle_outline,
-                        color: Colors.green.shade700),
+                        color: context.estado.exito),
                     const SizedBox(width: 8),
                     Expanded(child: Text(_ultimoExito!)),
                   ],

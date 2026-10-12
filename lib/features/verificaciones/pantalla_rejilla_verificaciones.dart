@@ -22,6 +22,7 @@ import 'package:drift/drift.dart' as d;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/reglas_verificacion.dart';
@@ -717,8 +718,8 @@ class _PantallaRejillaVerificacionesState
                         color: f.v == null
                             ? cs.outline
                             : f.v!.validado
-                            ? Colors.green.shade600
-                            : Colors.orange.shade700,
+                            ? context.estado.exito
+                            : context.estado.aviso,
                       )
                     : null,
               );

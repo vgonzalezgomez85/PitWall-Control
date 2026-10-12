@@ -19,6 +19,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../equipos/repositorio_equipos.dart';
@@ -213,11 +214,11 @@ class _TarjetaRevision extends StatelessWidget {
     IconData estadoIcon;
     if (iEf > iIni) {
       estado = 'Promociona';
-      estadoColor = Colors.green.shade700;
+      estadoColor = context.estado.exito;
       estadoIcon = Icons.arrow_upward;
     } else if (iEf < iIni) {
       estado = 'Desciende';
-      estadoColor = Colors.red.shade700;
+      estadoColor = Theme.of(context).colorScheme.error;
       estadoIcon = Icons.arrow_downward;
     } else {
       estado = 'Se mantiene';

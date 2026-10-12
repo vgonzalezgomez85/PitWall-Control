@@ -22,6 +22,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../campeonatos/editor_campeonato.dart';
@@ -406,7 +407,7 @@ class _Cabecera extends StatelessWidget {
               _Pildora(
                   icono: Icons.check_circle_outline,
                   label: '${datos.asignados}/${datos.filas.length} asignados',
-                  color: Colors.green.shade700),
+                  color: context.estado.exito),
               const SizedBox(width: 8),
               _Pildora(
                   icono: Icons.inventory_2_outlined,
@@ -610,9 +611,9 @@ class _ChipMotor extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final asignado = asignadoA != null;
-    final fondo = asignado ? cs.errorContainer : Colors.green.shade50;
-    final borde = asignado ? cs.error : Colors.green.shade400;
-    final texto = asignado ? cs.onErrorContainer : Colors.green.shade900;
+    final fondo = asignado ? cs.errorContainer : context.estado.exitoSuave;
+    final borde = asignado ? cs.error : context.estado.exito;
+    final texto = asignado ? cs.onErrorContainer : context.estado.exito;
     return Container(
       width: 150,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

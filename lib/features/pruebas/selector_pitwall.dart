@@ -237,7 +237,7 @@ class _SelectorPitwallState extends State<SelectorPitwall> {
   @override
   Widget build(BuildContext context) {
     final actual = widget.hostCtrl.text.trim();
-    final gris = TextStyle(fontSize: 12, color: Colors.grey.shade600);
+    final gris = TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outline);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,

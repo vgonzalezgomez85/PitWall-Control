@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../core/tema.dart';
 import '../../services/changelog.dart';
 
 /// Historial de versiones ("Novedades"), igual que en PitWall Manager:
@@ -135,14 +136,15 @@ class _Seccion extends StatelessWidget {
   const _Seccion({required this.seccion});
   final SeccionCambios seccion;
 
-  (IconData, Color) _estilo(ColorScheme cs) {
+  (IconData, Color) _estilo(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     switch (seccion.titulo) {
       case 'Añadido':
-        return (Icons.add_circle_outline, Colors.green.shade700);
+        return (Icons.add_circle_outline, context.estado.exito);
       case 'Mejorado':
-        return (Icons.trending_up, Colors.blue.shade700);
+        return (Icons.trending_up, context.estado.info);
       case 'Corregido':
-        return (Icons.build_outlined, Colors.orange.shade800);
+        return (Icons.build_outlined, context.estado.aviso);
       default:
         return (Icons.info_outline, cs.outline);
     }
@@ -150,8 +152,7 @@ class _Seccion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final (icono, color) = _estilo(cs);
+    final (icono, color) = _estilo(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

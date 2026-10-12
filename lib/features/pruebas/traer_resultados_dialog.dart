@@ -25,6 +25,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../services/almacen_local.dart';
 import '../../services/traer_resultados_service.dart';
@@ -313,7 +314,7 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
                   'no_inscrito' => Icons.person_off_outlined,
                   _ => Icons.check_circle_outline,
                 },
-                color: f.estado == 'ok' ? Colors.green : Colors.orange,
+                color: f.estado == 'ok' ? context.estado.exito : context.estado.aviso,
               ),
             ),
         ],

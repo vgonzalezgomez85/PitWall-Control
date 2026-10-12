@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/tema.dart';
 import '../../data/database/app_database.dart';
 import '../pruebas/repositorio_pruebas.dart';
 import '../sincronizacion/pantalla_sincronizacion.dart';
@@ -127,7 +128,7 @@ class _SeccionManga extends ConsumerWidget {
                   Text('$validadas / ${filas.length} validadas',
                       style: TextStyle(
                         color: validadas == filas.length
-                            ? Colors.green.shade700
+                            ? context.estado.exito
                             : cs.outline,
                         fontWeight: FontWeight.w600,
                       )),

@@ -27,6 +27,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/selector_buscable.dart';
 import '../../data/database/app_database.dart';
@@ -1424,6 +1425,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                     // hay, también sale en el resumen de
                                     // arriba, pero aquí se ve al momento).
                                     suffixIcon: _iconoCumpleMotor(
+                                        context,
                                         cs,
                                         _parseInt(_motorRpm.text),
                                         reglas?.motorRefRpm,
@@ -1443,6 +1445,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                         ? null
                                         : 'Máx ${reglas!.motorRefGauss}',
                                     suffixIcon: _iconoCumpleMotor(
+                                        context,
                                         cs,
                                         _parseDouble(_motorUms.text),
                                         reglas?.motorRefGauss,
@@ -1510,6 +1513,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                       ? null
                                       : 'Máx $anchuraEjeDelMax',
                                   suffixIcon: _iconoCumpleMotor(
+                                      context,
                                       cs,
                                       _parseDouble(_anchuraEjeDel.text),
                                       anchuraEjeDelMax,
@@ -1531,6 +1535,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
                                       ? null
                                       : 'Máx $anchuraEjeTraMax',
                                   suffixIcon: _iconoCumpleMotor(
+                                      context,
                                       cs,
                                       _parseDouble(_anchuraEjeTra.text),
                                       anchuraEjeTraMax,
@@ -2117,13 +2122,12 @@ class _AvisoBloqueo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final oscuro = Theme.of(context).brightness == Brightness.dark;
     final fondo = soloLectura
         ? cs.surfaceContainerHighest
-        : (oscuro ? Colors.orange.shade900 : Colors.orange.shade50);
+        : context.estado.avisoSuave;
     final texto = soloLectura
         ? cs.onSurface
-        : (oscuro ? Colors.orange.shade50 : Colors.orange.shade900);
+        : context.estado.aviso;
     return Card(
       color: fondo,
       child: Padding(
@@ -2230,12 +2234,12 @@ class _Resumen extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     if (resultado.todoOk) {
       return Card(
-        color: Colors.green.shade50,
+        color: context.estado.exitoSuave,
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.green.shade700),
+              Icon(Icons.check_circle, color: context.estado.exito),
               const SizedBox(width: 12),
               const Expanded(
                 child: Text('Todo cumple las normas. Puedes validar.'),
@@ -2246,9 +2250,9 @@ class _Resumen extends StatelessWidget {
       );
     }
     final color =
-        resultado.hayInfracciones ? cs.errorContainer : Colors.orange.shade50;
+        resultado.hayInfracciones ? cs.errorContainer : context.estado.avisoSuave;
     final colorTexto =
-        resultado.hayInfracciones ? cs.onErrorContainer : Colors.orange.shade900;
+        resultado.hayInfracciones ? cs.onErrorContainer : context.estado.aviso;
     return Card(
       color: color,
       child: Padding(
@@ -2287,7 +2291,7 @@ class _Resumen extends StatelessWidget {
                         size: 16,
                         color: h.nivel == NivelValidacion.infraccion
                             ? cs.error
-                            : Colors.orange.shade700,
+                            : context.estado.aviso,
                       ),
                       const SizedBox(width: 6),
                       Expanded(
@@ -2309,13 +2313,14 @@ class _Resumen extends StatelessWidget {
 /// para RPM (no puede superar la referencia); false para uMs/gauss (no
 /// puede ser menor). null si no hay valor o no hay motor de catálogo
 /// elegido, para no mostrar nada.
-Widget? _iconoCumpleMotor(ColorScheme cs, num? medido, num? referencia,
+Widget? _iconoCumpleMotor(
+    BuildContext context, ColorScheme cs, num? medido, num? referencia,
     {required bool maximo}) {
   if (medido == null || referencia == null) return null;
   final cumple = maximo ? medido <= referencia : medido >= referencia;
   return Icon(
     cumple ? Icons.check_circle : Icons.cancel,
-    color: cumple ? Colors.green.shade700 : cs.error,
+    color: cumple ? context.estado.exito : cs.error,
   );
 }
 
@@ -2407,8 +2412,8 @@ class _Bloque extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final oscuro = Theme.of(context).brightness == Brightness.dark;
     final estado = info?.estado ?? _EstadoBloque.neutro;
-    final ambar = oscuro ? Colors.amber.shade400 : Colors.amber.shade800;
-    final verde = oscuro ? Colors.green.shade400 : Colors.green.shade700;
+    final ambar = context.estado.aviso;
+    final verde = context.estado.exito;
     final (Color color, IconData? icono, String? etiqueta) = switch (estado) {
       _EstadoBloque.pendiente => (
           ambar,
@@ -2486,7 +2491,7 @@ class _ProgresoBloques extends StatelessWidget {
         .map((e) => e.key.replaceAll(RegExp(r' \(.*\)'), ''))
         .toList();
     final completo = cuentan.isNotEmpty && faltan.isEmpty;
-    final color = completo ? Colors.green.shade600 : Colors.amber.shade700;
+    final color = completo ? context.estado.exito : context.estado.aviso;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

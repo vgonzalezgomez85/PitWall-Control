@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import 'detalle_prueba.dart';
@@ -94,7 +95,7 @@ class _TarjetaPrueba extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final colorEst = _colorEstado(prueba.estado, cs);
+    final colorEst = _colorEstado(prueba.estado, context);
     final fmt = DateFormat("d MMM y", 'es_ES');
 
     return Card(
@@ -166,12 +167,13 @@ class _TarjetaPrueba extends StatelessWidget {
   }
 }
 
-Color _colorEstado(String e, ColorScheme cs) {
+Color _colorEstado(String e, BuildContext context) {
+  final cs = Theme.of(context).colorScheme;
   switch (e) {
     case 'EN_CURSO':
-      return Colors.orange.shade700;
+      return context.estado.aviso;
     case 'TERMINADA':
-      return Colors.green.shade700;
+      return context.estado.exito;
     case 'CANCELADA':
       return cs.outline;
     default:

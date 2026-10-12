@@ -19,6 +19,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../services/google_auth_service.dart';
 import '../../services/google_sheets_service.dart';
@@ -194,10 +195,10 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
-              color: Colors.green.shade100,
+              color: context.estado.exitoSuave,
               child: Text(_ok!,
                   style: TextStyle(
-                      color: Colors.green.shade900,
+                      color: context.estado.exito,
                       fontWeight: FontWeight.w600)),
             ),
           Expanded(
@@ -340,15 +341,15 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
             runSpacing: 6,
             children: [
               _chip('Pruebas reconocidas: ${a.pruebasReconocidas.length}',
-                  Colors.green.shade700),
+                  context.estado.exito),
               if (a.columnasNoReconocidas.isNotEmpty)
                 _chip(
                     'No reconocidas: ${a.columnasNoReconocidas.join(', ')}',
-                    Colors.orange.shade800),
+                    context.estado.aviso),
               _chip('Pilotos OK: ${a.pilotosOk}', cs.primary),
               if (a.pilotosKo > 0)
                 _chip('Pilotos con problemas: ${a.pilotosKo}',
-                    Colors.red.shade700),
+                    Theme.of(context).colorScheme.error),
             ],
           ),
         ),
@@ -363,19 +364,19 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
               switch (f.estado) {
                 case EstadoFila.ok:
                   ic = Icons.check_circle;
-                  col = Colors.green.shade700;
+                  col = context.estado.exito;
                   estado = 'OK';
                 case EstadoFila.pilotoNoEncontrado:
                   ic = Icons.person_off_outlined;
-                  col = Colors.red.shade700;
+                  col = Theme.of(context).colorScheme.error;
                   estado = 'Piloto no encontrado';
                 case EstadoFila.sinEquipo:
                   ic = Icons.group_off_outlined;
-                  col = Colors.orange.shade800;
+                  col = context.estado.aviso;
                   estado = 'Piloto sin equipo en este campeonato';
                 case EstadoFila.sinDatos:
                   ic = Icons.remove_circle_outline;
-                  col = Colors.grey.shade600;
+                  col = Theme.of(context).colorScheme.outline;
                   estado = 'Sin puntos importables';
               }
               final desglose = f.puntosPorPrueba.entries

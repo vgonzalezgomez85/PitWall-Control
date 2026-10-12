@@ -19,6 +19,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../pruebas/repositorio_pruebas.dart';
@@ -345,7 +346,7 @@ class _FilaPrevia extends StatelessWidget {
         color = cs.error;
         etiqueta = 'No existe';
       case 'no_inscrito':
-        color = Colors.orange.shade700;
+        color = context.estado.aviso;
         etiqueta = 'Se inscribirá';
       default:
         color = cs.primary;
