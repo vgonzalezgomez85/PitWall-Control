@@ -103,7 +103,7 @@ void main() {
     final a = lista.firstWhere((p) => p.equipoId == equipoA);
     expect(a.exento, isTrue);
     expect(a.exentoCoordinadora, isTrue);
-    expect(a.motivoExencion, 'Pilotos de coordinadora');
+    expect(a.motivoExencionCodigo, 'coordinadora');
     expect(a.saldado, isTrue);
     // El pago previo se borra, como con el wildcard.
     expect(a.pago, isNull);

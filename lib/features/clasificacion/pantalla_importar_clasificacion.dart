@@ -20,7 +20,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/tema.dart';
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
+import '../../domain/errores_importacion.dart';
 import '../../services/google_auth_service.dart';
 import '../../services/google_sheets_service.dart';
 import 'importador_clasificacion.dart';
@@ -58,12 +60,13 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
   }
 
   Future<void> _elegirArchivo() async {
+    final l = context.l;
     setState(() {
       _error = null;
       _ok = null;
     });
     final f = await openFile(acceptedTypeGroups: [
-      const XTypeGroup(label: 'CSV / Excel', extensions: ['csv', 'xlsx', 'xls']),
+      XTypeGroup(label: l.csvExcel, extensions: ['csv', 'xlsx', 'xls']),
     ]);
     if (f == null) return;
     setState(() => _archivoPath = f.path);
@@ -72,9 +75,10 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
 
   Future<void> _procesar(
       Future<List<List<String>>> Function() fuente) async {
+    final l = context.l;
     final activo = ref.read(campeonatoActivoProvider);
     if (activo == null) {
-      setState(() => _error = 'No hay campeonato activo.');
+      setState(() => _error = l.noHayCampeonatoActivo);
       return;
     }
     setState(() {
@@ -89,6 +93,10 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
           .read(importadorClasificacionProvider)
           .analizar(campeonatoId: activo.id, tabla: tabla);
       setState(() => _analisis = analisis);
+    } on FormatoNoSoportado catch (e) {
+      setState(() => _error = l.formatoNoSoportado(e.extension));
+    } on SinColumnaPiloto {
+      setState(() => _error = l.noEncuentroColumnaPiloto);
     } catch (e) {
       setState(() => _error = '$e');
     } finally {
@@ -109,10 +117,9 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
       final r = await ref
           .read(importadorClasificacionProvider)
           .aplicar(campeonatoId: activo.id, analisis: a);
+      if (!mounted) return;
       setState(() {
-        _ok =
-            'Importados ${r.registros} resultados de ${r.pilotos} pilotos. '
-            'Vuelve a la clasificación para verla actualizada.';
+        _ok = context.l.importadosResultados(r.registros, r.pilotos);
       });
     } catch (e) {
       setState(() => _error = '$e');
@@ -123,6 +130,7 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
 
   // ---- Drive ----
   Future<void> _cargarHojas() async {
+    final l = context.l;
     setState(() {
       _cargandoDrive = true;
       _error = null;
@@ -130,7 +138,7 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
     try {
       final estado = await ref.read(estadoGoogleProvider.future);
       if (!estado.conectado) {
-        throw 'Conecta tu cuenta de Google primero en Configuración → Google.';
+        throw l.conectaGooglePrimero;
       }
       _hojas = await ref.read(googleSheetsServiceProvider).listarHojas();
     } catch (e) {
@@ -172,12 +180,16 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Importar clasificación'),
+        title: Text(context.l.importarClasificacion),
         bottom: TabBar(
           controller: _tab,
-          tabs: const [
-            Tab(icon: Icon(Icons.upload_file_outlined), text: 'CSV / Excel'),
-            Tab(icon: Icon(Icons.cloud_outlined), text: 'Google Sheets'),
+          tabs: [
+            Tab(
+                icon: const Icon(Icons.upload_file_outlined),
+                text: context.l.csvExcel),
+            Tab(
+                icon: const Icon(Icons.cloud_outlined),
+                text: context.l.googleSheets),
           ],
         ),
       ),
@@ -225,17 +237,16 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
               Expanded(
                 child: Text(
                   _archivoPath == null
-                      ? 'Selecciona un archivo CSV o Excel con la clasificación. '
-                          'La primera fila debe ser la cabecera, con una columna "Piloto" '
-                          'y una columna por cada prueba.'
-                      : 'Archivo: ${_archivoPath!.split('/').last}',
+                      ? context.l.seleccionaArchivoClasificacion
+                      : context.l
+                          .archivoNombre(_archivoPath!.split('/').last),
                 ),
               ),
               const SizedBox(width: 12),
               FilledButton.icon(
                 onPressed: _cargando ? null : _elegirArchivo,
                 icon: const Icon(Icons.folder_open),
-                label: const Text('Elegir archivo'),
+                label: Text(context.l.elegirArchivo),
               ),
             ],
           ),
@@ -257,8 +268,8 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
               Expanded(
                 child: Text(
                   _hojaSel == null
-                      ? 'Selecciona la hoja de Drive con la clasificación.'
-                      : 'Hoja: ${_hojaSel!.nombre}'
+                      ? context.l.seleccionaHojaClasificacion
+                      : '${context.l.hojaNombre(_hojaSel!.nombre)}'
                           '${_pestanaSel == null ? '' : ' · ${_pestanaSel!.titulo}'}',
                 ),
               ),
@@ -266,7 +277,7 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
               FilledButton.icon(
                 onPressed: _cargandoDrive ? null : _cargarHojas,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Listar hojas'),
+                label: Text(context.l.listarHojas),
               ),
             ],
           ),
@@ -311,7 +322,7 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
                       child: Padding(
                         padding: const EdgeInsets.all(32),
                         child: Text(
-                          'Pulsa "Listar hojas" para empezar.',
+                          context.l.pulsaListarHojas,
                           style: TextStyle(color: cs.outline),
                         ),
                       ),
@@ -340,15 +351,16 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
             spacing: 8,
             runSpacing: 6,
             children: [
-              _chip('Pruebas reconocidas: ${a.pruebasReconocidas.length}',
+              _chip(context.l.pruebasReconocidas(a.pruebasReconocidas.length),
                   context.estado.exito),
               if (a.columnasNoReconocidas.isNotEmpty)
                 _chip(
-                    'No reconocidas: ${a.columnasNoReconocidas.join(', ')}',
+                    context.l.noReconocidasCampo(
+                        a.columnasNoReconocidas.join(', ')),
                     context.estado.aviso),
-              _chip('Pilotos OK: ${a.pilotosOk}', cs.primary),
+              _chip(context.l.pilotosOk(a.pilotosOk), cs.primary),
               if (a.pilotosKo > 0)
-                _chip('Pilotos con problemas: ${a.pilotosKo}',
+                _chip(context.l.pilotosConProblemas(a.pilotosKo),
                     Theme.of(context).colorScheme.error),
             ],
           ),
@@ -365,19 +377,19 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
                 case EstadoFila.ok:
                   ic = Icons.check_circle;
                   col = context.estado.exito;
-                  estado = 'OK';
+                  estado = context.l.estadoOk;
                 case EstadoFila.pilotoNoEncontrado:
                   ic = Icons.person_off_outlined;
                   col = Theme.of(context).colorScheme.error;
-                  estado = 'Piloto no encontrado';
+                  estado = context.l.pilotoNoEncontrado;
                 case EstadoFila.sinEquipo:
                   ic = Icons.group_off_outlined;
                   col = context.estado.aviso;
-                  estado = 'Piloto sin equipo en este campeonato';
+                  estado = context.l.pilotoSinEquipo;
                 case EstadoFila.sinDatos:
                   ic = Icons.remove_circle_outline;
                   col = Theme.of(context).colorScheme.outline;
-                  estado = 'Sin puntos importables';
+                  estado = context.l.sinPuntosImportables;
               }
               final desglose = f.puntosPorPrueba.entries
                   .map((e) => '${e.key}: ${e.value}')
@@ -416,8 +428,9 @@ class _State extends ConsumerState<PantallaImportarClasificacion>
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.cloud_upload_outlined),
             label: Text(_aplicando
-                ? 'Importando…'
-                : 'Importar ${a.filas.where((f) => f.importar).length} pilotos'),
+                ? context.l.importando
+                : context.l.importarNPilotos(
+                    a.filas.where((f) => f.importar).length)),
           ),
         ),
       ],

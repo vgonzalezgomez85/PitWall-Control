@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/acciones_barra.dart';
 import '../google/actualizador_drive.dart';
@@ -54,27 +55,30 @@ class _PantallaPilotosState extends ConsumerState<PantallaPilotos> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.pestanas == null ? 'Pilotos' : 'Participantes'),
+        title: Text(widget.pestanas == null
+            ? context.l.pilotos
+            : context.l.menuParticipantes),
         actions: [
           AccionesBarra([
             if (vinculoAsync.asData?.value case final v?)
               AccionBarra(
                 icono: Icons.sync,
-                etiqueta: 'Actualizar desde Drive',
+                etiqueta: context.l.actualizarDesdeDrive,
                 onPressed: () => _actualizarDesdeDrive(v),
               ),
             AccionBarra(
               icono: Icons.file_upload_outlined,
-              etiqueta: 'Importar',
+              etiqueta: context.l.importar,
               opciones: [
-                OpcionAccion(Icons.cloud_outlined, 'Vincular Google Sheet',
+                OpcionAccion(Icons.cloud_outlined,
+                    context.l.vincularGoogleSheet,
                     () => _abrir(const ImportarPilotosSheets())),
                 OpcionAccion(Icons.upload_file_outlined,
-                    'Desde archivo CSV / Excel',
+                    context.l.desdeArchivoCsvExcel,
                     () => _abrir(const PantallaImportarPilotos())),
                 OpcionAccion(
                     Icons.leaderboard_outlined,
-                    'Puntuación previa (1ª prueba)',
+                    context.l.puntuacionPreviaImport,
                     () => _abrir(const PantallaImportarPuntuacion())),
               ],
             ),
@@ -88,9 +92,9 @@ class _PantallaPilotosState extends ConsumerState<PantallaPilotos> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: TextField(
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  hintText: 'Buscar por nombre…',
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search),
+                  hintText: context.l.buscarPorNombre,
                 ),
                 onChanged: (v) => setState(() => _busqueda = v.trim().toLowerCase()),
               ),
@@ -102,13 +106,14 @@ class _PantallaPilotosState extends ConsumerState<PantallaPilotos> {
         heroTag: 'fab_pilotos',
         onPressed: () => _abrirEditor(),
         icon: const Icon(Icons.person_add),
-        label: const Text('Nuevo piloto'),
+        label: Text(context.l.nuevoPiloto),
       ),
       body: activo == null
-          ? const Center(child: Text('Selecciona primero un campeonato'))
+          ? Center(child: Text(context.l.seleccionaCampeonato))
           : pilotosAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) =>
+                  Center(child: Text(context.l.errorDetalle('$e'))),
               data: (pilotos) {
                 final filtrados = _busqueda.isEmpty
                     ? pilotos
@@ -128,14 +133,14 @@ class _PantallaPilotosState extends ConsumerState<PantallaPilotos> {
                           const SizedBox(height: 16),
                           Text(
                             pilotos.isEmpty
-                                ? 'Aún no hay pilotos en este campeonato'
-                                : 'No hay coincidencias',
+                                ? context.l.aunNoHayPilotosCampeonato
+                                : context.l.noHayCoincidencias,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           if (pilotos.isEmpty) ...[
                             const SizedBox(height: 12),
                             Text(
-                              'Pulsa el botón "Nuevo piloto" para añadir el primero.',
+                              context.l.pulsaNuevoPiloto,
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
@@ -173,9 +178,9 @@ class _PantallaPilotosState extends ConsumerState<PantallaPilotos> {
 
   Future<void> _actualizarDesdeDrive(VinculoHoja v) async {
     final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(const SnackBar(
-      content: Text('Actualizando desde Drive…'),
-      duration: Duration(seconds: 2),
+    messenger.showSnackBar(SnackBar(
+      content: Text(context.l.actualizandoDesdeDrive),
+      duration: const Duration(seconds: 2),
     ));
     final res = await ref.read(actualizadorDriveProvider).actualizarPilotos(v);
     if (!mounted) return;
@@ -232,7 +237,7 @@ class _TarjetaPiloto extends ConsumerWidget {
                           _Chip(text: perfil.categoria, color: colorCat),
                         if (usaCreditos)
                           _Chip(
-                            text: '${perfil.creditosActuales} créditos',
+                            text: context.l.nCreditos(perfil.creditosActuales),
                             color: color.secondary,
                           ),
                         if ((piloto.piloto.palmaresGlobal ?? '').isNotEmpty)

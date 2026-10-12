@@ -25,6 +25,13 @@ import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import 'repositorio_tesoreria.dart';
 
+/// Texto del motivo de exención ('wildcard' o 'coordinadora').
+String _motivoExencion(Textos l, String? codigo) => switch (codigo) {
+      'wildcard' => l.exencionWildcard,
+      'coordinadora' => l.exencionCoordinadora,
+      _ => '',
+    };
+
 /// Tarjeta de pago de un equipo en una prueba: Pagat / Coordinadora / Club,
 /// observaciones, pago rápido, wildcard y "Coord. total". Guarda al salir de
 /// cada campo. Se usa en la tesorería de la prueba y en la verificación.
@@ -165,7 +172,8 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
               style: const TextStyle(fontWeight: FontWeight.w700)),
           subtitle: Text(
             '${p.pilotosTexto}\n'
-            '${p.motivoExencion!} — ${context.l.noPagaEstaPrueba}',
+            '${_motivoExencion(context.l, p.motivoExencionCodigo)} — '
+            '${context.l.noPagaEstaPrueba}',
           ),
           isThreeLine: true,
           trailing: IconButton(
@@ -361,7 +369,9 @@ class FilaPagoEquipoEquipoState extends ConsumerState<FilaPagoEquipo> {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        p.notaMitad ?? '',
+                        p.notaMitadPiloto == null
+                            ? ''
+                            : context.l.pagaMitad(p.notaMitadPiloto!),
                         style: TextStyle(
                             color: cs.onTertiaryContainer, fontSize: 12),
                       ),

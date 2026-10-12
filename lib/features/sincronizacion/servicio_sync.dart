@@ -169,8 +169,13 @@ class InfoControl {
 }
 
 class ErrorSync implements Exception {
-  const ErrorSync(this.mensaje);
+  const ErrorSync(this.mensaje, {this.codigo});
+
+  /// Texto del error. Puede ser un texto del otro Control (llega por la red).
   final String mensaje;
+
+  /// Error propio que traduce la pantalla: 'sinRespuesta' | 'sinConexion'.
+  final String? codigo;
   @override
   String toString() => mensaje;
 }
@@ -211,9 +216,11 @@ class ClienteSync {
         headers: {cabeceraClaveSync: clave},
       ).timeout(const Duration(seconds: 20));
     } on TimeoutException {
-      throw const ErrorSync('No responde (¿sigue en la misma wifi?).');
+      throw const ErrorSync('No responde (¿sigue en la misma wifi?).',
+          codigo: 'sinRespuesta');
     } catch (_) {
-      throw const ErrorSync('No se puede conectar (¿sigue en la misma wifi?).');
+      throw const ErrorSync('No se puede conectar (¿sigue en la misma wifi?).',
+          codigo: 'sinConexion');
     }
     final cuerpo = utf8.decode(r.bodyBytes);
     if (r.statusCode != 200) {

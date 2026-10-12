@@ -24,6 +24,7 @@ import 'package:pitwall/core/idioma.dart';
 import 'package:pitwall/core/proveedores.dart';
 import 'package:pitwall/data/database/app_database.dart';
 import 'package:pitwall/features/home/app_shell.dart';
+import 'package:pitwall/features/pilotos/lista_pilotos.dart';
 import 'package:pitwall/features/pruebas/detalle_prueba.dart';
 import 'package:pitwall/features/verificaciones/lista_verificaciones.dart';
 import 'package:pitwall/services/almacen_local.dart';
@@ -220,6 +221,22 @@ void main() {
     expect(find.text('Verificacions'), findsOneWidget);
     expect(find.text('Pendent'), findsOneWidget);
     expect(find.text('1 equips'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await _desmontar(tester);
+  });
+
+  testWidgets('los participantes (fase 4) salen traducidos', (tester) async {
+    await _montarPantalla(
+        tester, const Locale('en'), (_, _) => const PantallaPilotos());
+    expect(find.text('Drivers'), findsOneWidget);
+    expect(find.text('New driver'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await _desmontar(tester);
+
+    await _montarPantalla(
+        tester, const Locale('ca'), (_, _) => const PantallaPilotos());
+    expect(find.text('Pilots'), findsOneWidget);
+    expect(find.text('Nou pilot'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await _desmontar(tester);
   });

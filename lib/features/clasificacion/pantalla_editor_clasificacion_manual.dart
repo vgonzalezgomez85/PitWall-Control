@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import 'repositorio_clasificacion.dart';
@@ -61,7 +62,7 @@ class _State extends ConsumerState<PantallaEditorClasificacionManual> {
     if (activo == null) {
       setState(() {
         _cargando = false;
-        _error = 'No hay campeonato activo.';
+        _error = context.l.noHayCampeonatoActivo;
       });
       return;
     }
@@ -171,18 +172,16 @@ class _State extends ConsumerState<PantallaEditorClasificacionManual> {
     return Scaffold(
       appBar: AppBar(
           title: Text(widget.copa == null
-              ? 'Clasificación a mano'
-              : 'Clasificación a mano · ${widget.copa}')),
+              ? context.l.clasificacionAMano
+              : context.l.clasificacionAManoCopa(widget.copa!))),
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text('Error: $_error'))
+              ? Center(child: Text(context.l.errorDetalle('$_error')))
               : _datos!.pruebas.isEmpty
-                  ? _aviso('Este campeonato no tiene pruebas. Crea pruebas '
-                      'primero para poder asignar puntos.')
+                  ? _aviso(context.l.sinPruebasParaPuntos)
                   : _datos!.filas.isEmpty
-                      ? _aviso('No hay pilotos con equipo en este campeonato. '
-                          'Asigna equipos a los pilotos primero.')
+                      ? _aviso(context.l.sinPilotosConEquipo)
                       : Column(
                           children: [
                             Container(
@@ -196,9 +195,7 @@ class _State extends ConsumerState<PantallaEditorClasificacionManual> {
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
-                                      'Escribe los puntos de cada piloto por prueba. '
-                                      'Se guardan solos al salir de cada casilla. '
-                                      'Casilla vacía = no puntuó; 0 = participó con 0.',
+                                      context.l.editorManualTexto,
                                       style: TextStyle(
                                           color: cs.outline, fontSize: 12),
                                     ),
@@ -237,7 +234,7 @@ class _State extends ConsumerState<PantallaEditorClasificacionManual> {
               columnSpacing: 14,
               headingRowColor: WidgetStatePropertyAll(cs.surfaceContainer),
               columns: [
-                const DataColumn(label: Text('Piloto')),
+                DataColumn(label: Text(context.l.piloto)),
                 for (final p in d.pruebas)
                   DataColumn(
                     numeric: true,

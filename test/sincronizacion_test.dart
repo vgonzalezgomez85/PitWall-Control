@@ -23,7 +23,9 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pitwall/core/idioma.dart';
 import 'package:pitwall/data/database/app_database.dart';
 import 'package:pitwall/data/database/sync_triggers.dart';
 import 'package:pitwall/domain/generador_mangas.dart';
@@ -100,7 +102,7 @@ Future<ResultadoFusionSync> _traer(AppDatabase destino, AppDatabase origen) asyn
   // Pasa por JSON como en la red.
   final paquete = jsonDecode(jsonEncode(await generarPaqueteSync(origen, _prueba)))
       as Map<String, dynamic>;
-  return FusionadorSync(destino).fusionar(_prueba, paquete);
+  return FusionadorSync(destino).fusionar(_prueba, paquete, lookupTextos(const Locale('es')));
 }
 
 Future<Verificacione?> _verif(AppDatabase db, int equipoId) =>
@@ -253,7 +255,7 @@ void main() {
 
       final paquete = await ClienteSync.paquete(host, '1234',
           const RefSync(1, 'Resistencia 2026'), const RefSync(_prueba, 'EL SOT'));
-      final r = await FusionadorSync(uno).fusionar(_prueba, paquete);
+      final r = await FusionadorSync(uno).fusionar(_prueba, paquete, lookupTextos(const Locale('es')));
       expect(r.verifNuevas, 1);
       expect((await _verif(uno, _equipoB))!.pesoInicial, 72);
 

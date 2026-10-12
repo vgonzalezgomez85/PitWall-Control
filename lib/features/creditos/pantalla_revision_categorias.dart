@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/tema.dart';
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../equipos/repositorio_equipos.dart';
@@ -117,15 +118,15 @@ class _PantallaRevisionCategoriasState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Revisión de categorías (cierre)'),
+        title: Text(context.l.revisionCategorias),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(72),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Buscar por nombre…',
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: context.l.buscarPorNombre,
               ),
               onChanged: (v) =>
                   setState(() => _busqueda = v.trim().toLowerCase()),
@@ -135,7 +136,8 @@ class _PantallaRevisionCategoriasState
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) =>
+            Center(child: Text(context.l.errorDetalle('$e'))),
         data: (todas) {
           final filas = _busqueda.isEmpty
               ? todas
@@ -149,8 +151,8 @@ class _PantallaRevisionCategoriasState
                 padding: const EdgeInsets.all(32),
                 child: Text(
                   todas.isEmpty
-                      ? 'No hay pilotos que hayan competido en este campeonato.'
-                      : 'No hay coincidencias.',
+                      ? context.l.noHayPilotosCompetido
+                      : context.l.noHayCoincidencias,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -169,9 +171,7 @@ class _PantallaRevisionCategoriasState
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Ajusta la categoría de cada piloto antes de finalizar. '
-                        'Se usará para la bonificación de cierre y como categoría '
-                        'inicial del próximo campeonato.',
+                        context.l.revisionTexto,
                         style: TextStyle(color: cs.outline, fontSize: 13),
                       ),
                     ),
@@ -213,15 +213,15 @@ class _TarjetaRevision extends StatelessWidget {
     Color estadoColor;
     IconData estadoIcon;
     if (iEf > iIni) {
-      estado = 'Promociona';
+      estado = context.l.estadoPromociona;
       estadoColor = context.estado.exito;
       estadoIcon = Icons.arrow_upward;
     } else if (iEf < iIni) {
-      estado = 'Desciende';
+      estado = context.l.estadoDesciende;
       estadoColor = Theme.of(context).colorScheme.error;
       estadoIcon = Icons.arrow_downward;
     } else {
-      estado = 'Se mantiene';
+      estado = context.l.estadoSeMantiene;
       estadoColor = cs.outline;
       estadoIcon = Icons.drag_handle;
     }
@@ -277,14 +277,14 @@ class _TarjetaRevision extends StatelessWidget {
                       ? () => onCambio(_mover(efectiva, -1))
                       : null,
                   icon: const Icon(Icons.arrow_downward, size: 16),
-                  label: const Text('Bajar'),
+                  label: Text(context.l.bajar),
                 ),
                 const SizedBox(width: 8),
                 OutlinedButton(
                   onPressed: efectiva == fila.inicial
                       ? null
                       : () => onCambio(fila.inicial),
-                  child: const Text('Mantener'),
+                  child: Text(context.l.mantener),
                 ),
                 const SizedBox(width: 8),
                 FilledButton.tonalIcon(
@@ -292,7 +292,7 @@ class _TarjetaRevision extends StatelessWidget {
                       ? () => onCambio(_mover(efectiva, 1))
                       : null,
                   icon: const Icon(Icons.arrow_upward, size: 16),
-                  label: const Text('Subir'),
+                  label: Text(context.l.subir),
                 ),
               ],
             ),

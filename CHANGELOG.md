@@ -14,6 +14,13 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.40.0] — 2026-10-12
+### Añadido
+- **La traducción avanza a los participantes, la clasificación, la tesorería, los créditos y el wifi (fase 4)**: se traducen las fichas y listas de pilotos y equipos (con sus importadores de CSV/Excel y la puntuación previa), la clasificación (general y por copa, con la tabla de puntos y el editor a mano), la tesorería (reparto de la cuota, movimientos y la caja de cada prueba), los créditos (historial, ajuste manual, bonificación de cierre y revisión de categorías) y «Verificar en equipo (wifi)» (emparejamiento, avisos de conflicto y resumen de lo que viaja). El resto de pantallas se irá traduciendo por fases y, mientras tanto, sigue en español.
+
+### Mejorado
+- Los avisos de la sincronización (qué ha viajado, conflictos de datos y reloj desviado) se componen en el idioma elegido, también cuando la sincronización termina en segundo plano.
+
 ## [1.39.0] — 2026-10-12
 ### Añadido
 - **La traducción avanza a las verificaciones (fase 3)**: se traducen el editor de verificación (ficha completa: coche, pesos, motor, carrocería, llantas, piñón y corona, bancada, chasis, otros, observaciones, fotos y validación, con el autoguardado y los avisos de bloqueo y reglamento congelado), el resumen en rejilla, la verificación libre (sesiones, reglamento de la sesión, alta de participantes e importación desde archivo o Google Sheets) y los mensajes de validación (infracciones y avisos), que ahora se componen en el idioma activo. El resto de pantallas se irá traduciendo por fases y, mientras tanto, sigue en español.

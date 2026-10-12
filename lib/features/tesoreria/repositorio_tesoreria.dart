@@ -97,18 +97,21 @@ class PagoEquipo {
     return 1.0;
   }
 
-  String? get motivoExencion {
-    if (wildcard) return 'Wildcard';
+  /// Por qué está exento: 'wildcard' o 'coordinadora'. El texto lo pone la
+  /// pantalla, que sí tiene idioma (null = no está exento).
+  String? get motivoExencionCodigo {
+    if (wildcard) return 'wildcard';
     if (exentoCoordinadora || todosCoordinadora) {
-      return 'Pilotos de coordinadora';
+      return 'coordinadora';
     }
     return null;
   }
 
-  String? get notaMitad {
+  /// Piloto de coordinadora que hace que el equipo pague la mitad (null si
+  /// el equipo paga entero). El texto lo pone la pantalla.
+  String? get notaMitadPiloto {
     if (!pagaMitad) return null;
-    final c = piloto1.esCoordinadora ? piloto1.nombre : piloto2!.nombre;
-    return 'Paga mitad — $c es de coordinadora';
+    return piloto1.esCoordinadora ? piloto1.nombre : piloto2!.nombre;
   }
 
   /// Total = PAGAT (los campos coordinadora y club son el desglose de PAGAT).

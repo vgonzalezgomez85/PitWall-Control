@@ -21,6 +21,8 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:excel/excel.dart';
 
+import '../../domain/errores_importacion.dart';
+
 /// Fila lista para importar: nombre de piloto + su puntuación de la
 /// temporada anterior (usada como semilla de orden solo hasta que el
 /// campeonato tenga resultados propios — a partir de la primera prueba
@@ -63,7 +65,7 @@ class ImportadorPuntuacionPrevia {
     final ext = path.toLowerCase().split('.').last;
     if (ext == 'csv') return _leerCsv(path);
     if (ext == 'xlsx' || ext == 'xls') return _leerExcel(path);
-    throw Exception('Formato no soportado: $ext. Usa .csv o .xlsx');
+    throw FormatoNoSoportado(ext);
   }
 
   static Future<({List<String> columnas, List<Map<String, String>> filas})>

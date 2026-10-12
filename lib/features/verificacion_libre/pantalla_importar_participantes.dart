@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/idioma.dart';
+import '../../domain/errores_importacion.dart';
 import '../../services/google_auth_service.dart';
 import '../../services/google_sheets_service.dart';
 import '../equipos/importador_equipos.dart';
@@ -122,6 +123,8 @@ class _PantallaImportarParticipantesState
           minCeldasCabecera: 1);
       _nombreArchivo = xfile.name;
       _cargarTabla(t);
+    } on FormatoNoSoportado catch (e) {
+      _error = l.formatoNoSoportado(e.extension);
     } catch (e) {
       _error = l.noSePudoLeerArchivo('$e');
     } finally {

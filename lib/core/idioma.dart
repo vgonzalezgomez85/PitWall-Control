@@ -21,7 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/generado/textos.dart';
 import '../services/almacen_local.dart';
 
-export '../l10n/generado/textos.dart' show Textos;
+export '../l10n/generado/textos.dart' show Textos, lookupTextos;
 
 /// Idiomas de la app, con su nombre en ese mismo idioma (así se reconocen en
 /// el selector aunque la app esté en otro).

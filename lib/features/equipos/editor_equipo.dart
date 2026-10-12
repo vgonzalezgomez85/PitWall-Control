@@ -16,6 +16,8 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'package:drift/drift.dart' as drift;
+
+import '../../core/idioma.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -80,23 +82,24 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
   }
 
   Future<void> _guardar() async {
+    final l = context.l;
     if (!_formKey.currentState!.validate()) return;
     if (_copa == null) {
-      _aviso('Selecciona la copa.');
+      _aviso(l.seleccionaLaCopa);
       return;
     }
     final activo = ref.read(campeonatoActivoProvider)!;
     final ids = _pilotos.whereType<int>().toList();
     if (ids.isEmpty) {
-      _aviso('Selecciona al menos un piloto.');
+      _aviso(l.seleccionaUnPiloto);
       return;
     }
     if (activo.formato == 'PAREJAS' && ids.length < 2) {
-      _aviso('En este campeonato (parejas) el equipo necesita dos pilotos.');
+      _aviso(l.parejasNecesitanDosPilotos);
       return;
     }
     if (ids.toSet().length != ids.length) {
-      _aviso('Hay pilotos repetidos en el equipo.');
+      _aviso(l.pilotosRepetidos);
       return;
     }
 
@@ -137,7 +140,7 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
       }
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
-      _aviso('No se pudo guardar: $e');
+      _aviso(l.noSePudoGuardar('$e'));
       if (mounted) setState(() => _guardando = false);
     }
   }
@@ -188,21 +191,23 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
   }
 
   Future<void> _borrar() async {
+    final l = context.l;
     final esIndividual = _maxSlots == 1;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(esIndividual ? 'Eliminar inscripción' : 'Eliminar equipo'),
+        title: Text(
+            esIndividual ? l.eliminarInscripcion : l.eliminarEquipo),
         content: Text(esIndividual
-            ? '¿Eliminar la inscripción de "${_nombre.text}"? Esta acción no se puede deshacer.'
-            : '¿Eliminar el equipo "${_nombre.text}"? Esta acción no se puede deshacer.'),
+            ? l.eliminarInscripcionTexto(_nombre.text)
+            : l.eliminarEquipoTexto(_nombre.text)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Eliminar')),
+              child: Text(l.eliminar)),
         ],
       ),
     );
@@ -225,12 +230,14 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
     return Scaffold(
       appBar: AppBar(
         title: Text(esNuevo
-            ? (esIndividual ? 'Nueva inscripción' : 'Nuevo equipo')
-            : (esIndividual ? 'Editar inscripción' : 'Editar equipo')),
+            ? (esIndividual ? context.l.nuevaInscripcion : context.l.nuevoEquipo)
+            : (esIndividual
+                ? context.l.editarInscripcion
+                : context.l.editarEquipo)),
         actions: [
           if (!esNuevo)
             IconButton(
-              tooltip: 'Eliminar',
+              tooltip: context.l.eliminar,
               icon: const Icon(Icons.delete_outline),
               onPressed: _borrar,
             ),
@@ -238,14 +245,14 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
       ),
       body: pilotosAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
         data: (pilotos) {
           if (pilotos.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(24),
+            return Padding(
+              padding: const EdgeInsets.all(24),
               child: Center(
                 child: Text(
-                  'Primero añade pilotos al campeonato para poder crear equipos.',
+                  context.l.primeroAnadePilotos,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -262,22 +269,22 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
                 if (_maxSlots > 1) ...[
                   TextFormField(
                     controller: _nombre,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre del equipo *',
-                      prefixIcon: Icon(Icons.label_outline),
+                    decoration: InputDecoration(
+                      labelText: context.l.nombreDelEquipoObligatorio,
+                      prefixIcon: const Icon(Icons.label_outline),
                     ),
                     textCapitalization: TextCapitalization.characters,
                     validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Indica un nombre'
+                        ? context.l.indicaUnNombre
                         : null,
                   ),
                   const SizedBox(height: 16),
                 ],
                 DropdownButtonFormField<String>(
                   initialValue: _copa,
-                  decoration: const InputDecoration(
-                    labelText: 'Copa / categoría *',
-                    prefixIcon: Icon(Icons.flag_outlined),
+                  decoration: InputDecoration(
+                    labelText: context.l.copaCategoriaObligatoria,
+                    prefixIcon: const Icon(Icons.flag_outlined),
                   ),
                   items: copas
                       .map((c) =>
@@ -288,7 +295,9 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    Text(_maxSlots == 1 ? 'Piloto' : 'Pilotos del equipo',
+                    Text(_maxSlots == 1
+                            ? context.l.piloto
+                            : context.l.pilotosDelEquipo,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               color: Theme.of(context).colorScheme.primary,
                             )),
@@ -306,7 +315,9 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
                     children: [
                       Expanded(
                         child: _SelectorPiloto(
-                          label: _maxSlots == 1 ? 'Piloto *' : 'Piloto ${i + 1}',
+                          label: _maxSlots == 1
+                              ? context.l.pilotoObligatorio
+                              : context.l.pilotoN(i + 1),
                           pilotos: pilotos,
                           valor: _pilotos[i],
                           onChange: (v) => setState(() => _pilotos[i] = v),
@@ -315,7 +326,7 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
                       // Quitar casilla (solo por encima del mínimo).
                       if (_pilotos.length > _minSlots)
                         IconButton(
-                          tooltip: 'Quitar',
+                          tooltip: context.l.quitar,
                           icon: const Icon(Icons.remove_circle_outline),
                           onPressed: () =>
                               setState(() => _pilotos.removeAt(i)),
@@ -330,7 +341,7 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
                     child: TextButton.icon(
                       onPressed: () => setState(() => _pilotos.add(null)),
                       icon: const Icon(Icons.add),
-                      label: const Text('Añadir piloto'),
+                      label: Text(context.l.anadirPiloto),
                     ),
                   ),
                 ],
@@ -344,11 +355,8 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
                         Icon(Icons.info_outline,
                             color: Theme.of(context).colorScheme.outline),
                         const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            'El coche se indica en la verificación de cada tanda. '
-                            'Un equipo puede usar coches diferentes en distintas pruebas.',
-                          ),
+                        Expanded(
+                          child: Text(context.l.cocheEnVerificacionTexto),
                         ),
                       ],
                     ),
@@ -364,8 +372,10 @@ class _EditorEquipoState extends ConsumerState<EditorEquipo> {
                         )
                       : const Icon(Icons.check),
                   label: Text(esNuevo
-                      ? (esIndividual ? 'Inscribir' : 'Crear equipo')
-                      : 'Guardar cambios'),
+                      ? (esIndividual
+                          ? context.l.inscribir
+                          : context.l.crearEquipo)
+                      : context.l.guardarCambios),
                 ),
               ],
             ),
@@ -400,7 +410,7 @@ class _SelectorPiloto extends StatelessWidget {
       opciones: pilotos,
       etiquetaOpcion: (p) => p.nombre,
       subtituloOpcion: (p) => p.email,
-      textoVacio: '— elegir piloto —',
+      textoVacio: context.l.elegirPiloto,
       onCambio: (p) => onChange(p?.id),
     );
   }

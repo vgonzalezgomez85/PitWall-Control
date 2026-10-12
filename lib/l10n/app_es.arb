@@ -1813,5 +1813,811 @@
       }
     }
   },
-  "fotoCatalogo": "Foto catálogo"
+  "fotoCatalogo": "Foto catálogo",
+  "pilotos": "Pilotos",
+  "inscripciones": "Inscripciones",
+  "nuevoPiloto": "Nuevo piloto",
+  "editarPiloto": "Editar piloto",
+  "crearPiloto": "Crear piloto",
+  "puntuacionPreviaImport": "Puntuación previa (1ª prueba)",
+  "buscarPorNombre": "Buscar por nombre…",
+  "aunNoHayPilotosCampeonato": "Aún no hay pilotos en este campeonato",
+  "noHayCoincidencias": "No hay coincidencias",
+  "pulsaNuevoPiloto": "Pulsa el botón \"Nuevo piloto\" para añadir el primero.",
+  "quitarDelCampeonato": "Quitar del campeonato",
+  "quitarDelCampeonatoTexto": "¿Quitar a {piloto} de \"{campeonato}\"?\n\nEl piloto no se borra, solo se desinscribe de este campeonato.",
+  "@quitarDelCampeonatoTexto": {
+    "placeholders": {
+      "piloto": {
+        "type": "String"
+      },
+      "campeonato": {
+        "type": "String"
+      }
+    }
+  },
+  "motivoAjusteManual": "Ajuste manual (ficha de piloto)",
+  "datosPersonales": "Datos personales",
+  "nombreYApellidos": "Nombre y apellidos *",
+  "telefono": "Teléfono",
+  "email": "Email",
+  "palmaresHistorico": "Palmarés histórico",
+  "palmaresEjemplo": "Ej: \"Top 3 liga 2025\", \"WES 2023-2024\"",
+  "pilotoCoordinadora": "Piloto de coordinadora",
+  "pilotoCoordinadoraTexto": "Si está activado, los equipos en los que participe no pagarán cuota.",
+  "enEsteCampeonato": "En este campeonato",
+  "categoria": "Categoría",
+  "creditosIniciales": "Créditos iniciales",
+  "sugeridoSegunCategoria": "Sugerido según categoría",
+  "creditosActuales": "Créditos actuales",
+  "palmaresLocal": "Palmarés en este campeonato",
+  "indicaUnNumero": "Indica un número",
+  "tieneQueSerEntero": "Tiene que ser un número entero",
+  "noPuedeSerNegativo": "No puede ser negativo",
+  "importarPilotos": "Importar pilotos",
+  "soportaExcelPilotos": "Soporta archivos Excel (.xlsx) y CSV. Debe tener al menos una columna con el nombre de los pilotos.",
+  "resumenImportacionPilotos": "✓ Pilotos nuevos: {nuevos}\n✓ Inscritos en este campeonato: {inscritos}\n✗ Saltados: {saltados}",
+  "@resumenImportacionPilotos": {
+    "placeholders": {
+      "nuevos": {
+        "type": "int"
+      },
+      "inscritos": {
+        "type": "int"
+      },
+      "saltados": {
+        "type": "int"
+      }
+    }
+  },
+  "errorImportando": "Error importando: {detalle}",
+  "@errorImportando": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "indicaColumnaNombrePiloto": "Indica qué columna contiene el nombre del piloto.",
+  "noFilasValidas": "No se han encontrado filas válidas.",
+  "importarNPilotos": "Importar {n, plural, =1{1 piloto} other{{n} pilotos}}",
+  "@importarNPilotos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "paso2AsignaLasColumnas": "2. Asigna las columnas",
+  "columnasAutodetectadas": "Hemos intentado detectarlas automáticamente. Cámbialas si hace falta.",
+  "categoriaMetal": "Categoría (metal)",
+  "palmares": "Palmarés",
+  "nuevo": "Nuevo",
+  "importarPuntuacionPrevia": "Importar puntuación previa",
+  "puntuacionPreviaTexto": "Excel (.xlsx) o CSV con el nombre del piloto y su puntuación. Solo actualiza a pilotos que YA están inscritos en el campeonato activo (se cruza por nombre) — no da de alta a nadie nuevo.",
+  "puntuacionImportada": "Puntuación importada",
+  "puntuacionImportadaTexto": "✓ Actualizados: {ok}\n✗ Saltados: {saltados}\n\nEsta puntuación solo se usa para \"Generar tandas\" en la primera prueba; en cuanto el campeonato tenga resultados propios, la clasificación real la sustituye sola.",
+  "@puntuacionImportadaTexto": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "saltados": {
+        "type": "int"
+      }
+    }
+  },
+  "puntuacionObligatoria": "Puntuación *",
+  "nDeTotalSeActualizaran": "{n} de {total} se actualizarán",
+  "@nDeTotalSeActualizaran": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "indicaColumnaNombreYPuntuacion": "Indica qué columna es el nombre y cuál la puntuación.",
+  "actualizarNPilotos": "Actualizar {n, plural, =1{1 piloto} other{{n} pilotos}}",
+  "@actualizarNPilotos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "noEstaEnCampeonato": "No está en el campeonato",
+  "formulaSinCalcular": "Fórmula sin calcular — usa \"pegado especial: valores\"",
+  "seActualizara": "Se actualizará",
+  "aunNoHayEquipos": "Aún no hay equipos",
+  "creaEquipoDosPilotos": "Crea un equipo con dos pilotos para empezar.",
+  "creaInscripcionIndividual": "Crea una inscripción individual para empezar.",
+  "importarEquipos": "Importar equipos",
+  "seleccionaLaCopa": "Selecciona la copa.",
+  "seleccionaUnPiloto": "Selecciona al menos un piloto.",
+  "parejasNecesitanDosPilotos": "En este campeonato (parejas) el equipo necesita dos pilotos.",
+  "pilotosRepetidos": "Hay pilotos repetidos en el equipo.",
+  "eliminarInscripcion": "Eliminar inscripción",
+  "eliminarEquipo": "Eliminar equipo",
+  "eliminarInscripcionTexto": "¿Eliminar la inscripción de \"{nombre}\"? Esta acción no se puede deshacer.",
+  "@eliminarInscripcionTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "eliminarEquipoTexto": "¿Eliminar el equipo \"{nombre}\"? Esta acción no se puede deshacer.",
+  "@eliminarEquipoTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "editarInscripcion": "Editar inscripción",
+  "editarEquipo": "Editar equipo",
+  "primeroAnadePilotos": "Primero añade pilotos al campeonato para poder crear equipos.",
+  "indicaUnNombre": "Indica un nombre",
+  "copaCategoriaObligatoria": "Copa / categoría *",
+  "piloto": "Piloto",
+  "pilotosDelEquipo": "Pilotos del equipo",
+  "pilotoN": "Piloto {n}",
+  "@pilotoN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cocheEnVerificacionTexto": "El coche se indica en la verificación de cada tanda. Un equipo puede usar coches diferentes en distintas pruebas.",
+  "crearEquipo": "Crear equipo",
+  "elegirPiloto": "— elegir piloto —",
+  "equipoImportTexto": "Sube el CSV o Excel del Google Form de pretemporada. Cada fila debe ser un equipo con el nombre del equipo y {pilotos}.",
+  "@equipoImportTexto": {
+    "placeholders": {
+      "pilotos": {
+        "type": "String"
+      }
+    }
+  },
+  "susDosPilotos": "sus dos pilotos",
+  "suPiloto": "su piloto",
+  "asignaColumnaEquipoYPiloto": "Asigna al menos la columna del nombre del equipo y la del primer piloto.",
+  "importarNEquipos": "Importar {n, plural, =1{1 equipo} other{{n} equipos}}",
+  "@importarNEquipos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "resumenImportacionEquipos": "✓ Equipos creados: {equipos}\n✓ Pilotos nuevos: {pilotosNuevos}\n✓ Pilotos inscritos al campeonato: {pilotosInscritos}\n✗ Saltados: {saltados}",
+  "@resumenImportacionEquipos": {
+    "placeholders": {
+      "equipos": {
+        "type": "int"
+      },
+      "pilotosNuevos": {
+        "type": "int"
+      },
+      "pilotosInscritos": {
+        "type": "int"
+      },
+      "saltados": {
+        "type": "int"
+      }
+    }
+  },
+  "columnasIntentadas": "Hemos intentado detectarlas. Cambia las que no estén bien.",
+  "yaExiste": "Ya existe",
+  "sinPiloto": "Sin piloto",
+  "faltaSegundoPiloto": "Falta el segundo piloto (campeonato por parejas)",
+  "nombreObligatorio": "Nombre *",
+  "nombreCampo": "Nombre",
+  "piloto1": "Piloto 1",
+  "piloto2Opcional": "Piloto 2 (opcional)",
+  "formatoNoSoportadoUsaCsv": "Formato no soportado: {ext}. Usa .csv o .xlsx",
+  "@formatoNoSoportadoUsaCsv": {
+    "placeholders": {
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "tablaDePuntos": "Tabla de puntos",
+  "rellenarAMano": "Rellenar a mano",
+  "aunNoHayClasificacion": "Aún no hay clasificación",
+  "clasificacionVaciaTexto": "Registra resultados de tanda, impórtala desde un archivo o rellénala a mano.",
+  "importarClasificacion": "Importar clasificación",
+  "general": "General",
+  "noHayPilotosEn": "No hay pilotos en \"{titulo}\".",
+  "@noHayPilotosEn": {
+    "placeholders": {
+      "titulo": {
+        "type": "String"
+      }
+    }
+  },
+  "todosLosPilotosCampeonato": "Todos los pilotos del campeonato",
+  "pilotosDeCopa": "Pilotos de copa {copa}",
+  "@pilotosDeCopa": {
+    "placeholders": {
+      "copa": {
+        "type": "String"
+      }
+    }
+  },
+  "nPilotos": "{n, plural, =1{1 piloto} other{{n} pilotos}}",
+  "@nPilotos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "equipo": "Equipo",
+  "catAbrev": "Cat.",
+  "bruto": "Bruto",
+  "descAbrev": "Desc.",
+  "totalMayusculas": "TOTAL",
+  "clasificacionAMano": "Clasificación a mano",
+  "clasificacionAManoCopa": "Clasificación a mano · {copa}",
+  "@clasificacionAManoCopa": {
+    "placeholders": {
+      "copa": {
+        "type": "String"
+      }
+    }
+  },
+  "sinPruebasParaPuntos": "Este campeonato no tiene pruebas. Crea pruebas primero para poder asignar puntos.",
+  "sinPilotosConEquipo": "No hay pilotos con equipo en este campeonato. Asigna equipos a los pilotos primero.",
+  "editorManualTexto": "Escribe los puntos de cada piloto por prueba. Se guardan solos al salir de cada casilla. Casilla vacía = no puntuó; 0 = participó con 0.",
+  "restaurarValores": "Restaurar valores por defecto",
+  "restaurar": "Restaurar",
+  "restaurarTexto": "Se sustituirá la tabla de puntos actual por la de PitWall Control (70, 64, 59… hasta 1 punto). Los cambios no se guardan hasta que pulses \"Guardar\".",
+  "posN": "Pos. {n}",
+  "@posN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "puntosMayus": "Puntos",
+  "quitarUltimaPosicion": "Quitar última posición",
+  "anadirPosicion": "Añadir posición",
+  "csvExcel": "CSV / Excel",
+  "googleSheets": "Google Sheets",
+  "listarHojas": "Listar hojas",
+  "seleccionaArchivoClasificacion": "Selecciona un archivo CSV o Excel con la clasificación. La primera fila debe ser la cabecera, con una columna \"Piloto\" y una columna por cada prueba.",
+  "archivoNombre": "Archivo: {nombre}",
+  "@archivoNombre": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "seleccionaHojaClasificacion": "Selecciona la hoja de Drive con la clasificación.",
+  "hojaNombre": "Hoja: {nombre}",
+  "@hojaNombre": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "pulsaListarHojas": "Pulsa \"Listar hojas\" para empezar.",
+  "pruebasReconocidas": "Pruebas reconocidas: {n}",
+  "@pruebasReconocidas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "noReconocidasCampo": "No reconocidas: {lista}",
+  "@noReconocidasCampo": {
+    "placeholders": {
+      "lista": {
+        "type": "String"
+      }
+    }
+  },
+  "pilotosOk": "Pilotos OK: {n}",
+  "@pilotosOk": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "pilotosConProblemas": "Pilotos con problemas: {n}",
+  "@pilotosConProblemas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "conectaGooglePrimero": "Conecta tu cuenta de Google primero en Configuración → Google.",
+  "importadosResultados": "Importados {registros} resultados de {pilotos} pilotos. Vuelve a la clasificación para verla actualizada.",
+  "@importadosResultados": {
+    "placeholders": {
+      "registros": {
+        "type": "int"
+      },
+      "pilotos": {
+        "type": "int"
+      }
+    }
+  },
+  "estadoOk": "OK",
+  "pilotoNoEncontrado": "Piloto no encontrado",
+  "pilotoSinEquipo": "Piloto sin equipo en este campeonato",
+  "sinPuntosImportables": "Sin puntos importables",
+  "noEncuentroColumnaPiloto": "No encuentro la columna del piloto. La primera fila debe contener una columna llamada \"Piloto\", \"Nombre\" o \"Equipo\".",
+  "importando": "Importando…",
+  "puntosNoValidos": "Hay una posición con un valor de puntos no válido.",
+  "tablaGuardada": "Tabla de puntos guardada.",
+  "reparto": "Reparto",
+  "movimiento": "Movimiento",
+  "sinCampeonatoActivo": "No hay campeonato activo",
+  "cuotaPorPruebaTexto": "Cuota por prueba: {pagat} (coordinadora {coord} · club {club})",
+  "@cuotaPorPruebaTexto": {
+    "placeholders": {
+      "pagat": {
+        "type": "String"
+      },
+      "coord": {
+        "type": "String"
+      },
+      "club": {
+        "type": "String"
+      }
+    }
+  },
+  "porPrueba": "Por prueba",
+  "repartoDeLaCuota": "Reparto de la cuota",
+  "repartoTexto": "Lo que paga cada equipo por prueba y a dónde va. Al cambiar coordinadora o club, el otro se ajusta para que sumen el Pagat.",
+  "pagatCuotaTotal": "Pagat (cuota total) €",
+  "coordinadoraEur": "Coordinadora €",
+  "clubEur": "Club €",
+  "pagatMayorQueCero": "El Pagat tiene que ser mayor que 0.",
+  "coordClubSumanPagat": "Coordinadora + club tienen que sumar el Pagat.",
+  "aplicarAPagosCobrados": "Aplicar también a los pagos ya cobrados",
+  "aplicarAPagosCobradosTexto": "Vuelve a repartir lo que pagó cada equipo con la nueva proporción. Lo cobrado no cambia.",
+  "repartoGuardadoRecalculado": "Reparto guardado. {n, plural, =1{1 pago recalculado.} other{{n} pagos recalculados.}}",
+  "@repartoGuardadoRecalculado": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "repartoGuardado": "Reparto guardado. Se aplicará a los próximos pagos.",
+  "nuevoMovimiento": "Nuevo movimiento",
+  "editarMovimiento": "Editar movimiento",
+  "ingreso": "Ingreso",
+  "gasto": "Gasto",
+  "conceptoObligatorio": "Concepto *",
+  "conceptoEjemplo": "Ej: Patrocinio, Material, Premio…",
+  "importeObligatorio": "Importe (€) *",
+  "importeAyuda": "Solo el número, sin signo",
+  "notas": "Notas",
+  "movimientosExtras": "Movimientos extras",
+  "ingresosYGastosSueltos": "(ingresos y gastos sueltos)",
+  "sinMovimientosTexto": "Sin movimientos. Usa el botón \"+ Movimiento\" para añadir patrocinios, gastos de material, etc.",
+  "balanceCampeonato": "Balance del campeonato",
+  "masIngresos": "+ Ingresos",
+  "menosGastos": "− Gastos",
+  "coordAbrev": "Coord.",
+  "tesoreriaDeLaPrueba": "Tesorería de la prueba",
+  "buscarPilotoOEquipo": "Buscar piloto o equipo…",
+  "borrar": "Borrar",
+  "sinEquiposInscritos": "Sin equipos inscritos",
+  "recaudadoEnPrueba": "Recaudado en la prueba",
+  "pagadosDe": "{pagados} / {total} pagados",
+  "@pagadosDe": {
+    "placeholders": {
+      "pagados": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "exentosNoPagan": "{n, plural, =1{1 exento} other{{n} exentos}} no pagan",
+  "@exentosNoPagan": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nadieCoincide": "Nadie coincide con \"{filtro}\".",
+  "@nadieCoincide": {
+    "placeholders": {
+      "filtro": {
+        "type": "String"
+      }
+    }
+  },
+  "exencionWildcard": "Wildcard",
+  "exencionCoordinadora": "Pilotos de coordinadora",
+  "pagaMitad": "Paga mitad — {piloto} es de coordinadora",
+  "@pagaMitad": {
+    "placeholders": {
+      "piloto": {
+        "type": "String"
+      }
+    }
+  },
+  "revisionCategorias": "Revisión de categorías (cierre)",
+  "aplicarBonificacion": "Aplicar bonificación de cierre",
+  "aunNoHayPilotosInscritos": "Aún no hay pilotos inscritos en este campeonato.",
+  "bonificacionCierre": "Bonificación de cierre",
+  "bonificacionCierreTexto": "Se regularizará el saldo de cada piloto que haya competido:\n\nsaldo = mín(saldo actual + bonificación según categoría y nº de carreras, {tope}).\n\nSolo se aplica a quien aún no la tenga. ¿Continuar?",
+  "@bonificacionCierreTexto": {
+    "placeholders": {
+      "tope": {
+        "type": "String"
+      }
+    }
+  },
+  "bonificacionAplicada": "Bonificación aplicada a {n, plural, =1{1 piloto} other{{n} pilotos}}.",
+  "@bonificacionAplicada": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "inicialUsados": "Inicial {inicial}  ·  Usados {usados}",
+  "@inicialUsados": {
+    "placeholders": {
+      "inicial": {
+        "type": "int"
+      },
+      "usados": {
+        "type": "int"
+      }
+    }
+  },
+  "ajustarCreditos": "Ajustar créditos · {piloto}",
+  "@ajustarCreditos": {
+    "placeholders": {
+      "piloto": {
+        "type": "String"
+      }
+    }
+  },
+  "creditosActualesSaldo": "Créditos actuales (saldo)",
+  "creditosAjustados": "Créditos ajustados",
+  "ajustarCreditosMano": "Ajustar créditos a mano",
+  "usados": "Usados",
+  "saldoMayus": "SALDO",
+  "movimientos": "Movimientos",
+  "inscripcionAlCampeonato": "Inscripción al campeonato",
+  "sinMovimientosTodavia": "Sin movimientos todavía.",
+  "huecoSinJustificar": "{n} créd. sin justificar",
+  "@huecoSinJustificar": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "descuadreSaldo": "El saldo actual ({actual}) no cuadra con inicial {inicial} {suma} movimientos. Probablemente venía así al importar o se editó a mano antes de activar el log.",
+  "@descuadreSaldo": {
+    "placeholders": {
+      "actual": {
+        "type": "String"
+      },
+      "inicial": {
+        "type": "String"
+      },
+      "suma": {
+        "type": "String"
+      }
+    }
+  },
+  "estadoPromociona": "Promociona",
+  "estadoDesciende": "Desciende",
+  "estadoSeMantiene": "Se mantiene",
+  "bajar": "Bajar",
+  "mantener": "Mantener",
+  "subir": "Subir",
+  "noHayPilotosCompetido": "No hay pilotos que hayan competido en este campeonato.",
+  "revisionTexto": "Ajusta la categoría de cada piloto antes de finalizar. Se usará para la bonificación de cierre y como categoría inicial del próximo campeonato.",
+  "motivoAjusteCreditos": "Ajuste manual (créditos)",
+  "verificarEnEquipoWifi": "Verificar en equipo (wifi)",
+  "verificarEnEquipoN": "Verificar en equipo · {n}",
+  "@verificarEnEquipoN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "verificarEnEquipoNConectados": "Verificar en equipo · {n} conectados",
+  "@verificarEnEquipoNConectados": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "syncIntroTexto": "Varios Controls pueden trabajar en esta prueba a la vez. Cada uno guarda en su dispositivo y se pasan los cambios por la wifi: verificaciones con sus fotos, copa y cobros, y también las altas (pilotos, equipos, su categoría en el campeonato e inscritos a la prueba, y sus bajas), las tandas con sus carriles y los resultados.\n\n• Todos en la misma wifi. No hace falta internet: vale un router sin conexión o el punto de acceso de un móvil.\n• La primera vez, partid todos de la misma copia de datos. Los catálogos y la configuración del campeonato todavía no viajan.\n• La misma clave del evento en todos, y la hora automática activada: si dos tocan lo mismo, gana el último cambio.",
+  "nombreDeEsteControl": "Nombre de este Control",
+  "nombreControlAyuda": "Distinto en cada dispositivo (p. ej. «Mesa 1»).",
+  "claveDelEvento": "Clave del evento",
+  "claveEventoAyuda": "La misma en todos los Controls.",
+  "conectarConOtros": "Conectar con otros Controls",
+  "visibleComo": "Visible como «{nombre}»",
+  "@visibleComo": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "conectando": "Conectando…",
+  "apagado": "Apagado",
+  "controlsEnLaRed": "Controls en la red",
+  "anadirPorDireccion": "Añadir por dirección",
+  "anadirControlPorDireccion": "Añadir Control por dirección",
+  "ipOPuerto": "IP (o IP:puerto)",
+  "ipAyuda": "La ves en esta misma pantalla del otro Control.",
+  "buscandoOtrosControls": "Buscando otros Controls en la wifi…",
+  "noSeEncuentraControl": "No se ha encontrado ningún Control. Comprueba que los demás tienen esta pantalla con «Conectar» encendido y están en la misma wifi, o añádelos por su dirección.",
+  "dosControlsMismoNombre": "Hay otro Control que también se llama «{nombre}». Cambia el nombre de uno de los dos.",
+  "@dosControlsMismoNombre": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "claveNoCoincide": "{host} · la clave del evento no coincide",
+  "@claveNoCoincide": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "quitarDeLaLista": "Quitar de la lista",
+  "sincronizarAutomaticamente": "Sincronizar automáticamente",
+  "cadaNsAppAbierta": "Cada {n} s mientras la app esté abierta",
+  "@cadaNsAppAbierta": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "sincronizando": "Sincronizando…",
+  "sincronizarAhora": "Sincronizar ahora",
+  "ultimaSincronizacion": "Última sincronización: {hora}",
+  "@ultimaSincronizacion": {
+    "placeholders": {
+      "hora": {
+        "type": "String"
+      }
+    }
+  },
+  "syncSinCambios": "Sin cambios",
+  "nEquipos": "{n, plural, =1{1 equipo} other{{n} equipos}}",
+  "@nEquipos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nPerfiles": "{n, plural, =1{1 perfil} other{{n} perfiles}}",
+  "@nPerfiles": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nInscritos": "{n, plural, =1{1 inscrito} other{{n} inscritos}}",
+  "@nInscritos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nTandas": "{n, plural, =1{1 tanda} other{{n} tandas}}",
+  "@nTandas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "resultadosDeNTandas": "resultados de {n, plural, =1{1 tanda} other{{n} tandas}}",
+  "@resultadosDeNTandas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nBajas": "{n, plural, =1{1 baja} other{{n} bajas}}",
+  "@nBajas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nVerifNuevas": "{n, plural, =1{1 verificación nueva} other{{n} verificaciones nuevas}}",
+  "@nVerifNuevas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nVerifActualizadas": "{n, plural, =1{1 actualizada} other{{n} actualizadas}}",
+  "@nVerifActualizadas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nVerifBorradas": "{n, plural, =1{1 borrada} other{{n} borradas}}",
+  "@nVerifBorradas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nCopas": "{n, plural, =1{1 copa} other{{n} copas}}",
+  "@nCopas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nCobros": "{n, plural, =1{1 cobro} other{{n} cobros}}",
+  "@nCobros": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSinClave": "Pon una clave del evento.",
+  "syncNoSePudoAbrir": "No se pudo abrir la conexión: {detalle}",
+  "@syncNoSePudoAbrir": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "syncFormatoDesconocido": "Formato de sincronización desconocido.",
+  "syncOtraVersion": "El otro Control tiene otra versión de PitWall Control. Actualizad todos a la misma versión.",
+  "syncVerifNoExiste": "Verificación de «{equipo}» en «{manga}»: no existe aquí esa tanda o ese equipo.",
+  "@syncVerifNoExiste": {
+    "placeholders": {
+      "equipo": {
+        "type": "String"
+      },
+      "manga": {
+        "type": "String"
+      }
+    }
+  },
+  "syncCocheNoCatalogo": "{equipo}: el coche «{coche}» no está en el catálogo de este Control.",
+  "@syncCocheNoCatalogo": {
+    "placeholders": {
+      "equipo": {
+        "type": "String"
+      },
+      "coche": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTandaFaltaEquipo": "Tanda «{tanda}»: falta aquí un equipo; su carril queda vacío.",
+  "@syncTandaFaltaEquipo": {
+    "placeholders": {
+      "tanda": {
+        "type": "String"
+      }
+    }
+  },
+  "syncResultFaltaPiloto": "Resultados de «{tanda}»: falta aquí un piloto o un equipo; esa fila no se copia.",
+  "@syncResultFaltaPiloto": {
+    "placeholders": {
+      "tanda": {
+        "type": "String"
+      }
+    }
+  },
+  "syncEquipoFaltanPilotos": "Equipo «{equipo}»: faltan aquí algunos de sus pilotos; no se copia.",
+  "@syncEquipoFaltanPilotos": {
+    "placeholders": {
+      "equipo": {
+        "type": "String"
+      }
+    }
+  },
+  "syncSinRespuesta": "No responde (¿sigue en la misma wifi?).",
+  "syncSinConexion": "No se puede conectar (¿sigue en la misma wifi?).",
+  "syncControlAnadido": "Control añadido.",
+  "syncNoHayControlEn": "No hay ningún Control conectado en {dir}.",
+  "@syncNoHayControlEn": {
+    "placeholders": {
+      "dir": {
+        "type": "String"
+      }
+    }
+  },
+  "primeroInscribeEquipos": "Primero inscribe equipos a la prueba.",
+  "sinCoincidenciasPunto": "No hay coincidencias.",
+  "ajusteManualHistorial": "El cambio del saldo se anota como \"Ajuste manual\" en el historial.",
+  "bonifTope": "+{bonif}, limitado al tope {tope}",
+  "@bonifTope": {
+    "placeholders": {
+      "bonif": {
+        "type": "int"
+      },
+      "tope": {
+        "type": "int"
+      }
+    }
+  },
+  "desfaseHora": "La hora del otro Control se desvía {min} min de la de este dispositivo. Poned todos la hora automática.",
+  "@desfaseHora": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "nCarreras": "{n, plural, =1{1 carrera} other{{n} carreras}}",
+  "@nCarreras": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "bonifMotivo": "Bonificación de cierre por {carreras} ({categoria}): +{bonif}",
+  "@bonifMotivo": {
+    "placeholders": {
+      "carreras": {
+        "type": "String"
+      },
+      "categoria": {
+        "type": "String"
+      },
+      "bonif": {
+        "type": "int"
+      }
+    }
+  },
+  "bonifLimiteTope": ", limitado al tope {tope}",
+  "@bonifLimiteTope": {
+    "placeholders": {
+      "tope": {
+        "type": "int"
+      }
+    }
+  }
 }

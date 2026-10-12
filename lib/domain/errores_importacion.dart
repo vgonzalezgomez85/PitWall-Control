@@ -26,3 +26,12 @@ class FormatoNoSoportado implements Exception {
   @override
   String toString() => 'Formato no soportado: $extension';
 }
+
+/// El archivo de clasificación no trae la columna del piloto. Sin datos: el
+/// texto lo pone la pantalla, que sí tiene idioma.
+class SinColumnaPiloto implements Exception {
+  const SinColumnaPiloto();
+
+  @override
+  String toString() => 'No encuentro la columna del piloto';
+}

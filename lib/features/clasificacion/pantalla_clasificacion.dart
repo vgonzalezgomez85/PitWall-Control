@@ -20,6 +20,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/acciones_barra.dart';
 import '../../data/database/app_database.dart';
@@ -49,12 +50,12 @@ class PantallaClasificacion extends ConsumerWidget {
       // aún no exista (campeonato recién creado sin pruebas).
       loading: () => Scaffold(
         appBar: AppBar(
-          title: const Text('Clasificación'),
+          title: Text(context.l.menuClasificacion),
           actions: [
             AccionesBarra([
               AccionBarra(
                 icono: Icons.format_list_numbered_outlined,
-                etiqueta: 'Tabla de puntos',
+                etiqueta: context.l.tablaDePuntos,
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const PantallaEditorTablaPuntos(),
                 )),
@@ -66,12 +67,12 @@ class PantallaClasificacion extends ConsumerWidget {
       ),
       error: (e, _) => Scaffold(
         appBar: AppBar(
-          title: const Text('Clasificación'),
+          title: Text(context.l.menuClasificacion),
           actions: [
             AccionesBarra([
               AccionBarra(
                 icono: Icons.format_list_numbered_outlined,
-                etiqueta: 'Tabla de puntos',
+                etiqueta: context.l.tablaDePuntos,
                 onPressed: () async {
                   await Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const PantallaEditorTablaPuntos(),
@@ -82,18 +83,18 @@ class PantallaClasificacion extends ConsumerWidget {
             ]),
           ],
         ),
-        body: Center(child: Text('Error: $e')),
+        body: Center(child: Text(context.l.errorDetalle('$e'))),
       ),
       data: (datos) {
         if (datos.filas.isEmpty) {
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Clasificación'),
+              title: Text(context.l.menuClasificacion),
               actions: [
                 AccionesBarra([
                   AccionBarra(
                     icono: Icons.edit_note_outlined,
-                    etiqueta: 'Rellenar a mano',
+                    etiqueta: context.l.rellenarAMano,
                     onPressed: () async {
                       await Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) =>
@@ -104,7 +105,7 @@ class PantallaClasificacion extends ConsumerWidget {
                   ),
                   AccionBarra(
                     icono: Icons.upload_outlined,
-                    etiqueta: 'Importar',
+                    etiqueta: context.l.importar,
                     onPressed: () =>
                         Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => const PantallaImportarClasificacion(),
@@ -112,7 +113,7 @@ class PantallaClasificacion extends ConsumerWidget {
                   ),
                   AccionBarra(
                     icono: Icons.format_list_numbered_outlined,
-                    etiqueta: 'Tabla de puntos',
+                    etiqueta: context.l.tablaDePuntos,
                     principal: false,
                     onPressed: () =>
                         Navigator.of(context).push(MaterialPageRoute(
@@ -131,18 +132,17 @@ class PantallaClasificacion extends ConsumerWidget {
                     Icon(Icons.leaderboard_outlined,
                         size: 96, color: cs.outline),
                     const SizedBox(height: 16),
-                    Text('Aún no hay clasificación',
+                    Text(context.l.aunNoHayClasificacion,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Registra resultados de tanda, impórtala desde un archivo '
-                      'o rellénala a mano.',
+                    Text(
+                      context.l.clasificacionVaciaTexto,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 20),
                     FilledButton.icon(
                       icon: const Icon(Icons.edit_note_outlined),
-                      label: const Text('Rellenar a mano'),
+                      label: Text(context.l.rellenarAMano),
                       onPressed: () =>
                           Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) =>
@@ -180,7 +180,7 @@ class PantallaClasificacion extends ConsumerWidget {
           length: 1 + copasDelCampeonato.length,
           child: Scaffold(
             appBar: AppBar(
-              title: const Text('Clasificación'),
+              title: Text(context.l.menuClasificacion),
               actions: [
                 // Builder: «Rellenar a mano» abre la copa de la pestaña activa.
                 Builder(builder: (context) {
@@ -208,18 +208,19 @@ class PantallaClasificacion extends ConsumerWidget {
                   return AccionesBarra([
                     AccionBarra(
                       icono: Icons.picture_as_pdf_outlined,
-                      etiqueta: 'Exportar PDF',
+                      etiqueta: context.l.exportarPdf,
                       opciones: [
-                        OpcionAccion(Icons.leaderboard_outlined, 'General',
+                        OpcionAccion(Icons.leaderboard_outlined, context.l.general,
                             () => exportarPdf(null)),
                         for (final c in copasDelCampeonato)
-                          OpcionAccion(Icons.emoji_events_outlined, 'Copa $c',
+                          OpcionAccion(Icons.emoji_events_outlined,
+                              context.l.copaTexto(c),
                               () => exportarPdf(c)),
                       ],
                     ),
                     AccionBarra(
                       icono: Icons.edit_note_outlined,
-                      etiqueta: 'Rellenar a mano',
+                      etiqueta: context.l.rellenarAMano,
                       onPressed: () async {
                         // Copa de la pestaña activa: 0 = General (null).
                         final idx = DefaultTabController.of(context).index;
@@ -235,7 +236,7 @@ class PantallaClasificacion extends ConsumerWidget {
                     ),
                     AccionBarra(
                       icono: Icons.format_list_numbered_outlined,
-                      etiqueta: 'Tabla de puntos',
+                      etiqueta: context.l.tablaDePuntos,
                       principal: false,
                       onPressed: () async {
                         await Navigator.of(context).push(MaterialPageRoute(
@@ -246,7 +247,7 @@ class PantallaClasificacion extends ConsumerWidget {
                     ),
                     AccionBarra(
                       icono: Icons.upload_outlined,
-                      etiqueta: 'Importar clasificación',
+                      etiqueta: context.l.importarClasificacion,
                       principal: false,
                       onPressed: () =>
                           Navigator.of(context).push(MaterialPageRoute(
@@ -259,9 +260,9 @@ class PantallaClasificacion extends ConsumerWidget {
               bottom: TabBar(
                 isScrollable: true,
                 tabs: [
-                  const Tab(
-                    icon: Icon(Icons.leaderboard_outlined),
-                    text: 'General',
+                  Tab(
+                    icon: const Icon(Icons.leaderboard_outlined),
+                    text: context.l.general,
                   ),
                   ...copasDelCampeonato.map((c) => Tab(text: c)),
                 ],
@@ -320,7 +321,7 @@ class _VistaCopa extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Text(
-            'No hay pilotos en "$titulo".',
+            context.l.noHayPilotosEn(titulo),
             style: TextStyle(color: cs.outline),
           ),
         ),
@@ -335,8 +336,8 @@ class _VistaCopa extends StatelessWidget {
             children: [
               Text(
                 copa == null
-                    ? 'Todos los pilotos del campeonato'
-                    : 'Pilotos de copa $copa',
+                    ? context.l.todosLosPilotosCampeonato
+                    : context.l.pilotosDeCopa(copa!),
                 style: TextStyle(
                   color: cs.outline,
                   fontWeight: FontWeight.w600,
@@ -350,7 +351,7 @@ class _VistaCopa extends StatelessWidget {
                   color: cs.primaryContainer,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text('${filas.length} pilotos',
+                child: Text(context.l.nPilotos(filas.length),
                     style: TextStyle(
                       color: cs.onPrimaryContainer,
                       fontWeight: FontWeight.w700,
@@ -443,10 +444,10 @@ class _TablaState extends State<_Tabla> {
           headingRowColor: WidgetStatePropertyAll(cs.surfaceContainer),
           columns: [
             const DataColumn(label: Text('#')),
-            const DataColumn(label: Text('Piloto')),
-            const DataColumn(label: Text('Equipo')),
-            const DataColumn(label: Text('Copa')),
-            const DataColumn(label: Text('Cat.')),
+            DataColumn(label: Text(context.l.piloto)),
+            DataColumn(label: Text(context.l.equipo)),
+            DataColumn(label: Text(context.l.copa)),
+            DataColumn(label: Text(context.l.catAbrev)),
             for (final p in pruebas)
               DataColumn(
                 label: SizedBox(
@@ -469,7 +470,7 @@ class _TablaState extends State<_Tabla> {
                 children: [
                   if (!widget.ordenadoPorNeto)
                     Icon(Icons.arrow_downward, size: 14, color: cs.primary),
-                  Text('Bruto',
+                  Text(context.l.bruto,
                       style: !widget.ordenadoPorNeto
                           ? TextStyle(
                               color: cs.primary, fontWeight: FontWeight.w800)
@@ -477,7 +478,7 @@ class _TablaState extends State<_Tabla> {
                 ],
               ),
             ),
-            const DataColumn(label: Text('Desc.'), numeric: true),
+            DataColumn(label: Text(context.l.descAbrev), numeric: true),
             DataColumn(
               numeric: true,
               label: Row(
@@ -485,7 +486,7 @@ class _TablaState extends State<_Tabla> {
                 children: [
                   if (widget.ordenadoPorNeto)
                     Icon(Icons.arrow_downward, size: 14, color: cs.primary),
-                  Text('TOTAL',
+                  Text(context.l.totalMayusculas,
                       style: widget.ordenadoPorNeto
                           ? TextStyle(
                               color: cs.primary, fontWeight: FontWeight.w800)

@@ -23,6 +23,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/tema.dart';
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/acciones_barra.dart';
 import '../../data/database/app_database.dart';
@@ -113,19 +114,19 @@ class _PantallaCreditosState extends ConsumerState<PantallaCreditos> {
     final pilotosAsync = ref.watch(_pilotosCampeonatoProvider);
 
     if (activo == null) {
-      return const Scaffold(
-        body: Center(child: Text('No hay campeonato activo')),
+      return Scaffold(
+        body: Center(child: Text(context.l.sinCampeonatoActivo)),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Créditos'),
+        title: Text(context.l.menuCreditos),
         actions: [
           AccionesBarra([
             AccionBarra(
               icono: Icons.ios_share,
-              etiqueta: 'Exportar',
+              etiqueta: context.l.exportar,
               opciones: [
                 OpcionAccion(Icons.picture_as_pdf_outlined, 'PDF', () async {
                   final idi = await elegirIdiomaExport(context, ref);
@@ -144,7 +145,7 @@ class _PantallaCreditosState extends ConsumerState<PantallaCreditos> {
             ),
             AccionBarra(
               icono: Icons.military_tech_outlined,
-              etiqueta: 'Revisión de categorías (cierre)',
+              etiqueta: context.l.revisionCategorias,
               principal: false,
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const PantallaRevisionCategorias(),
@@ -153,7 +154,7 @@ class _PantallaCreditosState extends ConsumerState<PantallaCreditos> {
             if (activo.finalizado)
               AccionBarra(
                 icono: Icons.workspace_premium_outlined,
-                etiqueta: 'Aplicar bonificación de cierre',
+                etiqueta: context.l.aplicarBonificacion,
                 principal: false,
                 onPressed: () =>
                     _aplicarBonificacionCierre(context, ref, activo),
@@ -165,9 +166,9 @@ class _PantallaCreditosState extends ConsumerState<PantallaCreditos> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Buscar por nombre…',
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: context.l.buscarPorNombre,
               ),
               onChanged: (v) =>
                   setState(() => _busqueda = v.trim().toLowerCase()),
@@ -177,7 +178,8 @@ class _PantallaCreditosState extends ConsumerState<PantallaCreditos> {
       ),
       body: pilotosAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) =>
+            Center(child: Text(context.l.errorDetalle('$e'))),
         data: (todos) {
           final pilotos = _busqueda.isEmpty
               ? todos
@@ -197,8 +199,8 @@ class _PantallaCreditosState extends ConsumerState<PantallaCreditos> {
                     const SizedBox(height: 16),
                     Text(
                       todos.isEmpty
-                          ? 'Aún no hay pilotos inscritos en este campeonato.'
-                          : 'No hay coincidencias.',
+                          ? context.l.aunNoHayPilotosInscritos
+                          : context.l.sinCoincidenciasPunto,
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -225,13 +227,9 @@ Future<void> _aplicarBonificacionCierre(
   final ok = await showDialog<bool>(
     context: context,
     builder: (_) => AlertDialog(
-      title: const Text('Bonificación de cierre'),
-      content: Text(
-        'Se regularizará el saldo de cada piloto que haya competido:\n\n'
-        'saldo = mín(saldo actual + bonificación según categoría y nº de '
-        'carreras, ${activo.topeRegularizacion}).\n\n'
-        'Solo se aplica a quien aún no la tenga. ¿Continuar?',
-      ),
+      title: Text(context.l.bonificacionCierre),
+      content: Text(context.l
+          .bonificacionCierreTexto('${activo.topeRegularizacion}')),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -243,15 +241,17 @@ Future<void> _aplicarBonificacionCierre(
     ),
   );
   if (ok != true || !context.mounted) return;
+  final l = context.l;
   final messenger = ScaffoldMessenger.of(context);
   try {
     final n = await ref
         .read(repoCreditosProvider)
-        .aplicarBonificacionCierre(activo.id);
+        .aplicarBonificacionCierre(activo.id, l);
     messenger.showSnackBar(
-        SnackBar(content: Text('Bonificación aplicada a $n pilotos.')));
+        SnackBar(content: Text(l.bonificacionAplicada(n))));
   } catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+    messenger.showSnackBar(
+        SnackBar(content: Text(l.errorDetalle('$e'))));
   }
 }
 
@@ -299,7 +299,7 @@ class _TarjetaPiloto extends StatelessWidget {
                             fontWeight: FontWeight.w700, fontSize: 16)),
                     const SizedBox(height: 2),
                     Text(
-                      'Inicial ${r.inicial}  ·  Usados ${r.usados}',
+                      context.l.inicialUsados(r.inicial, r.usados),
                       style: TextStyle(color: cs.outline, fontSize: 13),
                     ),
                   ],
@@ -315,7 +315,7 @@ class _TarjetaPiloto extends StatelessWidget {
                         fontSize: 24,
                         fontWeight: FontWeight.w800),
                   ),
-                  Text('créditos',
+                  Text(context.l.creditosMin,
                       style: TextStyle(color: cs.outline, fontSize: 11)),
                 ],
               ),
@@ -342,27 +342,29 @@ Future<void> _ajustarCreditos(
   final ok = await showDialog<bool>(
     context: context,
     builder: (_) => AlertDialog(
-      title: Text('Ajustar créditos · ${r.piloto.nombre}'),
+      title: Text(context.l.ajustarCreditos(r.piloto.nombre)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             controller: iniCtrl,
-            decoration: const InputDecoration(labelText: 'Créditos iniciales'),
+            decoration:
+                InputDecoration(labelText: context.l.creditosIniciales),
             keyboardType: TextInputType.number,
             inputFormatters: fmt,
           ),
           const SizedBox(height: 12),
           TextField(
             controller: actCtrl,
-            decoration: const InputDecoration(labelText: 'Créditos actuales (saldo)'),
+            decoration: InputDecoration(
+                labelText: context.l.creditosActualesSaldo),
             keyboardType: TextInputType.number,
             inputFormatters: fmt,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'El cambio del saldo se anota como "Ajuste manual" en el historial.',
-            style: TextStyle(fontSize: 12),
+          Text(
+            context.l.ajusteManualHistorial,
+            style: const TextStyle(fontSize: 12),
           ),
         ],
       ),
@@ -409,7 +411,7 @@ Future<void> _ajustarCreditos(
   }
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Créditos ajustados')),
+      SnackBar(content: Text(context.l.creditosAjustados)),
     );
     Navigator.of(context).pop();
   }
@@ -431,7 +433,7 @@ class _PantallaHistorialPiloto extends ConsumerWidget {
         title: Text(resumen.piloto.nombre),
         actions: [
           IconButton(
-            tooltip: 'Ajustar créditos a mano',
+            tooltip: context.l.ajustarCreditosMano,
             icon: const Icon(Icons.tune),
             onPressed: () => _ajustarCreditos(context, ref, resumen),
           ),
@@ -439,7 +441,8 @@ class _PantallaHistorialPiloto extends ConsumerWidget {
       ),
       body: movsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) =>
+            Center(child: Text(context.l.errorDetalle('$e'))),
         data: (movs) {
           final pruebasMap = pruebasAsync.asData?.value ?? const {};
           final sumaMovs = movs.fold<int>(0, (s, m) => s + m.delta);
@@ -457,19 +460,19 @@ class _PantallaHistorialPiloto extends ConsumerWidget {
                   child: Row(
                     children: [
                       _Stat(
-                          etiqueta: 'Inicial',
+                          etiqueta: context.l.inicial,
                           valor: resumen.inicial,
                           color: cs.onPrimaryContainer),
                       const SizedBox(width: 16),
                       _Stat(
-                          etiqueta: 'Usados',
+                          etiqueta: context.l.usados,
                           valor: resumen.usados,
                           color: cs.onPrimaryContainer),
                       const Spacer(),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text('SALDO',
+                          Text(context.l.saldoMayus,
                               style: TextStyle(
                                   color: cs.onPrimaryContainer,
                                   fontSize: 11,
@@ -486,13 +489,13 @@ class _PantallaHistorialPiloto extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              Text('Movimientos',
+              Text(context.l.movimientos,
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               _FilaTimeline(
                 fecha: null,
-                etiqueta: 'Créditos iniciales',
-                detalle: 'Inscripción al campeonato',
+                etiqueta: context.l.creditosIniciales,
+                detalle: context.l.inscripcionAlCampeonato,
                 delta: resumen.inicial,
                 saldo: resumen.inicial,
                 inicial: true,
@@ -508,16 +511,16 @@ class _PantallaHistorialPiloto extends ConsumerWidget {
                     leading: Icon(Icons.warning_amber_outlined,
                         color: context.estado.aviso),
                     title: Text(
-                      '${huecoCreditos.abs()} créd. sin justificar',
+                      context.l.huecoSinJustificar(huecoCreditos.abs()),
                       style: TextStyle(
                           color: context.estado.aviso,
                           fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(
-                      'El saldo actual ($huecoSigno${resumen.actual}) no cuadra con '
-                      'inicial ${resumen.inicial} $sumaSigno movimientos. '
-                      'Probablemente venía así al importar o se editó a mano antes '
-                      'de activar el log.',
+                      context.l.descuadreSaldo(
+                          '$huecoSigno${resumen.actual}',
+                          '${resumen.inicial}',
+                          sumaSigno),
                       style: TextStyle(
                           color: context.estado.aviso, fontSize: 12),
                     ),
@@ -526,14 +529,14 @@ class _PantallaHistorialPiloto extends ConsumerWidget {
               if (movs.isEmpty)
                 Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Text('Sin movimientos todavía.',
+                  child: Text(context.l.sinMovimientosTodavia,
                       style: TextStyle(color: cs.outline)),
                 ),
               ...movs.map((m) {
                 final p = m.pruebaId == null ? null : pruebasMap[m.pruebaId!];
                 return _FilaTimeline(
                   fecha: df.format(m.fecha),
-                  etiqueta: p?.nombre ?? 'Movimiento',
+                  etiqueta: p?.nombre ?? context.l.movimiento,
                   detalle: m.motivo,
                   delta: m.delta,
                   saldo: m.saldoResultante,

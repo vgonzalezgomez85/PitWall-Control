@@ -21,6 +21,8 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:excel/excel.dart';
 
+import '../../domain/errores_importacion.dart';
+
 /// Fila lista para importar como equipo + pilotos.
 class EquipoImportado {
   String nombreEquipo;
@@ -103,7 +105,7 @@ class ImportadorEquipos {
     if (ext == 'xlsx' || ext == 'xls') {
       return _leerExcel(path, minCeldasCabecera);
     }
-    throw Exception('Formato no soportado: $ext. Usa .csv o .xlsx');
+    throw FormatoNoSoportado(ext);
   }
 
   static Future<({List<String> columnas, List<Map<String, String>> filas})>

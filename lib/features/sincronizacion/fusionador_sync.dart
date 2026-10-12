@@ -42,6 +42,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
+import '../../core/idioma.dart';
 import '../../data/database/app_database.dart';
 import '../verificaciones/repositorio_verificaciones.dart';
 import 'paquete_sync.dart';
@@ -79,21 +80,22 @@ class ResultadoFusionSync {
       copas +
       tesoreria;
 
-  String resumen() {
-    if (cambios == 0) return 'Sin cambios';
+  /// Resumen de lo que ha viajado, en el idioma de la app.
+  String resumen(Textos l) {
+    if (cambios == 0) return l.syncSinCambios;
     final p = <String>[
-      if (pilotos > 0) '$pilotos pilotos',
-      if (equipos > 0) '$equipos equipos',
-      if (perfiles > 0) '$perfiles perfiles',
-      if (inscritos > 0) '$inscritos inscritos',
-      if (tandas > 0) '$tandas tandas',
-      if (resultados > 0) 'resultados de $resultados tandas',
-      if (bajas > 0) '$bajas bajas',
-      if (verifNuevas > 0) '$verifNuevas verificaciones nuevas',
-      if (verifActualizadas > 0) '$verifActualizadas actualizadas',
-      if (verifBorradas > 0) '$verifBorradas borradas',
-      if (copas > 0) '$copas copas',
-      if (tesoreria > 0) '$tesoreria cobros',
+      if (pilotos > 0) l.nPilotos(pilotos),
+      if (equipos > 0) l.nEquipos(equipos),
+      if (perfiles > 0) l.nPerfiles(perfiles),
+      if (inscritos > 0) l.nInscritos(inscritos),
+      if (tandas > 0) l.nTandas(tandas),
+      if (resultados > 0) l.resultadosDeNTandas(resultados),
+      if (bajas > 0) l.nBajas(bajas),
+      if (verifNuevas > 0) l.nVerifNuevas(verifNuevas),
+      if (verifActualizadas > 0) l.nVerifActualizadas(verifActualizadas),
+      if (verifBorradas > 0) l.nVerifBorradas(verifBorradas),
+      if (copas > 0) l.nCopas(copas),
+      if (tesoreria > 0) l.nCobros(tesoreria),
     ];
     return p.join(' · ');
   }
@@ -132,14 +134,12 @@ class FusionadorSync {
 
   /// Fusiona [paquete] en la prueba local [pruebaId].
   Future<ResultadoFusionSync> fusionar(
-      int pruebaId, Map<String, dynamic> paquete) async {
+      int pruebaId, Map<String, dynamic> paquete, Textos l) async {
     if (paquete['schema'] != schemaPaqueteSync) {
-      throw const FormatException('Formato de sincronización desconocido.');
+      throw FormatException(l.syncFormatoDesconocido);
     }
     if (paquete['schemaVersion'] != db.schemaVersion) {
-      throw const FormatException(
-          'El otro Control tiene otra versión de PitWall Control. '
-          'Actualizad todos a la misma versión.');
+      throw FormatException(l.syncOtraVersion);
     }
     final r = ResultadoFusionSync();
     await db.transaction(() async {
@@ -167,14 +167,15 @@ class FusionadorSync {
         for (final p in await db.select(db.pilotos).get())
           if (p.uuid != null) p.uuid!: p,
       };
-      await _fusionarEquipos(
-          r, camp.id, paquete['equipos'] as List? ?? const [], pilotoPorUuid);
+      await _fusionarEquipos(r, camp.id,
+          paquete['equipos'] as List? ?? const [], pilotoPorUuid, l);
       await _fusionarPerfiles(
           r, camp, paquete['perfiles'] as List? ?? const [], pilotoPorUuid);
       // Tandas y parrillas (necesitan los equipos ya fusionados).
-      await _fusionarMangas(r, prueba, paquete['mangas'] as List? ?? const []);
+      await _fusionarMangas(
+          r, prueba, paquete['mangas'] as List? ?? const [], l);
       await _fusionarResultados(
-          r, prueba, paquete['mangas'] as List? ?? const []);
+          r, prueba, paquete['mangas'] as List? ?? const [], l);
       await _fusionarOverrides(r, prueba, camp, paquete);
 
       final mangas = await (db.select(db.mangas)
@@ -198,16 +199,16 @@ class FusionadorSync {
         final m = manga(j['manga']);
         final e = equipo(j['equipo']);
         if (m == null || e == null) {
-          r.avisos.add('Verificación de «${RefSync.fromJson(j['equipo'])?.nombre}» '
-              'en «${RefSync.fromJson(j['manga'])?.nombre}»: '
-              'no existe aquí esa tanda o ese equipo.');
+          r.avisos.add(l.syncVerifNoExiste(
+              '${RefSync.fromJson(j['equipo'])?.nombre}',
+              '${RefSync.fromJson(j['manga'])?.nombre}'));
           continue;
         }
         final cocheRef = RefSync.fromJson(j['coche']);
         final coche = casar(cocheRef, coches, (c) => c.id, (c) => c.nombre);
         if (cocheRef != null && coche == null) {
-          r.avisos.add('${e.nombre}: el coche «${cocheRef.nombre}» no está '
-              'en el catálogo de este Control; se deja sin coche.');
+          r.avisos.add(
+              l.syncCocheNoCatalogo(e.nombre, cocheRef.nombre));
         }
         await _fusionarVerificacion(
             r, m, e, coche?.id, j['datos'] as Map<String, dynamic>);
@@ -253,7 +254,7 @@ class FusionadorSync {
   // ----------------------------------------------------------------- tandas
 
   Future<void> _fusionarMangas(
-      ResultadoFusionSync r, Prueba prueba, List lista) async {
+      ResultadoFusionSync r, Prueba prueba, List lista, Textos l) async {
     final equipoPorUuid = {
       for (final e in await (db.select(db.equipos)
             ..where((t) => t.campeonatoId.equals(prueba.campeonatoId)))
@@ -302,8 +303,7 @@ class FusionadorSync {
         final cj = c as Map<String, dynamic>;
         final e = equipoPorUuid[cj['equipo']];
         if (e == null) {
-          r.avisos.add('Tanda «${j['nombre']}»: falta aquí un equipo; '
-              'su carril queda vacío.');
+          r.avisos.add(l.syncTandaFaltaEquipo('${j['nombre']}'));
           continue;
         }
         await db.into(db.inscripciones).insert(InscripcionesCompanion.insert(
@@ -343,7 +343,7 @@ class FusionadorSync {
 
   /// Resultados de cada tanda: si gana el remoto, se sustituyen todos.
   Future<void> _fusionarResultados(
-      ResultadoFusionSync r, Prueba prueba, List lista) async {
+      ResultadoFusionSync r, Prueba prueba, List lista, Textos l) async {
     Map<String, int>? idPorUuidPiloto;
     Map<String, int>? idPorUuidEquipo;
     for (final raw in lista) {
@@ -373,8 +373,7 @@ class FusionadorSync {
         final pid = idPorUuidPiloto[xj['piloto']];
         final eid = idPorUuidEquipo[xj['equipo']];
         if (pid == null || eid == null) {
-          r.avisos.add('Resultados de «${m.nombre}»: falta aquí un piloto o '
-              'un equipo; esa fila no se copia.');
+          r.avisos.add(l.syncResultFaltaPiloto(m.nombre));
           continue;
         }
         await db.into(db.resultados).insert(ResultadosCompanion.insert(
@@ -492,7 +491,7 @@ class FusionadorSync {
   }
 
   Future<void> _fusionarEquipos(ResultadoFusionSync r, int campeonatoId,
-      List lista, Map<String, Piloto> pilotoPorUuid) async {
+      List lista, Map<String, Piloto> pilotoPorUuid, Textos l) async {
     for (final raw in lista) {
       final j = raw as Map<String, dynamic>;
       final uuid = j['uuid'] as String;
@@ -504,8 +503,7 @@ class FusionadorSync {
           pilotoPorUuid[u]?.id,
       ];
       if (ids.isEmpty || ids.contains(null)) {
-        r.avisos.add('Equipo «$nombre»: faltan aquí algunos de sus pilotos; '
-            'no se copia.');
+        r.avisos.add(l.syncEquipoFaltanPilotos(nombre));
         continue;
       }
       final miembros = ids.cast<int>();

@@ -22,6 +22,7 @@ import 'package:drift/drift.dart' show BooleanExpressionOperators, OrderingTerm,
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/seeds.dart';
@@ -425,6 +426,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   /// bonificación de cierre (cada piloto recibe un movimiento que indica la
   /// bonificación por su nº de carreras y categoría).
   Future<void> _ofrecerBonificacionCierre(int campeonatoId) async {
+    final l = context.l;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -453,9 +455,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
     if (ok != true) return;
     final n = await ref
         .read(repoCreditosProvider)
-        .aplicarBonificacionCierre(campeonatoId);
+        .aplicarBonificacionCierre(campeonatoId, l);
     if (mounted) {
-      _aviso('Bonificación de cierre aplicada a $n pilotos.');
+      _aviso(l.bonificacionAplicada(n));
     }
   }
 

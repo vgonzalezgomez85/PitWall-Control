@@ -2539,4 +2539,1110 @@ class TextosEs extends Textos {
 
   @override
   String get fotoCatalogo => 'Foto catálogo';
+
+  @override
+  String get pilotos => 'Pilotos';
+
+  @override
+  String get inscripciones => 'Inscripciones';
+
+  @override
+  String get nuevoPiloto => 'Nuevo piloto';
+
+  @override
+  String get editarPiloto => 'Editar piloto';
+
+  @override
+  String get crearPiloto => 'Crear piloto';
+
+  @override
+  String get puntuacionPreviaImport => 'Puntuación previa (1ª prueba)';
+
+  @override
+  String get buscarPorNombre => 'Buscar por nombre…';
+
+  @override
+  String get aunNoHayPilotosCampeonato =>
+      'Aún no hay pilotos en este campeonato';
+
+  @override
+  String get noHayCoincidencias => 'No hay coincidencias';
+
+  @override
+  String get pulsaNuevoPiloto =>
+      'Pulsa el botón \"Nuevo piloto\" para añadir el primero.';
+
+  @override
+  String get quitarDelCampeonato => 'Quitar del campeonato';
+
+  @override
+  String quitarDelCampeonatoTexto(String piloto, String campeonato) {
+    return '¿Quitar a $piloto de \"$campeonato\"?\n\nEl piloto no se borra, solo se desinscribe de este campeonato.';
+  }
+
+  @override
+  String get motivoAjusteManual => 'Ajuste manual (ficha de piloto)';
+
+  @override
+  String get datosPersonales => 'Datos personales';
+
+  @override
+  String get nombreYApellidos => 'Nombre y apellidos *';
+
+  @override
+  String get telefono => 'Teléfono';
+
+  @override
+  String get email => 'Email';
+
+  @override
+  String get palmaresHistorico => 'Palmarés histórico';
+
+  @override
+  String get palmaresEjemplo => 'Ej: \"Top 3 liga 2025\", \"WES 2023-2024\"';
+
+  @override
+  String get pilotoCoordinadora => 'Piloto de coordinadora';
+
+  @override
+  String get pilotoCoordinadoraTexto =>
+      'Si está activado, los equipos en los que participe no pagarán cuota.';
+
+  @override
+  String get enEsteCampeonato => 'En este campeonato';
+
+  @override
+  String get categoria => 'Categoría';
+
+  @override
+  String get creditosIniciales => 'Créditos iniciales';
+
+  @override
+  String get sugeridoSegunCategoria => 'Sugerido según categoría';
+
+  @override
+  String get creditosActuales => 'Créditos actuales';
+
+  @override
+  String get palmaresLocal => 'Palmarés en este campeonato';
+
+  @override
+  String get indicaUnNumero => 'Indica un número';
+
+  @override
+  String get tieneQueSerEntero => 'Tiene que ser un número entero';
+
+  @override
+  String get noPuedeSerNegativo => 'No puede ser negativo';
+
+  @override
+  String get importarPilotos => 'Importar pilotos';
+
+  @override
+  String get soportaExcelPilotos =>
+      'Soporta archivos Excel (.xlsx) y CSV. Debe tener al menos una columna con el nombre de los pilotos.';
+
+  @override
+  String resumenImportacionPilotos(int nuevos, int inscritos, int saltados) {
+    return '✓ Pilotos nuevos: $nuevos\n✓ Inscritos en este campeonato: $inscritos\n✗ Saltados: $saltados';
+  }
+
+  @override
+  String errorImportando(String detalle) {
+    return 'Error importando: $detalle';
+  }
+
+  @override
+  String get indicaColumnaNombrePiloto =>
+      'Indica qué columna contiene el nombre del piloto.';
+
+  @override
+  String get noFilasValidas => 'No se han encontrado filas válidas.';
+
+  @override
+  String importarNPilotos(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n pilotos',
+      one: '1 piloto',
+    );
+    return 'Importar $_temp0';
+  }
+
+  @override
+  String get paso2AsignaLasColumnas => '2. Asigna las columnas';
+
+  @override
+  String get columnasAutodetectadas =>
+      'Hemos intentado detectarlas automáticamente. Cámbialas si hace falta.';
+
+  @override
+  String get categoriaMetal => 'Categoría (metal)';
+
+  @override
+  String get palmares => 'Palmarés';
+
+  @override
+  String get nuevo => 'Nuevo';
+
+  @override
+  String get importarPuntuacionPrevia => 'Importar puntuación previa';
+
+  @override
+  String get puntuacionPreviaTexto =>
+      'Excel (.xlsx) o CSV con el nombre del piloto y su puntuación. Solo actualiza a pilotos que YA están inscritos en el campeonato activo (se cruza por nombre) — no da de alta a nadie nuevo.';
+
+  @override
+  String get puntuacionImportada => 'Puntuación importada';
+
+  @override
+  String puntuacionImportadaTexto(int ok, int saltados) {
+    return '✓ Actualizados: $ok\n✗ Saltados: $saltados\n\nEsta puntuación solo se usa para \"Generar tandas\" en la primera prueba; en cuanto el campeonato tenga resultados propios, la clasificación real la sustituye sola.';
+  }
+
+  @override
+  String get puntuacionObligatoria => 'Puntuación *';
+
+  @override
+  String nDeTotalSeActualizaran(int n, int total) {
+    return '$n de $total se actualizarán';
+  }
+
+  @override
+  String get indicaColumnaNombreYPuntuacion =>
+      'Indica qué columna es el nombre y cuál la puntuación.';
+
+  @override
+  String actualizarNPilotos(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n pilotos',
+      one: '1 piloto',
+    );
+    return 'Actualizar $_temp0';
+  }
+
+  @override
+  String get noEstaEnCampeonato => 'No está en el campeonato';
+
+  @override
+  String get formulaSinCalcular =>
+      'Fórmula sin calcular — usa \"pegado especial: valores\"';
+
+  @override
+  String get seActualizara => 'Se actualizará';
+
+  @override
+  String get aunNoHayEquipos => 'Aún no hay equipos';
+
+  @override
+  String get creaEquipoDosPilotos =>
+      'Crea un equipo con dos pilotos para empezar.';
+
+  @override
+  String get creaInscripcionIndividual =>
+      'Crea una inscripción individual para empezar.';
+
+  @override
+  String get importarEquipos => 'Importar equipos';
+
+  @override
+  String get seleccionaLaCopa => 'Selecciona la copa.';
+
+  @override
+  String get seleccionaUnPiloto => 'Selecciona al menos un piloto.';
+
+  @override
+  String get parejasNecesitanDosPilotos =>
+      'En este campeonato (parejas) el equipo necesita dos pilotos.';
+
+  @override
+  String get pilotosRepetidos => 'Hay pilotos repetidos en el equipo.';
+
+  @override
+  String get eliminarInscripcion => 'Eliminar inscripción';
+
+  @override
+  String get eliminarEquipo => 'Eliminar equipo';
+
+  @override
+  String eliminarInscripcionTexto(String nombre) {
+    return '¿Eliminar la inscripción de \"$nombre\"? Esta acción no se puede deshacer.';
+  }
+
+  @override
+  String eliminarEquipoTexto(String nombre) {
+    return '¿Eliminar el equipo \"$nombre\"? Esta acción no se puede deshacer.';
+  }
+
+  @override
+  String get editarInscripcion => 'Editar inscripción';
+
+  @override
+  String get editarEquipo => 'Editar equipo';
+
+  @override
+  String get primeroAnadePilotos =>
+      'Primero añade pilotos al campeonato para poder crear equipos.';
+
+  @override
+  String get indicaUnNombre => 'Indica un nombre';
+
+  @override
+  String get copaCategoriaObligatoria => 'Copa / categoría *';
+
+  @override
+  String get piloto => 'Piloto';
+
+  @override
+  String get pilotosDelEquipo => 'Pilotos del equipo';
+
+  @override
+  String pilotoN(int n) {
+    return 'Piloto $n';
+  }
+
+  @override
+  String get cocheEnVerificacionTexto =>
+      'El coche se indica en la verificación de cada tanda. Un equipo puede usar coches diferentes en distintas pruebas.';
+
+  @override
+  String get crearEquipo => 'Crear equipo';
+
+  @override
+  String get elegirPiloto => '— elegir piloto —';
+
+  @override
+  String equipoImportTexto(String pilotos) {
+    return 'Sube el CSV o Excel del Google Form de pretemporada. Cada fila debe ser un equipo con el nombre del equipo y $pilotos.';
+  }
+
+  @override
+  String get susDosPilotos => 'sus dos pilotos';
+
+  @override
+  String get suPiloto => 'su piloto';
+
+  @override
+  String get asignaColumnaEquipoYPiloto =>
+      'Asigna al menos la columna del nombre del equipo y la del primer piloto.';
+
+  @override
+  String importarNEquipos(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n equipos',
+      one: '1 equipo',
+    );
+    return 'Importar $_temp0';
+  }
+
+  @override
+  String resumenImportacionEquipos(
+    int equipos,
+    int pilotosNuevos,
+    int pilotosInscritos,
+    int saltados,
+  ) {
+    return '✓ Equipos creados: $equipos\n✓ Pilotos nuevos: $pilotosNuevos\n✓ Pilotos inscritos al campeonato: $pilotosInscritos\n✗ Saltados: $saltados';
+  }
+
+  @override
+  String get columnasIntentadas =>
+      'Hemos intentado detectarlas. Cambia las que no estén bien.';
+
+  @override
+  String get yaExiste => 'Ya existe';
+
+  @override
+  String get sinPiloto => 'Sin piloto';
+
+  @override
+  String get faltaSegundoPiloto =>
+      'Falta el segundo piloto (campeonato por parejas)';
+
+  @override
+  String get nombreObligatorio => 'Nombre *';
+
+  @override
+  String get nombreCampo => 'Nombre';
+
+  @override
+  String get piloto1 => 'Piloto 1';
+
+  @override
+  String get piloto2Opcional => 'Piloto 2 (opcional)';
+
+  @override
+  String formatoNoSoportadoUsaCsv(String ext) {
+    return 'Formato no soportado: $ext. Usa .csv o .xlsx';
+  }
+
+  @override
+  String get tablaDePuntos => 'Tabla de puntos';
+
+  @override
+  String get rellenarAMano => 'Rellenar a mano';
+
+  @override
+  String get aunNoHayClasificacion => 'Aún no hay clasificación';
+
+  @override
+  String get clasificacionVaciaTexto =>
+      'Registra resultados de tanda, impórtala desde un archivo o rellénala a mano.';
+
+  @override
+  String get importarClasificacion => 'Importar clasificación';
+
+  @override
+  String get general => 'General';
+
+  @override
+  String noHayPilotosEn(String titulo) {
+    return 'No hay pilotos en \"$titulo\".';
+  }
+
+  @override
+  String get todosLosPilotosCampeonato => 'Todos los pilotos del campeonato';
+
+  @override
+  String pilotosDeCopa(String copa) {
+    return 'Pilotos de copa $copa';
+  }
+
+  @override
+  String nPilotos(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n pilotos',
+      one: '1 piloto',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get equipo => 'Equipo';
+
+  @override
+  String get catAbrev => 'Cat.';
+
+  @override
+  String get bruto => 'Bruto';
+
+  @override
+  String get descAbrev => 'Desc.';
+
+  @override
+  String get totalMayusculas => 'TOTAL';
+
+  @override
+  String get clasificacionAMano => 'Clasificación a mano';
+
+  @override
+  String clasificacionAManoCopa(String copa) {
+    return 'Clasificación a mano · $copa';
+  }
+
+  @override
+  String get sinPruebasParaPuntos =>
+      'Este campeonato no tiene pruebas. Crea pruebas primero para poder asignar puntos.';
+
+  @override
+  String get sinPilotosConEquipo =>
+      'No hay pilotos con equipo en este campeonato. Asigna equipos a los pilotos primero.';
+
+  @override
+  String get editorManualTexto =>
+      'Escribe los puntos de cada piloto por prueba. Se guardan solos al salir de cada casilla. Casilla vacía = no puntuó; 0 = participó con 0.';
+
+  @override
+  String get restaurarValores => 'Restaurar valores por defecto';
+
+  @override
+  String get restaurar => 'Restaurar';
+
+  @override
+  String get restaurarTexto =>
+      'Se sustituirá la tabla de puntos actual por la de PitWall Control (70, 64, 59… hasta 1 punto). Los cambios no se guardan hasta que pulses \"Guardar\".';
+
+  @override
+  String posN(int n) {
+    return 'Pos. $n';
+  }
+
+  @override
+  String get puntosMayus => 'Puntos';
+
+  @override
+  String get quitarUltimaPosicion => 'Quitar última posición';
+
+  @override
+  String get anadirPosicion => 'Añadir posición';
+
+  @override
+  String get csvExcel => 'CSV / Excel';
+
+  @override
+  String get googleSheets => 'Google Sheets';
+
+  @override
+  String get listarHojas => 'Listar hojas';
+
+  @override
+  String get seleccionaArchivoClasificacion =>
+      'Selecciona un archivo CSV o Excel con la clasificación. La primera fila debe ser la cabecera, con una columna \"Piloto\" y una columna por cada prueba.';
+
+  @override
+  String archivoNombre(String nombre) {
+    return 'Archivo: $nombre';
+  }
+
+  @override
+  String get seleccionaHojaClasificacion =>
+      'Selecciona la hoja de Drive con la clasificación.';
+
+  @override
+  String hojaNombre(String nombre) {
+    return 'Hoja: $nombre';
+  }
+
+  @override
+  String get pulsaListarHojas => 'Pulsa \"Listar hojas\" para empezar.';
+
+  @override
+  String pruebasReconocidas(int n) {
+    return 'Pruebas reconocidas: $n';
+  }
+
+  @override
+  String noReconocidasCampo(String lista) {
+    return 'No reconocidas: $lista';
+  }
+
+  @override
+  String pilotosOk(int n) {
+    return 'Pilotos OK: $n';
+  }
+
+  @override
+  String pilotosConProblemas(int n) {
+    return 'Pilotos con problemas: $n';
+  }
+
+  @override
+  String get conectaGooglePrimero =>
+      'Conecta tu cuenta de Google primero en Configuración → Google.';
+
+  @override
+  String importadosResultados(int registros, int pilotos) {
+    return 'Importados $registros resultados de $pilotos pilotos. Vuelve a la clasificación para verla actualizada.';
+  }
+
+  @override
+  String get estadoOk => 'OK';
+
+  @override
+  String get pilotoNoEncontrado => 'Piloto no encontrado';
+
+  @override
+  String get pilotoSinEquipo => 'Piloto sin equipo en este campeonato';
+
+  @override
+  String get sinPuntosImportables => 'Sin puntos importables';
+
+  @override
+  String get noEncuentroColumnaPiloto =>
+      'No encuentro la columna del piloto. La primera fila debe contener una columna llamada \"Piloto\", \"Nombre\" o \"Equipo\".';
+
+  @override
+  String get importando => 'Importando…';
+
+  @override
+  String get puntosNoValidos =>
+      'Hay una posición con un valor de puntos no válido.';
+
+  @override
+  String get tablaGuardada => 'Tabla de puntos guardada.';
+
+  @override
+  String get reparto => 'Reparto';
+
+  @override
+  String get movimiento => 'Movimiento';
+
+  @override
+  String get sinCampeonatoActivo => 'No hay campeonato activo';
+
+  @override
+  String cuotaPorPruebaTexto(String pagat, String coord, String club) {
+    return 'Cuota por prueba: $pagat (coordinadora $coord · club $club)';
+  }
+
+  @override
+  String get porPrueba => 'Por prueba';
+
+  @override
+  String get repartoDeLaCuota => 'Reparto de la cuota';
+
+  @override
+  String get repartoTexto =>
+      'Lo que paga cada equipo por prueba y a dónde va. Al cambiar coordinadora o club, el otro se ajusta para que sumen el Pagat.';
+
+  @override
+  String get pagatCuotaTotal => 'Pagat (cuota total) €';
+
+  @override
+  String get coordinadoraEur => 'Coordinadora €';
+
+  @override
+  String get clubEur => 'Club €';
+
+  @override
+  String get pagatMayorQueCero => 'El Pagat tiene que ser mayor que 0.';
+
+  @override
+  String get coordClubSumanPagat =>
+      'Coordinadora + club tienen que sumar el Pagat.';
+
+  @override
+  String get aplicarAPagosCobrados => 'Aplicar también a los pagos ya cobrados';
+
+  @override
+  String get aplicarAPagosCobradosTexto =>
+      'Vuelve a repartir lo que pagó cada equipo con la nueva proporción. Lo cobrado no cambia.';
+
+  @override
+  String repartoGuardadoRecalculado(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n pagos recalculados.',
+      one: '1 pago recalculado.',
+    );
+    return 'Reparto guardado. $_temp0';
+  }
+
+  @override
+  String get repartoGuardado =>
+      'Reparto guardado. Se aplicará a los próximos pagos.';
+
+  @override
+  String get nuevoMovimiento => 'Nuevo movimiento';
+
+  @override
+  String get editarMovimiento => 'Editar movimiento';
+
+  @override
+  String get ingreso => 'Ingreso';
+
+  @override
+  String get gasto => 'Gasto';
+
+  @override
+  String get conceptoObligatorio => 'Concepto *';
+
+  @override
+  String get conceptoEjemplo => 'Ej: Patrocinio, Material, Premio…';
+
+  @override
+  String get importeObligatorio => 'Importe (€) *';
+
+  @override
+  String get importeAyuda => 'Solo el número, sin signo';
+
+  @override
+  String get notas => 'Notas';
+
+  @override
+  String get movimientosExtras => 'Movimientos extras';
+
+  @override
+  String get ingresosYGastosSueltos => '(ingresos y gastos sueltos)';
+
+  @override
+  String get sinMovimientosTexto =>
+      'Sin movimientos. Usa el botón \"+ Movimiento\" para añadir patrocinios, gastos de material, etc.';
+
+  @override
+  String get balanceCampeonato => 'Balance del campeonato';
+
+  @override
+  String get masIngresos => '+ Ingresos';
+
+  @override
+  String get menosGastos => '− Gastos';
+
+  @override
+  String get coordAbrev => 'Coord.';
+
+  @override
+  String get tesoreriaDeLaPrueba => 'Tesorería de la prueba';
+
+  @override
+  String get buscarPilotoOEquipo => 'Buscar piloto o equipo…';
+
+  @override
+  String get borrar => 'Borrar';
+
+  @override
+  String get sinEquiposInscritos => 'Sin equipos inscritos';
+
+  @override
+  String get recaudadoEnPrueba => 'Recaudado en la prueba';
+
+  @override
+  String pagadosDe(int pagados, int total) {
+    return '$pagados / $total pagados';
+  }
+
+  @override
+  String exentosNoPagan(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n exentos',
+      one: '1 exento',
+    );
+    return '$_temp0 no pagan';
+  }
+
+  @override
+  String nadieCoincide(String filtro) {
+    return 'Nadie coincide con \"$filtro\".';
+  }
+
+  @override
+  String get exencionWildcard => 'Wildcard';
+
+  @override
+  String get exencionCoordinadora => 'Pilotos de coordinadora';
+
+  @override
+  String pagaMitad(String piloto) {
+    return 'Paga mitad — $piloto es de coordinadora';
+  }
+
+  @override
+  String get revisionCategorias => 'Revisión de categorías (cierre)';
+
+  @override
+  String get aplicarBonificacion => 'Aplicar bonificación de cierre';
+
+  @override
+  String get aunNoHayPilotosInscritos =>
+      'Aún no hay pilotos inscritos en este campeonato.';
+
+  @override
+  String get bonificacionCierre => 'Bonificación de cierre';
+
+  @override
+  String bonificacionCierreTexto(String tope) {
+    return 'Se regularizará el saldo de cada piloto que haya competido:\n\nsaldo = mín(saldo actual + bonificación según categoría y nº de carreras, $tope).\n\nSolo se aplica a quien aún no la tenga. ¿Continuar?';
+  }
+
+  @override
+  String bonificacionAplicada(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n pilotos',
+      one: '1 piloto',
+    );
+    return 'Bonificación aplicada a $_temp0.';
+  }
+
+  @override
+  String inicialUsados(int inicial, int usados) {
+    return 'Inicial $inicial  ·  Usados $usados';
+  }
+
+  @override
+  String ajustarCreditos(String piloto) {
+    return 'Ajustar créditos · $piloto';
+  }
+
+  @override
+  String get creditosActualesSaldo => 'Créditos actuales (saldo)';
+
+  @override
+  String get creditosAjustados => 'Créditos ajustados';
+
+  @override
+  String get ajustarCreditosMano => 'Ajustar créditos a mano';
+
+  @override
+  String get usados => 'Usados';
+
+  @override
+  String get saldoMayus => 'SALDO';
+
+  @override
+  String get movimientos => 'Movimientos';
+
+  @override
+  String get inscripcionAlCampeonato => 'Inscripción al campeonato';
+
+  @override
+  String get sinMovimientosTodavia => 'Sin movimientos todavía.';
+
+  @override
+  String huecoSinJustificar(int n) {
+    return '$n créd. sin justificar';
+  }
+
+  @override
+  String descuadreSaldo(String actual, String inicial, String suma) {
+    return 'El saldo actual ($actual) no cuadra con inicial $inicial $suma movimientos. Probablemente venía así al importar o se editó a mano antes de activar el log.';
+  }
+
+  @override
+  String get estadoPromociona => 'Promociona';
+
+  @override
+  String get estadoDesciende => 'Desciende';
+
+  @override
+  String get estadoSeMantiene => 'Se mantiene';
+
+  @override
+  String get bajar => 'Bajar';
+
+  @override
+  String get mantener => 'Mantener';
+
+  @override
+  String get subir => 'Subir';
+
+  @override
+  String get noHayPilotosCompetido =>
+      'No hay pilotos que hayan competido en este campeonato.';
+
+  @override
+  String get revisionTexto =>
+      'Ajusta la categoría de cada piloto antes de finalizar. Se usará para la bonificación de cierre y como categoría inicial del próximo campeonato.';
+
+  @override
+  String get motivoAjusteCreditos => 'Ajuste manual (créditos)';
+
+  @override
+  String get verificarEnEquipoWifi => 'Verificar en equipo (wifi)';
+
+  @override
+  String verificarEnEquipoN(int n) {
+    return 'Verificar en equipo · $n';
+  }
+
+  @override
+  String verificarEnEquipoNConectados(int n) {
+    return 'Verificar en equipo · $n conectados';
+  }
+
+  @override
+  String get syncIntroTexto =>
+      'Varios Controls pueden trabajar en esta prueba a la vez. Cada uno guarda en su dispositivo y se pasan los cambios por la wifi: verificaciones con sus fotos, copa y cobros, y también las altas (pilotos, equipos, su categoría en el campeonato e inscritos a la prueba, y sus bajas), las tandas con sus carriles y los resultados.\n\n• Todos en la misma wifi. No hace falta internet: vale un router sin conexión o el punto de acceso de un móvil.\n• La primera vez, partid todos de la misma copia de datos. Los catálogos y la configuración del campeonato todavía no viajan.\n• La misma clave del evento en todos, y la hora automática activada: si dos tocan lo mismo, gana el último cambio.';
+
+  @override
+  String get nombreDeEsteControl => 'Nombre de este Control';
+
+  @override
+  String get nombreControlAyuda =>
+      'Distinto en cada dispositivo (p. ej. «Mesa 1»).';
+
+  @override
+  String get claveDelEvento => 'Clave del evento';
+
+  @override
+  String get claveEventoAyuda => 'La misma en todos los Controls.';
+
+  @override
+  String get conectarConOtros => 'Conectar con otros Controls';
+
+  @override
+  String visibleComo(String nombre) {
+    return 'Visible como «$nombre»';
+  }
+
+  @override
+  String get conectando => 'Conectando…';
+
+  @override
+  String get apagado => 'Apagado';
+
+  @override
+  String get controlsEnLaRed => 'Controls en la red';
+
+  @override
+  String get anadirPorDireccion => 'Añadir por dirección';
+
+  @override
+  String get anadirControlPorDireccion => 'Añadir Control por dirección';
+
+  @override
+  String get ipOPuerto => 'IP (o IP:puerto)';
+
+  @override
+  String get ipAyuda => 'La ves en esta misma pantalla del otro Control.';
+
+  @override
+  String get buscandoOtrosControls => 'Buscando otros Controls en la wifi…';
+
+  @override
+  String get noSeEncuentraControl =>
+      'No se ha encontrado ningún Control. Comprueba que los demás tienen esta pantalla con «Conectar» encendido y están en la misma wifi, o añádelos por su dirección.';
+
+  @override
+  String dosControlsMismoNombre(String nombre) {
+    return 'Hay otro Control que también se llama «$nombre». Cambia el nombre de uno de los dos.';
+  }
+
+  @override
+  String claveNoCoincide(String host) {
+    return '$host · la clave del evento no coincide';
+  }
+
+  @override
+  String get quitarDeLaLista => 'Quitar de la lista';
+
+  @override
+  String get sincronizarAutomaticamente => 'Sincronizar automáticamente';
+
+  @override
+  String cadaNsAppAbierta(int n) {
+    return 'Cada $n s mientras la app esté abierta';
+  }
+
+  @override
+  String get sincronizando => 'Sincronizando…';
+
+  @override
+  String get sincronizarAhora => 'Sincronizar ahora';
+
+  @override
+  String ultimaSincronizacion(String hora) {
+    return 'Última sincronización: $hora';
+  }
+
+  @override
+  String get syncSinCambios => 'Sin cambios';
+
+  @override
+  String nEquipos(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n equipos',
+      one: '1 equipo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nPerfiles(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n perfiles',
+      one: '1 perfil',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nInscritos(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n inscritos',
+      one: '1 inscrito',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nTandas(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n tandas',
+      one: '1 tanda',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String resultadosDeNTandas(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n tandas',
+      one: '1 tanda',
+    );
+    return 'resultados de $_temp0';
+  }
+
+  @override
+  String nBajas(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n bajas',
+      one: '1 baja',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nVerifNuevas(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n verificaciones nuevas',
+      one: '1 verificación nueva',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nVerifActualizadas(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n actualizadas',
+      one: '1 actualizada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nVerifBorradas(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n borradas',
+      one: '1 borrada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nCopas(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n copas',
+      one: '1 copa',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String nCobros(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n cobros',
+      one: '1 cobro',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncSinClave => 'Pon una clave del evento.';
+
+  @override
+  String syncNoSePudoAbrir(String detalle) {
+    return 'No se pudo abrir la conexión: $detalle';
+  }
+
+  @override
+  String get syncFormatoDesconocido => 'Formato de sincronización desconocido.';
+
+  @override
+  String get syncOtraVersion =>
+      'El otro Control tiene otra versión de PitWall Control. Actualizad todos a la misma versión.';
+
+  @override
+  String syncVerifNoExiste(String equipo, String manga) {
+    return 'Verificación de «$equipo» en «$manga»: no existe aquí esa tanda o ese equipo.';
+  }
+
+  @override
+  String syncCocheNoCatalogo(String equipo, String coche) {
+    return '$equipo: el coche «$coche» no está en el catálogo de este Control.';
+  }
+
+  @override
+  String syncTandaFaltaEquipo(String tanda) {
+    return 'Tanda «$tanda»: falta aquí un equipo; su carril queda vacío.';
+  }
+
+  @override
+  String syncResultFaltaPiloto(String tanda) {
+    return 'Resultados de «$tanda»: falta aquí un piloto o un equipo; esa fila no se copia.';
+  }
+
+  @override
+  String syncEquipoFaltanPilotos(String equipo) {
+    return 'Equipo «$equipo»: faltan aquí algunos de sus pilotos; no se copia.';
+  }
+
+  @override
+  String get syncSinRespuesta => 'No responde (¿sigue en la misma wifi?).';
+
+  @override
+  String get syncSinConexion =>
+      'No se puede conectar (¿sigue en la misma wifi?).';
+
+  @override
+  String get syncControlAnadido => 'Control añadido.';
+
+  @override
+  String syncNoHayControlEn(String dir) {
+    return 'No hay ningún Control conectado en $dir.';
+  }
+
+  @override
+  String get primeroInscribeEquipos => 'Primero inscribe equipos a la prueba.';
+
+  @override
+  String get sinCoincidenciasPunto => 'No hay coincidencias.';
+
+  @override
+  String get ajusteManualHistorial =>
+      'El cambio del saldo se anota como \"Ajuste manual\" en el historial.';
+
+  @override
+  String bonifTope(int bonif, int tope) {
+    return '+$bonif, limitado al tope $tope';
+  }
+
+  @override
+  String desfaseHora(int min) {
+    return 'La hora del otro Control se desvía $min min de la de este dispositivo. Poned todos la hora automática.';
+  }
+
+  @override
+  String nCarreras(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n carreras',
+      one: '1 carrera',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bonifMotivo(String carreras, String categoria, int bonif) {
+    return 'Bonificación de cierre por $carreras ($categoria): +$bonif';
+  }
+
+  @override
+  String bonifLimiteTope(int tope) {
+    return ', limitado al tope $tope';
+  }
 }

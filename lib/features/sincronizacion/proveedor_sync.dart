@@ -23,10 +23,12 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nsd/nsd.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../services/almacen_local.dart';
 import 'dispositivo_sync.dart';
@@ -59,14 +61,17 @@ class CompaneroSync {
   final String nombre;
   final bool claveOk;
   final DateTime? ultimaSync;
-  final String? resumen;
+
+  /// Lo que viajó en el último intercambio (lo formatea la pantalla, que sí
+  /// tiene idioma).
+  final ResultadoFusionSync? resumen;
   final String? error;
 
   CompaneroSync copyWith({
     String? nombre,
     bool? claveOk,
     DateTime? ultimaSync,
-    String? resumen,
+    ResultadoFusionSync? resumen,
     String? error,
     bool limpiarError = false,
   }) =>
@@ -86,6 +91,8 @@ class EstadoSync {
     this.arrancando = false,
     this.puerto,
     this.error,
+    this.errorCodigo,
+    this.errorDetalle,
     this.companeros = const {},
     this.buscando = false,
     this.sincronizando = false,
@@ -97,7 +104,13 @@ class EstadoSync {
   final bool activo;
   final bool arrancando;
   final int? puerto;
+
+  /// Texto de error ya listo (fallos técnicos de red/servidor).
   final String? error;
+
+  /// Error que traduce la pantalla: 'sinClave' | 'abrirConexion'.
+  final String? errorCodigo;
+  final String? errorDetalle;
   /// host "ip:puerto" → otro Control encontrado.
   final Map<String, CompaneroSync> companeros;
   final bool buscando;
@@ -113,6 +126,8 @@ class EstadoSync {
     bool? arrancando,
     int? puerto,
     String? error,
+    String? errorCodigo,
+    String? errorDetalle,
     bool limpiarError = false,
     Map<String, CompaneroSync>? companeros,
     bool? buscando,
@@ -127,6 +142,9 @@ class EstadoSync {
         arrancando: arrancando ?? this.arrancando,
         puerto: puerto ?? this.puerto,
         error: limpiarError ? null : (error ?? this.error),
+        errorCodigo: limpiarError ? null : (errorCodigo ?? this.errorCodigo),
+        errorDetalle:
+            limpiarError ? null : (errorDetalle ?? this.errorDetalle),
         companeros: companeros ?? this.companeros,
         buscando: buscando ?? this.buscando,
         sincronizando: sincronizando ?? this.sincronizando,
@@ -138,6 +156,16 @@ class EstadoSync {
 }
 
 class SincronizacionNotifier extends Notifier<EstadoSync> {
+  /// Textos del idioma elegido en Ajustes (o el del sistema en «Automático»):
+  /// la sincronización va en segundo plano y no tiene contexto.
+  Textos get _l {
+    final elegido = ref.read(idiomaProvider);
+    final locale = elegido ??
+        resolverIdioma(
+            PlatformDispatcher.instance.locale, Textos.supportedLocales);
+    return lookupTextos(locale);
+  }
+
   ServidorSync? _servidor;
   Discovery? _discovery;
   Timer? _timer;
@@ -173,7 +201,7 @@ class SincronizacionNotifier extends Notifier<EstadoSync> {
   Future<void> activar() async {
     if (state.activo || state.arrancando) return;
     if (clave.isEmpty) {
-      state = state.copyWith(error: 'Pon una clave del evento.');
+      state = state.copyWith(errorCodigo: 'sinClave');
       return;
     }
     state = state.copyWith(arrancando: true, limpiarError: true);
@@ -192,7 +220,9 @@ class SincronizacionNotifier extends Notifier<EstadoSync> {
       }
     } catch (e) {
       state = state.copyWith(
-          arrancando: false, error: 'No se pudo abrir la conexión: $e');
+          arrancando: false,
+          errorCodigo: 'abrirConexion',
+          errorDetalle: '$e');
     }
   }
 
@@ -392,6 +422,7 @@ class SincronizacionNotifier extends Notifier<EstadoSync> {
     final pruebaId = state.pruebaId;
     if (!state.activo || pruebaId == null || state.sincronizando) return;
     state = state.copyWith(sincronizando: true);
+    final l = _l;
     final db = ref.read(dbProvider);
     final avisos = <String>[];
     try {
@@ -418,21 +449,25 @@ class SincronizacionNotifier extends Notifier<EstadoSync> {
             final desfase = Duration(
                 milliseconds: (ahoraOtro - ahoraMsSync()).abs());
             if (desfase > _desfaseMaximo) {
-              avisos.add('La hora de ${c.nombre} difiere ${desfase.inMinutes} '
-                  'min de la de este dispositivo. Poned todos la hora '
-                  'automática: si no, un cambio viejo puede pisar a uno nuevo.');
+              avisos.add(l.desfaseHora(desfase.inMinutes));
             }
           }
-          final r = await FusionadorSync(db).fusionar(pruebaId, paquete);
+          final r =
+              await FusionadorSync(db).fusionar(pruebaId, paquete, l);
           avisos.addAll(r.avisos.map((a) => '${c.nombre}: $a'));
           await ClienteSync.traerFotosQueFalten(host, clave, r.fotos);
           nuevo = c.copyWith(
               claveOk: true,
               ultimaSync: DateTime.now(),
-              resumen: r.resumen(),
+              resumen: r,
               limpiarError: true);
         } on ErrorSync catch (e) {
-          nuevo = c.copyWith(error: e.mensaje);
+          nuevo = c.copyWith(
+              error: switch (e.codigo) {
+                'sinRespuesta' => l.syncSinRespuesta,
+                'sinConexion' => l.syncSinConexion,
+                _ => e.mensaje,
+              });
         } on FormatException catch (e) {
           nuevo = c.copyWith(error: e.message);
         } catch (e) {

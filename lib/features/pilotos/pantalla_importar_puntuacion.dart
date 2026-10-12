@@ -20,7 +20,9 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
+import '../../domain/errores_importacion.dart';
 import 'importador_puntuacion_previa.dart';
 import 'repositorio_pilotos.dart';
 
@@ -48,13 +50,15 @@ class _PantallaImportarPuntuacionState
   String? _error;
 
   Future<void> _elegirArchivo() async {
+    final l = context.l;
     setState(() {
       _error = null;
       _trabajando = true;
     });
     try {
       final xfile = await openFile(acceptedTypeGroups: [
-        const XTypeGroup(label: 'Archivos', extensions: ['csv', 'xlsx', 'xls']),
+        XTypeGroup(
+            label: l.archivos, extensions: ['csv', 'xlsx', 'xls']),
       ]);
       if (xfile == null) {
         setState(() => _trabajando = false);
@@ -66,8 +70,10 @@ class _PantallaImportarPuntuacionState
       _filasArchivo = res.filas;
       _mapeo = ImportadorPuntuacionPrevia.detectarMapeo(_columnas);
       await _recalcularPrevio();
+    } on FormatoNoSoportado catch (e) {
+      _error = l.formatoNoSoportadoUsaCsv(e.extension);
     } catch (e) {
-      _error = 'No se pudo leer el archivo: $e';
+      _error = l.noSePudoLeerArchivo('$e');
     } finally {
       if (mounted) setState(() => _trabajando = false);
     }
@@ -125,26 +131,23 @@ class _PantallaImportarPuntuacionState
         ok++;
       }
       if (!mounted) return;
+      final l = context.l;
       await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Puntuación importada'),
-          content: Text(
-              '✓ Actualizados: $ok\n✗ Saltados: $saltados\n\n'
-              'Esta puntuación solo se usa para "Generar tandas" en la '
-              'primera prueba; en cuanto el campeonato tenga resultados '
-              'propios, la clasificación real la sustituye sola.'),
+          title: Text(l.puntuacionImportada),
+          content: Text(l.puntuacionImportadaTexto(ok, saltados)),
           actions: [
             FilledButton(
-                onPressed: () => Navigator.pop(context), child: const Text('OK')),
+                onPressed: () => Navigator.pop(context), child: Text(l.ok)),
           ],
         ),
       );
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l.errorDetalle('$e'))));
     } finally {
       if (mounted) setState(() => _trabajando = false);
     }
@@ -156,7 +159,7 @@ class _PantallaImportarPuntuacionState
     final paraImportar = _previo.where((f) => f.importar).length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Importar puntuación previa')),
+      appBar: AppBar(title: Text(context.l.importarPuntuacionPrevia)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -167,14 +170,11 @@ class _PantallaImportarPuntuacionState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('1. Elige el archivo',
+                  Text(context.l.paso1EligeArchivo,
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   Text(
-                    'Excel (.xlsx) o CSV con el nombre del piloto y su '
-                    'puntuación. Solo actualiza a pilotos que YA están '
-                    'inscritos en el campeonato activo (se cruza por '
-                    'nombre) — no da de alta a nadie nuevo.',
+                    context.l.puntuacionPreviaTexto,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 12),
@@ -183,7 +183,7 @@ class _PantallaImportarPuntuacionState
                       FilledButton.icon(
                         onPressed: _trabajando ? null : _elegirArchivo,
                         icon: const Icon(Icons.folder_open),
-                        label: const Text('Elegir archivo'),
+                        label: Text(context.l.elegirArchivo),
                       ),
                       const SizedBox(width: 12),
                       if (_archivo != null)
@@ -227,16 +227,16 @@ class _PantallaImportarPuntuacionState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('2. Asigna las columnas',
+                    Text(context.l.paso2AsignaLasColumnas,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 12),
-                    _selector(context, 'Nombre del piloto *', _mapeo.colNombre,
-                        (v) {
+                    _selector(context, context.l.nombreDelPilotoObligatorio,
+                        _mapeo.colNombre, (v) {
                       setState(() => _mapeo.colNombre = v);
                       _recalcularPrevio();
                     }),
-                    _selector(context, 'Puntuación *', _mapeo.colPuntuacion,
-                        (v) {
+                    _selector(context, context.l.puntuacionObligatoria,
+                        _mapeo.colPuntuacion, (v) {
                       setState(() => _mapeo.colPuntuacion = v);
                       _recalcularPrevio();
                     }),
@@ -253,21 +253,23 @@ class _PantallaImportarPuntuacionState
                   children: [
                     Row(
                       children: [
-                        Text('3. Vista previa',
+                        Text(context.l.paso3VistaPrevia,
                             style: Theme.of(context).textTheme.titleMedium),
                         const Spacer(),
-                        Text('$paraImportar de ${_previo.length} se actualizarán',
+                        Text(
+                            context.l.nDeTotalSeActualizaran(
+                                paraImportar, _previo.length),
                             style: Theme.of(context).textTheme.bodySmall),
                       ],
                     ),
                     const SizedBox(height: 8),
                     if (!_mapeo.esValido)
                       Text(
-                        'Indica qué columna es el nombre y cuál la puntuación.',
+                        context.l.indicaColumnaNombreYPuntuacion,
                         style: TextStyle(color: cs.error),
                       )
                     else if (_previo.isEmpty)
-                      const Text('No se han encontrado filas válidas.')
+                      Text(context.l.noFilasValidas)
                     else
                       ..._previo.map((f) => _FilaPrevia(
                             fila: f,
@@ -289,7 +291,7 @@ class _PantallaImportarPuntuacionState
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.cloud_download_outlined),
-              label: Text('Actualizar $paraImportar pilotos'),
+              label: Text(context.l.actualizarNPilotos(paraImportar)),
             ),
           ],
         ],
@@ -306,7 +308,7 @@ class _PantallaImportarPuntuacionState
         isExpanded: true,
         decoration: InputDecoration(labelText: label, isDense: true),
         items: [
-          const DropdownMenuItem(value: null, child: Text('— ninguna —')),
+          DropdownMenuItem(value: null, child: Text(context.l.ninguna)),
           ..._columnas.map((c) => DropdownMenuItem(value: c, child: Text(c))),
         ],
         onChanged: onCambio,
@@ -327,11 +329,11 @@ class _FilaPrevia extends StatelessWidget {
     final avisar = noExiste || fila.esFormulaSinValor;
     String etiqueta;
     if (noExiste) {
-      etiqueta = 'No está en el campeonato';
+      etiqueta = context.l.noEstaEnCampeonato;
     } else if (fila.esFormulaSinValor) {
-      etiqueta = 'Fórmula sin calcular — usa "pegado especial: valores"';
+      etiqueta = context.l.formulaSinCalcular;
     } else {
-      etiqueta = 'Se actualizará';
+      etiqueta = context.l.seActualizara;
     }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),

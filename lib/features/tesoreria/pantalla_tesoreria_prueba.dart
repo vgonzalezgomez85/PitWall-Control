@@ -21,6 +21,7 @@ import 'package:intl/intl.dart';
 
 import 'fila_pago_equipo.dart';
 import 'repositorio_tesoreria.dart';
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 
 /// Minúsculas y sin acentos, para buscar "diaz" y encontrar "Díaz".
@@ -83,11 +84,11 @@ class _PantallaTesoreriaPruebaState
         controller: _buscador,
         decoration: InputDecoration(
           prefixIcon: const Icon(Icons.search),
-          hintText: 'Buscar piloto o equipo…',
+          hintText: context.l.buscarPilotoOEquipo,
           suffixIcon: _busqueda.isEmpty
               ? null
               : IconButton(
-                  tooltip: 'Borrar',
+                  tooltip: context.l.borrar,
                   icon: const Icon(Icons.close),
                   onPressed: () => setState(() {
                     _buscador.clear();
@@ -101,7 +102,8 @@ class _PantallaTesoreriaPruebaState
     );
     final cuerpo = dataAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) =>
+          Center(child: Text(context.l.errorDetalle('$e'))),
       data: (lista) {
         if (lista.isEmpty) {
           return Center(
@@ -113,11 +115,11 @@ class _PantallaTesoreriaPruebaState
                   Icon(Icons.group_off_outlined,
                       size: 96, color: cs.outline),
                   const SizedBox(height: 16),
-                  Text('Sin equipos inscritos',
+                  Text(context.l.sinEquiposInscritos,
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Primero inscribe equipos a la prueba.',
+                  Text(
+                    context.l.primeroInscribeEquipos,
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -145,7 +147,7 @@ class _PantallaTesoreriaPruebaState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Recaudado en la prueba',
+                          Text(context.l.recaudadoEnPrueba,
                               style: TextStyle(
                                   color: cs.outline, fontSize: 13)),
                           Text(eur.format(totalRecaudado),
@@ -158,13 +160,13 @@ class _PantallaTesoreriaPruebaState
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('$pagados / $aPagar pagados',
+                        Text(context.l.pagadosDe(pagados, aPagar),
                             style: TextStyle(
                                 color: pagados >= aPagar
                                     ? context.estado.exito
                                     : cs.outline)),
                         if (exentos > 0)
-                          Text('$exentos no pagan',
+                          Text(context.l.exentosNoPagan(exentos),
                               style: TextStyle(
                                   color: cs.outline, fontSize: 12)),
                       ],
@@ -177,7 +179,8 @@ class _PantallaTesoreriaPruebaState
             if (visibles.isEmpty)
               Padding(
                 padding: const EdgeInsets.all(32),
-                child: Text('Nadie coincide con "${_buscador.text.trim()}".',
+                child: Text(
+                    context.l.nadieCoincide(_buscador.text.trim()),
                     textAlign: TextAlign.center,
                     style: TextStyle(color: cs.outline)),
               ),
@@ -201,7 +204,7 @@ class _PantallaTesoreriaPruebaState
     }
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tesorería de la prueba'),
+        title: Text(context.l.tesoreriaDeLaPrueba),
         // Buscador fijo arriba: localizar rápido quién va a pagar.
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(64),

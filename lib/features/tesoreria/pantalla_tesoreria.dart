@@ -21,6 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/tema.dart';
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import 'pantalla_tesoreria_prueba.dart';
@@ -39,12 +40,12 @@ class PantallaTesoreria extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tesorería'),
+        title: Text(context.l.menuTesoreria),
         actions: [
           if (activo != null)
             TextButton.icon(
               icon: const Icon(Icons.pie_chart_outline),
-              label: const Text('Reparto'),
+              label: Text(context.l.reparto),
               onPressed: () => _editarReparto(context, ref, activo),
             ),
         ],
@@ -56,11 +57,12 @@ class PantallaTesoreria extends ConsumerWidget {
               onPressed: () => _editarMovimiento(
                   context, ref, activo.id, null, null),
               icon: const Icon(Icons.add),
-              label: const Text('Movimiento'),
+              label: Text(context.l.movimiento),
             ),
       body: dataAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) =>
+            Center(child: Text(context.l.errorDetalle('$e'))),
         data: (lista) {
           if (lista.isEmpty && activo == null) {
             return Center(
@@ -72,7 +74,7 @@ class PantallaTesoreria extends ConsumerWidget {
                     Icon(Icons.payments_outlined,
                         size: 96, color: cs.outline),
                     const SizedBox(height: 16),
-                    Text('No hay campeonato activo',
+                    Text(context.l.sinCampeonatoActivo,
                         style: Theme.of(context).textTheme.titleMedium),
                   ],
                 ),
@@ -105,9 +107,10 @@ class PantallaTesoreria extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
-                    'Cuota por prueba: ${eurSin.format(activo.cuotaPagat)} '
-                    '(coordinadora ${eurSin.format(activo.cuotaCoordinadora)}'
-                    ' · club ${eurSin.format(activo.cuotaClub)})',
+                    context.l.cuotaPorPruebaTexto(
+                        eurSin.format(activo.cuotaPagat),
+                        eurSin.format(activo.cuotaCoordinadora),
+                        eurSin.format(activo.cuotaClub)),
                     style: TextStyle(color: cs.outline, fontSize: 13),
                   ),
                 ),
@@ -122,7 +125,7 @@ class PantallaTesoreria extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               if (lista.isNotEmpty) ...[
-                Text('Por prueba',
+                Text(context.l.porPrueba,
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 ...lista.map((r) => _TarjetaPrueba(resumen: r, eur: eur)),
@@ -166,7 +169,7 @@ Future<void> _editarReparto(
       String pct(double v) =>
           total > 0 ? '${(v / total * 100).toStringAsFixed(0)} %' : '';
       return AlertDialog(
-        title: const Text('Reparto de la cuota'),
+        title: Text(context.l.repartoDeLaCuota),
         content: SizedBox(
           width: 440,
           child: Column(
@@ -174,9 +177,7 @@ Future<void> _editarReparto(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Lo que paga cada equipo por prueba y a dónde va. '
-                'Al cambiar coordinadora o club, el otro se ajusta para '
-                'que sumen el Pagat.',
+                context.l.repartoTexto,
                 style: Theme.of(ctx).textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
@@ -186,8 +187,8 @@ Future<void> _editarReparto(
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: formato,
-                decoration: const InputDecoration(
-                  labelText: 'Pagat (cuota total) €',
+                decoration: InputDecoration(
+                  labelText: context.l.pagatCuotaTotal,
                   prefixIcon: Icon(Icons.payments_outlined),
                 ),
                 // Mantener la parte de coordinadora; el club absorbe el cambio.
@@ -206,7 +207,7 @@ Future<void> _editarReparto(
                           decimal: true),
                       inputFormatters: formato,
                       decoration: InputDecoration(
-                        labelText: 'Coordinadora €',
+                        labelText: context.l.coordinadoraEur,
                         suffixText: pct(c),
                       ),
                       onChanged: (_) => setS(() {
@@ -223,7 +224,7 @@ Future<void> _editarReparto(
                           decimal: true),
                       inputFormatters: formato,
                       decoration: InputDecoration(
-                        labelText: 'Club €',
+                        labelText: context.l.clubEur,
                         suffixText: pct(cl),
                       ),
                       onChanged: (_) => setS(() {
@@ -238,8 +239,8 @@ Future<void> _editarReparto(
                 const SizedBox(height: 8),
                 Text(
                   total <= 0
-                      ? 'El Pagat tiene que ser mayor que 0.'
-                      : 'Coordinadora + club tienen que sumar el Pagat.',
+                      ? context.l.pagatMayorQueCero
+                      : context.l.coordClubSumanPagat,
                   style: TextStyle(
                       color: Theme.of(ctx).colorScheme.error, fontSize: 12),
                 ),
@@ -249,10 +250,8 @@ Future<void> _editarReparto(
                 contentPadding: EdgeInsets.zero,
                 value: recalcular,
                 onChanged: (v) => setS(() => recalcular = v ?? false),
-                title: const Text('Aplicar también a los pagos ya cobrados'),
-                subtitle: const Text(
-                    'Vuelve a repartir lo que pagó cada equipo con la nueva '
-                    'proporción. Lo cobrado no cambia.'),
+                title: Text(context.l.aplicarAPagosCobrados),
+                subtitle: Text(context.l.aplicarAPagosCobradosTexto),
               ),
             ],
           ),
@@ -260,11 +259,11 @@ Future<void> _editarReparto(
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancelar),
           ),
           FilledButton(
             onPressed: cuadra ? () => Navigator.pop(ctx, true) : null,
-            child: const Text('Guardar'),
+            child: Text(context.l.guardar),
           ),
         ],
       );
@@ -287,8 +286,8 @@ Future<void> _editarReparto(
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(recalcular
-          ? 'Reparto guardado. $n pago(s) recalculado(s).'
-          : 'Reparto guardado. Se aplicará a los próximos pagos.'),
+          ? context.l.repartoGuardadoRecalculado(n)
+          : context.l.repartoGuardado),
     ));
   }
 }
@@ -311,23 +310,25 @@ Future<void> _editarMovimiento(
     context: context,
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setS) => AlertDialog(
-        title: Text(mov == null ? 'Nuevo movimiento' : 'Editar movimiento'),
+        title: Text(mov == null
+            ? context.l.nuevoMovimiento
+            : context.l.editarMovimiento),
         content: SizedBox(
           width: 420,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               SegmentedButton<bool>(
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: true,
-                    label: Text('Ingreso'),
-                    icon: Icon(Icons.arrow_downward),
+                    label: Text(context.l.ingreso),
+                    icon: const Icon(Icons.arrow_downward),
                   ),
                   ButtonSegment(
                     value: false,
-                    label: Text('Gasto'),
-                    icon: Icon(Icons.arrow_upward),
+                    label: Text(context.l.gasto),
+                    icon: const Icon(Icons.arrow_upward),
                   ),
                 ],
                 selected: {ingreso},
@@ -337,9 +338,9 @@ Future<void> _editarMovimiento(
               TextField(
                 controller: concepto,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Concepto *',
-                  helperText: 'Ej: Patrocinio, Material, Premio…',
+                decoration: InputDecoration(
+                  labelText: context.l.conceptoObligatorio,
+                  helperText: context.l.conceptoEjemplo,
                 ),
               ),
               const SizedBox(height: 8),
@@ -350,16 +351,17 @@ Future<void> _editarMovimiento(
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                 ],
-                decoration: const InputDecoration(
-                  labelText: 'Importe (€) *',
-                  helperText: 'Solo el número, sin signo',
+                decoration: InputDecoration(
+                  labelText: context.l.importeObligatorio,
+                  helperText: context.l.importeAyuda,
                 ),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: notas,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Notas'),
+                decoration:
+                    InputDecoration(labelText: context.l.notas),
               ),
             ],
           ),
@@ -368,7 +370,7 @@ Future<void> _editarMovimiento(
           if (mov != null)
             TextButton.icon(
               icon: const Icon(Icons.delete_outline),
-              label: const Text('Eliminar'),
+              label: Text(context.l.eliminar),
               style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
               onPressed: () async {
                 await ref
@@ -379,11 +381,11 @@ Future<void> _editarMovimiento(
             ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(context.l.cancelar),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Guardar'),
+            child: Text(context.l.guardar),
           ),
         ],
       ),
@@ -432,10 +434,10 @@ class _SeccionMovimientos extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text('Movimientos extras',
+            Text(context.l.movimientosExtras,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(width: 8),
-            Text('(ingresos y gastos sueltos)',
+            Text(context.l.ingresosYGastosSueltos,
                 style: TextStyle(color: cs.outline, fontSize: 12)),
           ],
         ),
@@ -445,7 +447,7 @@ class _SeccionMovimientos extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Sin movimientos. Usa el botón "+ Movimiento" para añadir patrocinios, gastos de material, etc.',
+                context.l.sinMovimientosTexto,
                 style: TextStyle(color: cs.outline),
               ),
             ),
@@ -520,7 +522,7 @@ class _ResumenGlobal extends StatelessWidget {
                 Icon(Icons.payments_outlined,
                     color: cs.onPrimaryContainer),
                 const SizedBox(width: 8),
-                Text('Balance del campeonato',
+                Text(context.l.balanceCampeonato,
                     style: TextStyle(
                         color: cs.onPrimaryContainer,
                         fontWeight: FontWeight.w700)),
@@ -538,13 +540,18 @@ class _ResumenGlobal extends StatelessWidget {
               spacing: 8,
               runSpacing: 6,
               children: [
-                _Mini(label: 'Pagat', valor: pagat, eur: eur),
-                _Mini(label: 'Coordinadora', valor: coordinadora, eur: eur),
-                _Mini(label: 'Club', valor: club, eur: eur),
+                _Mini(label: context.l.pagat, valor: pagat, eur: eur),
+                _Mini(
+                    label: context.l.coordinadora,
+                    valor: coordinadora,
+                    eur: eur),
+                _Mini(label: context.l.club, valor: club, eur: eur),
                 if (ingresos > 0)
-                  _Mini(label: '+ Ingresos', valor: ingresos, eur: eur),
+                  _Mini(
+                      label: context.l.masIngresos, valor: ingresos, eur: eur),
                 if (gastos > 0)
-                  _Mini(label: '− Gastos', valor: gastos, eur: eur),
+                  _Mini(
+                      label: context.l.menosGastos, valor: gastos, eur: eur),
               ],
             ),
           ],
@@ -668,14 +675,17 @@ class _TarjetaPrueba extends StatelessWidget {
                 runSpacing: 4,
                 children: [
                   _ChipMini(
-                      texto: 'Pagat ${eur.format(resumen.sumaPagat)}',
+                      texto: '${context.l.pagat} '
+                          '${eur.format(resumen.sumaPagat)}',
                       color: cs.secondary),
                   _ChipMini(
                       texto:
-                          'Coord. ${eur.format(resumen.sumaCoordinadora)}',
+                          '${context.l.coordAbrev} '
+                          '${eur.format(resumen.sumaCoordinadora)}',
                       color: cs.tertiary),
                   _ChipMini(
-                      texto: 'Club ${eur.format(resumen.sumaClub)}',
+                      texto: '${context.l.club} '
+                          '${eur.format(resumen.sumaClub)}',
                       color: cs.outline),
                 ],
               ),

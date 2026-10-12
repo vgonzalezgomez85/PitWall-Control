@@ -20,8 +20,10 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../../domain/errores_importacion.dart';
 import 'importador_pilotos.dart';
 import 'repositorio_pilotos.dart';
 
@@ -44,13 +46,14 @@ class _PantallaImportarPilotosState
   String? _error;
 
   Future<void> _elegirArchivo() async {
+    final l = context.l;
     setState(() {
       _error = null;
       _trabajando = true;
     });
     try {
       final tipo = XTypeGroup(
-        label: 'Archivos',
+        label: l.archivos,
         extensions: ['csv', 'xlsx', 'xls'],
       );
       final xfile = await openFile(acceptedTypeGroups: [tipo]);
@@ -65,8 +68,10 @@ class _PantallaImportarPilotosState
       _filasArchivo = res.filas;
       _mapeo = ImportadorPilotos.detectarMapeo(_columnas);
       await _recalcularPrevio();
+    } on FormatoNoSoportado catch (e) {
+      _error = l.formatoNoSoportadoUsaCsv(e.extension);
     } catch (e) {
-      _error = 'No se pudo leer el archivo: $e';
+      _error = l.noSePudoLeerArchivo('$e');
     } finally {
       if (mounted) setState(() => _trabajando = false);
     }
@@ -161,19 +166,16 @@ class _PantallaImportarPilotosState
       }
 
       if (!mounted) return;
+      final l = context.l;
       await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Importación completada'),
-          content: Text(
-            '✓ Pilotos nuevos: $nuevos\n'
-            '✓ Inscritos en este campeonato: $inscritos\n'
-            '✗ Saltados: $saltados',
-          ),
+          title: Text(l.importacionCompletada),
+          content: Text(l.resumenImportacionPilotos(nuevos, inscritos, saltados)),
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
+              child: Text(l.ok),
             ),
           ],
         ),
@@ -182,7 +184,7 @@ class _PantallaImportarPilotosState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error importando: $e')),
+        SnackBar(content: Text(context.l.errorImportando('$e'))),
       );
     } finally {
       if (mounted) setState(() => _trabajando = false);
@@ -195,7 +197,7 @@ class _PantallaImportarPilotosState
     final filasParaImportar = _previo.where((f) => f.importar).length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Importar pilotos')),
+      appBar: AppBar(title: Text(context.l.importarPilotos)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -206,12 +208,11 @@ class _PantallaImportarPilotosState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('1. Elige el archivo',
+                  Text(context.l.paso1EligeArchivo,
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   Text(
-                    'Soporta archivos Excel (.xlsx) y CSV. Debe tener al menos '
-                    'una columna con el nombre de los pilotos.',
+                    context.l.soportaExcelPilotos,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 12),
@@ -220,7 +221,7 @@ class _PantallaImportarPilotosState
                       FilledButton.icon(
                         onPressed: _trabajando ? null : _elegirArchivo,
                         icon: const Icon(Icons.folder_open),
-                        label: const Text('Elegir archivo'),
+                        label: Text(context.l.elegirArchivo),
                       ),
                       const SizedBox(width: 12),
                       if (_archivo != null)
@@ -272,21 +273,23 @@ class _PantallaImportarPilotosState
                   children: [
                     Row(
                       children: [
-                        Text('3. Vista previa',
+                        Text(context.l.paso3VistaPrevia,
                             style: Theme.of(context).textTheme.titleMedium),
                         const Spacer(),
-                        Text('$filasParaImportar de ${_previo.length} se importarán',
+                        Text(
+                            context.l.nDeTotalSeImportaran(
+                                filasParaImportar, _previo.length),
                             style: Theme.of(context).textTheme.bodySmall),
                       ],
                     ),
                     const SizedBox(height: 8),
                     if (!_mapeo.esValido)
                       Text(
-                        'Indica qué columna contiene el nombre del piloto.',
+                        context.l.indicaColumnaNombrePiloto,
                         style: TextStyle(color: color.error),
                       )
                     else if (_previo.isEmpty)
-                      const Text('No se han encontrado filas válidas.')
+                      Text(context.l.noFilasValidas)
                     else
                       ..._previo.asMap().entries.map(
                             (e) => _FilaPrevia(
@@ -310,7 +313,7 @@ class _PantallaImportarPilotosState
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.cloud_download_outlined),
-              label: Text('Importar $filasParaImportar pilotos'),
+              label: Text(context.l.importarNPilotos(filasParaImportar)),
             ),
           ],
         ],
@@ -338,23 +341,25 @@ class _Mapeo extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('2. Asigna las columnas',
+            Text(context.l.paso2AsignaLasColumnas,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
             Text(
-              'Hemos intentado detectarlas automáticamente. Cámbialas si hace falta.',
+              context.l.columnasAutodetectadas,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-            _selector(context, 'Nombre del piloto *', mapeo.colNombre,
-                (v) { mapeo.colNombre = v; onCambio(); }),
-            _selector(context, 'Categoría (metal)', mapeo.colCategoria,
+            _selector(context, context.l.nombreDelPilotoObligatorio,
+                mapeo.colNombre, (v) { mapeo.colNombre = v; onCambio(); }),
+            _selector(context, context.l.categoriaMetal, mapeo.colCategoria,
                 (v) { mapeo.colCategoria = v; onCambio(); }),
-            _selector(context, 'Créditos iniciales', mapeo.colCreditosIniciales,
+            _selector(context, context.l.creditosIniciales,
+                mapeo.colCreditosIniciales,
                 (v) { mapeo.colCreditosIniciales = v; onCambio(); }),
-            _selector(context, 'Créditos actuales', mapeo.colCreditosActuales,
+            _selector(context, context.l.creditosActuales,
+                mapeo.colCreditosActuales,
                 (v) { mapeo.colCreditosActuales = v; onCambio(); }),
-            _selector(context, 'Palmarés', mapeo.colPalmares,
+            _selector(context, context.l.palmares, mapeo.colPalmares,
                 (v) { mapeo.colPalmares = v; onCambio(); }),
           ],
         ),
@@ -371,7 +376,7 @@ class _Mapeo extends StatelessWidget {
         isExpanded: true,
         decoration: InputDecoration(labelText: label, isDense: true),
         items: [
-          const DropdownMenuItem(value: null, child: Text('— ninguna —')),
+          DropdownMenuItem(value: null, child: Text(context.l.ninguna)),
           ...columnas.map((c) => DropdownMenuItem(value: c, child: Text(c))),
         ],
         onChanged: onCambio,
@@ -394,13 +399,13 @@ class _FilaPrevia extends StatelessWidget {
     switch (fila.estado) {
       case 'ya_inscrito':
         colorEstado = cs.outline;
-        etiquetaEstado = 'Ya inscrito';
+        etiquetaEstado = context.l.yaInscrito;
       case 'inscribir':
         colorEstado = cs.secondary;
-        etiquetaEstado = 'Inscribir';
+        etiquetaEstado = context.l.inscribir;
       default:
         colorEstado = cs.primary;
-        etiquetaEstado = 'Nuevo';
+        etiquetaEstado = context.l.nuevo;
     }
 
     return Padding(

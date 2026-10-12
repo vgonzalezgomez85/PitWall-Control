@@ -19,6 +19,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import 'repositorio_pilotos.dart';
@@ -111,6 +112,7 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
   }
 
   Future<void> _guardar() async {
+    final l = context.l;
     if (!_formKey.currentState!.validate()) return;
     setState(() => _guardando = true);
 
@@ -160,7 +162,7 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
                   campeonatoId: activo.id,
                   delta: delta,
                   saldoResultante: nuevoActual,
-                  motivo: 'Ajuste manual (ficha de piloto)',
+                  motivo: l.motivoAjusteManual,
                 ),
               );
         }
@@ -180,7 +182,7 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo guardar: $e')),
+          SnackBar(content: Text(context.l.noSePudoGuardar('$e'))),
         );
         setState(() => _guardando = false);
       }
@@ -193,23 +195,21 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
   }
 
   Future<void> _quitarDelCampeonato() async {
+    final l = context.l;
     final activo = ref.read(campeonatoActivoProvider)!;
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Quitar del campeonato'),
-        content: Text(
-          '¿Quitar a ${_nombre.text} de "${activo.nombre}"?\n\n'
-          'El piloto no se borra, solo se desinscribe de este campeonato.',
-        ),
+        title: Text(l.quitarDelCampeonato),
+        content: Text(l.quitarDelCampeonatoTexto(_nombre.text, activo.nombre)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(l.cancelar),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Quitar'),
+            child: Text(l.quitar),
           ),
         ],
       ),
@@ -234,11 +234,12 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
     final usaCreditos = activo?.usaCreditos ?? true;
     return Scaffold(
       appBar: AppBar(
-        title: Text(esNuevo ? 'Nuevo piloto' : 'Editar piloto'),
+        title: Text(
+            esNuevo ? context.l.nuevoPiloto : context.l.editarPiloto),
         actions: [
           if (!esNuevo)
             IconButton(
-              tooltip: 'Quitar del campeonato',
+              tooltip: context.l.quitarDelCampeonato,
               icon: const Icon(Icons.person_remove_outlined),
               onPressed: _quitarDelCampeonato,
             ),
@@ -249,63 +250,63 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            _Seccion(titulo: 'Datos personales'),
+            _Seccion(titulo: context.l.datosPersonales),
             const SizedBox(height: 12),
             TextFormField(
               controller: _nombre,
-              decoration: const InputDecoration(
-                labelText: 'Nombre y apellidos *',
-                prefixIcon: Icon(Icons.person_outline),
+              decoration: InputDecoration(
+                labelText: context.l.nombreYApellidos,
+                prefixIcon: const Icon(Icons.person_outline),
               ),
               textCapitalization: TextCapitalization.words,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Indica el nombre' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? context.l.indicaElNombre
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _telefono,
-              decoration: const InputDecoration(
-                labelText: 'Teléfono',
-                prefixIcon: Icon(Icons.phone_outlined),
+              decoration: InputDecoration(
+                labelText: context.l.telefono,
+                prefixIcon: const Icon(Icons.phone_outlined),
               ),
               keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _email,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                prefixIcon: Icon(Icons.email_outlined),
+              decoration: InputDecoration(
+                labelText: context.l.email,
+                prefixIcon: const Icon(Icons.email_outlined),
               ),
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _palmares,
-              decoration: const InputDecoration(
-                labelText: 'Palmarés histórico',
-                helperText: 'Ej: "Top 3 liga 2025", "WES 2023-2024"',
-                prefixIcon: Icon(Icons.emoji_events_outlined),
+              decoration: InputDecoration(
+                labelText: context.l.palmaresHistorico,
+                helperText: context.l.palmaresEjemplo,
+                prefixIcon: const Icon(Icons.emoji_events_outlined),
               ),
             ),
             const SizedBox(height: 12),
             SwitchListTile(
               value: _esCoordinadora,
               onChanged: (v) => setState(() => _esCoordinadora = v),
-              title: const Text('Piloto de coordinadora'),
-              subtitle: const Text(
-                  'Si está activado, los equipos en los que participe no pagarán cuota.'),
+              title: Text(context.l.pilotoCoordinadora),
+              subtitle: Text(context.l.pilotoCoordinadoraTexto),
               secondary: const Icon(Icons.shield_outlined),
             ),
             const SizedBox(height: 28),
-            _Seccion(titulo: 'En este campeonato'),
+            _Seccion(titulo: context.l.enEsteCampeonato),
             const SizedBox(height: 12),
             if (usaCreditos)
               DropdownButtonFormField<String>(
                 initialValue: _categoria,
-                decoration: const InputDecoration(
-                  labelText: 'Categoría',
-                  prefixIcon: Icon(Icons.workspace_premium_outlined),
+                decoration: InputDecoration(
+                  labelText: context.l.categoria,
+                  prefixIcon: const Icon(Icons.workspace_premium_outlined),
                 ),
                 items: categorias
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -328,9 +329,9 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
                 Expanded(
                   child: TextFormField(
                     controller: _creditosIniciales,
-                    decoration: const InputDecoration(
-                      labelText: 'Créditos iniciales',
-                      helperText: 'Sugerido según categoría',
+                    decoration: InputDecoration(
+                      labelText: context.l.creditosIniciales,
+                      helperText: context.l.sugeridoSegunCategoria,
                     ),
                     keyboardType: TextInputType.number,
                     validator: _validarEntero,
@@ -340,8 +341,8 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
                 Expanded(
                   child: TextFormField(
                     controller: _creditosActuales,
-                    decoration: const InputDecoration(
-                      labelText: 'Créditos actuales',
+                    decoration: InputDecoration(
+                      labelText: context.l.creditosActuales,
                     ),
                     keyboardType: TextInputType.number,
                     validator: _validarEntero,
@@ -352,9 +353,9 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _palmaresLocal,
-              decoration: const InputDecoration(
-                labelText: 'Palmarés en este campeonato',
-                prefixIcon: Icon(Icons.military_tech_outlined),
+              decoration: InputDecoration(
+                labelText: context.l.palmaresLocal,
+                prefixIcon: const Icon(Icons.military_tech_outlined),
               ),
             ),
             const SizedBox(height: 32),
@@ -366,7 +367,8 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.check),
-              label: Text(esNuevo ? 'Crear piloto' : 'Guardar cambios'),
+              label: Text(
+                  esNuevo ? context.l.crearPiloto : context.l.guardarCambios),
             ),
           ],
         ),
@@ -375,10 +377,11 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
   }
 
   String? _validarEntero(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Indica un número';
+    final l = context.l;
+    if (v == null || v.trim().isEmpty) return l.indicaUnNumero;
     final n = int.tryParse(v.trim());
-    if (n == null) return 'Tiene que ser un número entero';
-    if (n < 0) return 'No puede ser negativo';
+    if (n == null) return l.tieneQueSerEntero;
+    if (n < 0) return l.noPuedeSerNegativo;
     return null;
   }
 }

@@ -21,6 +21,8 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:drift/drift.dart' as d;
 import 'package:excel/excel.dart';
+
+import '../../domain/errores_importacion.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
@@ -79,7 +81,7 @@ class ImportadorClasificacion {
     final ext = path.toLowerCase().split('.').last;
     if (ext == 'csv') return _leerCsv(path);
     if (ext == 'xlsx' || ext == 'xls') return _leerExcel(path);
-    throw Exception('Formato no soportado: $ext');
+    throw FormatoNoSoportado(ext);
   }
 
   static Future<List<List<String>>> _leerCsv(String path) async {
@@ -125,8 +127,7 @@ class ImportadorClasificacion {
       if (idxCab >= 0) break;
     }
     if (idxCab < 0) {
-      throw 'No encuentro la columna del piloto. La primera fila debe '
-          'contener una columna llamada "Piloto", "Nombre" o "Equipo".';
+      throw const SinColumnaPiloto();
     }
 
     final cabecera = tabla[idxCab].map((c) => c.trim()).toList();

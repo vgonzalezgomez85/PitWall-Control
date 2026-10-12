@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/seeds.dart';
 import 'repositorio_tabla_puntos.dart';
@@ -77,18 +78,15 @@ class _PantallaEditorTablaPuntosState
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Restaurar valores por defecto'),
-        content: const Text(
-            'Se sustituirá la tabla de puntos actual por la de PitWall Control '
-            '(70, 64, 59… hasta 1 punto). Los cambios no se guardan hasta que '
-            'pulses "Guardar".'),
+        title: Text(context.l.restaurarValores),
+        content: Text(context.l.restaurarTexto),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(context.l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Restaurar')),
+              child: Text(context.l.restaurar)),
         ],
       ),
     );
@@ -103,7 +101,7 @@ class _PantallaEditorTablaPuntosState
     for (final c in _controladores) {
       final v = int.tryParse(c.text.trim());
       if (v == null || v < 0) {
-        _aviso('Hay una posición con un valor de puntos no válido.');
+        _aviso(context.l.puntosNoValidos);
         return;
       }
       puntos.add(v);
@@ -114,7 +112,7 @@ class _PantallaEditorTablaPuntosState
           .read(repositorioTablaPuntosProvider)
           .guardar(activo.id, puntos);
       if (mounted) {
-        _aviso('Tabla de puntos guardada.');
+        _aviso(context.l.tablaGuardada);
         Navigator.of(context).pop();
       }
     } catch (e) {
@@ -134,10 +132,10 @@ class _PantallaEditorTablaPuntosState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tabla de puntos'),
+        title: Text(context.l.tablaDePuntos),
         actions: [
           IconButton(
-            tooltip: 'Restaurar valores por defecto',
+            tooltip: context.l.restaurarValores,
             icon: const Icon(Icons.restore_outlined),
             onPressed: _restaurarPorDefecto,
           ),
@@ -145,7 +143,8 @@ class _PantallaEditorTablaPuntosState
       ),
       body: tablaAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) =>
+              Center(child: Text(context.l.errorDetalle('$e'))),
         data: (filas) {
           if (!_cargado) {
             final puntos = filas.isEmpty
@@ -193,22 +192,22 @@ class _PantallaEditorTablaPuntosState
                       children: [
                         SizedBox(
                           width: 72,
-                          child: Text('Pos. ${i + 1}',
+                          child: Text(context.l.posN(i + 1),
                               style: Theme.of(context).textTheme.bodyMedium),
                         ),
                         Expanded(
                           child: TextField(
                             controller: _controladores[i],
                             keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Puntos',
+                            decoration: InputDecoration(
+                              labelText: context.l.puntosMayus,
                               isDense: true,
                             ),
                           ),
                         ),
                         if (i == _controladores.length - 1)
                           IconButton(
-                            tooltip: 'Quitar última posición',
+                            tooltip: context.l.quitarUltimaPosicion,
                             icon: const Icon(Icons.remove_circle_outline),
                             onPressed: _quitarUltimaPosicion,
                           ),
@@ -224,7 +223,7 @@ class _PantallaEditorTablaPuntosState
                   child: TextButton.icon(
                     onPressed: _anadirPosicion,
                     icon: const Icon(Icons.add),
-                    label: const Text('Añadir posición'),
+                    label: Text(context.l.anadirPosicion),
                   ),
                 ),
               ),
@@ -239,7 +238,7 @@ class _PantallaEditorTablaPuntosState
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.check),
-                  label: const Text('Guardar'),
+                  label: Text(context.l.guardar),
                 ),
               ),
             ],

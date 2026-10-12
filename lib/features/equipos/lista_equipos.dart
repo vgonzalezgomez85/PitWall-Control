@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/acciones_barra.dart';
 import '../google/actualizador_drive.dart';
@@ -51,10 +52,10 @@ class _PantallaEquiposState extends ConsumerState<PantallaEquipos> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.pestanas != null
-            ? 'Participantes'
+            ? context.l.menuParticipantes
             : esIndividual
-                ? 'Inscripciones'
-                : 'Equipos'),
+                ? context.l.inscripciones
+                : context.l.equipos),
         actions: [
           Consumer(builder: (context, ref, _) {
             final v = ref.watch(vinculoEquiposProvider).asData?.value;
@@ -64,12 +65,12 @@ class _PantallaEquiposState extends ConsumerState<PantallaEquipos> {
               if (v != null)
                 AccionBarra(
                   icono: Icons.sync,
-                  etiqueta: 'Actualizar desde Drive',
+                  etiqueta: context.l.actualizarDesdeDrive,
                   onPressed: () async {
                     final m = ScaffoldMessenger.of(context);
-                    m.showSnackBar(const SnackBar(
-                      content: Text('Actualizando desde Drive…'),
-                      duration: Duration(seconds: 2),
+                    m.showSnackBar(SnackBar(
+                      content: Text(context.l.actualizandoDesdeDrive),
+                      duration: const Duration(seconds: 2),
                     ));
                     final r = await ref
                         .read(actualizadorDriveProvider)
@@ -83,12 +84,13 @@ class _PantallaEquiposState extends ConsumerState<PantallaEquipos> {
                 ),
               AccionBarra(
                 icono: Icons.file_upload_outlined,
-                etiqueta: 'Importar',
+                etiqueta: context.l.importar,
                 opciones: [
-                  OpcionAccion(Icons.cloud_outlined, 'Vincular Google Sheet',
+                  OpcionAccion(Icons.cloud_outlined,
+                      context.l.vincularGoogleSheet,
                       () => abrir(const ImportarEquiposSheets())),
                   OpcionAccion(Icons.upload_file_outlined,
-                      'Desde archivo CSV / Excel',
+                      context.l.desdeArchivoCsvExcel,
                       () => abrir(const PantallaImportarEquipos())),
                 ],
               ),
@@ -103,9 +105,9 @@ class _PantallaEquiposState extends ConsumerState<PantallaEquipos> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: TextField(
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  hintText: 'Buscar equipo o piloto…',
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search),
+                  hintText: context.l.buscarEquipoOPiloto,
                 ),
                 onChanged: (v) =>
                     setState(() => _busqueda = v.trim().toLowerCase()),
@@ -118,13 +120,16 @@ class _PantallaEquiposState extends ConsumerState<PantallaEquipos> {
         heroTag: 'fab_equipos',
         onPressed: () => _abrirEditor(),
         icon: Icon(esIndividual ? Icons.person_add_outlined : Icons.group_add),
-        label: Text(esIndividual ? 'Nueva inscripción' : 'Nuevo equipo'),
+        label: Text(esIndividual
+            ? context.l.nuevaInscripcion
+            : context.l.nuevoEquipo),
       ),
       body: activo == null
-          ? const Center(child: Text('Selecciona primero un campeonato'))
+          ? Center(child: Text(context.l.seleccionaCampeonato))
           : equiposAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) =>
+                  Center(child: Text(context.l.errorDetalle('$e'))),
               data: (equipos) {
                 final filtrados = _busqueda.isEmpty
                     ? equipos
@@ -146,16 +151,16 @@ class _PantallaEquiposState extends ConsumerState<PantallaEquipos> {
                           const SizedBox(height: 16),
                           Text(
                             equipos.isEmpty
-                                ? 'Aún no hay equipos'
-                                : 'No hay coincidencias',
+                                ? context.l.aunNoHayEquipos
+                                : context.l.noHayCoincidencias,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           if (equipos.isEmpty) ...[
                             const SizedBox(height: 12),
                             Text(
                               activo.formato == 'PAREJAS'
-                                  ? 'Crea un equipo con dos pilotos para empezar.'
-                                  : 'Crea una inscripción individual para empezar.',
+                                  ? context.l.creaEquipoDosPilotos
+                                  : context.l.creaInscripcionIndividual,
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),

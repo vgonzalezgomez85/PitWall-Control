@@ -19,6 +19,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/proveedores.dart';
+import '../../core/idioma.dart';
 import '../../data/database/app_database.dart';
 
 final repoCreditosProvider = Provider<RepositorioCreditos>(
@@ -78,7 +79,7 @@ class RepositorioCreditos {
   /// Aplica la bonificación de cierre del campeonato a los pilotos que aún no
   /// la tengan: saldo = min(actual + bonif(categoria, nº carreras), tope).
   /// El cambio se anota como movimiento. Devuelve el nº de pilotos afectados.
-  Future<int> aplicarBonificacionCierre(int campeonatoId) async {
+  Future<int> aplicarBonificacionCierre(int campeonatoId, Textos l) async {
     final camp = await (db.select(db.campeonatos)
           ..where((t) => t.id.equals(campeonatoId)))
         .getSingle();
@@ -112,11 +113,8 @@ class RepositorioCreditos {
           ));
       // Registrar siempre el movimiento de cierre (aunque el tope deje delta
       // en 0), indicando claramente de qué bonificación se trata.
-      final carrerasTxt = n == 1 ? '1 carrera' : '$n carreras';
-      final motivo = suma > tope
-          ? 'Bonificación de cierre por $carrerasTxt ($categoria): '
-              '+$bonif, limitado al tope $tope'
-          : 'Bonificación de cierre por $carrerasTxt ($categoria): +$bonif';
+      final motivo = l.bonifMotivo(l.nCarreras(n), categoria, bonif) +
+          (suma > tope ? l.bonifLimiteTope(tope) : '');
       await db.into(db.movimientosCreditos).insert(
             MovimientosCreditosCompanion.insert(
               pilotoId: pc.pilotoId,

@@ -26,6 +26,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../core/tema.dart';
 import '../../services/almacen_local.dart';
@@ -97,24 +98,24 @@ class _PantallaSincronizacionState
     final dir = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Añadir Control por dirección'),
+        title: Text(context.l.anadirControlPorDireccion),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'IP (o IP:puerto)',
+          decoration: InputDecoration(
+            labelText: context.l.ipOPuerto,
             hintText: '192.168.1.34',
-            helperText: 'La ves en esta misma pantalla del otro Control.',
+            helperText: context.l.ipAyuda,
           ),
           onSubmitted: (v) => Navigator.pop(ctx, v),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar')),
+              child: Text(context.l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, ctrl.text),
-              child: const Text('Añadir')),
+              child: Text(context.l.anadir)),
         ],
       ),
     );
@@ -124,8 +125,8 @@ class _PantallaSincronizacionState
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(ok
-            ? 'Control añadido.'
-            : 'No hay ningún Control conectado en $dir.')));
+            ? context.l.syncControlAnadido
+            : context.l.syncNoHayControlEn(dir))));
   }
 
   @override
@@ -139,7 +140,7 @@ class _PantallaSincronizacionState
         .any((c) => c.nombre == DispositivoSync.nombre);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Verificar en equipo (wifi)')),
+      appBar: AppBar(title: Text(context.l.verificarEnEquipoWifi)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -147,19 +148,7 @@ class _PantallaSincronizacionState
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Text(
-                'Varios Controls pueden trabajar en esta prueba a la vez. '
-                'Cada uno guarda en su dispositivo y se pasan los cambios por '
-                'la wifi: verificaciones con sus fotos, copa y cobros, y '
-                'también las altas (pilotos, equipos, su categoría en el '
-                'campeonato e inscritos a la prueba, y sus bajas), las '
-                'tandas con sus carriles y los resultados.\n\n'
-                '• Todos en la misma wifi. No hace falta internet: vale un '
-                'router sin conexión o el punto de acceso de un móvil.\n'
-                '• La primera vez, partid todos de la misma copia de datos. '
-                'Los catálogos y la configuración del campeonato todavía no '
-                'viajan.\n'
-                '• La misma clave del evento en todos, y la hora automática '
-                'activada: si dos tocan lo mismo, gana el último cambio.',
+                context.l.syncIntroTexto,
                 style: gris,
               ),
             ),
@@ -167,9 +156,9 @@ class _PantallaSincronizacionState
           const SizedBox(height: 12),
           TextField(
             controller: _nombre,
-            decoration: const InputDecoration(
-              labelText: 'Nombre de este Control',
-              helperText: 'Distinto en cada dispositivo (p. ej. «Mesa 1»).',
+            decoration: InputDecoration(
+              labelText: context.l.nombreDeEsteControl,
+              helperText: context.l.nombreControlAyuda,
             ),
             onSubmitted: (_) => _guardarNombre(),
             onTapOutside: (_) => _guardarNombre(),
@@ -177,9 +166,9 @@ class _PantallaSincronizacionState
           const SizedBox(height: 12),
           TextField(
             controller: _clave,
-            decoration: const InputDecoration(
-              labelText: 'Clave del evento',
-              helperText: 'La misma en todos los Controls.',
+            decoration: InputDecoration(
+              labelText: context.l.claveDelEvento,
+              helperText: context.l.claveEventoAyuda,
             ),
             onSubmitted: (v) => n.guardarClave(v),
             onTapOutside: (_) {
@@ -189,13 +178,13 @@ class _PantallaSincronizacionState
           const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Conectar con otros Controls'),
+            title: Text(context.l.conectarConOtros),
             subtitle: Text(st.activo
-                ? 'Visible como «${DispositivoSync.nombre}»'
+                ? '${context.l.visibleComo(DispositivoSync.nombre)}'
                     '${_misIps.isEmpty ? '' : ' · ${_misIps.map((ip) => '$ip:${st.puerto}').join(', ')}'}'
                 : st.arrancando
-                    ? 'Conectando…'
-                    : 'Apagado'),
+                    ? context.l.conectando
+                    : context.l.apagado),
             value: st.activo,
             onChanged: st.arrancando
                 ? null
@@ -209,13 +198,13 @@ class _PantallaSincronizacionState
                     }
                   },
           ),
-          if (st.error != null)
-            Text(st.error!, style: TextStyle(color: cs.error)),
+          if (st.error != null || st.errorCodigo != null)
+            Text(_textoError(context.l, st), style: TextStyle(color: cs.error)),
           if (st.activo) ...[
             const Divider(height: 24),
             Row(
               children: [
-                Text('Controls en la red',
+                Text(context.l.controlsEnLaRed,
                     style: Theme.of(context).textTheme.titleMedium),
                 const Spacer(),
                 if (st.buscando)
@@ -225,12 +214,12 @@ class _PantallaSincronizacionState
                       child: CircularProgressIndicator(strokeWidth: 2))
                 else
                   IconButton(
-                    tooltip: 'Buscar de nuevo',
+                    tooltip: context.l.buscarDeNuevo,
                     icon: const Icon(Icons.refresh),
                     onPressed: n.buscar,
                   ),
                 IconButton(
-                  tooltip: 'Añadir por dirección',
+                  tooltip: context.l.anadirPorDireccion,
                   icon: const Icon(Icons.add_link),
                   onPressed: _anadirManual,
                 ),
@@ -241,19 +230,14 @@ class _PantallaSincronizacionState
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   st.buscando
-                      ? 'Buscando otros Controls en la wifi…'
-                      : 'No se ha encontrado ningún Control. Comprueba que '
-                          'los demás tienen esta pantalla con «Conectar» '
-                          'encendido y están en la misma wifi, o añádelos '
-                          'por su dirección.',
+                      ? context.l.buscandoOtrosControls
+                      : context.l.noSeEncuentraControl,
                   style: gris,
                 ),
               ),
             if (mismoNombre)
               Text(
-                  'Hay otro Control que también se llama '
-                  '«${DispositivoSync.nombre}». Cambia el nombre de uno de '
-                  'los dos.',
+                  context.l.dosControlsMismoNombre(DispositivoSync.nombre),
                   style: TextStyle(color: cs.error)),
             for (final c in st.companeros.values)
               ListTile(
@@ -273,16 +257,16 @@ class _PantallaSincronizacionState
                 title: Text(c.nombre),
                 subtitle: Text(
                   !c.claveOk && c.error == null
-                      ? '${c.host} · la clave del evento no coincide'
+                      ? context.l.claveNoCoincide(c.host)
                       : c.error != null
                           ? '${c.host} · ${c.error}'
                           : c.ultimaSync == null
                               ? c.host
                               : '${c.host} · ${hora.format(c.ultimaSync!)} · '
-                                  '${c.resumen}',
+                                  '${c.resumen?.resumen(context.l) ?? ''}',
                 ),
                 trailing: IconButton(
-                  tooltip: 'Quitar de la lista',
+                  tooltip: context.l.quitarDeLaLista,
                   icon: const Icon(Icons.close, size: 18),
                   onPressed: () => n.olvidar(c.host),
                 ),
@@ -290,9 +274,9 @@ class _PantallaSincronizacionState
             const Divider(height: 24),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Sincronizar automáticamente'),
+              title: Text(context.l.sincronizarAutomaticamente),
               subtitle: Text(
-                  'Cada ${intervaloAutoSync.inSeconds} s mientras la app '
+                  '${context.l.cadaNsAppAbierta(intervaloAutoSync.inSeconds)} '
                   'esté abierta'),
               value: st.auto,
               onChanged: n.fijarAuto,
@@ -309,14 +293,15 @@ class _PantallaSincronizacionState
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.sync),
               label: Text(st.sincronizando
-                  ? 'Sincronizando…'
-                  : 'Sincronizar ahora'),
+                  ? context.l.sincronizando
+                  : context.l.sincronizarAhora),
             ),
             if (st.ultimaSync != null)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                    'Última sincronización: ${hora.format(st.ultimaSync!)}',
+                    context.l.ultimaSincronizacion(
+                        hora.format(st.ultimaSync!)),
                     style: gris,
                     textAlign: TextAlign.center),
               ),
@@ -339,6 +324,14 @@ class _PantallaSincronizacionState
     );
   }
 }
+
+/// Texto del error de sincronización: los códigos propios se traducen; el
+/// resto (fallos de red) ya viene listo.
+String _textoError(Textos l, EstadoSync st) => switch (st.errorCodigo) {
+      'sinClave' => l.syncSinClave,
+      'abrirConexion' => l.syncNoSePudoAbrir(st.errorDetalle ?? ''),
+      _ => st.error ?? '',
+    };
 
 /// Icono para las barras de las pantallas de verificación: indica si la
 /// sincronización está encendida y abre su pantalla.
@@ -369,15 +362,15 @@ class BotonSincronizacion extends ConsumerWidget {
       return OutlinedButton.icon(
         icon: icono,
         label: Text(activaAqui
-            ? 'Verificar en equipo · $conectados'
-            : 'Verificar en equipo (wifi)'),
+            ? context.l.verificarEnEquipoN(conectados)
+            : context.l.verificarEnEquipoWifi),
         onPressed: abrir,
       );
     }
     return IconButton(
       tooltip: activaAqui
-          ? 'Verificar en equipo · $conectados conectados'
-          : 'Verificar en equipo (wifi)',
+          ? context.l.verificarEnEquipoNConectados(conectados)
+          : context.l.verificarEnEquipoWifi,
       icon: icono,
       onPressed: abrir,
     );
