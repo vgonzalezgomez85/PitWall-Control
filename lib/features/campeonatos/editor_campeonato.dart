@@ -25,12 +25,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/seeds.dart';
-import '../../services/elegir_imagen.dart';
-import '../../services/logo_club.dart';
 import '../clasificacion/pantalla_editor_tabla_puntos.dart';
 import '../creditos/repositorio_creditos.dart';
 import 'pantalla_coches_campeonato.dart';
 import 'repositorio_coches_campeonato.dart';
+import 'selector_club_logo.dart';
 import 'selector_marcas_permitidas.dart';
 import 'selector_tipo_motor.dart';
 
@@ -490,24 +489,6 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
     if (mounted) Navigator.of(context).pop();
   }
 
-  Future<void> _elegirLogo() async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final xfile = await elegirImagenDeArchivo();
-      if (xfile == null) return;
-      final logo = prepararLogoClub(await xfile.readAsBytes());
-      if (logo == null) {
-        messenger.showSnackBar(const SnackBar(
-            content: Text('No se puede leer esa imagen. Usa un PNG o JPG.')));
-        return;
-      }
-      setState(() => _logoClub = logo);
-    } catch (e) {
-      messenger.showSnackBar(
-          SnackBar(content: Text('No se pudo añadir el logo: $e')));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_cargando) {
@@ -604,62 +585,11 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               descripcion: 'Aparece en la cabecera de las exportaciones '
                   '(PDF de tandas, verificaciones, clasificación y créditos).',
               children: [
-                TextFormField(
-                  controller: _club,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre del club',
-                    hintText: 'Ej: Club Slot Barcelona',
-                    prefixIcon: Icon(Icons.flag_outlined),
-                  ),
-                  textCapitalization: TextCapitalization.words,
+                SelectorClubLogo(
+                  club: _club,
+                  logo: _logoClub,
+                  onLogo: (l) => setState(() => _logoClub = l),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Container(
-                      width: 96,
-                      height: 72,
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        // Blanco, como en la cabecera del PDF.
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                            color: Theme.of(context).colorScheme.outlineVariant),
-                      ),
-                      child: _logoClub == null
-                          ? Icon(Icons.image_outlined,
-                              color: Theme.of(context).colorScheme.outline)
-                          : Image.memory(_logoClub!, fit: BoxFit.contain),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          OutlinedButton.icon(
-                            icon: const Icon(Icons.upload_outlined),
-                            label: Text(_logoClub == null
-                                ? 'Elegir logo'
-                                : 'Cambiar logo'),
-                            onPressed: _elegirLogo,
-                          ),
-                          if (_logoClub != null)
-                            TextButton.icon(
-                              icon: const Icon(Icons.delete_outline),
-                              label: const Text('Quitar'),
-                              onPressed: () =>
-                                  setState(() => _logoClub = null),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text('PNG o JPG. Se reduce a ${ladoMaximoLogoClub}px.',
-                    style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
             _Seccion(

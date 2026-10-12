@@ -15,6 +15,8 @@
 //
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
+import 'dart:typed_data';
+
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -68,6 +70,25 @@ void main() {
     expect(plantilla.copas, isEmpty);
     expect(plantilla.tipoMotor, isNull);
     expect(plantilla.motorSorteoMax, isNull);
+  });
+
+  test('la sesión guarda su club organizador y logo', () async {
+    final logo = Uint8List.fromList([137, 80, 78, 71]);
+    final pruebaId = await repo.crearSesion(DatosSesionLibre(
+        nombre: 'Carrera club',
+        copas: ['GT'],
+        clubOrganizador: 'Club Slot Test',
+        logoClub: logo));
+    var s = (await repo.cargar(pruebaId))!;
+    expect(s.reglamento.clubOrganizador, 'Club Slot Test');
+    expect(s.reglamento.logoClub, logo);
+
+    // Al editar sin club ni logo, se borran.
+    await repo.actualizarSesion(
+        pruebaId, DatosSesionLibre(nombre: 'Carrera club', copas: ['GT']));
+    s = (await repo.cargar(pruebaId))!;
+    expect(s.reglamento.clubOrganizador, isNull);
+    expect(s.reglamento.logoClub, isNull);
   });
 
   test('participantes: reutiliza pilotos por nombre y se pueden quitar',

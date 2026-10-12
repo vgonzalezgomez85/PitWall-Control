@@ -16,12 +16,14 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/proveedores.dart';
+import '../campeonatos/selector_club_logo.dart';
 import '../campeonatos/selector_marcas_permitidas.dart';
 import '../campeonatos/selector_tipo_motor.dart';
 import 'repositorio_verificacion_libre.dart';
@@ -53,6 +55,8 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
   final _sede = TextEditingController();
   final _motorMin = TextEditingController();
   final _motorMax = TextEditingController();
+  final _club = TextEditingController();
+  Uint8List? _logoClub;
   /// 'ORGANIZACION', 'PROPIO' o 'MIXTO'; null = sin elegir (sesión nueva).
   String? _tipoMotor;
   bool _limitarMarcas = false;
@@ -75,7 +79,7 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
   @override
   void dispose() {
     for (final c in [
-      _nombre, _sede, _motorMin, _motorMax,
+      _nombre, _sede, _motorMin, _motorMax, _club,
       ..._anchuraEjeCtrl.values,
     ]) {
       c.dispose();
@@ -105,10 +109,14 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
         motorSorteoMin: c.motorSorteoMin,
         motorSorteoMax: c.motorSorteoMax,
         marcasPermitidasJson: c.marcasPermitidasJson,
+        clubOrganizador: c.clubOrganizador,
+        logoClub: c.logoClub,
       );
     }
     _nombre.text = d.nombre;
     _sede.text = d.sede ?? '';
+    _club.text = d.clubOrganizador ?? '';
+    _logoClub = d.logoClub;
     _fecha = d.fecha;
     _copasSel.addAll(d.copas);
     // Sesión nueva: sin elegir; existente sin tipo guardado = mixto.
@@ -190,6 +198,8 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
       motorSorteoMax: conSorteo ? int.tryParse(_motorMax.text.trim()) : null,
       marcasPermitidasJson:
           marcasPermitidasAJson(_limitarMarcas ? _marcasPermitidas : {}),
+      clubOrganizador: _club.text.trim().isEmpty ? null : _club.text.trim(),
+      logoClub: _logoClub,
     );
     final repo = ref.read(repoVerificacionLibreProvider);
     try {
@@ -278,6 +288,14 @@ class _EditorSesionLibreState extends ConsumerState<EditorSesionLibre> {
                       onPressed: () => setState(() => _fecha = null),
                     ),
               onTap: _elegirFecha,
+            ),
+
+            seccion('Club organizador',
+                'Aparece en la cabecera de los PDF de la sesión.'),
+            SelectorClubLogo(
+              club: _club,
+              logo: _logoClub,
+              onLogo: (l) => setState(() => _logoClub = l),
             ),
 
             seccion('Copas / categorías',

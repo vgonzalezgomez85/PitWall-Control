@@ -14,6 +14,10 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.31.0] — 2026-10-12
+### Añadido
+- **Club organizador y logo en la verificación libre.** El reglamento de cada sesión tiene ahora la sección «Club organizador», igual que el campeonato: el nombre y el logo salen en la cabecera de los PDF de la sesión.
+
 ## [1.30.0] — 2026-10-12
 ### Añadido
 - **Menú para móvil.** En pantallas estrechas (un teléfono en vertical) el menú lateral se sustituye por una **barra inferior** con Inicio, Pruebas, Participantes y Clasificación, más un botón **«Más»** que abre una hoja con el **campeonato activo** (para cambiarlo), Tesorería, Créditos, Verificación libre, Catálogos, Gestionar campeonatos y Ajustes. En tablet y escritorio sigue el menú lateral.

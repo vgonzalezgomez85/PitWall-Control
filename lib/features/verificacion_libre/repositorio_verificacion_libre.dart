@@ -55,6 +55,8 @@ class DatosSesionLibre {
     this.motorSorteoMin,
     this.motorSorteoMax,
     this.marcasPermitidasJson = '[]',
+    this.clubOrganizador,
+    this.logoClub,
   });
 
   final String nombre;
@@ -72,6 +74,10 @@ class DatosSesionLibre {
   /// Limitar fabricante (códigos de marca); "[]" = sin limitación.
   final String marcasPermitidasJson;
 
+  /// Club organizador y su logo (cabecera de los PDF de la sesión).
+  final String? clubOrganizador;
+  final Uint8List? logoClub;
+
   CampeonatosCompanion _reglamento() => CampeonatosCompanion(
         copasJson: Value(json.encode(copas)),
         anchuraEjeJson: Value(anchuraEjeJson),
@@ -79,6 +85,8 @@ class DatosSesionLibre {
         motorSorteoMin: Value(motorSorteoMin),
         motorSorteoMax: Value(motorSorteoMax),
         marcasPermitidasJson: Value(marcasPermitidasJson),
+        clubOrganizador: Value(clubOrganizador),
+        logoClub: Value(logoClub),
       );
 }
 
