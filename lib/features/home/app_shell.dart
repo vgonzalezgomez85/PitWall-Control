@@ -23,46 +23,59 @@ import '../../core/entorno.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/logo_pitwall.dart';
 import '../../data/database/app_database.dart';
+import '../ajustes/pantalla_ajustes.dart';
 import '../ajustes/pantalla_changelog.dart';
 import '../campeonatos/editor_campeonato.dart';
 import '../campeonatos/pantalla_campeonatos.dart';
 import '../catalogos/pantalla_catalogos.dart';
 import '../clasificacion/pantalla_clasificacion.dart';
 import '../creditos/pantalla_creditos.dart';
-import '../equipos/lista_equipos.dart';
-import '../google/pantalla_configuracion_google.dart';
-import '../pilotos/lista_pilotos.dart';
-import '../plantillas/pantalla_plantillas_csv.dart';
+import '../participantes/pantalla_participantes.dart';
 import '../pruebas/lista_pruebas.dart';
 import '../tesoreria/pantalla_tesoreria.dart';
 import '../verificacion_libre/pantalla_verificacion_libre.dart';
-import '../verificaciones/pantalla_rejilla_verificaciones.dart';
 import 'pantalla_resumen.dart';
 
-/// Destino principal del shell (un icono + título en la barra lateral).
+/// Bloque del menú lateral al que pertenece un destino.
+enum _Grupo { campeonato, herramientas, ajustes }
+
+/// Destino del shell (un icono + título en el menú lateral). Todos cambian la
+/// vista sin apilar pantallas, también Herramientas y Ajustes.
 class _Destino {
-  const _Destino(this.icono, this.iconoSel, this.titulo, this.pantalla);
+  const _Destino(
+      this.icono, this.iconoSel, this.titulo, this.pantalla, this.grupo);
   final IconData icono;
   final IconData iconoSel;
   final String titulo;
   final Widget pantalla;
+  final _Grupo grupo;
 }
 
 const _destinos = <_Destino>[
-  _Destino(Icons.home_outlined, Icons.home, 'Inicio', PantallaResumen()),
-  _Destino(Icons.people_alt_outlined, Icons.people_alt, 'Pilotos',
-      PantallaPilotos()),
-  _Destino(Icons.groups_outlined, Icons.groups, 'Equipos', PantallaEquipos()),
-  _Destino(Icons.event_outlined, Icons.event, 'Pruebas', PantallaPruebas()),
-  _Destino(Icons.table_chart_outlined, Icons.table_chart, 'Resum. Verifi.',
-      PantallaRejillaVerificaciones()),
+  _Destino(Icons.home_outlined, Icons.home, 'Inicio', PantallaResumen(),
+      _Grupo.campeonato),
+  _Destino(Icons.event_outlined, Icons.event, 'Pruebas', PantallaPruebas(),
+      _Grupo.campeonato),
+  _Destino(Icons.people_alt_outlined, Icons.people_alt, 'Participantes',
+      PantallaParticipantes(), _Grupo.campeonato),
   _Destino(Icons.leaderboard_outlined, Icons.leaderboard, 'Clasificación',
-      PantallaClasificacion()),
+      PantallaClasificacion(), _Grupo.campeonato),
   _Destino(Icons.payments_outlined, Icons.payments, 'Tesorería',
-      PantallaTesoreria()),
+      PantallaTesoreria(), _Grupo.campeonato),
   _Destino(Icons.savings_outlined, Icons.savings, 'Créditos',
-      PantallaCreditos()),
+      PantallaCreditos(), _Grupo.campeonato),
+  _Destino(Icons.fact_check_outlined, Icons.fact_check, 'Verificación libre',
+      PantallaVerificacionLibre(), _Grupo.herramientas),
+  _Destino(Icons.inventory_2_outlined, Icons.inventory_2, 'Catálogos',
+      PantallaCatalogos(), _Grupo.herramientas),
+  _Destino(Icons.settings_outlined, Icons.settings, 'Ajustes',
+      PantallaAjustes(), _Grupo.ajustes),
 ];
+
+const _titulosGrupo = {
+  _Grupo.campeonato: 'CAMPEONATO',
+  _Grupo.herramientas: 'HERRAMIENTAS',
+};
 
 /// Destinos visibles según las reglas del campeonato activo: oculta Tesorería
 /// y/o Créditos cuando el campeonato no los usa.
@@ -109,19 +122,30 @@ class AppShell extends ConsumerWidget {
   }
 }
 
-class _ShellConContenido extends ConsumerWidget {
+class _ShellConContenido extends ConsumerStatefulWidget {
   const _ShellConContenido({required this.campeonatos});
 
   final List<Campeonato> campeonatos;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ShellConContenido> createState() =>
+      _ShellConContenidoState();
+}
+
+class _ShellConContenidoState extends ConsumerState<_ShellConContenido> {
+  /// Destinos ya abiertos. Los demás no se construyen hasta la primera visita:
+  /// Catálogos o Verificación libre no tienen por qué cargarse al arrancar.
+  final _visitados = <String>{};
+
+  @override
+  Widget build(BuildContext context) {
     final activo = ref.watch(campeonatoActivoProvider);
     final destinos = _destinosVisibles(activo);
     final indice =
         ref.watch(shellIndiceProvider).clamp(0, destinos.length - 1);
     final ancho = MediaQuery.sizeOf(context).width;
     final extendida = ancho > 1100;
+    _visitados.add(destinos[indice].titulo);
 
     return Scaffold(
       body: Row(
@@ -129,14 +153,19 @@ class _ShellConContenido extends ConsumerWidget {
           _BarraLateral(
             indice: indice,
             extendida: extendida,
-            campeonatos: campeonatos,
+            campeonatos: widget.campeonatos,
             destinos: destinos,
           ),
           const VerticalDivider(width: 1, thickness: 1),
           Expanded(
             child: IndexedStack(
               index: indice,
-              children: [for (final d in destinos) d.pantalla],
+              children: [
+                for (final d in destinos)
+                  _visitados.contains(d.titulo)
+                      ? d.pantalla
+                      : const SizedBox.shrink(),
+              ],
             ),
           ),
         ],
@@ -145,6 +174,9 @@ class _ShellConContenido extends ConsumerWidget {
   }
 }
 
+/// Menú lateral en tres bloques: Campeonato, Herramientas y, abajo, Ajustes.
+/// Extendido (ventana ancha) muestra títulos de bloque y nombres; plegado,
+/// solo iconos con su nombre al pasar el ratón.
 class _BarraLateral extends ConsumerWidget {
   const _BarraLateral({
     required this.indice,
@@ -160,107 +192,168 @@ class _BarraLateral extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final color = Theme.of(context).colorScheme;
+    void ir(int i) => ref.read(shellIndiceProvider.notifier).ir(i);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: IntrinsicHeight(
-              child: NavigationRail(
-                extended: extendida,
-                minWidth: 72,
-                minExtendedWidth: 220,
-                selectedIndex: indice,
-                onDestinationSelected: (i) =>
-                    ref.read(shellIndiceProvider.notifier).ir(i),
-                // El rail cuelga de un Row, así que su ancho llega SIN acotar:
-                // hay que fijarlo aquí o el encabezado extendido (Row + Expanded)
-                // no puede hacer layout y logo/selector no llegan a pintarse.
-                // Mismo criterio que el `trailing` de abajo.
-                leading: SizedBox(
-                  width: extendida ? 220 : 72,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 14),
-                      _EncabezadoLogo(extendida: extendida),
-                      const SizedBox(height: 6),
-                      _SelectorCampeonatoRail(
-                        campeonatos: campeonatos,
-                        extendida: extendida,
-                      ),
-                    ],
-                  ),
-                ),
-                trailing: Expanded(
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: SizedBox(
-                      width: extendida ? 220 : 72,
-                      child: Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Divider(indent: 12, endIndent: 12),
-                          _AccionSecundaria(
-                            icono: Icons.fact_check_outlined,
-                            etiqueta: 'Verificación libre',
-                            extendida: extendida,
-                            destino: const PantallaVerificacionLibre(),
-                          ),
-                          _AccionSecundaria(
-                            icono: Icons.emoji_events_outlined,
-                            etiqueta: 'Campeonatos',
-                            extendida: extendida,
-                            destino: const PantallaCampeonatos(),
-                          ),
-                          _AccionSecundaria(
-                            icono: Icons.inventory_2_outlined,
-                            etiqueta: 'Catálogos',
-                            extendida: extendida,
-                            destino: const PantallaCatalogos(),
-                          ),
-                          _AccionSecundaria(
-                            icono: Icons.cloud_outlined,
-                            etiqueta: 'Google Sheets',
-                            extendida: extendida,
-                            destino: const PantallaConfiguracionGoogle(),
-                          ),
-                          _AccionSecundaria(
-                            icono: Icons.file_download_outlined,
-                            etiqueta: 'Plantillas CSV',
-                            extendida: extendida,
-                            destino: const PantallaPlantillasCsv(),
-                          ),
-                          _AccionSecundaria(
-                            icono: Icons.new_releases_outlined,
-                            etiqueta: 'Novedades',
-                            extendida: extendida,
-                            destino: const PantallaChangelog(),
-                          ),
-                          _BotonTema(extendida: extendida),
-                          if (extendida) const _VersionPie(),
-                        ],
-                      ),
-                    ),
-                    ),
-                  ),
-                ),
-                destinations: [
-                  for (final d in destinos)
-                    NavigationRailDestination(
-                      icon: Icon(d.icono),
-                      selectedIcon: Icon(d.iconoSel, color: color.primary),
-                      label: Text(d.titulo),
-                    ),
-                ],
+    Widget item(int i) => _ItemMenu(
+          destino: destinos[i],
+          seleccionado: i == indice,
+          extendida: extendida,
+          onTap: () => ir(i),
+        );
+
+    final principales = <Widget>[];
+    _Grupo? grupoAnterior;
+    for (var i = 0; i < destinos.length; i++) {
+      final g = destinos[i].grupo;
+      if (g == _Grupo.ajustes) continue;
+      if (g != grupoAnterior) {
+        principales.add(_CabeceraGrupo(
+          titulo: _titulosGrupo[g]!,
+          extendida: extendida,
+          primera: grupoAnterior == null,
+        ));
+        grupoAnterior = g;
+      }
+      principales.add(item(i));
+    }
+    final iAjustes = destinos.indexWhere((d) => d.grupo == _Grupo.ajustes);
+
+    return SizedBox(
+      width: extendida ? 232 : 72,
+      child: Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: SafeArea(
+          right: false,
+          child: Column(
+            children: [
+              const SizedBox(height: 14),
+              _EncabezadoLogo(extendida: extendida),
+              const SizedBox(height: 6),
+              _SelectorCampeonatoRail(
+                campeonatos: campeonatos,
+                extendida: extendida,
               ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  children: principales,
+                ),
+              ),
+              const Divider(height: 1, indent: 12, endIndent: 12),
+              const SizedBox(height: 6),
+              if (iAjustes >= 0) item(iAjustes),
+              if (extendida) const _VersionPie(),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Título de un bloque del menú (o un separador si está plegado).
+class _CabeceraGrupo extends StatelessWidget {
+  const _CabeceraGrupo({
+    required this.titulo,
+    required this.extendida,
+    required this.primera,
+  });
+
+  final String titulo;
+  final bool extendida;
+  final bool primera;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!extendida) {
+      return primera
+          ? const SizedBox(height: 8)
+          : const Divider(height: 24, indent: 16, endIndent: 16);
+    }
+    return Padding(
+      padding: EdgeInsets.fromLTRB(24, primera ? 12 : 20, 16, 6),
+      child: Text(titulo,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.outline,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+              )),
+    );
+  }
+}
+
+class _ItemMenu extends StatelessWidget {
+  const _ItemMenu({
+    required this.destino,
+    required this.seleccionado,
+    required this.extendida,
+    required this.onTap,
+  });
+
+  final _Destino destino;
+  final bool seleccionado;
+  final bool extendida;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final icono = Icon(
+      seleccionado ? destino.iconoSel : destino.icono,
+      color: seleccionado ? cs.onSecondaryContainer : cs.onSurfaceVariant,
+    );
+    final fondo = seleccionado ? cs.secondaryContainer : Colors.transparent;
+
+    if (!extendida) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        child: Tooltip(
+          message: destino.titulo,
+          child: Material(
+            color: fondo,
+            borderRadius: BorderRadius.circular(16),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: onTap,
+              child: SizedBox(height: 40, child: Center(child: icono)),
             ),
           ),
-        );
-      },
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
+      child: Material(
+        color: fondo,
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            child: Row(
+              children: [
+                icono,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    destino.titulo,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: seleccionado
+                              ? cs.onSecondaryContainer
+                              : cs.onSurfaceVariant,
+                          fontWeight:
+                              seleccionado ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -307,6 +400,9 @@ class _EncabezadoLogo extends StatelessWidget {
   }
 }
 
+/// Valor del selector que abre «Gestionar campeonatos» (los id son > 0).
+const _gestionar = -1;
+
 /// Selector compacto del campeonato activo, en la cabecera de la barra.
 class _SelectorCampeonatoRail extends ConsumerWidget {
   const _SelectorCampeonatoRail({
@@ -322,8 +418,17 @@ class _SelectorCampeonatoRail extends ConsumerWidget {
     final color = Theme.of(context).colorScheme;
     final activo = ref.watch(campeonatoActivoProvider) ?? campeonatos.first;
 
-    void elegir(Campeonato c) =>
-        ref.read(campeonatoActivoProvider.notifier).seleccionar(c);
+    // `_gestionar` no es un campeonato: abre la lista para crear o editar.
+    void elegir(int? id) {
+      if (id == _gestionar) {
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const PantallaCampeonatos()));
+        return;
+      }
+      ref
+          .read(campeonatoActivoProvider.notifier)
+          .seleccionar(campeonatos.firstWhere((c) => c.id == id));
+    }
 
     if (!extendida) {
       // Solo el trofeo; al pulsar, menú para cambiar de campeonato.
@@ -332,11 +437,13 @@ class _SelectorCampeonatoRail extends ConsumerWidget {
         child: PopupMenuButton<int>(
           tooltip: 'Campeonato: ${activo.nombre}',
           icon: Icon(Icons.emoji_events, color: color.primary),
-          onSelected: (id) =>
-              elegir(campeonatos.firstWhere((c) => c.id == id)),
+          onSelected: elegir,
           itemBuilder: (_) => [
             for (final c in campeonatos)
               PopupMenuItem(value: c.id, child: Text(c.nombre)),
+            const PopupMenuDivider(),
+            const PopupMenuItem(
+                value: _gestionar, child: Text('Gestionar campeonatos…')),
           ],
         ),
       );
@@ -370,9 +477,16 @@ class _SelectorCampeonatoRail extends ConsumerWidget {
               items: [
                 for (final c in campeonatos)
                   DropdownMenuItem(value: c.id, child: Text(c.nombre)),
+                DropdownMenuItem(
+                  value: _gestionar,
+                  child: Text('Gestionar campeonatos…',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: color.onPrimaryContainer.withValues(alpha: 0.8),
+                      )),
+                ),
               ],
-              onChanged: (id) =>
-                  elegir(campeonatos.firstWhere((c) => c.id == id)),
+              onChanged: elegir,
             ),
           ),
         ],
@@ -381,31 +495,20 @@ class _SelectorCampeonatoRail extends ConsumerWidget {
   }
 }
 
+/// Acceso de la pantalla sin campeonatos: abre [destino] encima.
 class _AccionSecundaria extends StatelessWidget {
   const _AccionSecundaria({
     required this.icono,
     required this.etiqueta,
-    required this.extendida,
     required this.destino,
   });
 
   final IconData icono;
   final String etiqueta;
-  final bool extendida;
   final Widget destino;
 
   @override
   Widget build(BuildContext context) {
-    void abrir() => Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => destino));
-
-    if (!extendida) {
-      return IconButton(
-        tooltip: etiqueta,
-        icon: Icon(icono),
-        onPressed: abrir,
-      );
-    }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: ListTile(
@@ -413,39 +516,8 @@ class _AccionSecundaria extends StatelessWidget {
         leading: Icon(icono),
         title: Text(etiqueta),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        onTap: abrir,
-      ),
-    );
-  }
-}
-
-/// Conmutador de modo claro/oscuro.
-class _BotonTema extends ConsumerWidget {
-  const _BotonTema({required this.extendida});
-  final bool extendida;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final oscuro = ref.watch(temaOscuroProvider);
-    final icono = oscuro ? Icons.light_mode_outlined : Icons.dark_mode_outlined;
-    final etiqueta = oscuro ? 'Modo claro' : 'Modo oscuro';
-    void alternar() => ref.read(temaOscuroProvider.notifier).alternar();
-
-    if (!extendida) {
-      return IconButton(
-        tooltip: etiqueta,
-        icon: Icon(icono),
-        onPressed: alternar,
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: ListTile(
-        dense: true,
-        leading: Icon(icono),
-        title: Text(etiqueta),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        onTap: alternar,
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => destino)),
       ),
     );
   }
@@ -524,44 +596,25 @@ class _Vacio extends StatelessWidget {
                     builder: (_) => const PantallaVerificacionLibre())),
               ),
               const SizedBox(height: 28),
-              // Sin campeonato también hay que poder conectar Google, preparar
-              // el catálogo, bajar plantillas, ver novedades y cambiar el modo.
+              // Sin campeonato también hay que poder preparar el catálogo y,
+              // desde Ajustes, conectar Google o restaurar una copia.
               const Wrap(
                 alignment: WrapAlignment.center,
                 children: [
                   _OpcionVacio(
                     child: _AccionSecundaria(
-                      icono: Icons.cloud_outlined,
-                      etiqueta: 'Google Sheets',
-                      extendida: true,
-                      destino: PantallaConfiguracionGoogle(),
-                    ),
-                  ),
-                  _OpcionVacio(
-                    child: _AccionSecundaria(
                       icono: Icons.inventory_2_outlined,
                       etiqueta: 'Catálogos',
-                      extendida: true,
                       destino: PantallaCatalogos(),
                     ),
                   ),
                   _OpcionVacio(
                     child: _AccionSecundaria(
-                      icono: Icons.file_download_outlined,
-                      etiqueta: 'Plantillas CSV',
-                      extendida: true,
-                      destino: PantallaPlantillasCsv(),
+                      icono: Icons.settings_outlined,
+                      etiqueta: 'Ajustes y copias',
+                      destino: PantallaAjustes(),
                     ),
                   ),
-                  _OpcionVacio(
-                    child: _AccionSecundaria(
-                      icono: Icons.new_releases_outlined,
-                      etiqueta: 'Novedades',
-                      extendida: true,
-                      destino: PantallaChangelog(),
-                    ),
-                  ),
-                  _OpcionVacio(child: _BotonTema(extendida: true)),
                 ],
               ),
             ],

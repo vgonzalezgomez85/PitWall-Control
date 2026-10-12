@@ -28,7 +28,11 @@ import 'pantalla_importar_puntuacion.dart';
 import 'repositorio_pilotos.dart';
 
 class PantallaPilotos extends ConsumerStatefulWidget {
-  const PantallaPilotos({super.key});
+  const PantallaPilotos({super.key, this.pestanas});
+
+  /// Pestañas de «Participantes»: si llegan, van en la barra superior encima
+  /// del buscador y el título pasa a ser «Participantes».
+  final PreferredSizeWidget? pestanas;
 
   @override
   ConsumerState<PantallaPilotos> createState() => _PantallaPilotosState();
@@ -46,7 +50,7 @@ class _PantallaPilotosState extends ConsumerState<PantallaPilotos> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pilotos'),
+        title: Text(widget.pestanas == null ? 'Pilotos' : 'Participantes'),
         actions: [
           vinculoAsync.maybeWhen(
             data: (v) => v == null
@@ -106,17 +110,21 @@ class _PantallaPilotosState extends ConsumerState<PantallaPilotos> {
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(72),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Buscar por nombre…',
+          preferredSize: Size.fromHeight(
+              72 + (widget.pestanas?.preferredSize.height ?? 0)),
+          child: Column(children: [
+            ?widget.pestanas,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: TextField(
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  hintText: 'Buscar por nombre…',
+                ),
+                onChanged: (v) => setState(() => _busqueda = v.trim().toLowerCase()),
               ),
-              onChanged: (v) => setState(() => _busqueda = v.trim().toLowerCase()),
             ),
-          ),
+          ]),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(

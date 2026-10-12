@@ -27,7 +27,11 @@ import 'pantalla_importar_equipos.dart';
 import 'repositorio_equipos.dart';
 
 class PantallaEquipos extends ConsumerStatefulWidget {
-  const PantallaEquipos({super.key});
+  const PantallaEquipos({super.key, this.pestanas});
+
+  /// Pestañas de «Participantes»: si llegan, van en la barra superior encima
+  /// del buscador y el título pasa a ser «Participantes».
+  final PreferredSizeWidget? pestanas;
 
   @override
   ConsumerState<PantallaEquipos> createState() => _PantallaEquiposState();
@@ -45,7 +49,11 @@ class _PantallaEquiposState extends ConsumerState<PantallaEquipos> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(esIndividual ? 'Inscripciones' : 'Equipos'),
+        title: Text(widget.pestanas != null
+            ? 'Participantes'
+            : esIndividual
+                ? 'Inscripciones'
+                : 'Equipos'),
         actions: [
           Consumer(builder: (context, ref, _) {
             final vinculoAsync = ref.watch(vinculoEquiposProvider);
@@ -110,18 +118,22 @@ class _PantallaEquiposState extends ConsumerState<PantallaEquipos> {
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(72),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Buscar equipo o piloto…',
+          preferredSize: Size.fromHeight(
+              72 + (widget.pestanas?.preferredSize.height ?? 0)),
+          child: Column(children: [
+            ?widget.pestanas,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: TextField(
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  hintText: 'Buscar equipo o piloto…',
+                ),
+                onChanged: (v) =>
+                    setState(() => _busqueda = v.trim().toLowerCase()),
               ),
-              onChanged: (v) =>
-                  setState(() => _busqueda = v.trim().toLowerCase()),
             ),
-          ),
+          ]),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(

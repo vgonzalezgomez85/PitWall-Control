@@ -203,11 +203,8 @@ class PantallaResumen extends ConsumerWidget {
               // Cada acceso resuelve su índice dentro de la lista de destinos
               // visible (oculta Tesorería/Créditos si el campeonato no los usa).
               for (final a in const [
-                (Icons.people_alt_outlined, 'Pilotos', 'Pilotos'),
-                (Icons.groups_outlined, 'Equipos', 'Equipos'),
-                (Icons.event_outlined, 'Pruebas y mangas', 'Pruebas'),
-                (Icons.table_chart_outlined, 'Resum. Verifi.',
-                    'Resum. Verifi.'),
+                (Icons.event_outlined, 'Pruebas', 'Pruebas'),
+                (Icons.people_alt_outlined, 'Participantes', 'Participantes'),
                 (Icons.leaderboard_outlined, 'Clasificación', 'Clasificación'),
                 (Icons.payments_outlined, 'Tesorería', 'Tesorería'),
                 (Icons.savings_outlined, 'Créditos', 'Créditos'),

@@ -14,6 +14,15 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.25.0] — 2026-10-12
+### Mejorado
+- **Menú lateral más sencillo, en tres bloques.** Arriba, **Campeonato** (Inicio · Pruebas · Participantes · Clasificación · Tesorería · Créditos); debajo, **Herramientas** (Verificación libre · Catálogos); y al pie, **Ajustes**. Todas las entradas cambian la vista sin abrir pantallas encima, así que el menú no desaparece al entrar en Catálogos o Verificación libre.
+- **Pilotos y Equipos ahora están juntos en «Participantes»**, con una pestaña para cada uno (en formato individual, «Pilotos» e «Inscripciones»). Cada pestaña mantiene su buscador, su importación y su botón de alta.
+- **Nueva pantalla de Ajustes** que reúne lo que antes estaba repartido: gestionar campeonatos, **copias de seguridad** (antes escondidas dentro de «Google Sheets»), conexión con Google, plantillas CSV, modo oscuro y novedades con la versión.
+- **«Gestionar campeonatos…» en el selector de campeonato activo**, para crear o editar uno sin buscarlo en otro sitio.
+- **El resumen de verificaciones sale del menú principal.** Se consulta dentro de cada prueba, que es donde se usa.
+- La pantalla sin campeonatos ofrece Catálogos y «Ajustes y copias» (desde ahí se conecta Google o se restaura una copia).
+
 ## [1.24.1] — 2026-10-08
 
 ### Corregido
