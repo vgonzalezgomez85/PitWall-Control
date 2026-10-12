@@ -20,6 +20,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/tema.dart';
 import '../../services/changelog.dart';
+import '../../core/idioma.dart';
 
 /// Historial de versiones ("Novedades"), igual que en PitWall Manager:
 /// lee CHANGELOG.md y lo muestra agrupado por versión.
@@ -38,7 +39,7 @@ class _PantallaChangelogState extends State<PantallaChangelog> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Novedades'),
+        title: Text(context.l.novedades),
         actions: [
           FutureBuilder<PackageInfo>(
             future: _info,
@@ -66,7 +67,7 @@ class _PantallaChangelogState extends State<PantallaChangelog> {
           }
           final versiones = snap.data!;
           if (versiones.isEmpty) {
-            return const Center(child: Text('Aún no hay historial.'));
+            return Center(child: Text(context.l.aunNoHayHistorial));
           }
           return ListView.builder(
             padding: const EdgeInsets.all(20),

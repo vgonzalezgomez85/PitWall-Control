@@ -27,11 +27,12 @@ const extensionesImagen = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'];
 /// escritorio, el selector de archivos del sistema: `image_picker` no tiene
 /// implementación registrada en macOS y la llamada se queda esperando sin
 /// abrir nada.
-Future<XFile?> elegirImagenDeArchivo() async {
+Future<XFile?> elegirImagenDeArchivo({String? etiqueta}) async {
   if (Platform.isAndroid || Platform.isIOS) {
     return ImagePicker().pickImage(source: ImageSource.gallery);
   }
-  return openFile(acceptedTypeGroups: const [
-    XTypeGroup(label: 'Imágenes', extensions: extensionesImagen),
+  return openFile(acceptedTypeGroups: [
+    XTypeGroup(
+        label: etiqueta ?? 'Imágenes', extensions: extensionesImagen),
   ]);
 }

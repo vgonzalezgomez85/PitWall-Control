@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import 'editor_campeonato.dart';
 
@@ -31,18 +32,18 @@ class PantallaCampeonatos extends ConsumerWidget {
     final activo = ref.watch(campeonatoActivoProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Campeonatos')),
+      appBar: AppBar(title: Text(context.l.campeonatos)),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab_campeonatos',
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const EditorCampeonato()),
         ),
         icon: const Icon(Icons.add),
-        label: const Text('Nuevo campeonato'),
+        label: Text(context.l.nuevoCampeonato),
       ),
       body: listaAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
         data: (lista) {
           if (lista.isEmpty) {
             return Center(
@@ -54,7 +55,7 @@ class PantallaCampeonatos extends ConsumerWidget {
                     Icon(Icons.emoji_events_outlined,
                         size: 96, color: cs.outline),
                     const SizedBox(height: 16),
-                    Text('Aún no hay campeonatos',
+                    Text(context.l.vacioTitulo,
                         style: Theme.of(context).textTheme.titleMedium),
                   ],
                 ),
@@ -83,7 +84,8 @@ class PantallaCampeonatos extends ConsumerWidget {
                         color: esActivo ? cs.onPrimaryContainer : null,
                       )),
                   subtitle: Text(
-                    '${c.formato}  ·  Año ${c.anio}  ·  Descartes: ${c.numDescartes}',
+                    '${c.formato}  ·  ${context.l.anioTexto(c.anio)}  ·  '
+                    '${context.l.descartesTexto(c.numDescartes)}',
                     style: TextStyle(
                       color: esActivo
                           ? cs.onPrimaryContainer.withValues(alpha: 0.8)
@@ -98,7 +100,7 @@ class PantallaCampeonatos extends ConsumerWidget {
                           onPressed: () => ref
                               .read(campeonatoActivoProvider.notifier)
                               .seleccionar(c),
-                          child: const Text('Activar'),
+                          child: Text(context.l.activar),
                         ),
                       IconButton(
                         icon: const Icon(Icons.edit_outlined),

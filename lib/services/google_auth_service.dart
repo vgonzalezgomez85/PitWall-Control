@@ -16,12 +16,14 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../core/idioma.dart';
 import 'almacen_local.dart';
 
 /// Scopes:
@@ -38,6 +40,17 @@ const List<String> _scopesGoogle = [
 class GoogleAuthService {
   GoogleAuthService(this._storage);
   final AlmacenLocal _storage;
+
+  /// Textos del idioma elegido en Ajustes (o el del sistema en «Automático»).
+  /// Este servicio no tiene contexto: los errores se lanzan desde aquí.
+  Textos get textos {
+    final c = _storage.readSync(key: 'idioma_app');
+    final locale = c == 'auto'
+        ? resolverIdioma(
+            PlatformDispatcher.instance.locale, Textos.supportedLocales)
+        : Locale((c == null || c.isEmpty) ? 'es' : c);
+    return lookupTextos(locale);
+  }
 
   // Públicas: las usa la copia de configuración (ConfigBackup). La copia
   // incluye estas dos credenciales del proyecto, nunca la sesión.
@@ -99,10 +112,7 @@ class GoogleAuthService {
     final clientId = await obtenerClientId();
     final clientSecret = await obtenerClientSecret();
     if (clientId == null || clientSecret == null) {
-      throw GoogleAuthException(
-        'Faltan las credenciales del proyecto Google Cloud. '
-        'Ve a Configuración → Google y pega el Client ID y el Client Secret.',
-      );
+      throw GoogleAuthException(textos.authFaltanCredenciales);
     }
 
     final id = ClientId(clientId, clientSecret);
@@ -115,8 +125,7 @@ class GoogleAuthService {
         final uri = Uri.parse(url);
         if (!await launchUrl(uri,
             mode: LaunchMode.externalApplication)) {
-          throw GoogleAuthException(
-              'No se pudo abrir el navegador para autorizar.');
+          throw GoogleAuthException(textos.authNoSePudoAbrirNavegador);
         }
       },
     );
@@ -134,12 +143,12 @@ class GoogleAuthService {
     final clientId = await obtenerClientId();
     final clientSecret = await obtenerClientSecret();
     if (clientId == null || clientSecret == null) {
-      throw GoogleAuthException('Configura primero las credenciales de Google Cloud.');
+      throw GoogleAuthException(textos.authConfiguraCredenciales);
     }
 
     var creds = await _cargarCredenciales();
     if (creds == null) {
-      throw GoogleAuthException('No estás conectado con Google.');
+      throw GoogleAuthException(textos.authNoConectado);
     }
     final id = ClientId(clientId, clientSecret);
 
@@ -150,9 +159,7 @@ class GoogleAuthService {
     if (caducado) {
       if (creds.refreshToken == null) {
         await desconectar();
-        throw GoogleAuthException(
-            'La sesión de Google ha caducado. Vuelve a conectar tu cuenta '
-            'en Google Sheets (menú lateral).');
+        throw GoogleAuthException(textos.authSesionCaducada);
       }
       try {
         creds = await refreshCredentials(id, creds, _httpClient());
@@ -160,10 +167,7 @@ class GoogleAuthService {
       } catch (e) {
         if (e.toString().contains('invalid_grant')) {
           await desconectar();
-          throw GoogleAuthException(
-              'La conexión con Google ha caducado o fue revocada. '
-              'Ve a Google Sheets (menú lateral) y pulsa "Conectar con '
-              'Google" para autorizar de nuevo.');
+          throw GoogleAuthException(textos.authConexionRevocada);
         }
         rethrow;
       }

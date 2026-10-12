@@ -36,8 +36,9 @@ const idiomasApp = <(String codigo, String nombre)>[
 /// Idioma elegido en Ajustes; null = «Automático», el del sistema (si la
 /// app lo tiene; si no, español). Se guarda como el modo oscuro.
 ///
-/// Sin elección guardada se usa español: mientras la traducción esté a
-/// medias, seguir al sistema mezclaría pantallas traducidas y en español.
+/// Sin elección guardada se sigue el idioma del sistema: la traducción ya
+/// está completa (a falta de los PDF), así que es lo natural para quien
+/// tiene el Mac o el móvil en otro idioma.
 class IdiomaNotifier extends Notifier<Locale?> {
   static const _clave = 'idioma_app';
   static const _automatico = 'auto';
@@ -45,8 +46,8 @@ class IdiomaNotifier extends Notifier<Locale?> {
   @override
   Locale? build() {
     final c = ref.read(almacenSyncProvider).readSync(key: _clave);
-    if (c == _automatico) return null;
-    return Locale((c == null || c.isEmpty) ? 'es' : c);
+    if (c == null || c == _automatico || c.isEmpty) return null;
+    return Locale(c);
   }
 
   Future<void> elegir(String? codigo) async {

@@ -2619,5 +2619,950 @@
         "type": "int"
       }
     }
+  },
+  "importarPilotosFinalizado": "Importar pilotos de un campeonato finalizado",
+  "importarPilotosFinalizadoAyuda": "Trae sus pilotos con el saldo de cierre como créditos iniciales.",
+  "noImportar": "No importar",
+  "tesoreriaNoCuadra": "Tesorería: Coordinadora + Club deben sumar el Pagat ({suma} ≠ {pagat}).",
+  "@tesoreriaNoCuadra": {
+    "placeholders": {
+      "suma": {
+        "type": "String"
+      },
+      "pagat": {
+        "type": "String"
+      }
+    }
+  },
+  "bonifCierrePregunta": "Has marcado el campeonato como finalizado.\n\nSe regularizará el saldo de cada piloto que haya competido: saldo = mín(saldo actual + bonificación según categoría y nº de carreras, {tope}). Cada ajuste queda registrado como movimiento indicando la bonificación aplicada.\n\nImportante: la bonificación usa la categoría de cierre (revísala antes en Créditos → Revisión de categorías si hay promociones o descensos).\n\n¿Aplicarla ahora?",
+  "@bonifCierrePregunta": {
+    "placeholders": {
+      "tope": {
+        "type": "String"
+      }
+    }
+  },
+  "ahoraNo": "Ahora no",
+  "eliminarCampeonato": "Eliminar campeonato",
+  "eliminarCampeonatoTexto": "¿Eliminar \"{nombre}\"?\n\nSe borrarán también sus pruebas, tandas, inscripciones, resultados, verificaciones y pagos. No se puede deshacer.",
+  "@eliminarCampeonatoTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "nuevoCampeonato": "Nuevo campeonato",
+  "editarCampeonato": "Editar campeonato",
+  "obligatoriosAviso": "Obligatorio (*): nombre, al menos una copa y el tipo de motor. Lo demás se puede completar después.",
+  "datosBasicos": "Datos básicos",
+  "nombreCampeonatoObligatorio": "Nombre del campeonato *",
+  "nombreCampeonatoEjemplo": "Ej: Liga 2026, Individual LMP-HYP-GT3 Otoño",
+  "formato": "Formato",
+  "formatoAyuda": "Parejas = 2 pilotos por equipo. Individual = 1 piloto",
+  "formatoParejas": "Parejas",
+  "formatoIndividual": "Individual",
+  "anio": "Año",
+  "anioInvalido": "Año inválido",
+  "activarCampeonatoAlCrear": "Activar este campeonato al crearlo",
+  "campeonatoVisible": "Campeonato visible",
+  "campeonatoVisibleAyuda": "Solo los campeonatos visibles aparecen en el selector",
+  "clubOrgAyudaExportaciones": "Aparece en la cabecera de las exportaciones (PDF de tandas, verificaciones, clasificación y créditos).",
+  "categoriasCopasObligatorio": "Categorías / copas *",
+  "seleccionaCopasTexto": "Selecciona las que se usan en este campeonato. Pueden ser una sola (p.ej. \"Grupo C\") o varias (p.ej. \"LMP + HYP + GT3\").",
+  "anadirNuevaCategoria": "Añadir nueva categoría",
+  "anadirNuevaCategoriaAyuda": "Si no la encuentras arriba",
+  "motorObligatorio": "Motor *",
+  "rangoMotorCampeonatoTexto": "Rango de números de motor que la organización sortea entre los equipos en cada prueba. Déjalo vacío si no usáis sorteo.",
+  "creditosYTesoreria": "Créditos y tesorería",
+  "creditosTesoreriaAyuda": "Actívalos solo si el campeonato los usa; si no, sus pantallas se ocultan del menú.",
+  "usaCreditos": "Usa sistema de créditos (handicap)",
+  "usaCreditosAyuda": "Sistema de handicap por créditos. Apágalo si el campeonato no lo usa.",
+  "topeRegularizacion": "Tope regularización créditos",
+  "topeRegularizacionAyuda": "Máximo de créditos al regularizar al cierre de temporada",
+  "numeroPositivo": "Número positivo",
+  "gestionaTesoreria": "Gestiona tesorería (cuotas/pagos)",
+  "gestionaTesoreriaAyuda": "Apágalo si este campeonato no controla el dinero.",
+  "pagatTexto": "PAGAT es la cuota total. APORTACIÓN COORDINADORA + APORTACIÓN CLUB deben sumar el PAGAT (es el desglose de a dónde va el dinero).",
+  "pagatObligatorio": "Pagat (€) *",
+  "coordinadoraEurParentesis": "Coordinadora (€)",
+  "clubEurParentesis": "Club (€)",
+  "indicaLaCuota": "Indica la cuota",
+  "numeroNoValido": "Número no válido",
+  "masOpcionesPuntuacion": "Más opciones: puntuación, verificación y PDF",
+  "puntuacion": "Puntuación",
+  "numeroDescartes": "Número de descartes",
+  "numeroDescartesAyuda": "Cuántas peores pruebas se descartan al piloto",
+  "entreCeroYCinco": "Entre 0 y 5",
+  "tablaDePuntosAyuda": "Puntos por posición en cada prueba",
+  "verificacionAyuda": "Anchura de eje, coches y fabricantes que se comprueban al verificar.",
+  "anchuraEjeCategoriasAyuda": "Anchura máxima de eje (mm) por categoría. Deja vacío si en esa copa no se comprueba.",
+  "pesoMinCreditos": "Peso mínimo y créditos en este campeonato",
+  "pesoMinCampeonato": "Peso mínimo en este campeonato",
+  "pesoMinCampeonatoAyuda": "Fija los valores de los coches para que los cambios del catálogo no afecten a este campeonato.",
+  "marcaPdf": "Marca en los PDF (opcional)",
+  "marcaPdfTexto": "Título de cabecera y lema del pie en las exportaciones (PDF) de ESTE campeonato. Si lo dejas vacío, se usa un valor por defecto.",
+  "tituloCabecera": "Título de cabecera",
+  "tituloCabeceraEjemplo": "Ej: PITWALL o el nombre de tu club",
+  "lemaPie": "Lema del pie",
+  "lemaPieEjemplo": "Ej: tu club · localidad",
+  "campeonatoFinalizadoTitulo": "Campeonato finalizado",
+  "campeonatoFinalizadoAyuda": "Temporada cerrada: la clasificación ordena por netos, se habilita la bonificación de cierre y sus verificaciones quedan bloqueadas (solo lectura).",
+  "campeonatos": "Campeonatos",
+  "activar": "Activar",
+  "anioTexto": "Año {anio}",
+  "@anioTexto": {
+    "placeholders": {
+      "anio": {
+        "type": "int"
+      }
+    }
+  },
+  "descartesTexto": "Descartes: {n}",
+  "@descartesTexto": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cochesDelCampeonato": "Coches del campeonato",
+  "fijarValoresCatalogo": "Fijar los valores actuales del catálogo",
+  "volverTodosAlCatalogo": "Volver todos al catálogo",
+  "volverAlCatalogo": "Volver al catálogo",
+  "volverAlCatalogoTexto": "Se borran los valores fijados en este campeonato y todos los coches vuelven a usar el peso mínimo y los créditos del catálogo.\n\nLas verificaciones ya validadas no cambian: guardan el reglamento con el que se verificaron.",
+  "valorNoValidoEn": "Valor no válido en {coche}.",
+  "@valorNoValidoEn": {
+    "placeholders": {
+      "coche": {
+        "type": "String"
+      }
+    }
+  },
+  "buscarCoche": "Buscar coche",
+  "pesoMinG": "Peso mín. (g)",
+  "fijadosCoches": "Fijados los valores del catálogo en {n, plural, =1{1 coche} other{{n} coches}}.",
+  "@fijadosCoches": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "aunNoHayHistorial": "Aún no hay historial.",
+  "cochesYaFijados": "Todos los coches ya tenían sus valores fijados.",
+  "yCreditos": " y créditos",
+  "pesoMinCochesTexto": "Peso mínimo{creditos} de cada coche en {campeonato}. Vacío = se usa el valor del catálogo. Lo que fijes aquí no cambia aunque después se modifique el catálogo (p. ej. para la temporada siguiente).",
+  "@pesoMinCochesTexto": {
+    "placeholders": {
+      "creditos": {
+        "type": "String"
+      },
+      "campeonato": {
+        "type": "String"
+      }
+    }
+  },
+  "verifsValidadasNoCambian": "Las verificaciones validadas no cambian: guardan el reglamento con el que se verificaron.",
+  "noHayCochesConCopas": "No hay coches del catálogo con las copas de este campeonato.",
+  "indicaDireccionPitwall": "Indica la dirección de PitWall.",
+  "errorAlPedirCarreras": "Error {codigo} al pedir las carreras.",
+  "@errorAlPedirCarreras": {
+    "placeholders": {
+      "codigo": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAlPedirResultados": "Error {codigo} al pedir los resultados.",
+  "@errorAlPedirResultados": {
+    "placeholders": {
+      "codigo": {
+        "type": "String"
+      }
+    }
+  },
+  "respuestaNoReconocida": "Respuesta no reconocida ({schema}).",
+  "@respuestaNoReconocida": {
+    "placeholders": {
+      "schema": {
+        "type": "String"
+      }
+    }
+  },
+  "pinIncorrecto": "PIN incorrecto o dispositivo no autorizado.",
+  "errorCodigoHttp": "Error {codigo}.",
+  "@errorCodigoHttp": {
+    "placeholders": {
+      "codigo": {
+        "type": "String"
+      }
+    }
+  },
+  "noSePudoConectarPitwall": "No se pudo conectar con PitWall: {detalle}",
+  "@noSePudoConectarPitwall": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "verificacionesEnviadas": "{n} verificación(es) enviada(s) a {nombre}.",
+  "@verificacionesEnviadas": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "idiomaDelPdf": "Idioma del PDF",
+  "imagenes": "Imágenes",
+  "difValor": "{titulo}: {antes}{unidad} (ahora {ahora}{unidad})",
+  "@difValor": {
+    "placeholders": {
+      "titulo": {
+        "type": "String"
+      },
+      "antes": {
+        "type": "String"
+      },
+      "unidad": {
+        "type": "String"
+      },
+      "ahora": {
+        "type": "String"
+      }
+    }
+  },
+  "difAnadidas": "añadidas: {lista}",
+  "@difAnadidas": {
+    "placeholders": {
+      "lista": {
+        "type": "String"
+      }
+    }
+  },
+  "difQuitadas": "quitadas: {lista}",
+  "@difQuitadas": {
+    "placeholders": {
+      "lista": {
+        "type": "String"
+      }
+    }
+  },
+  "difNombreCoche": "Nombre del coche: {antes} (ahora {ahora})",
+  "@difNombreCoche": {
+    "placeholders": {
+      "antes": {
+        "type": "String"
+      },
+      "ahora": {
+        "type": "String"
+      }
+    }
+  },
+  "tituloPesoMinimo": "Peso mínimo",
+  "tituloCreditosCoche": "Créditos del coche",
+  "tituloRpmMax": "RPM máx. del motor",
+  "tituloImanMax": "Imán máx. del motor",
+  "tituloEjeDelMax": "Eje delantero máx.",
+  "tituloEjeTraMax": "Eje trasero máx.",
+  "tituloFabricantesPermitidos": "Fabricantes permitidos",
+  "tituloMarcasCatalogo": "Marcas del catálogo",
+  "tituloLlantasDel": "Llantas delanteras",
+  "tituloLlantasTra": "Llantas traseras",
+  "tituloBancadas": "Bancadas",
+  "tituloNeumaticos": "Neumáticos",
+  "coches": "Coches",
+  "marcas": "Marcas",
+  "llantas": "Llantas",
+  "engranajes": "Engranajes",
+  "motores": "Motores",
+  "bancadas": "Bancadas",
+  "neumaticos": "Neumáticos",
+  "copas": "Copas",
+  "clubs": "Clubs",
+  "llanta": "Llanta",
+  "engranaje": "Engranaje",
+  "sinCopaCategoria": "Sin copa/categoría (no se puede usar)",
+  "copasEtiqueta": "Copas: {copas}",
+  "@copasEtiqueta": {
+    "placeholders": {
+      "copas": {
+        "type": "String"
+      }
+    }
+  },
+  "pesoYCreditos": "Peso mín {peso}g  ·  Créd {creditos}",
+  "@pesoYCreditos": {
+    "placeholders": {
+      "peso": {
+        "type": "String"
+      },
+      "creditos": {
+        "type": "String"
+      }
+    }
+  },
+  "todasLasCopas": "Todas las copas",
+  "todas": "Todas",
+  "sinCoincidencias": "Sin coincidencias",
+  "sinCoches": "Sin coches",
+  "sinMarcas": "Sin marcas",
+  "sinLlantas": "Sin llantas",
+  "sinEngranajes": "Sin engranajes",
+  "sinMotores": "Sin motores",
+  "sinBancadas": "Sin bancadas",
+  "sinChasis": "Sin chasis",
+  "sinNeumaticos": "Sin neumáticos",
+  "sinCopas": "Sin copas",
+  "sinClubs": "Sin clubs",
+  "buscarCochePuntos": "Buscar coche…",
+  "sinMedidas": "Sin medidas",
+  "sinReferencia": "Sin referencia",
+  "calculandoCambiosSubir": "Calculando cambios para subir…",
+  "todoCatalogoExcel": "Todo el catálogo en Excel",
+  "exportarTodoExcel": "Exportar todo a Excel",
+  "unaPestanaPorCatalogo": "Una pestaña por catálogo",
+  "importarExcelEditado": "Importar Excel editado",
+  "actualizaPorIdCreaNuevos": "Actualiza por ID y crea los nuevos",
+  "bajarDesdeDriveCon": "Bajar desde Drive ({hoja} · {pestana})",
+  "@bajarDesdeDriveCon": {
+    "placeholders": {
+      "hoja": {
+        "type": "String"
+      },
+      "pestana": {
+        "type": "String"
+      }
+    }
+  },
+  "subirMisCambiosSheet": "Subir mis cambios al Sheet",
+  "importarPestanaActual": "Importar la pestaña actual",
+  "importarCatalogosExcelTitulo": "Importar catálogos desde Excel",
+  "importarCatalogosExcelTexto": "Se actualizarán las filas que tengan ID y se crearán las que no lo tengan.\n\nNo se borra nada: las fichas que quites de la hoja seguirán en la app.",
+  "resumenCreadosActualizados": "✓ Creados: {creados} · Actualizados: {actualizados}",
+  "@resumenCreadosActualizados": {
+    "placeholders": {
+      "creados": {
+        "type": "int"
+      },
+      "actualizados": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogoImportadoLinea": "• {nombre}: {creados, plural, =1{1 nuevo} other{{creados} nuevos}}, {actualizados, plural, =1{1 actualizado} other{{actualizados} actualizados}}",
+  "@catalogoImportadoLinea": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      },
+      "creados": {
+        "type": "int"
+      },
+      "actualizados": {
+        "type": "int"
+      }
+    }
+  },
+  "pestanasIgnoradasAviso": "⚠ Estas pestañas no se han importado porque su nombre no coincide con ningún catálogo:\n{lista}\nNo renombres las pestañas del fichero exportado.",
+  "@pestanasIgnoradasAviso": {
+    "placeholders": {
+      "lista": {
+        "type": "String"
+      }
+    }
+  },
+  "erroresEtiqueta": "Errores:\n{lista}",
+  "@erroresEtiqueta": {
+    "placeholders": {
+      "lista": {
+        "type": "String"
+      }
+    }
+  },
+  "eliminarFichaTexto": "¿Eliminar \"{nombre}\"?",
+  "@eliminarFichaTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "vacioPulsaAnadir": "{texto}.\nPulsa el + para añadir.",
+  "@vacioPulsaAnadir": {
+    "placeholders": {
+      "texto": {
+        "type": "String"
+      }
+    }
+  },
+  "copasDondeAplica": "Copas donde aplica",
+  "copasSinMarcarAviso": "Sin marcar = no se podrá usar en ninguna copa.",
+  "copasMarcarAviso": "Marca solo las copas donde es válido.",
+  "nuevoCoche": "Nuevo coche",
+  "editarCoche": "Editar coche",
+  "nombreCompletoObligatorio": "Nombre completo *",
+  "nombreCompletoEjemplo": "Ej: SCALEAUTO-BMW M8 GTE",
+  "marcaObligatoria": "Marca *",
+  "modeloObligatorio": "Modelo *",
+  "pesoMinimoObligatorio": "Peso mínimo (g) *",
+  "pesoMinimoAyuda": "No cambia las verificaciones validadas ni los campeonatos con valores fijados",
+  "creditosCoche": "Créditos coche",
+  "creditosCocheAyuda": "Negativo o positivo",
+  "galeria": "Galería",
+  "camara": "Cámara",
+  "quitarFoto": "Quitar foto",
+  "nuevaMarca": "Nueva marca",
+  "editarMarca": "Editar marca",
+  "codigoObligatorio": "Código *",
+  "marcaCodigoEjemplo": "Ej: SIT, SCA, SLP",
+  "nuevaLlanta": "Nueva llanta",
+  "editarLlanta": "Editar llanta",
+  "llantaDimensionEjemplo": "Ej: 15,8 x 8 PL",
+  "delantera": "Delantera",
+  "trasera": "Trasera",
+  "ambas": "Ambas",
+  "nuevoEngranaje": "Nuevo engranaje",
+  "editarEngranaje": "Editar engranaje",
+  "diametroEjemplo": "Ej: 6,5",
+  "dientesEjemplo": "Ej: 12 piñón, 28 corona",
+  "nDientes": "{n, plural, =1{1 diente} other{{n} dientes}}",
+  "@nDientes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nuevoMotor": "Nuevo motor",
+  "editarMotor": "Editar motor",
+  "motorIdentificadorAyuda": "Identificador o modelo",
+  "nuevaBancada": "Nueva bancada",
+  "editarBancada": "Editar bancada",
+  "bancadaEjemplo": "Ej: Slot.it 1,0 carbono",
+  "nuevoNeumatico": "Nuevo neumático",
+  "editarNeumatico": "Editar neumático",
+  "neumaticoEjemplo": "Ej: AS25 19,0 NEGRO",
+  "referenciaOpcional": "Referencia (opcional)",
+  "copaEjemplo": "Ej: GT, GT2, LMP, HYP",
+  "clubNombreEjemplo": "Ej: EL SOT, GASCLAVAT, SLOTMANIA",
+  "chasisEjemplo": "Ej: INYECCIÓN PLÁSTICO NEGRO, 3D",
+  "nuevoChasis": "Nuevo Chasis",
+  "nuevaCopa": "Nuevo Copa",
+  "nuevoClub": "Nuevo Club",
+  "importarTitulo": "Importar {titulo}",
+  "@importarTitulo": {
+    "placeholders": {
+      "titulo": {
+        "type": "String"
+      }
+    }
+  },
+  "pasoEligeLaFuente": "{n}. Elige la fuente",
+  "@pasoEligeLaFuente": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "archivoCsvExcel": "Archivo CSV / Excel",
+  "sustituirCatalogoExistente": "Sustituir el catálogo existente",
+  "sustituirCatalogoExistenteTexto": "Si lo marcas, primero se vacía la tabla y luego se importa.",
+  "importarNFilas": "{n, plural, =1{Importar 1 fila} other{Importar {n} filas}}",
+  "@importarNFilas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "vincularSinImportar": "Vincular sin importar",
+  "sustituirCatalogoTitulo": "Sustituir el catálogo",
+  "anadirCatalogoTitulo": "Añadir al catálogo",
+  "sustituirCatalogoTexto": "{n, plural, =1{Se vaciará la ficha actual} other{Se vaciarán las {n} fichas actuales}} antes de importar {m, plural, =1{la fila de la hoja} other{las {m} filas de la hoja}}.\n\nSe pierden los ID de sincronización, las fotos locales de los coches y los valores fijados en campeonatos. Lo que solo exista en la app y no esté en la hoja desaparece.",
+  "@sustituirCatalogoTexto": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "m": {
+        "type": "int"
+      }
+    }
+  },
+  "anadirCatalogoTexto": "{n, plural, =1{Se añadirá la fila de la hoja} other{Se añadirán las {n} filas de la hoja}} a {m, plural, =1{la ficha que ya tienes} other{las {m} fichas que ya tienes}}.\n\nLas filas que ya existan (mismo nombre o clave) quedarán duplicadas. Si solo quieres conectar la hoja para traer cambios, cancela y usa «Vincular sin importar».",
+  "@anadirCatalogoTexto": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "m": {
+        "type": "int"
+      }
+    }
+  },
+  "siSustituir": "Sí, sustituir",
+  "siAnadir": "Sí, añadir",
+  "hojaVinculadaTitulo": "Hoja vinculada",
+  "hojaVinculadaTexto": "No se ha importado nada ni se ha tocado ninguna ficha del catálogo.\n\nEn la pestaña «{pestana}» ya aparece el botón de sincronización: «Actualizar desde Drive» traerá los cambios de la hoja emparejando por la columna ID (si la hay) o por nombre, sin duplicar las fichas que ya tienes.",
+  "@hojaVinculadaTexto": {
+    "placeholders": {
+      "pestana": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAlVincular": "Error al vincular: {detalle}",
+  "@errorAlVincular": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "resumenImportacionCatalogo": "✓ Añadidos: {ok}\n✗ Saltados: {saltados}",
+  "@resumenImportacionCatalogo": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "saltados": {
+        "type": "int"
+      }
+    }
+  },
+  "hojaVinculadaAviso": "\n\nHoja vinculada: a partir de ahora pulsa \"Actualizar desde Drive\" en la pestaña del catálogo para traer cambios.",
+  "eligeHojaGoogle": "Elige la hoja de Google",
+  "modificadaFecha": "Modificada: {fecha}",
+  "@modificadaFecha": {
+    "placeholders": {
+      "fecha": {
+        "type": "DateTime",
+        "format": "yMd"
+      }
+    }
+  },
+  "avisoCatalogoLlenoIntro": "Este catálogo ya tiene {n, plural, =1{1 ficha} other{{n} fichas}} en la app.",
+  "@avisoCatalogoLlenoIntro": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "avisoCatalogoLlenoImportar": "• «Importar» añadirá las filas de la hoja como nuevas: las que ya existan quedarán duplicadas.",
+  "avisoCatalogoLlenoVincular": "• Si solo quieres conectar la hoja, usa «Vincular sin importar»; después, «Actualizar desde Drive» trae los cambios sin duplicar.",
+  "avisoCatalogoLlenoSustituir": "• «Sustituir el catálogo existente» vacía el catálogo actual: se pierden los ID de sincronización, las fotos locales y los valores fijados en campeonatos.",
+  "ayudaCatalogoCoches": "CSV/Excel o Google Sheets con columnas: Nombre, Marca, Modelo, Peso mínimo, Créditos, Copa(s) (separadas por coma; vacío = todas).",
+  "ayudaCatalogoMarcas": "CSV/Excel con columnas: Código, Nombre.",
+  "ayudaCatalogoLlantas": "CSV/Excel con columnas: Dimensión, Tipo (DELANTERA / TRASERA / AMBAS).",
+  "ayudaCatalogoEngranajes": "CSV/Excel o Google Sheets con columnas: Marca, Dientes, Tipo (PIÑÓN / CORONA).",
+  "ayudaCatalogoMotores": "CSV/Excel o Google Sheets con columnas: Motor, RPM, Gauss, Copa(s) (separadas por coma; vacío = todas).",
+  "ayudaCatalogoSimple": "CSV/Excel con una columna: Nombre.",
+  "ayudaCatalogoNeumaticos": "CSV/Excel con columnas: Nombre, Referencia (opcional).",
+  "modeloCampo": "Modelo",
+  "pesoMinimoCampo": "Peso mínimo *",
+  "creditosCampo": "Créditos",
+  "copasCampo": "Copa(s)",
+  "fotoEnlaceDrive": "Foto (enlace de Drive)",
+  "tipoPinonCorona": "Tipo (piñón/corona)",
+  "referenciaCampo": "Referencia",
+  "dimensionObligatoria": "Dimensión *",
+  "tipoCampo": "Tipo",
+  "dientesObligatorio": "Dientes *",
+  "subirAlSheet": "Subir al Sheet",
+  "subidoSheetResumen": "✓ Subido al Sheet: {anadidas, plural, =1{1 añadida} other{{anadidas} añadidas}}, {actualizadas, plural, =1{1 actualizada} other{{actualizadas} actualizadas}}, {borradas, plural, =1{1 borrada} other{{borradas} borradas}}.",
+  "@subidoSheetResumen": {
+    "placeholders": {
+      "anadidas": {
+        "type": "int"
+      },
+      "actualizadas": {
+        "type": "int"
+      },
+      "borradas": {
+        "type": "int"
+      }
+    }
+  },
+  "fotosSinSubir": "\n✗ Fotos sin subir: {lista}",
+  "@fotosSinSubir": {
+    "placeholders": {
+      "lista": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAlSubir": "Error al subir: {detalle}",
+  "@errorAlSubir": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "nadaQueSubir": "No hay nada que subir: la hoja ya coincide con la app.\n\n({n, plural, =1{1 fila idéntica} other{{n} filas idénticas}})",
+  "@nadaQueSubir": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "subidaIntro": "Se subirán tus cambios al Google Sheet.",
+  "filasNuevasResumen": "{n, plural, =1{· 1 fila nueva (se añade)} other{· {n} filas nuevas (se añaden)}}",
+  "@filasNuevasResumen": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "conDiferenciasResumen": "· {n} con diferencias (elige cuáles pisan la hoja)",
+  "@conDiferenciasResumen": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "borradasResumen": "{n, plural, =1{· 1 borrada en la app, pendiente de borrar en la hoja (elige cuál)} other{· {n} borradas en la app, pendientes de borrar en la hoja (elige cuáles)}}",
+  "@borradasResumen": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "identicasResumen": "{n, plural, =1{· 1 idéntica (se ignora)} other{· {n} idénticas (se ignoran)}}",
+  "@identicasResumen": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "borradasEnAppPregunta": "Borradas en la app — ¿borrar también en la hoja?",
+  "seBorraraEsaFila": "Se borrará esa fila del Sheet",
+  "seDejaEnSheet": "Se deja en el Sheet (no se borra)",
+  "filasNuevasTitulo": "Filas nuevas",
+  "seAnadiraAlSheet": "Se añadirá al Sheet",
+  "diferenciasConflictos": "Diferencias (conflictos)",
+  "subirNAlSheet": "Subir {n} al Sheet",
+  "@subirNAlSheet": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "seSubiraTuVersion": "Se subirá tu versión (pisa la hoja)",
+  "seMantieneSheet": "Se mantiene lo del Sheet",
+  "appValor": "app: {valor}",
+  "@appValor": {
+    "placeholders": {
+      "valor": {
+        "type": "String"
+      }
+    }
+  },
+  "sheetValor": "sheet: {valor}",
+  "@sheetValor": {
+    "placeholders": {
+      "valor": {
+        "type": "String"
+      }
+    }
+  },
+  "vacioParentesis": "(vacío)",
+  "plantillasIntro": "Descarga la plantilla, rellénala con tus datos (borra la fila de ejemplo) y luego impórtala desde la sección correspondiente. La primera fila son las columnas: no la cambies.",
+  "descargar": "Descargar",
+  "plantillaPilotos": "Pilotos",
+  "plantillaPilotosTexto": "Para importar pilotos a un campeonato.",
+  "plantillaEquipos": "Equipos (parejas)",
+  "plantillaEquiposTexto": "Equipos con uno o dos pilotos. Deja en blanco el piloto 2 si es individual.",
+  "plantillaEquiposResistencia": "Equipos de resistencia (24H/12H)",
+  "plantillaEquiposResistenciaTexto": "Equipos de 3 a 6 pilotos. Deja en blanco los que no uses. La categoría de cada piloto se toma de su ficha ya importada.",
+  "plantillaInscripciones": "Inscripciones a una prueba",
+  "plantillaInscripcionesTexto": "Equipos que se inscriben a una prueba, con su preferencia de día.",
+  "plantillaParticipantesVerificacion": "Participantes de verificación libre",
+  "plantillaParticipantesVerificacionTexto": "Participantes de una sesión de verificación libre. Piloto 2 y Equipo son opcionales; si la copa va vacía se elige al importar.",
+  "plantillaCoches": "Catálogo · Coches",
+  "plantillaCochesTexto": "Modelos de coche del catálogo.",
+  "plantillaMotores": "Catálogo · Motores",
+  "plantillaMotoresTexto": "Motores homologados (RPM y gauss de referencia).",
+  "plantillaMarcas": "Catálogo · Marcas",
+  "plantillaMarcasTexto": "Marcas (código corto + nombre).",
+  "plantillaLlantas": "Catálogo · Llantas",
+  "plantillaLlantasTexto": "Dimensión y tipo (DELANTERA / TRASERA / AMBAS).",
+  "plantillaEngranajes": "Catálogo · Engranajes",
+  "plantillaEngranajesTexto": "Piñones y coronas (tipo, diámetro, dientes).",
+  "pegaClientIdSecret": "Pega el Client ID y el Client Secret antes de guardar.",
+  "clientIdNoValido": "El Client ID no parece válido (debe acabar en \".apps.googleusercontent.com\"). Revisa que lo hayas copiado entero de Google Cloud Console.",
+  "credencialesGuardadasAviso": "Credenciales guardadas. Ahora pulsa \"Conectar con Google\".",
+  "abriendoNavegadorAutoriza": "Abriendo el navegador… autoriza y vuelve aquí.",
+  "conectadoGoogleOk": "Conectado correctamente con Google.",
+  "desconectarGoogle": "Desconectar Google",
+  "desconectarGoogleTexto": "La app dejará de leer tus hojas hasta que vuelvas a conectarte. ¿Continuar?",
+  "desconectar": "Desconectar",
+  "credencialesProyectoGoogleCloud": "Credenciales del proyecto Google Cloud",
+  "credencialesProyectoTexto": "Estas credenciales se crean una sola vez en tu cuenta de Google Cloud. Pulsa \"Cómo conseguirlas\" para una guía paso a paso.",
+  "comoConseguirlas": "Cómo conseguirlas",
+  "guardarCredenciales": "Guardar credenciales",
+  "permisosSolicitados": "Permisos solicitados",
+  "permisosTexto": "• Leer tus hojas de cálculo (Google Sheets — solo lectura)\n• Listar archivos de Drive (Google Drive — solo lectura)\n• Crear y modificar el archivo de copia de la app (Drive — solo el archivo de la app)\n\nPitWall Control no toca ningún archivo tuyo, solo el que crea él.",
+  "copiaCompartidaDrive": "Copia compartida en Drive",
+  "copiaCompartidaDriveTexto": "Subir o descargar la base de datos para trabajar entre varios dispositivos.",
+  "conectadoConGoogle": "Conectado con Google",
+  "sinConectar": "Sin conectar",
+  "faltanCredencialesGoogle": "Faltan credenciales del proyecto Google Cloud",
+  "conectarConGoogle": "Conectar con Google",
+  "conseguirCredenciales": "Conseguir credenciales",
+  "conseguirCredencialesTexto": "Solo se hace una vez, es gratis y no pide tarjeta. Necesitas la cuenta de Google que tiene tus hojas y tu Drive y unos 10 minutos.",
+  "verManualCapturas": "Ver el manual con capturas",
+  "guiaPaso1Titulo": "Crear un proyecto",
+  "guiaPaso1Texto": "Entra en Google Cloud Console con tu cuenta de Google. Arriba, pulsa el selector de proyectos → \"Proyecto nuevo\". Nombre: \"PitWall Control\". Pulsa \"Crear\" y comprueba que queda seleccionado.",
+  "abrirCloudConsole": "Abrir Cloud Console",
+  "guiaPaso2Titulo": "Activar las dos API",
+  "guiaPaso2Texto": "Habilita \"Google Sheets API\" y también \"Google Drive API\" (pulsa \"Habilitar\" en cada una). Si no, la conexión fallará.",
+  "apiSheets": "API Sheets",
+  "apiDrive": "API Drive",
+  "pantallaDeConsentimiento": "Pantalla de consentimiento",
+  "guiaPaso3Texto": "En \"Google Auth Platform\" pulsa \"Comenzar\" y sigue el asistente: 1) nombre \"PitWall Control\" y tu correo de asistencia; 2) Público: elige \"Usuarios externos\" (\"Interno\" solo vale para cuentas de empresa); 3) tu correo de contacto; 4) acepta la política de datos, \"Continuar\" y \"Crear\".",
+  "guiaPaso4Titulo": "Añadir tu cuenta como usuario de prueba",
+  "guiaPaso4Texto": "En el menú lateral entra en \"Público\" → \"Usuarios de prueba\" → \"Add users\". Escribe el correo de Google con el que vas a conectar Control (y el de quien más vaya a conectarse) y guarda. Sin este paso Google da el \"Error 403: access_denied\".",
+  "publico": "Público",
+  "guiaPaso5Titulo": "Crear el cliente OAuth",
+  "guiaPaso5Texto": "En \"Clientes\" pulsa \"Crear cliente\". Tipo: \"Aplicación de escritorio\". Nombre: \"PitWall Control Desktop\". Pulsa \"Crear\".",
+  "clientes": "Clientes",
+  "guiaPaso6Titulo": "Copiar el ID y el secreto",
+  "guiaPaso6Texto": "Aparece el ID de cliente (acaba en .apps.googleusercontent.com) y el secreto. Cópialos y pulsa \"Descargar JSON\": Google solo enseña el secreto en este momento. Pégalos en la pantalla anterior, pulsa \"Guardar credenciales\" y luego \"Conectar con Google\".",
+  "guiaPaso7Titulo": "Autorizar en el navegador",
+  "guiaPaso7Texto": "Elige la cuenta del paso 4. Si sale \"Google no ha verificado esta aplicación\", pulsa \"Configuración avanzada\" → \"Ir a PitWall Control (no seguro)\", marca todos los permisos y \"Continuar\".",
+  "avisoPrueba7Dias": "Para que no caduque a los 7 días: mientras la aplicación está en estado \"Prueba\", Google cierra la sesión cada 7 días. En \"Público\" pulsa \"Publicar aplicación\" (pasa a \"En producción\"); para uso propio no necesita verificación.",
+  "cosasQueSuelenFallar": "Cosas que suelen fallar:",
+  "pistaUsuariosPrueba": "Google bloquea la cuenta con la que has entrado porque la app está en modo \"Prueba\" y esa cuenta NO está en la lista de usuarios de prueba. En Google Cloud Console → Google Auth Platform → Público → \"Usuarios de prueba\" → \"Add users\", añade ese correo exacto. O pulsa \"Publicar aplicación\" en esa misma pantalla.",
+  "pistaCredencialEscritorio": "El tipo de credencial no es \"Aplicación de escritorio\". Crea de nuevo las credenciales OAuth en Google Cloud Console eligiendo \"Aplicación de escritorio\".",
+  "pistaClientIdSecreto": "Client ID o Client Secret incorrectos. Vuelve a copiarlos de Google Cloud Console (Credenciales → tu cliente OAuth) y pégalos sin espacios.",
+  "pistaApisNoActivadas": "Las APIs de Google Sheets y/o Drive no están activadas en tu proyecto. Ve a \"APIs y servicios → Biblioteca\", busca \"Google Sheets API\" y \"Google Drive API\" y pulsa Habilitar.",
+  "pistaNavegador": "La app no consiguió abrir el navegador. Cierra esta ventana, espera 2 segundos y vuelve a intentarlo.",
+  "pistaRed": "Problema de red. Verifica que tienes conexión a internet y vuelve a probar.",
+  "pistaGuardarCredenciales": "No has guardado el Client ID y Client Secret. Rellena los campos y pulsa \"Guardar credenciales\" primero.",
+  "pistaCredencialPorDefecto": "Comprueba que el tipo de credenciales en Google Cloud Console es \"Aplicación de escritorio\" y que tu email está añadido como usuario de prueba en la pantalla de consentimiento.",
+  "subirCopiaADrive": "Subir copia a Drive",
+  "subirCopiaTexto": "Se subirá una copia actual a tu Drive como \"pitwall-backup.zip\". Incluye la base de datos, las fotos de verificaciones y la configuración del programa (credenciales de Google, tema y preferencias); nunca la sesión conectada.\n\nSi ya había una versión anterior, se reemplaza por la nueva.\n\n¿Continuar?",
+  "restaurarTambienConfig": "Restaurar también la configuración de la copia",
+  "restaurarTambienConfigSub": "Credenciales de Google, tema y preferencias. Nunca la sesión conectada.",
+  "siRestaurar": "Sí, restaurar",
+  "descargarYRestaurar": "Descargar y restaurar",
+  "descargarRestaurarTexto": "Se reemplazará tu base de datos local con la copia que hay en Drive. ⚠️ Cualquier cambio local que no hayas subido se perderá.\n\nDespués tendrás que cerrar y volver a abrir la app.",
+  "copiaDePitwall": "Copia de PitWall",
+  "restaurarDesdeArchivo": "Restaurar desde archivo",
+  "restaurarDesdeArchivoTexto": "Se reemplazará tu base de datos local con la copia de «{nombre}». ⚠️ Cualquier cambio local que no hayas subido se perderá.\n\nNo hace falta conexión con Google para esto.\n\nDespués tendrás que cerrar y volver a abrir la app.",
+  "@restaurarDesdeArchivoTexto": {
+    "nombre": {
+      "type": "String"
+    }
+  },
+  "copiaActualEnDrive": "Copia actual en Drive",
+  "noHayCopiaDriveTexto": "Aún no hay ninguna copia en Drive. Pulsa \"Subir copia\" para crear la primera.",
+  "ultimaSubida": "Última subida: {fecha}",
+  "@ultimaSubida": {
+    "fecha": {
+      "type": "String"
+    }
+  },
+  "tamanoKB": "Tamaño: {kb} KB",
+  "@tamanoKB": {
+    "kb": {
+      "type": "String"
+    }
+  },
+  "restaurarDesdeArchivoPuntos": "Restaurar desde archivo…",
+  "comoTrabajarEnEquipo": "Cómo trabajar en equipo",
+  "trabajoEnEquipoTexto": "• Al empezar a trabajar, pulsa \"Descargar\" para tener la última versión.\n• Al terminar tus cambios, pulsa \"Subir\" para que los demás puedan recibirlos.\n• Si dos personas editan a la vez, gana quien sube último (no hay fusión automática). Lo más práctico: coordinar quién edita en cada momento.",
+  "sinConexionGoogle": "Sin conexión con Google",
+  "sinConexionGoogleTexto": "Conéctate con Google para poder subir o descargar la copia.\n\nTambién puedes restaurar una copia guardada como archivo (.zip), sin conexión.",
+  "importarEquiposDesdeSheets": "Importar equipos desde Sheets",
+  "importacionEquiposAviso": "A partir de ahora, pulsa \"Actualizar desde Drive\" en Equipos.",
+  "conectaCuentaHojas": "Conecta tu cuenta una sola vez para poder leer las hojas.",
+  "nDeTotal": "{n} de {total}",
+  "@nDeTotal": {
+    "n": {
+      "type": "int"
+    },
+    "total": {
+      "type": "int"
+    }
+  },
+  "hojaModificada": "Modificada: {fecha}",
+  "@hojaModificada": {
+    "fecha": {
+      "type": "String"
+    }
+  },
+  "importarDesdeGoogleSheets": "Importar desde Google Sheets",
+  "importacionInscripcionesAviso": "A partir de ahora, pulsa \"Actualizar desde Drive\" en Inscritos para traer nuevas respuestas del formulario.",
+  "conectaCuentaGoogleForm": "Conecta tu cuenta una sola vez para poder leer las hojas donde llegan las respuestas del Google Form.",
+  "diaPreferido": "Día preferido",
+  "asignaAlMenosColumnaPiloto": "Asigna al menos la columna del nombre del piloto.",
+  "asignaAlMenosColumnaEquipo": "Asigna al menos la columna del nombre del equipo.",
+  "importarPilotosDesdeSheets": "Importar pilotos desde Sheets",
+  "importacionPilotosAviso": "A partir de ahora, pulsa \"Actualizar desde Drive\" en Pilotos para traer cambios sin tener que volver a configurar nada.",
+  "detectadasAutomaticamente": "Detectadas automáticamente. Cámbialas si hace falta.",
+  "diagLeidas": "Leídas {filas} filas · {columnas} columnas detectadas · piloto={piloto}\n1ª fila: {primera}",
+  "@diagLeidas": {
+    "filas": {
+      "type": "int"
+    },
+    "columnas": {
+      "type": "int"
+    },
+    "piloto": {
+      "type": "String"
+    },
+    "primera": {
+      "type": "String"
+    }
+  },
+  "diagNinguna": "(ninguna)",
+  "sinCampeonatoActivoAviso": "Sin campeonato activo",
+  "sinPruebaAsignadaVinculo": "Sin prueba asignada al vínculo",
+  "resumenPilotosActualizados": "Nuevos: {nuevos} · Inscritos al campeonato: {ya} · Saltados: {saltados}",
+  "@resumenPilotosActualizados": {
+    "nuevos": {
+      "type": "int"
+    },
+    "ya": {
+      "type": "int"
+    },
+    "saltados": {
+      "type": "int"
+    }
+  },
+  "resumenEquiposActualizados": "Equipos nuevos: {nuevos} · Saltados: {saltados}",
+  "@resumenEquiposActualizados": {
+    "nuevos": {
+      "type": "int"
+    },
+    "saltados": {
+      "type": "int"
+    }
+  },
+  "resumenCatalogoActualizado": "Nuevos: {nuevos} · Actualizados: {actualizados} · Sin cambios: {saltados}",
+  "@resumenCatalogoActualizado": {
+    "nuevos": {
+      "type": "int"
+    },
+    "actualizados": {
+      "type": "int"
+    },
+    "saltados": {
+      "type": "int"
+    }
+  },
+  "resumenFotos": " · Fotos: {n}",
+  "@resumenFotos": {
+    "n": {
+      "type": "int"
+    }
+  },
+  "resumenFotosFallan": " (fallan {n}: {detalle})",
+  "@resumenFotosFallan": {
+    "n": {
+      "type": "int"
+    },
+    "detalle": {
+      "type": "String"
+    }
+  },
+  "resumenInscripcionesActualizadas": "Nuevas inscripciones: {nuevos} · Ya inscritos: {ya} · No reconocidos: {sin}",
+  "@resumenInscripcionesActualizadas": {
+    "nuevos": {
+      "type": "int"
+    },
+    "ya": {
+      "type": "int"
+    },
+    "sin": {
+      "type": "int"
+    }
+  },
+  "resumenNoReconocidos": " ({detalle})",
+  "@resumenNoReconocidos": {
+    "detalle": {
+      "type": "String"
+    }
+  },
+  "noEncuentroCabecera": "No encuentro la cabecera en la hoja.",
+  "faltanColumnasClaveMapeo": "Faltan columnas clave en el mapeo de la hoja. Revisa el vínculo (Importar) para que las columnas cuadren.",
+  "fotoNuevaSeSube": "(foto nueva: se sube a Drive y sustituye al enlace)",
+  "seSubeFotoADrive": "(se sube la foto a Drive)",
+  "copiaSubida": "Copia subida ({kb} KB · {fotos} fotos).",
+  "@copiaSubida": {
+    "kb": {
+      "type": "String"
+    },
+    "fotos": {
+      "type": "int"
+    }
+  },
+  "noHayCopiaEnDrive": "No hay copia en Drive.",
+  "zipSinBaseDeDatos": "El ZIP de backup no contiene la base de datos.",
+  "configuracionRestaurada": " · Configuración restaurada",
+  "reconectaConGoogle": " — reconecta con Google al reabrir",
+  "copiaConFotos": " · {n} fotos",
+  "@copiaConFotos": {
+    "n": {
+      "type": "int"
+    }
+  },
+  "copiaRestaurada": "Copia restaurada ({detalle}). Cierra y vuelve a abrir la app para que los cambios surtan efecto.",
+  "@copiaRestaurada": {
+    "detalle": {
+      "type": "String"
+    }
+  },
+  "descripcionCopiaDrive": "Copia de PitWall (BD + fotos de verificaciones).",
+  "authFaltanCredenciales": "Faltan las credenciales del proyecto Google Cloud. Ve a Configuración → Google y pega el Client ID y el Client Secret.",
+  "authNoSePudoAbrirNavegador": "No se pudo abrir el navegador para autorizar.",
+  "authConfiguraCredenciales": "Configura primero las credenciales de Google Cloud.",
+  "authNoConectado": "No estás conectado con Google.",
+  "authSesionCaducada": "La sesión de Google ha caducado. Vuelve a conectar tu cuenta en Google Sheets (menú lateral).",
+  "authConexionRevocada": "La conexión con Google ha caducado o fue revocada. Ve a Google Sheets (menú lateral) y pulsa \"Conectar con Google\" para autorizar de nuevo.",
+  "sinTitulo": "Sin título",
+  "sinNombre": "Sin nombre",
+  "fotoNoLegible": "el archivo no es una imagen JPG/PNG/WEBP legible",
+  "fotoLocalNoEncontrada": "no se encuentra la foto local {ruta}",
+  "@fotoLocalNoEncontrada": {
+    "ruta": {
+      "type": "String"
+    }
+  },
+  "versionInstalada": "Versión instalada",
+  "buscarActualizaciones": "Buscar actualizaciones",
+  "estasAlDia": "Estás al día",
+  "noSePudoComprobarSinConexion": "No se pudo comprobar (¿sin conexión?)",
+  "conexionFallida": "No se pudo conectar",
+  "accionSubir": "Subir",
+  "errorFilaDetalle": "{hoja} fila {fila}: {detalle}",
+  "@errorFilaDetalle": {
+    "placeholders": {
+      "hoja": {
+        "type": "String"
+      },
+      "fila": {
+        "type": "int"
+      },
+      "detalle": {
+        "type": "String"
+      }
+    }
   }
 }

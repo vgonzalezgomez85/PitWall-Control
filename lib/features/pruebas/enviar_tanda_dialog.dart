@@ -102,6 +102,7 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
       }
 
       final res = await enviarTanda(
+          l: l,
           host: host, pin: _pinCtrl.text, payload: payload);
       if (res.ok && res.raceId != null) {
         await widget.ref

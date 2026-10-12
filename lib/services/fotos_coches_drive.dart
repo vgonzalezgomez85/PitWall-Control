@@ -18,12 +18,14 @@
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 
+import '../core/idioma.dart';
 import 'fotos_verificacion.dart';
 import 'google_auth_service.dart';
 
@@ -36,6 +38,16 @@ import 'google_auth_service.dart';
 class FotosCochesDrive {
   FotosCochesDrive(this.ref);
   final Ref ref;
+
+  /// Textos del idioma elegido en Ajustes (o el del sistema en «Automático»):
+  /// la sincronización va en segundo plano y no tiene contexto.
+  Textos get _l {
+    final elegido = ref.read(idiomaProvider);
+    final locale = elegido ??
+        resolverIdioma(
+            PlatformDispatcher.instance.locale, Textos.supportedLocales);
+    return lookupTextos(locale);
+  }
 
   static const _prefijo = 'coche-drive-';
   static const _carpetaDrive = 'PitWall Control - Fotos coches';
@@ -96,7 +108,7 @@ class FotosCochesDrive {
     }
     final jpg = await Isolate.run(() => _aJpeg(builder.takeBytes()));
     if (jpg == null) {
-      throw Exception('el archivo no es una imagen JPG/PNG/WEBP legible');
+      throw Exception(_l.fotoNoLegible);
     }
     final nombre = '$_prefijo$idDrive.jpg';
     final dir = await FotosVerificacion.carpeta();
@@ -110,7 +122,7 @@ class FotosCochesDrive {
       drive.DriveApi api, String fotoPath, String nombreCoche) async {
     final archivo = await FotosVerificacion.resolver(fotoPath);
     if (!await archivo.exists()) {
-      throw Exception('no se encuentra la foto local $fotoPath');
+      throw Exception(_l.fotoLocalNoEncontrada(fotoPath));
     }
     final carpetaId = await _carpeta(api);
     final bytes = await archivo.readAsBytes();

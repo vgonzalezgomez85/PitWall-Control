@@ -17,6 +17,8 @@
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:convert';
 
+import '../core/idioma.dart';
+
 /// Reglamento contra el que se comprueba UNA verificación: todo lo que sale
 /// del catálogo o del campeonato y no de lo que mide el verificador.
 ///
@@ -113,7 +115,7 @@ class ReglasVerificacion {
 
   /// Diferencias legibles con [actuales] ("Peso mínimo: 17 g (ahora 18 g)").
   /// Vacía si el reglamento congelado coincide con el actual.
-  List<String> diferenciasCon(ReglasVerificacion actuales) {
+  List<String> diferenciasCon(ReglasVerificacion actuales, Textos l) {
     String n(num? v) {
       if (v == null) return '—';
       return v == v.roundToDouble() ? v.toStringAsFixed(0) : '$v';
@@ -123,7 +125,7 @@ class ReglasVerificacion {
     void num_(String titulo, num? antes, num? ahora, [String unidad = '']) {
       if (antes == ahora) return;
       final u = unidad.isEmpty ? '' : ' $unidad';
-      out.add('$titulo: ${n(antes)}$u (ahora ${n(ahora)}$u)');
+      out.add(l.difValor(titulo, n(antes), u, n(ahora)));
     }
 
     void lista(String titulo, Set<String> antes, Set<String> ahora) {
@@ -132,31 +134,32 @@ class ReglasVerificacion {
       if (quitadas.isEmpty && nuevas.isEmpty) return;
       out.add([
         titulo,
-        if (nuevas.isNotEmpty) 'añadidas: ${(nuevas.toList()..sort()).join(', ')}',
+        if (nuevas.isNotEmpty)
+          l.difAnadidas((nuevas.toList()..sort()).join(', ')),
         if (quitadas.isNotEmpty)
-          'quitadas: ${(quitadas.toList()..sort()).join(', ')}',
+          l.difQuitadas((quitadas.toList()..sort()).join(', ')),
       ].join(' · '));
     }
 
     if (cocheNombre != actuales.cocheNombre && cocheId == actuales.cocheId) {
-      out.add('Nombre del coche: ${cocheNombre ?? '—'} '
-          '(ahora ${actuales.cocheNombre ?? '—'})');
+      out.add(l.difNombreCoche(
+          cocheNombre ?? '—', actuales.cocheNombre ?? '—'));
     }
-    num_('Peso mínimo', pesoMin, actuales.pesoMin, 'g');
-    num_('Créditos del coche', creditosCoche, actuales.creditosCoche);
-    num_('RPM máx. del motor', motorRefRpm, actuales.motorRefRpm);
-    num_('Imán máx. del motor', motorRefGauss, actuales.motorRefGauss);
-    num_('Eje delantero máx.', anchuraEjeDelMax, actuales.anchuraEjeDelMax,
+    num_(l.tituloPesoMinimo, pesoMin, actuales.pesoMin, 'g');
+    num_(l.tituloCreditosCoche, creditosCoche, actuales.creditosCoche);
+    num_(l.tituloRpmMax, motorRefRpm, actuales.motorRefRpm);
+    num_(l.tituloImanMax, motorRefGauss, actuales.motorRefGauss);
+    num_(l.tituloEjeDelMax, anchuraEjeDelMax, actuales.anchuraEjeDelMax,
         'mm');
-    num_('Eje trasero máx.', anchuraEjeTraMax, actuales.anchuraEjeTraMax,
+    num_(l.tituloEjeTraMax, anchuraEjeTraMax, actuales.anchuraEjeTraMax,
         'mm');
-    lista('Fabricantes permitidos', marcasPermitidas,
+    lista(l.tituloFabricantesPermitidos, marcasPermitidas,
         actuales.marcasPermitidas);
-    lista('Marcas del catálogo', marcasValidas, actuales.marcasValidas);
-    lista('Llantas delanteras', llantasDelValidas, actuales.llantasDelValidas);
-    lista('Llantas traseras', llantasTraValidas, actuales.llantasTraValidas);
-    lista('Bancadas', bancadasValidas, actuales.bancadasValidas);
-    lista('Neumáticos', neumaticosValidos, actuales.neumaticosValidos);
+    lista(l.tituloMarcasCatalogo, marcasValidas, actuales.marcasValidas);
+    lista(l.tituloLlantasDel, llantasDelValidas, actuales.llantasDelValidas);
+    lista(l.tituloLlantasTra, llantasTraValidas, actuales.llantasTraValidas);
+    lista(l.tituloBancadas, bancadasValidas, actuales.bancadasValidas);
+    lista(l.tituloNeumaticos, neumaticosValidos, actuales.neumaticosValidos);
     return out;
   }
 

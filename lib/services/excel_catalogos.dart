@@ -30,6 +30,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:excel/excel.dart';
 
+import '../core/idioma.dart';
 import '../data/database/app_database.dart';
 
 /// Resultado de una reimportación, para enseñárselo al usuario.
@@ -48,16 +49,6 @@ class ResultadoImportCatalogos {
   void suma(String hoja, {bool creado = false}) {
     final m = creado ? creados : actualizados;
     m[hoja] = (m[hoja] ?? 0) + 1;
-  }
-
-  String get resumen {
-    final b = StringBuffer('✓ Creados: $totalCreados · Actualizados: $totalActualizados');
-    if (hojasIgnoradas.isNotEmpty) {
-      b.write('\n⚠ Pestañas ignoradas (nombre no reconocido): '
-          '${hojasIgnoradas.join(', ')}');
-    }
-    if (errores.isNotEmpty) b.write('\n✗ ${errores.length} fila(s) con error');
-    return b.toString();
   }
 }
 
@@ -116,7 +107,7 @@ bool _celdaBool(List<Data?> fila, Map<String, int> cols, String nombre) {
 
 // ── Exportar ────────────────────────────────────────────────────────────────
 
-Future<Uint8List> exportarCatalogosExcel(AppDatabase db) async {
+Future<Uint8List> exportarCatalogosExcel(AppDatabase db, {Textos? l}) async {
   final libro = Excel.createExcel();
   final porDefecto = libro.getDefaultSheet();
 
@@ -202,14 +193,15 @@ Future<Uint8List> exportarCatalogosExcel(AppDatabase db) async {
   }
 
   final bytes = libro.save();
-  if (bytes == null) throw 'No se pudo generar el Excel.';
+  if (bytes == null) throw (l ?? textosEspanol).noSePudoGenerarExcel;
   return Uint8List.fromList(bytes);
 }
 
 // ── Reimportar ──────────────────────────────────────────────────────────────
 
 Future<ResultadoImportCatalogos> importarCatalogosExcel(
-    AppDatabase db, Uint8List bytes) async {
+    AppDatabase db, Uint8List bytes, {Textos? l}) async {
+  final textos = l ?? textosEspanol;
   final libro = Excel.decodeBytes(bytes);
   final res = ResultadoImportCatalogos();
 
@@ -243,7 +235,7 @@ Future<ResultadoImportCatalogos> importarCatalogosExcel(
       try {
         await fn(fila, cols, _celdaInt(fila, cols, 'id'));
       } catch (e) {
-        res.errores.add('$nombre fila ${f + 1}: $e');
+        res.errores.add(textos.errorFilaDetalle(nombre, f + 1, '$e'));
       }
     }
   }

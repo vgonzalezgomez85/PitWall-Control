@@ -3644,4 +3644,1596 @@ class TextosCa extends Textos {
   String bonifLimiteTope(int tope) {
     return ', limitat al topall $tope';
   }
+
+  @override
+  String get importarPilotosFinalizado =>
+      'Importar pilots d\'un campionat finalitzat';
+
+  @override
+  String get importarPilotosFinalizadoAyuda =>
+      'Porta els seus pilots amb el saldo de tancament com a crèdits inicials.';
+
+  @override
+  String get noImportar => 'No importar';
+
+  @override
+  String tesoreriaNoCuadra(String suma, String pagat) {
+    return 'Tresoreria: Coordinadora + Club han de sumar el Pagat ($suma ≠ $pagat).';
+  }
+
+  @override
+  String bonifCierrePregunta(String tope) {
+    return 'Has marcat el campionat com a finalitzat.\n\nEs regularitzarà el saldo de cada pilot que hagi competit: saldo = mín(saldo actual + bonificació segons categoria i nombre de curses, $tope). Cada ajust queda registrat com un moviment que indica la bonificació aplicada.\n\nImportant: la bonificació fa servir la categoria de tancament (revisa-la abans a Crèdits → Revisió de categories si hi ha promocions o descensos).\n\nAplicar-la ara?';
+  }
+
+  @override
+  String get ahoraNo => 'Ara no';
+
+  @override
+  String get eliminarCampeonato => 'Eliminar campionat';
+
+  @override
+  String eliminarCampeonatoTexto(String nombre) {
+    return 'Eliminar \"$nombre\"?\n\nS\'esborraran també les seves proves, tandes, inscripcions, resultats, verificacions i pagaments. No es pot desfer.';
+  }
+
+  @override
+  String get nuevoCampeonato => 'Nou campionat';
+
+  @override
+  String get editarCampeonato => 'Editar campionat';
+
+  @override
+  String get obligatoriosAviso =>
+      'Obligatori (*): nom, almenys una copa i el tipus de motor. La resta es pot completar després.';
+
+  @override
+  String get datosBasicos => 'Dades bàsiques';
+
+  @override
+  String get nombreCampeonatoObligatorio => 'Nom del campionat *';
+
+  @override
+  String get nombreCampeonatoEjemplo =>
+      'Ex.: Lliga 2026, Individual LMP-HYP-GT3 Tardor';
+
+  @override
+  String get formato => 'Format';
+
+  @override
+  String get formatoAyuda =>
+      'Parelles = 2 pilots per equip. Individual = 1 pilot';
+
+  @override
+  String get formatoParejas => 'Parelles';
+
+  @override
+  String get formatoIndividual => 'Individual';
+
+  @override
+  String get anio => 'Any';
+
+  @override
+  String get anioInvalido => 'Any invàlid';
+
+  @override
+  String get activarCampeonatoAlCrear => 'Activar aquest campionat en crear-lo';
+
+  @override
+  String get campeonatoVisible => 'Campionat visible';
+
+  @override
+  String get campeonatoVisibleAyuda =>
+      'Només els campionats visibles surten al selector';
+
+  @override
+  String get clubOrgAyudaExportaciones =>
+      'Apareix a la capçalera de les exportacions (PDF de tandes, verificacions, classificació i crèdits).';
+
+  @override
+  String get categoriasCopasObligatorio => 'Categories / copes *';
+
+  @override
+  String get seleccionaCopasTexto =>
+      'Selecciona les que es fan servir en aquest campionat. Poden ser una de sola (p. ex. \"Grup C\") o diverses (p. ex. \"LMP + HYP + GT3\").';
+
+  @override
+  String get anadirNuevaCategoria => 'Afegir nova categoria';
+
+  @override
+  String get anadirNuevaCategoriaAyuda => 'Si no la trobes a dalt';
+
+  @override
+  String get motorObligatorio => 'Motor *';
+
+  @override
+  String get rangoMotorCampeonatoTexto =>
+      'Rang de números de motor que l\'organització sorteja entre els equips a cada prova. Deixa\'l buit si no feu servir sorteig.';
+
+  @override
+  String get creditosYTesoreria => 'Crèdits i tresoreria';
+
+  @override
+  String get creditosTesoreriaAyuda =>
+      'Activa\'ls només si el campionat els fa servir; si no, les seves pantalles s\'amaguen del menú.';
+
+  @override
+  String get usaCreditos => 'Fa servir sistema de crèdits (handicap)';
+
+  @override
+  String get usaCreditosAyuda =>
+      'Sistema d\'handicap per crèdits. Apaga\'l si el campionat no el fa servir.';
+
+  @override
+  String get topeRegularizacion => 'Topall regularització crèdits';
+
+  @override
+  String get topeRegularizacionAyuda =>
+      'Màxim de crèdits en regularitzar al tancament de temporada';
+
+  @override
+  String get numeroPositivo => 'Número positiu';
+
+  @override
+  String get gestionaTesoreria => 'Gestiona tresoreria (quotes/pagaments)';
+
+  @override
+  String get gestionaTesoreriaAyuda =>
+      'Apaga\'l si aquest campionat no controla els diners.';
+
+  @override
+  String get pagatTexto =>
+      'PAGAT és la quota total. APORTACIÓ COORDINADORA + APORTACIÓ CLUB han de sumar el PAGAT (és el desglossament d\'on va el diner).';
+
+  @override
+  String get pagatObligatorio => 'Pagat (€) *';
+
+  @override
+  String get coordinadoraEurParentesis => 'Coordinadora (€)';
+
+  @override
+  String get clubEurParentesis => 'Club (€)';
+
+  @override
+  String get indicaLaCuota => 'Indica la quota';
+
+  @override
+  String get numeroNoValido => 'Número no vàlid';
+
+  @override
+  String get masOpcionesPuntuacion =>
+      'Més opcions: puntuació, verificació i PDF';
+
+  @override
+  String get puntuacion => 'Puntuació';
+
+  @override
+  String get numeroDescartes => 'Nombre de descarts';
+
+  @override
+  String get numeroDescartesAyuda =>
+      'Quantes proves pitjors es descarten al pilot';
+
+  @override
+  String get entreCeroYCinco => 'Entre 0 i 5';
+
+  @override
+  String get tablaDePuntosAyuda => 'Punts per posició a cada prova';
+
+  @override
+  String get verificacionAyuda =>
+      'Amplada d\'eix, cotxes i fabricants que es comproven en verificar.';
+
+  @override
+  String get anchuraEjeCategoriasAyuda =>
+      'Amplada màxima d\'eix (mm) per categoria. Deixa-ho buit si en aquesta copa no es comprova.';
+
+  @override
+  String get pesoMinCreditos => 'Pes mínim i crèdits en aquest campionat';
+
+  @override
+  String get pesoMinCampeonato => 'Pes mínim en aquest campionat';
+
+  @override
+  String get pesoMinCampeonatoAyuda =>
+      'Fixa els valors dels cotxes perquè els canvis del catàleg no afectin aquest campionat.';
+
+  @override
+  String get marcaPdf => 'Marca als PDF (opcional)';
+
+  @override
+  String get marcaPdfTexto =>
+      'Títol de capçalera i lema del peu a les exportacions (PDF) d\'AQUEST campionat. Si ho deixes buit, es fa servir un valor per defecte.';
+
+  @override
+  String get tituloCabecera => 'Títol de capçalera';
+
+  @override
+  String get tituloCabeceraEjemplo => 'Ex.: PITWALL o el nom del teu club';
+
+  @override
+  String get lemaPie => 'Lema del peu';
+
+  @override
+  String get lemaPieEjemplo => 'Ex.: el teu club · localitat';
+
+  @override
+  String get campeonatoFinalizadoTitulo => 'Campionat finalitzat';
+
+  @override
+  String get campeonatoFinalizadoAyuda =>
+      'Temporada tancada: la classificació ordena per nets, s\'habilita la bonificació de tancament i les seves verificacions queden bloquejades (només lectura).';
+
+  @override
+  String get campeonatos => 'Campionats';
+
+  @override
+  String get activar => 'Activar';
+
+  @override
+  String anioTexto(int anio) {
+    return 'Any $anio';
+  }
+
+  @override
+  String descartesTexto(int n) {
+    return 'Descarts: $n';
+  }
+
+  @override
+  String get cochesDelCampeonato => 'Cotxes del campionat';
+
+  @override
+  String get fijarValoresCatalogo => 'Fixar els valors actuals del catàleg';
+
+  @override
+  String get volverTodosAlCatalogo => 'Tornar tots al catàleg';
+
+  @override
+  String get volverAlCatalogo => 'Tornar al catàleg';
+
+  @override
+  String get volverAlCatalogoTexto =>
+      'S\'esborren els valors fixats en aquest campionat i tots els cotxes tornen a fer servir el pes mínim i els crèdits del catàleg.\n\nLes verificacions ja validades no canvien: guarden el reglament amb què es van verificar.';
+
+  @override
+  String valorNoValidoEn(String coche) {
+    return 'Valor no vàlid a $coche.';
+  }
+
+  @override
+  String get buscarCoche => 'Cercar cotxe';
+
+  @override
+  String get pesoMinG => 'Pes mín. (g)';
+
+  @override
+  String fijadosCoches(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n cotxes',
+      one: '1 cotxe',
+    );
+    return 'Fixats els valors del catàleg en $_temp0.';
+  }
+
+  @override
+  String get aunNoHayHistorial => 'Encara no hi ha historial.';
+
+  @override
+  String get cochesYaFijados =>
+      'Tots els cotxes ja tenien els seus valors fixats.';
+
+  @override
+  String get yCreditos => ' i crèdits';
+
+  @override
+  String pesoMinCochesTexto(String creditos, String campeonato) {
+    return 'Pes mínim$creditos de cada cotxe a $campeonato. Buit = es fa servir el valor del catàleg. El que fixis aquí no canvia encara que després es modifiqui el catàleg (p. ex. per a la temporada següent).';
+  }
+
+  @override
+  String get verifsValidadasNoCambian =>
+      'Les verificacions validades no canvien: guarden el reglament amb què es van verificar.';
+
+  @override
+  String get noHayCochesConCopas =>
+      'No hi ha cotxes del catàleg amb les copes d\'aquest campionat.';
+
+  @override
+  String get indicaDireccionPitwall => 'Indica l\'adreça de PitWall.';
+
+  @override
+  String errorAlPedirCarreras(String codigo) {
+    return 'Error $codigo en demanar les curses.';
+  }
+
+  @override
+  String errorAlPedirResultados(String codigo) {
+    return 'Error $codigo en demanar els resultats.';
+  }
+
+  @override
+  String respuestaNoReconocida(String schema) {
+    return 'Resposta no reconeguda ($schema).';
+  }
+
+  @override
+  String get pinIncorrecto => 'PIN incorrecte o dispositiu no autoritzat.';
+
+  @override
+  String errorCodigoHttp(String codigo) {
+    return 'Error $codigo.';
+  }
+
+  @override
+  String noSePudoConectarPitwall(String detalle) {
+    return 'No s\'ha pogut connectar amb PitWall: $detalle';
+  }
+
+  @override
+  String verificacionesEnviadas(String n, String nombre) {
+    return '$n verificació(ns) enviada(es) a $nombre.';
+  }
+
+  @override
+  String get idiomaDelPdf => 'Idioma del PDF';
+
+  @override
+  String get imagenes => 'Imatges';
+
+  @override
+  String difValor(String titulo, String antes, String unidad, String ahora) {
+    return '$titulo: $antes$unidad (ara $ahora$unidad)';
+  }
+
+  @override
+  String difAnadidas(String lista) {
+    return 'afegides: $lista';
+  }
+
+  @override
+  String difQuitadas(String lista) {
+    return 'tretes: $lista';
+  }
+
+  @override
+  String difNombreCoche(String antes, String ahora) {
+    return 'Nom del cotxe: $antes (ara $ahora)';
+  }
+
+  @override
+  String get tituloPesoMinimo => 'Pes mínim';
+
+  @override
+  String get tituloCreditosCoche => 'Crèdits del cotxe';
+
+  @override
+  String get tituloRpmMax => 'RPM màx. del motor';
+
+  @override
+  String get tituloImanMax => 'Imant màx. del motor';
+
+  @override
+  String get tituloEjeDelMax => 'Eix davanter màx.';
+
+  @override
+  String get tituloEjeTraMax => 'Eix posterior màx.';
+
+  @override
+  String get tituloFabricantesPermitidos => 'Fabricants permesos';
+
+  @override
+  String get tituloMarcasCatalogo => 'Marques del catàleg';
+
+  @override
+  String get tituloLlantasDel => 'Llandes davanteres';
+
+  @override
+  String get tituloLlantasTra => 'Llandes posteriors';
+
+  @override
+  String get tituloBancadas => 'Bancades';
+
+  @override
+  String get tituloNeumaticos => 'Pneumàtics';
+
+  @override
+  String get coches => 'Cotxes';
+
+  @override
+  String get marcas => 'Marques';
+
+  @override
+  String get llantas => 'Llandes';
+
+  @override
+  String get engranajes => 'Engranatges';
+
+  @override
+  String get motores => 'Motors';
+
+  @override
+  String get bancadas => 'Bancades';
+
+  @override
+  String get neumaticos => 'Pneumàtics';
+
+  @override
+  String get copas => 'Copes';
+
+  @override
+  String get clubs => 'Clubs';
+
+  @override
+  String get llanta => 'Llanda';
+
+  @override
+  String get engranaje => 'Engranatge';
+
+  @override
+  String get sinCopaCategoria => 'Sense copa/categoria (no es pot fer servir)';
+
+  @override
+  String copasEtiqueta(String copas) {
+    return 'Copes: $copas';
+  }
+
+  @override
+  String pesoYCreditos(String peso, String creditos) {
+    return 'Pes mín ${peso}g  ·  Crèd $creditos';
+  }
+
+  @override
+  String get todasLasCopas => 'Totes les copes';
+
+  @override
+  String get todas => 'Totes';
+
+  @override
+  String get sinCoincidencias => 'Sense coincidències';
+
+  @override
+  String get sinCoches => 'Sense cotxes';
+
+  @override
+  String get sinMarcas => 'Sense marques';
+
+  @override
+  String get sinLlantas => 'Sense llandes';
+
+  @override
+  String get sinEngranajes => 'Sense engranatges';
+
+  @override
+  String get sinMotores => 'Sense motors';
+
+  @override
+  String get sinBancadas => 'Sense bancades';
+
+  @override
+  String get sinChasis => 'Sense xassís';
+
+  @override
+  String get sinNeumaticos => 'Sense pneumàtics';
+
+  @override
+  String get sinCopas => 'Sense copes';
+
+  @override
+  String get sinClubs => 'Sense clubs';
+
+  @override
+  String get buscarCochePuntos => 'Cercar cotxe…';
+
+  @override
+  String get sinMedidas => 'Sense mesures';
+
+  @override
+  String get sinReferencia => 'Sense referència';
+
+  @override
+  String get calculandoCambiosSubir => 'Calculant els canvis per pujar…';
+
+  @override
+  String get todoCatalogoExcel => 'Tot el catàleg en Excel';
+
+  @override
+  String get exportarTodoExcel => 'Exportar-ho tot a Excel';
+
+  @override
+  String get unaPestanaPorCatalogo => 'Una pestanya per catàleg';
+
+  @override
+  String get importarExcelEditado => 'Importar l\'Excel editat';
+
+  @override
+  String get actualizaPorIdCreaNuevos => 'Actualitza per ID i crea els nous';
+
+  @override
+  String bajarDesdeDriveCon(String hoja, String pestana) {
+    return 'Baixar des de Drive ($hoja · $pestana)';
+  }
+
+  @override
+  String get subirMisCambiosSheet => 'Pujar els meus canvis al Sheet';
+
+  @override
+  String get importarPestanaActual => 'Importar la pestanya actual';
+
+  @override
+  String get importarCatalogosExcelTitulo => 'Importar catàlegs des d\'Excel';
+
+  @override
+  String get importarCatalogosExcelTexto =>
+      'S\'actualitzaran les files que tinguin ID i es crearan les que no en tinguin.\n\nNo s\'esborra res: les fitxes que treguis del full continuaran a l\'app.';
+
+  @override
+  String resumenCreadosActualizados(int creados, int actualizados) {
+    return '✓ Creats: $creados · Actualitzats: $actualizados';
+  }
+
+  @override
+  String catalogoImportadoLinea(String nombre, int creados, int actualizados) {
+    String _temp0 = intl.Intl.pluralLogic(
+      creados,
+      locale: localeName,
+      other: '$creados nous',
+      one: '1 nou',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      actualizados,
+      locale: localeName,
+      other: '$actualizados actualitzats',
+      one: '1 actualitzat',
+    );
+    return '• $nombre: $_temp0, $_temp1';
+  }
+
+  @override
+  String pestanasIgnoradasAviso(String lista) {
+    return '⚠ Aquestes pestanyes no s\'han importat perquè el seu nom no coincideix amb cap catàleg:\n$lista\nNo reanomenis les pestanyes del fitxer exportat.';
+  }
+
+  @override
+  String erroresEtiqueta(String lista) {
+    return 'Errors:\n$lista';
+  }
+
+  @override
+  String eliminarFichaTexto(String nombre) {
+    return 'Eliminar \"$nombre\"?';
+  }
+
+  @override
+  String vacioPulsaAnadir(String texto) {
+    return '$texto.\nPrem el + per afegir.';
+  }
+
+  @override
+  String get copasDondeAplica => 'Copes on s\'aplica';
+
+  @override
+  String get copasSinMarcarAviso =>
+      'Sense marcar = no es podrà fer servir en cap copa.';
+
+  @override
+  String get copasMarcarAviso => 'Marca només les copes on és vàlid.';
+
+  @override
+  String get nuevoCoche => 'Cotxe nou';
+
+  @override
+  String get editarCoche => 'Editar cotxe';
+
+  @override
+  String get nombreCompletoObligatorio => 'Nom complet *';
+
+  @override
+  String get nombreCompletoEjemplo => 'Ex: SCALEAUTO-BMW M8 GTE';
+
+  @override
+  String get marcaObligatoria => 'Marca *';
+
+  @override
+  String get modeloObligatorio => 'Model *';
+
+  @override
+  String get pesoMinimoObligatorio => 'Pes mínim (g) *';
+
+  @override
+  String get pesoMinimoAyuda =>
+      'No canvia les verificacions validades ni els campionats amb valors fixats';
+
+  @override
+  String get creditosCoche => 'Crèdits cotxe';
+
+  @override
+  String get creditosCocheAyuda => 'Negatiu o positiu';
+
+  @override
+  String get galeria => 'Galeria';
+
+  @override
+  String get camara => 'Càmera';
+
+  @override
+  String get quitarFoto => 'Treure la foto';
+
+  @override
+  String get nuevaMarca => 'Marca nova';
+
+  @override
+  String get editarMarca => 'Editar marca';
+
+  @override
+  String get codigoObligatorio => 'Codi *';
+
+  @override
+  String get marcaCodigoEjemplo => 'Ex: SIT, SCA, SLP';
+
+  @override
+  String get nuevaLlanta => 'Llanda nova';
+
+  @override
+  String get editarLlanta => 'Editar llanda';
+
+  @override
+  String get llantaDimensionEjemplo => 'Ex: 15,8 x 8 PL';
+
+  @override
+  String get delantera => 'Davantera';
+
+  @override
+  String get trasera => 'Posterior';
+
+  @override
+  String get ambas => 'Totes dues';
+
+  @override
+  String get nuevoEngranaje => 'Engranatge nou';
+
+  @override
+  String get editarEngranaje => 'Editar engranatge';
+
+  @override
+  String get diametroEjemplo => 'Ex: 6,5';
+
+  @override
+  String get dientesEjemplo => 'Ex: 12 pinyó, 28 corona';
+
+  @override
+  String nDientes(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n dents',
+      one: '1 dent',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get nuevoMotor => 'Motor nou';
+
+  @override
+  String get editarMotor => 'Editar motor';
+
+  @override
+  String get motorIdentificadorAyuda => 'Identificador o model';
+
+  @override
+  String get nuevaBancada => 'Bancada nova';
+
+  @override
+  String get editarBancada => 'Editar bancada';
+
+  @override
+  String get bancadaEjemplo => 'Ex: Slot.it 1,0 carboni';
+
+  @override
+  String get nuevoNeumatico => 'Pneumàtic nou';
+
+  @override
+  String get editarNeumatico => 'Editar pneumàtic';
+
+  @override
+  String get neumaticoEjemplo => 'Ex: AS25 19,0 NEGRE';
+
+  @override
+  String get referenciaOpcional => 'Referència (opcional)';
+
+  @override
+  String get copaEjemplo => 'Ex: GT, GT2, LMP, HYP';
+
+  @override
+  String get clubNombreEjemplo => 'Ex: EL SOT, GASCLAVAT, SLOTMANIA';
+
+  @override
+  String get chasisEjemplo => 'Ex: INJECCIÓ PLÀSTIC NEGRE, 3D';
+
+  @override
+  String get nuevoChasis => 'Xassís nou';
+
+  @override
+  String get nuevaCopa => 'Copa nova';
+
+  @override
+  String get nuevoClub => 'Club nou';
+
+  @override
+  String importarTitulo(String titulo) {
+    return 'Importar $titulo';
+  }
+
+  @override
+  String pasoEligeLaFuente(int n) {
+    return '$n. Tria la font';
+  }
+
+  @override
+  String get archivoCsvExcel => 'Fitxer CSV / Excel';
+
+  @override
+  String get sustituirCatalogoExistente => 'Substituir el catàleg existent';
+
+  @override
+  String get sustituirCatalogoExistenteTexto =>
+      'Si ho marques, primer es buida la taula i després s\'importa.';
+
+  @override
+  String importarNFilas(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Importar $n files',
+      one: 'Importar 1 fila',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get vincularSinImportar => 'Vincular sense importar';
+
+  @override
+  String get sustituirCatalogoTitulo => 'Substituir el catàleg';
+
+  @override
+  String get anadirCatalogoTitulo => 'Afegir al catàleg';
+
+  @override
+  String sustituirCatalogoTexto(int n, int m) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Es buidaran les $n fitxes actuals',
+      one: 'Es buidarà la fitxa actual',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      m,
+      locale: localeName,
+      other: 'les $m files del full',
+      one: 'la fila del full',
+    );
+    return '$_temp0 abans d\'importar $_temp1.\n\nEs perden els ID de sincronització, les fotos locals dels cotxes i els valors fixats als campionats. El que només existeixi a l\'app i no sigui al full desapareix.';
+  }
+
+  @override
+  String anadirCatalogoTexto(int n, int m) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'S\'afegiran les $n files del full',
+      one: 'S\'afegirà la fila del full',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      m,
+      locale: localeName,
+      other: 'les $m fitxes que ja tens',
+      one: 'la fitxa que ja tens',
+    );
+    return '$_temp0 a $_temp1.\n\nLes files que ja existeixin (mateix nom o clau) quedaran duplicades. Si només vols connectar el full per portar canvis, cancel·la i fes servir «Vincular sense importar».';
+  }
+
+  @override
+  String get siSustituir => 'Sí, substituir';
+
+  @override
+  String get siAnadir => 'Sí, afegir';
+
+  @override
+  String get hojaVinculadaTitulo => 'Full vinculat';
+
+  @override
+  String hojaVinculadaTexto(String pestana) {
+    return 'No s\'ha importat res ni s\'ha tocat cap fitxa del catàleg.\n\nA la pestanya «$pestana» ja apareix el botó de sincronització: «Actualitzar des de Drive» portarà els canvis del full aparellant per la columna ID (si n\'hi ha) o per nom, sense duplicar les fitxes que ja tens.';
+  }
+
+  @override
+  String errorAlVincular(String detalle) {
+    return 'Error en vincular: $detalle';
+  }
+
+  @override
+  String resumenImportacionCatalogo(int ok, int saltados) {
+    return '✓ Afegits: $ok\n✗ Saltats: $saltados';
+  }
+
+  @override
+  String get hojaVinculadaAviso =>
+      '\n\nFull vinculat: a partir d\'ara prem \"Actualitzar des de Drive\" a la pestanya del catàleg per portar canvis.';
+
+  @override
+  String get eligeHojaGoogle => 'Tria el full de Google';
+
+  @override
+  String modificadaFecha(DateTime fecha) {
+    final intl.DateFormat fechaDateFormat = intl.DateFormat.yMd(localeName);
+    final String fechaString = fechaDateFormat.format(fecha);
+
+    return 'Modificada: $fechaString';
+  }
+
+  @override
+  String avisoCatalogoLlenoIntro(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n fitxes',
+      one: '1 fitxa',
+    );
+    return 'Aquest catàleg ja té $_temp0 a l\'app.';
+  }
+
+  @override
+  String get avisoCatalogoLlenoImportar =>
+      '• «Importar» afegirà les files del full com a noves: les que ja existeixin quedaran duplicades.';
+
+  @override
+  String get avisoCatalogoLlenoVincular =>
+      '• Si només vols connectar el full, fes servir «Vincular sense importar»; després, «Actualitzar des de Drive» porta els canvis sense duplicar.';
+
+  @override
+  String get avisoCatalogoLlenoSustituir =>
+      '• «Substituir el catàleg existent» buida el catàleg actual: es perden els ID de sincronització, les fotos locals i els valors fixats als campionats.';
+
+  @override
+  String get ayudaCatalogoCoches =>
+      'CSV/Excel o Google Sheets amb columnes: Nom, Marca, Model, Pes mínim, Crèdits, Copa(es) (separades per coma; buit = totes).';
+
+  @override
+  String get ayudaCatalogoMarcas => 'CSV/Excel amb columnes: Codi, Nom.';
+
+  @override
+  String get ayudaCatalogoLlantas =>
+      'CSV/Excel amb columnes: Dimensió, Tipus (DELANTERA / TRASERA / AMBAS).';
+
+  @override
+  String get ayudaCatalogoEngranajes =>
+      'CSV/Excel o Google Sheets amb columnes: Marca, Dents, Tipus (PIÑÓN / CORONA).';
+
+  @override
+  String get ayudaCatalogoMotores =>
+      'CSV/Excel o Google Sheets amb columnes: Motor, RPM, Gauss, Copa(es) (separades per coma; buit = totes).';
+
+  @override
+  String get ayudaCatalogoSimple => 'CSV/Excel amb una columna: Nom.';
+
+  @override
+  String get ayudaCatalogoNeumaticos =>
+      'CSV/Excel amb columnes: Nom, Referència (opcional).';
+
+  @override
+  String get modeloCampo => 'Model';
+
+  @override
+  String get pesoMinimoCampo => 'Pes mínim *';
+
+  @override
+  String get creditosCampo => 'Crèdits';
+
+  @override
+  String get copasCampo => 'Copa(es)';
+
+  @override
+  String get fotoEnlaceDrive => 'Foto (enllaç de Drive)';
+
+  @override
+  String get tipoPinonCorona => 'Tipus (pinyó/corona)';
+
+  @override
+  String get referenciaCampo => 'Referència';
+
+  @override
+  String get dimensionObligatoria => 'Dimensió *';
+
+  @override
+  String get tipoCampo => 'Tipus';
+
+  @override
+  String get dientesObligatorio => 'Dents *';
+
+  @override
+  String get subirAlSheet => 'Pujar al Sheet';
+
+  @override
+  String subidoSheetResumen(int anadidas, int actualizadas, int borradas) {
+    String _temp0 = intl.Intl.pluralLogic(
+      anadidas,
+      locale: localeName,
+      other: '$anadidas afegides',
+      one: '1 afegida',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      actualizadas,
+      locale: localeName,
+      other: '$actualizadas actualitzades',
+      one: '1 actualitzada',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      borradas,
+      locale: localeName,
+      other: '$borradas esborrades',
+      one: '1 esborrada',
+    );
+    return '✓ Pujat al Sheet: $_temp0, $_temp1, $_temp2.';
+  }
+
+  @override
+  String fotosSinSubir(String lista) {
+    return '\n✗ Fotos sense pujar: $lista';
+  }
+
+  @override
+  String errorAlSubir(String detalle) {
+    return 'Error en pujar: $detalle';
+  }
+
+  @override
+  String nadaQueSubir(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n files idèntiques',
+      one: '1 fila idèntica',
+    );
+    return 'No hi ha res per pujar: el full ja coincideix amb l\'app.\n\n($_temp0)';
+  }
+
+  @override
+  String get subidaIntro => 'Es pujaran els teus canvis al Google Sheet.';
+
+  @override
+  String filasNuevasResumen(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '· $n files noves (s\'afegeixen)',
+      one: '· 1 fila nova (s\'afegeix)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String conDiferenciasResumen(int n) {
+    return '· $n amb diferències (tria quines trepitgen el full)';
+  }
+
+  @override
+  String borradasResumen(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other:
+          '· $n esborrades a l\'app, pendents d\'esborrar al full (tria quines)',
+      one: '· 1 esborrada a l\'app, pendent d\'esborrar al full (tria quina)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String identicasResumen(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '· $n idèntiques (s\'ignoren)',
+      one: '· 1 idèntica (s\'ignora)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get borradasEnAppPregunta =>
+      'Esborrades a l\'app — també les esborrem del full?';
+
+  @override
+  String get seBorraraEsaFila => 'S\'esborrarà aquesta fila del Sheet';
+
+  @override
+  String get seDejaEnSheet => 'Es deixa al Sheet (no s\'esborra)';
+
+  @override
+  String get filasNuevasTitulo => 'Files noves';
+
+  @override
+  String get seAnadiraAlSheet => 'S\'afegirà al Sheet';
+
+  @override
+  String get diferenciasConflictos => 'Diferències (conflictes)';
+
+  @override
+  String subirNAlSheet(int n) {
+    return 'Pujar $n al Sheet';
+  }
+
+  @override
+  String get seSubiraTuVersion => 'Es pujarà la teva versió (trepitja el full)';
+
+  @override
+  String get seMantieneSheet => 'Es manté el que hi ha al Sheet';
+
+  @override
+  String appValor(String valor) {
+    return 'app: $valor';
+  }
+
+  @override
+  String sheetValor(String valor) {
+    return 'full: $valor';
+  }
+
+  @override
+  String get vacioParentesis => '(buit)';
+
+  @override
+  String get plantillasIntro =>
+      'Descarrega la plantilla, omple-la amb les teves dades (esborra la fila d\'exemple) i després importa-la des de la secció corresponent. La primera fila són les columnes: no la canviïs.';
+
+  @override
+  String get descargar => 'Descarregar';
+
+  @override
+  String get plantillaPilotos => 'Pilots';
+
+  @override
+  String get plantillaPilotosTexto => 'Per importar pilots a un campionat.';
+
+  @override
+  String get plantillaEquipos => 'Equips (parelles)';
+
+  @override
+  String get plantillaEquiposTexto =>
+      'Equips amb un o dos pilots. Deixa en blanc el pilot 2 si és individual.';
+
+  @override
+  String get plantillaEquiposResistencia => 'Equips de resistència (24H/12H)';
+
+  @override
+  String get plantillaEquiposResistenciaTexto =>
+      'Equips de 3 a 6 pilots. Deixa en blanc els que no facis servir. La categoria de cada pilot es pren de la seva fitxa ja importada.';
+
+  @override
+  String get plantillaInscripciones => 'Inscripcions a una prova';
+
+  @override
+  String get plantillaInscripcionesTexto =>
+      'Equips que s\'inscriuen a una prova, amb la seva preferència de dia.';
+
+  @override
+  String get plantillaParticipantesVerificacion =>
+      'Participants de verificació lliure';
+
+  @override
+  String get plantillaParticipantesVerificacionTexto =>
+      'Participants d\'una sessió de verificació lliure. Pilot 2 i Equip són opcionals; si la copa va buida es tria en importar.';
+
+  @override
+  String get plantillaCoches => 'Catàleg · Cotxes';
+
+  @override
+  String get plantillaCochesTexto => 'Models de cotxe del catàleg.';
+
+  @override
+  String get plantillaMotores => 'Catàleg · Motors';
+
+  @override
+  String get plantillaMotoresTexto =>
+      'Motors homologats (RPM i gauss de referència).';
+
+  @override
+  String get plantillaMarcas => 'Catàleg · Marques';
+
+  @override
+  String get plantillaMarcasTexto => 'Marques (codi curt + nom).';
+
+  @override
+  String get plantillaLlantas => 'Catàleg · Llandes';
+
+  @override
+  String get plantillaLlantasTexto =>
+      'Dimensió i tipus (DELANTERA / TRASERA / AMBAS).';
+
+  @override
+  String get plantillaEngranajes => 'Catàleg · Engranatges';
+
+  @override
+  String get plantillaEngranajesTexto =>
+      'Pinyons i corones (tipus, diàmetre, dents).';
+
+  @override
+  String get pegaClientIdSecret =>
+      'Enganxa el Client ID i el Client Secret abans de desar.';
+
+  @override
+  String get clientIdNoValido =>
+      'El Client ID no sembla vàlid (ha d\'acabar en \".apps.googleusercontent.com\"). Comprova que l\'hagis copiat sencer de Google Cloud Console.';
+
+  @override
+  String get credencialesGuardadasAviso =>
+      'Credencials desades. Ara prem \"Connecta amb Google\".';
+
+  @override
+  String get abriendoNavegadorAutoriza =>
+      'Obrint el navegador… autoritza i torna aquí.';
+
+  @override
+  String get conectadoGoogleOk => 'Connectat correctament amb Google.';
+
+  @override
+  String get desconectarGoogle => 'Desconnecta Google';
+
+  @override
+  String get desconectarGoogleTexto =>
+      'L\'app deixarà de llegir els teus fulls fins que et tornis a connectar. Continuar?';
+
+  @override
+  String get desconectar => 'Desconnecta';
+
+  @override
+  String get credencialesProyectoGoogleCloud =>
+      'Credencials del projecte Google Cloud';
+
+  @override
+  String get credencialesProyectoTexto =>
+      'Aquestes credencials es creen una sola vegada al teu compte de Google Cloud. Prem \"Com aconseguir-les\" per a una guia pas a pas.';
+
+  @override
+  String get comoConseguirlas => 'Com aconseguir-les';
+
+  @override
+  String get guardarCredenciales => 'Desa les credencials';
+
+  @override
+  String get permisosSolicitados => 'Permisos sol·licitats';
+
+  @override
+  String get permisosTexto =>
+      '• Llegir els teus fulls de càlcul (Google Sheets — només lectura)\n• Llistar fitxers de Drive (Google Drive — només lectura)\n• Crear i modificar el fitxer de còpia de l\'app (Drive — només el fitxer de l\'app)\n\nPitWall Control no toca cap fitxer teu, només el que crea ell.';
+
+  @override
+  String get copiaCompartidaDrive => 'Còpia compartida a Drive';
+
+  @override
+  String get copiaCompartidaDriveTexto =>
+      'Puja o baixa la base de dades per treballar entre diversos dispositius.';
+
+  @override
+  String get conectadoConGoogle => 'Connectat amb Google';
+
+  @override
+  String get sinConectar => 'Sense connectar';
+
+  @override
+  String get faltanCredencialesGoogle =>
+      'Falten credencials del projecte Google Cloud';
+
+  @override
+  String get conectarConGoogle => 'Connecta amb Google';
+
+  @override
+  String get conseguirCredenciales => 'Com aconseguir les credencials';
+
+  @override
+  String get conseguirCredencialesTexto =>
+      'Només es fa una vegada, és gratis i no demana targeta. Necessites el compte de Google que té els teus fulls i el teu Drive i uns 10 minuts.';
+
+  @override
+  String get verManualCapturas => 'Veure el manual amb captures';
+
+  @override
+  String get guiaPaso1Titulo => 'Crear un projecte';
+
+  @override
+  String get guiaPaso1Texto =>
+      'Entra a Google Cloud Console amb el teu compte de Google. A dalt, prem el selector de projectes → \"Projecte nou\". Nom: \"PitWall Control\". Prem \"Crea\" i comprova que quedi seleccionat.';
+
+  @override
+  String get abrirCloudConsole => 'Obre Cloud Console';
+
+  @override
+  String get guiaPaso2Titulo => 'Activar les dues API';
+
+  @override
+  String get guiaPaso2Texto =>
+      'Habilita \"Google Sheets API\" i també \"Google Drive API\" (prem \"Habilita\" a cadascuna). Si no, la connexió fallarà.';
+
+  @override
+  String get apiSheets => 'API Sheets';
+
+  @override
+  String get apiDrive => 'API Drive';
+
+  @override
+  String get pantallaDeConsentimiento => 'Pantalla de consentiment';
+
+  @override
+  String get guiaPaso3Texto =>
+      'A \"Google Auth Platform\" prem \"Comença\" i segueix l\'assistent: 1) nom \"PitWall Control\" i el teu correu d\'assistència; 2) Públic: tria \"Usuaris externs\" (\"Intern\" només val per a comptes d\'empresa); 3) el teu correu de contacte; 4) accepta la política de dades, \"Continua\" i \"Crea\".';
+
+  @override
+  String get guiaPaso4Titulo => 'Afegir el teu compte com a usuari de prova';
+
+  @override
+  String get guiaPaso4Texto =>
+      'Al menú lateral entra a \"Públic\" → \"Usuaris de prova\" → \"Add users\". Escriu el correu de Google amb el qual connectaràs Control (i el de qui més s\'hi connecti) i desa. Sense aquest pas Google dona l\'\"Error 403: access_denied\".';
+
+  @override
+  String get publico => 'Públic';
+
+  @override
+  String get guiaPaso5Titulo => 'Crear el client OAuth';
+
+  @override
+  String get guiaPaso5Texto =>
+      'A \"Clients\" prem \"Crea un client\". Tipus: \"Aplicació d\'escriptori\". Nom: \"PitWall Control Desktop\". Prem \"Crea\".';
+
+  @override
+  String get clientes => 'Clients';
+
+  @override
+  String get guiaPaso6Titulo => 'Copiar l\'ID i el secret';
+
+  @override
+  String get guiaPaso6Texto =>
+      'Apareix l\'ID de client (acaba en .apps.googleusercontent.com) i el secret. Copia\'ls i prem \"Baixa JSON\": Google només mostra el secret en aquest moment. Enganxa\'ls a la pantalla anterior, prem \"Desa les credencials\" i després \"Connecta amb Google\".';
+
+  @override
+  String get guiaPaso7Titulo => 'Autoritzar al navegador';
+
+  @override
+  String get guiaPaso7Texto =>
+      'Tria el compte del pas 4. Si surt \"Google no ha verificat aquesta aplicació\", prem \"Configuració avançada\" → \"Ves a PitWall Control (no segur)\", marca tots els permisos i \"Continua\".';
+
+  @override
+  String get avisoPrueba7Dias =>
+      'Perquè no caduqui als 7 dies: mentre l\'aplicació està en estat \"Prova\", Google tanca la sessió cada 7 dies. A \"Públic\" prem \"Publica l\'aplicació\" (passa a \"En producció\"); per a ús propi no necessita verificació.';
+
+  @override
+  String get cosasQueSuelenFallar => 'Coses que solen fallar:';
+
+  @override
+  String get pistaUsuariosPrueba =>
+      'Google bloqueja el compte amb el qual has entrat perquè l\'app està en mode \"Prova\" i aquest compte NO és a la llista d\'usuaris de prova. A Google Cloud Console → Google Auth Platform → Públic → \"Usuaris de prova\" → \"Add users\", afegeix aquest correu exacte. O prem \"Publica l\'aplicació\" en aquesta mateixa pantalla.';
+
+  @override
+  String get pistaCredencialEscritorio =>
+      'El tipus de credencial no és \"Aplicació d\'escriptori\". Torna a crear les credencials OAuth a Google Cloud Console triant \"Aplicació d\'escriptori\".';
+
+  @override
+  String get pistaClientIdSecreto =>
+      'Client ID o Client Secret incorrectes. Torna a copiar-los de Google Cloud Console (Credencials → el teu client OAuth) i enganxa\'ls sense espais.';
+
+  @override
+  String get pistaApisNoActivadas =>
+      'Les API de Google Sheets i/o Drive no estan activades al teu projecte. Ves a \"APIs i serveis → Biblioteca\", cerca \"Google Sheets API\" i \"Google Drive API\" i prem Habilita.';
+
+  @override
+  String get pistaNavegador =>
+      'L\'app no ha pogut obrir el navegador. Tanca aquesta finestra, espera 2 segons i torna-ho a provar.';
+
+  @override
+  String get pistaRed =>
+      'Problema de xarxa. Comprova que tens connexió a internet i torna-ho a provar.';
+
+  @override
+  String get pistaGuardarCredenciales =>
+      'No has desat el Client ID i el Client Secret. Omple els camps i prem \"Desa les credencials\" primer.';
+
+  @override
+  String get pistaCredencialPorDefecto =>
+      'Comprova que el tipus de credencials a Google Cloud Console és \"Aplicació d\'escriptori\" i que el teu correu està afegit com a usuari de prova a la pantalla de consentiment.';
+
+  @override
+  String get subirCopiaADrive => 'Puja la còpia a Drive';
+
+  @override
+  String get subirCopiaTexto =>
+      'Es pujarà una còpia actual al teu Drive com a \"pitwall-backup.zip\". Inclou la base de dades, les fotos de verificacions i la configuració del programa (credencials de Google, tema i preferències); mai la sessió connectada.\n\nSi ja hi havia una versió anterior, es reemplaça per la nova.\n\nContinuar?';
+
+  @override
+  String get restaurarTambienConfig =>
+      'Restaura també la configuració de la còpia';
+
+  @override
+  String get restaurarTambienConfigSub =>
+      'Credencials de Google, tema i preferències. Mai la sessió connectada.';
+
+  @override
+  String get siRestaurar => 'Sí, restaura';
+
+  @override
+  String get descargarYRestaurar => 'Baixa i restaura';
+
+  @override
+  String get descargarRestaurarTexto =>
+      'Es reemplaçarà la teva base de dades local amb la còpia que hi ha a Drive. ⚠️ Qualsevol canvi local que no hagis pujat es perdrà.\n\nDesprés hauràs de tancar i tornar a obrir l\'app.';
+
+  @override
+  String get copiaDePitwall => 'Còpia de PitWall';
+
+  @override
+  String get restaurarDesdeArchivo => 'Restaura des d\'un fitxer';
+
+  @override
+  String restaurarDesdeArchivoTexto(Object nombre) {
+    return 'Es reemplaçarà la teva base de dades local amb la còpia de «$nombre». ⚠️ Qualsevol canvi local que no hagis pujat es perdrà.\n\nPer a això no cal connexió amb Google.\n\nDesprés hauràs de tancar i tornar a obrir l\'app.';
+  }
+
+  @override
+  String get copiaActualEnDrive => 'Còpia actual a Drive';
+
+  @override
+  String get noHayCopiaDriveTexto =>
+      'Encara no hi ha cap còpia a Drive. Prem \"Puja la còpia\" per crear la primera.';
+
+  @override
+  String ultimaSubida(Object fecha) {
+    return 'Darrera pujada: $fecha';
+  }
+
+  @override
+  String tamanoKB(Object kb) {
+    return 'Mida: $kb KB';
+  }
+
+  @override
+  String get restaurarDesdeArchivoPuntos => 'Restaura des d\'un fitxer…';
+
+  @override
+  String get comoTrabajarEnEquipo => 'Com treballar en equip';
+
+  @override
+  String get trabajoEnEquipoTexto =>
+      '• En començar a treballar, prem \"Baixa\" per tenir la darrera versió.\n• En acabar els teus canvis, prem \"Puja\" perquè els altres els puguin rebre.\n• Si dues persones editen alhora, guanya qui puja l\'últim (no hi ha fusió automàtica). El més pràctic: coordinar qui edita en cada moment.';
+
+  @override
+  String get sinConexionGoogle => 'Sense connexió amb Google';
+
+  @override
+  String get sinConexionGoogleTexto =>
+      'Connecta\'t amb Google per poder pujar o baixar la còpia.\n\nTambé pots restaurar una còpia desada com a fitxer (.zip), sense connexió.';
+
+  @override
+  String get importarEquiposDesdeSheets => 'Importa equips des de Sheets';
+
+  @override
+  String get importacionEquiposAviso =>
+      'A partir d\'ara, prem \"Actualitza des de Drive\" a Equips.';
+
+  @override
+  String get conectaCuentaHojas =>
+      'Connecta el teu compte una sola vegada per poder llegir els fulls.';
+
+  @override
+  String nDeTotal(Object n, Object total) {
+    return '$n de $total';
+  }
+
+  @override
+  String hojaModificada(Object fecha) {
+    return 'Modificada: $fecha';
+  }
+
+  @override
+  String get importarDesdeGoogleSheets => 'Importa des de Google Sheets';
+
+  @override
+  String get importacionInscripcionesAviso =>
+      'A partir d\'ara, prem \"Actualitza des de Drive\" a Inscrits per portar noves respostes del formulari.';
+
+  @override
+  String get conectaCuentaGoogleForm =>
+      'Connecta el teu compte una sola vegada per poder llegir els fulls on arriben les respostes del Google Form.';
+
+  @override
+  String get diaPreferido => 'Dia preferit';
+
+  @override
+  String get asignaAlMenosColumnaPiloto =>
+      'Assigna com a mínim la columna del nom del pilot.';
+
+  @override
+  String get asignaAlMenosColumnaEquipo =>
+      'Assigna com a mínim la columna del nom de l\'equip.';
+
+  @override
+  String get importarPilotosDesdeSheets => 'Importa pilots des de Sheets';
+
+  @override
+  String get importacionPilotosAviso =>
+      'A partir d\'ara, prem \"Actualitza des de Drive\" a Pilots per portar canvis sense haver de tornar a configurar res.';
+
+  @override
+  String get detectadasAutomaticamente =>
+      'Detectades automàticament. Canvia-les si cal.';
+
+  @override
+  String diagLeidas(
+    Object columnas,
+    Object filas,
+    Object piloto,
+    Object primera,
+  ) {
+    return 'Llegides $filas files · $columnas columnes detectades · pilot=$piloto\n1a fila: $primera';
+  }
+
+  @override
+  String get diagNinguna => '(cap)';
+
+  @override
+  String get sinCampeonatoActivoAviso => 'Sense campionat actiu';
+
+  @override
+  String get sinPruebaAsignadaVinculo => 'Sense prova assignada al vincle';
+
+  @override
+  String resumenPilotosActualizados(Object nuevos, Object saltados, Object ya) {
+    return 'Nous: $nuevos · Inscrits al campionat: $ya · Saltats: $saltados';
+  }
+
+  @override
+  String resumenEquiposActualizados(Object nuevos, Object saltados) {
+    return 'Equips nous: $nuevos · Saltats: $saltados';
+  }
+
+  @override
+  String resumenCatalogoActualizado(
+    Object actualizados,
+    Object nuevos,
+    Object saltados,
+  ) {
+    return 'Nous: $nuevos · Actualitzats: $actualizados · Sense canvis: $saltados';
+  }
+
+  @override
+  String resumenFotos(Object n) {
+    return ' · Fotos: $n';
+  }
+
+  @override
+  String resumenFotosFallan(Object detalle, Object n) {
+    return ' (fallen $n: $detalle)';
+  }
+
+  @override
+  String resumenInscripcionesActualizadas(
+    Object nuevos,
+    Object sin,
+    Object ya,
+  ) {
+    return 'Inscripcions noves: $nuevos · Ja inscrits: $ya · No reconeguts: $sin';
+  }
+
+  @override
+  String resumenNoReconocidos(Object detalle) {
+    return ' ($detalle)';
+  }
+
+  @override
+  String get noEncuentroCabecera => 'No trobo la capçalera al full.';
+
+  @override
+  String get faltanColumnasClaveMapeo =>
+      'Falten columnes clau en el mapatge del full. Revisa el vincle (Importa) perquè les columnes quadrin.';
+
+  @override
+  String get fotoNuevaSeSube =>
+      '(foto nova: es puja a Drive i substitueix l\'enllaç)';
+
+  @override
+  String get seSubeFotoADrive => '(es puja la foto a Drive)';
+
+  @override
+  String copiaSubida(Object fotos, Object kb) {
+    return 'Còpia pujada ($kb KB · $fotos fotos).';
+  }
+
+  @override
+  String get noHayCopiaEnDrive => 'No hi ha cap còpia a Drive.';
+
+  @override
+  String get zipSinBaseDeDatos => 'El ZIP de backup no conté la base de dades.';
+
+  @override
+  String get configuracionRestaurada => ' · Configuració restaurada';
+
+  @override
+  String get reconectaConGoogle => ' — reconnecta amb Google en reobrir';
+
+  @override
+  String copiaConFotos(Object n) {
+    return ' · $n fotos';
+  }
+
+  @override
+  String copiaRestaurada(Object detalle) {
+    return 'Còpia restaurada ($detalle). Tanca i torna a obrir l\'app perquè els canvis tinguin efecte.';
+  }
+
+  @override
+  String get descripcionCopiaDrive =>
+      'Còpia de PitWall (BD + fotos de verificacions).';
+
+  @override
+  String get authFaltanCredenciales =>
+      'Falten les credencials del projecte Google Cloud. Ves a Configuració → Google i enganxa el Client ID i el Client Secret.';
+
+  @override
+  String get authNoSePudoAbrirNavegador =>
+      'No s\'ha pogut obrir el navegador per autoritzar.';
+
+  @override
+  String get authConfiguraCredenciales =>
+      'Configura primer les credencials de Google Cloud.';
+
+  @override
+  String get authNoConectado => 'No estàs connectat amb Google.';
+
+  @override
+  String get authSesionCaducada =>
+      'La sessió de Google ha caducat. Torna a connectar el teu compte a Google Sheets (menú lateral).';
+
+  @override
+  String get authConexionRevocada =>
+      'La connexió amb Google ha caducat o va ser revocada. Ves a Google Sheets (menú lateral) i prem \"Connecta amb Google\" per autoritzar de nou.';
+
+  @override
+  String get sinTitulo => 'Sense títol';
+
+  @override
+  String get sinNombre => 'Sense nom';
+
+  @override
+  String get fotoNoLegible =>
+      'el fitxer no és una imatge JPG/PNG/WEBP llegible';
+
+  @override
+  String fotoLocalNoEncontrada(Object ruta) {
+    return 'no es troba la foto local $ruta';
+  }
+
+  @override
+  String get versionInstalada => 'Versió instal·lada';
+
+  @override
+  String get buscarActualizaciones => 'Cercar actualitzacions';
+
+  @override
+  String get estasAlDia => 'Estàs al dia';
+
+  @override
+  String get noSePudoComprobarSinConexion =>
+      'No s\'ha pogut comprovar (sense connexió?)';
+
+  @override
+  String get conexionFallida => 'No s\'ha pogut connectar';
+
+  @override
+  String get accionSubir => 'Puja';
+
+  @override
+  String errorFilaDetalle(String hoja, int fila, String detalle) {
+    return '$hoja fila $fila: $detalle';
+  }
 }

@@ -210,16 +210,15 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
           child: DropdownButtonFormField<int?>(
             initialValue: _importarDesdeId,
             isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Importar pilotos de un campeonato finalizado',
-              helperText:
-                  'Trae sus pilotos con el saldo de cierre como créditos iniciales.',
-              prefixIcon: Icon(Icons.download_outlined),
+            decoration: InputDecoration(
+              labelText: context.l.importarPilotosFinalizado,
+              helperText: context.l.importarPilotosFinalizadoAyuda,
+              prefixIcon: const Icon(Icons.download_outlined),
             ),
             items: [
-              const DropdownMenuItem<int?>(
+              DropdownMenuItem<int?>(
                 value: null,
-                child: Text('No importar'),
+                child: Text(context.l.noImportar),
               ),
               for (final c in finalizados)
                 DropdownMenuItem<int?>(
@@ -259,16 +258,17 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       if (!_masOpciones) setState(() => _masOpciones = true);
       return;
     }
+    final l = context.l;
     if (_copasSel.isEmpty) {
-      _aviso('Selecciona al menos una copa / categoría.');
+      _aviso(l.seleccionaUnaCopa);
       return;
     }
     if (_tipoMotor == null) {
-      _aviso('Motor: elige si es de sorteo, propio o mixto.');
+      _aviso(l.eligeTipoMotor);
       return;
     }
     if (_limitarMarcas && _marcasPermitidas.isEmpty) {
-      _aviso('Limitar fabricante: elige al menos una marca o desactívalo.');
+      _aviso(l.limitarFabricanteError);
       return;
     }
     setState(() => _guardando = true);
@@ -300,9 +300,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       final cuotaCl = parseD(_cuotaClub, 0);
       // El desglose tiene que cuadrar con la cuota, o la tesorería no suma.
       if (_usaTesoreria && (cuotaC + cuotaCl - cuotaP).abs() >= 0.01) {
-        _aviso('Tesorería: Coordinadora + Club deben sumar el Pagat '
-            '(${(cuotaC + cuotaCl).toStringAsFixed(2)} ≠ '
-            '${cuotaP.toStringAsFixed(2)}).');
+        _aviso(l.tesoreriaNoCuadra((cuotaC + cuotaCl).toStringAsFixed(2),
+            cuotaP.toStringAsFixed(2)));
         setState(() => _guardando = false);
         return;
       }
@@ -412,7 +411,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
-        _aviso('No se pudo guardar: $e');
+        _aviso(l.noSePudoGuardar('$e'));
         setState(() => _guardando = false);
       }
     }
@@ -430,25 +429,15 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Bonificación de cierre'),
-        content: Text(
-          'Has marcado el campeonato como finalizado.\n\n'
-          'Se regularizará el saldo de cada piloto que haya competido: '
-          'saldo = mín(saldo actual + bonificación según categoría y nº de '
-          'carreras, ${_tope.text.trim()}). Cada ajuste queda registrado como '
-          'movimiento indicando la bonificación aplicada.\n\n'
-          'Importante: la bonificación usa la categoría de cierre (revísala '
-          'antes en Créditos → Revisión de categorías si hay promociones o '
-          'descensos).\n\n'
-          '¿Aplicarla ahora?',
-        ),
+        title: Text(l.bonificacionCierre),
+        content: Text(l.bonifCierrePregunta(_tope.text.trim())),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Ahora no')),
+              child: Text(l.ahoraNo)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Aplicar')),
+              child: Text(l.aplicar)),
         ],
       ),
     );
@@ -462,21 +451,19 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   }
 
   Future<void> _borrar() async {
+    final l = context.l;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Eliminar campeonato'),
-        content: Text(
-            '¿Eliminar "${_nombre.text}"?\n\n'
-            'Se borrarán también sus pruebas, tandas, inscripciones, '
-            'resultados, verificaciones y pagos. No se puede deshacer.'),
+        title: Text(l.eliminarCampeonato),
+        content: Text(l.eliminarCampeonatoTexto(_nombre.text)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Eliminar')),
+              child: Text(l.eliminar)),
         ],
       ),
     );
@@ -501,11 +488,12 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(esNuevo ? 'Nuevo campeonato' : 'Editar campeonato'),
+        title: Text(
+            esNuevo ? context.l.nuevoCampeonato : context.l.editarCampeonato),
         actions: [
           if (!esNuevo)
             IconButton(
-              tooltip: 'Eliminar',
+              tooltip: context.l.eliminar,
               icon: const Icon(Icons.delete_outline),
               onPressed: _borrar,
             ),
@@ -520,53 +508,58 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
-                  'Obligatorio (*): nombre, al menos una copa y el tipo de '
-                  'motor. Lo demás se puede completar después.',
+                  context.l.obligatoriosAviso,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
             _Seccion(
-              titulo: 'Datos básicos',
+              titulo: context.l.datosBasicos,
               children: [
                 TextFormField(
                   controller: _nombre,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre del campeonato *',
-                    helperText: 'Ej: Liga 2026, Individual LMP-HYP-GT3 Otoño',
-                    prefixIcon: Icon(Icons.emoji_events_outlined),
+                  decoration: InputDecoration(
+                    labelText: context.l.nombreCampeonatoObligatorio,
+                    helperText: context.l.nombreCampeonatoEjemplo,
+                    prefixIcon: const Icon(Icons.emoji_events_outlined),
                   ),
                   textCapitalization: TextCapitalization.words,
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Indica un nombre' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? context.l.indicaUnNombre
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: _formato,
-                  decoration: const InputDecoration(
-                    labelText: 'Formato',
-                    prefixIcon: Icon(Icons.groups_outlined),
-                    helperText:
-                        'Parejas = 2 pilotos por equipo. Individual = 1 piloto',
+                  decoration: InputDecoration(
+                    labelText: context.l.formato,
+                    prefixIcon: const Icon(Icons.groups_outlined),
+                    helperText: context.l.formatoAyuda,
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'PAREJAS', child: Text('Parejas')),
-                    DropdownMenuItem(value: 'INDIVIDUAL', child: Text('Individual')),
-                    DropdownMenuItem(value: '24H', child: Text('24h')),
-                    DropdownMenuItem(value: '12H', child: Text('12h')),
+                  items: [
+                    DropdownMenuItem(
+                        value: 'PAREJAS',
+                        child: Text(context.l.formatoParejas)),
+                    DropdownMenuItem(
+                        value: 'INDIVIDUAL',
+                        child: Text(context.l.formatoIndividual)),
+                    const DropdownMenuItem(value: '24H', child: Text('24h')),
+                    const DropdownMenuItem(value: '12H', child: Text('12h')),
                   ],
                   onChanged: (v) => setState(() => _formato = v ?? 'PAREJAS'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _anio,
-                  decoration: const InputDecoration(
-                    labelText: 'Año',
-                    prefixIcon: Icon(Icons.calendar_today_outlined),
+                  decoration: InputDecoration(
+                    labelText: context.l.anio,
+                    prefixIcon: const Icon(Icons.calendar_today_outlined),
                   ),
                   keyboardType: TextInputType.number,
                   validator: (v) {
                     final n = int.tryParse(v ?? '');
-                    if (n == null || n < 2000 || n > 2100) return 'Año inválido';
+                    if (n == null || n < 2000 || n > 2100) {
+                      return context.l.anioInvalido;
+                    }
                     return null;
                   },
                 ),
@@ -575,17 +568,15 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                   value: _activo,
                   onChanged: (v) => setState(() => _activo = v),
                   title: Text(esNuevo
-                      ? 'Activar este campeonato al crearlo'
-                      : 'Campeonato visible'),
-                  subtitle: const Text(
-                      'Solo los campeonatos visibles aparecen en el selector'),
+                      ? context.l.activarCampeonatoAlCrear
+                      : context.l.campeonatoVisible),
+                  subtitle: Text(context.l.campeonatoVisibleAyuda),
                 ),
               ],
             ),
             _Seccion(
-              titulo: 'Club organizador',
-              descripcion: 'Aparece en la cabecera de las exportaciones '
-                  '(PDF de tandas, verificaciones, clasificación y créditos).',
+              titulo: context.l.clubOrganizador,
+              descripcion: context.l.clubOrgAyudaExportaciones,
               children: [
                 SelectorClubLogo(
                   club: _club,
@@ -595,18 +586,18 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               ],
             ),
             _Seccion(
-              titulo: 'Categorías / copas *',
+              titulo: context.l.categoriasCopasObligatorio,
               children: [
                 Text(
-                  'Selecciona las que se usan en este campeonato. Pueden ser una sola '
-                  '(p.ej. "Grupo C") o varias (p.ej. "LMP + HYP + GT3").',
+                  context.l.seleccionaCopasTexto,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
                 catalogoAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Text('Error: $e'),
+                  error: (e, _) =>
+                      Text(context.l.errorDetalle('$e')),
                   data: (copas) {
                     // Asegurar que las copas ya seleccionadas (aunque no estén
                     // en el catálogo) aparezcan también
@@ -636,9 +627,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                     Expanded(
                       child: TextField(
                         controller: _nuevaCopa,
-                        decoration: const InputDecoration(
-                          labelText: 'Añadir nueva categoría',
-                          helperText: 'Si no la encuentras arriba',
+                        decoration: InputDecoration(
+                          labelText: context.l.anadirNuevaCategoria,
+                          helperText: context.l.anadirNuevaCategoriaAyuda,
                           isDense: true,
                         ),
                         onSubmitted: (_) => _anadirCopaNueva(),
@@ -648,14 +639,14 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                     FilledButton.icon(
                       onPressed: _anadirCopaNueva,
                       icon: const Icon(Icons.add),
-                      label: const Text('Añadir'),
+                      label: Text(context.l.anadir),
                     ),
                   ],
                 ),
               ],
             ),
             _Seccion(
-              titulo: 'Motor *',
+              titulo: context.l.motorObligatorio,
               children: [
                 SelectorTipoMotor(
                   valor: _tipoMotor,
@@ -664,8 +655,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 if (tipoMotorConSorteo(_tipoMotor)) ...[
                 const SizedBox(height: 16),
                 Text(
-                  'Rango de números de motor que la organización sortea entre los '
-                  'equipos en cada prueba. Déjalo vacío si no usáis sorteo.',
+                  context.l.rangoMotorCampeonatoTexto,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
@@ -674,9 +664,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                     Expanded(
                       child: TextFormField(
                         controller: _motorMin,
-                        decoration: const InputDecoration(
-                          labelText: 'Motor desde',
-                          prefixIcon: Icon(Icons.tag),
+                        decoration: InputDecoration(
+                          labelText: context.l.motorDesde,
+                          prefixIcon: const Icon(Icons.tag),
                         ),
                         keyboardType: TextInputType.number,
                       ),
@@ -685,8 +675,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                     Expanded(
                       child: TextFormField(
                         controller: _motorMax,
-                        decoration: const InputDecoration(
-                          labelText: 'Motor hasta',
+                        decoration: InputDecoration(
+                          labelText: context.l.motorHasta,
                         ),
                         keyboardType: TextInputType.number,
                         validator: (v) {
@@ -694,9 +684,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                           final max = int.tryParse(v?.trim() ?? '');
                           if (min == null && max == null) return null;
                           if (min == null || max == null) {
-                            return 'Indica ambos';
+                            return context.l.indicaAmbos;
                           }
-                          if (max < min) return 'Hasta ≥ desde';
+                          if (max < min) return context.l.hastaMayorQueDesde;
                           return null;
                         },
                       ),
@@ -707,34 +697,33 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
               ],
             ),
             _Seccion(
-              titulo: 'Créditos y tesorería',
-              descripcion: 'Actívalos solo si el campeonato los usa; si no, sus pantallas se ocultan del menú.',
+              titulo: context.l.creditosYTesoreria,
+              descripcion: context.l.creditosTesoreriaAyuda,
               children: [
                 // --- Créditos (handicap) ---
-                Text('Créditos', style: Theme.of(context).textTheme.titleSmall),
+                Text(context.l.menuCreditos,
+                    style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: 4),
                 SwitchListTile(
                   value: _usaCreditos,
                   onChanged: (v) => setState(() => _usaCreditos = v),
-                  title: const Text('Usa sistema de créditos (handicap)'),
-                  subtitle: const Text(
-                      'Sistema de handicap por créditos. Apágalo si el campeonato no lo usa.'),
+                  title: Text(context.l.usaCreditos),
+                  subtitle: Text(context.l.usaCreditosAyuda),
                 ),
                 if (esNuevo && _usaCreditos) _selectorImportarPilotos(),
                 if (_usaCreditos) ...[
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _tope,
-                    decoration: const InputDecoration(
-                      labelText: 'Tope regularización créditos',
-                      helperText:
-                          'Máximo de créditos al regularizar al cierre de temporada',
-                      prefixIcon: Icon(Icons.toll_outlined),
+                    decoration: InputDecoration(
+                      labelText: context.l.topeRegularizacion,
+                      helperText: context.l.topeRegularizacionAyuda,
+                      prefixIcon: const Icon(Icons.toll_outlined),
                     ),
                     keyboardType: TextInputType.number,
                     validator: (v) {
                       final n = int.tryParse(v ?? '');
-                      if (n == null || n < 1) return 'Número positivo';
+                      if (n == null || n < 1) return context.l.numeroPositivo;
                       return null;
                     },
                   ),
@@ -743,20 +732,19 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 const SizedBox(height: 24),
 
                 // --- Tesorería (cuotas/pagos) ---
-                Text('Tesorería', style: Theme.of(context).textTheme.titleSmall),
+                Text(context.l.menuTesoreria,
+                    style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: 4),
                 SwitchListTile(
                   value: _usaTesoreria,
                   onChanged: (v) => setState(() => _usaTesoreria = v),
-                  title: const Text('Gestiona tesorería (cuotas/pagos)'),
-                  subtitle: const Text(
-                      'Apágalo si este campeonato no controla el dinero.'),
+                  title: Text(context.l.gestionaTesoreria),
+                  subtitle: Text(context.l.gestionaTesoreriaAyuda),
                 ),
                 if (_usaTesoreria) ...[
                   const SizedBox(height: 12),
                   Text(
-                    'PAGAT es la cuota total. APORTACIÓN COORDINADORA + APORTACIÓN CLUB '
-                    'deben sumar el PAGAT (es el desglose de a dónde va el dinero).',
+                    context.l.pagatTexto,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 12),
@@ -765,15 +753,15 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                       Expanded(
                         child: TextFormField(
                           controller: _cuotaPagat,
-                          decoration: const InputDecoration(
-                            labelText: 'Pagat (€) *',
-                            prefixIcon: Icon(Icons.payments_outlined),
+                          decoration: InputDecoration(
+                            labelText: context.l.pagatObligatorio,
+                            prefixIcon: const Icon(Icons.payments_outlined),
                           ),
                           validator: (v) {
                             final t = v?.trim() ?? '';
-                            if (t.isEmpty) return 'Indica la cuota';
+                            if (t.isEmpty) return context.l.indicaLaCuota;
                             if (double.tryParse(t.replaceAll(',', '.')) == null) {
-                              return 'Número no válido';
+                              return context.l.numeroNoValido;
                             }
                             return null;
                           },
@@ -785,8 +773,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                       Expanded(
                         child: TextFormField(
                           controller: _cuotaCoord,
-                          decoration: const InputDecoration(
-                            labelText: 'Coordinadora (€)',
+                          decoration: InputDecoration(
+                            labelText: context.l.coordinadoraEurParentesis,
                           ),
                           keyboardType:
                               const TextInputType.numberWithOptions(decimal: true),
@@ -796,8 +784,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                       Expanded(
                         child: TextFormField(
                           controller: _cuotaClub,
-                          decoration: const InputDecoration(
-                            labelText: 'Club (€)',
+                          decoration: InputDecoration(
+                            labelText: context.l.clubEurParentesis,
                           ),
                           keyboardType:
                               const TextInputType.numberWithOptions(decimal: true),
@@ -817,8 +805,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.expand_more),
-                  label: const Text(
-                      'Más opciones: puntuación, verificación y PDF'),
+                  label: Text(context.l.masOpcionesPuntuacion),
                   onPressed: () => setState(() => _masOpciones = true),
                 ),
               ),
@@ -829,19 +816,21 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _Seccion(
-                    titulo: 'Puntuación',
+                    titulo: context.l.puntuacion,
                     children: [
                       TextFormField(
                         controller: _descartes,
-                        decoration: const InputDecoration(
-                          labelText: 'Número de descartes',
-                          helperText: 'Cuántas peores pruebas se descartan al piloto',
-                          prefixIcon: Icon(Icons.delete_outline),
+                        decoration: InputDecoration(
+                          labelText: context.l.numeroDescartes,
+                          helperText: context.l.numeroDescartesAyuda,
+                          prefixIcon: const Icon(Icons.delete_outline),
                         ),
                         keyboardType: TextInputType.number,
                         validator: (v) {
                           final n = int.tryParse(v ?? '');
-                          if (n == null || n < 0 || n > 5) return 'Entre 0 y 5';
+                          if (n == null || n < 0 || n > 5) {
+                            return context.l.entreCeroYCinco;
+                          }
                           return null;
                         },
                       ),
@@ -850,8 +839,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                         ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: const Icon(Icons.format_list_numbered_outlined),
-                          title: const Text('Tabla de puntos'),
-                          subtitle: const Text('Puntos por posición en cada prueba'),
+                          title: Text(context.l.tablaDePuntos),
+                          subtitle: Text(context.l.tablaDePuntosAyuda),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => Navigator.of(context).push(MaterialPageRoute(
                               builder: (_) => const PantallaEditorTablaPuntos())),
@@ -860,22 +849,22 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                     ],
                   ),
                   _Seccion(
-                    titulo: 'Verificación',
-                    descripcion: 'Anchura de eje, coches y fabricantes que se comprueban al verificar.',
+                    titulo: context.l.verificacion,
+                    descripcion: context.l.verificacionAyuda,
                     children: [
                       if (_copasSel.isNotEmpty) ...[
-                        Text('Anchura de eje', style: Theme.of(context).textTheme.titleSmall),
+                        Text(context.l.anchuraEje,
+                            style: Theme.of(context).textTheme.titleSmall),
                         const SizedBox(height: 4),
                         Text(
-                          'Anchura máxima de eje (mm) por categoría. Deja vacío si en '
-                          'esa copa no se comprueba.',
+                          context.l.anchuraEjeCategoriasAyuda,
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 8),
                         for (final copa in _copasSel.toList()..sort()) ...[
                           Padding(
                             padding: const EdgeInsets.only(bottom: 4),
-                            child: Text('Copa $copa',
+                            child: Text(context.l.copaTexto(copa),
                                 style: Theme.of(context).textTheme.labelMedium),
                           ),
                           Padding(
@@ -885,9 +874,10 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                                 Expanded(
                                   child: TextFormField(
                                     controller: _anchuraCtrl(copa, 'del'),
-                                    decoration: const InputDecoration(
-                                      labelText: 'Máx delantero (mm)',
-                                      prefixIcon: Icon(Icons.straighten_outlined),
+                                    decoration: InputDecoration(
+                                      labelText: context.l.maxDelanteroMm,
+                                      prefixIcon:
+                                          const Icon(Icons.straighten_outlined),
                                       isDense: true,
                                     ),
                                     keyboardType: const TextInputType.numberWithOptions(
@@ -898,9 +888,10 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                                 Expanded(
                                   child: TextFormField(
                                     controller: _anchuraCtrl(copa, 'tra'),
-                                    decoration: const InputDecoration(
-                                      labelText: 'Máx trasero (mm)',
-                                      prefixIcon: Icon(Icons.straighten_outlined),
+                                    decoration: InputDecoration(
+                                      labelText: context.l.maxTraseroMm,
+                                      prefixIcon:
+                                          const Icon(Icons.straighten_outlined),
                                       isDense: true,
                                     ),
                                     keyboardType: const TextInputType.numberWithOptions(
@@ -919,10 +910,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                           contentPadding: EdgeInsets.zero,
                           leading: const Icon(Icons.directions_car_outlined),
                           title: Text(_usaCreditos
-                              ? 'Peso mínimo y créditos en este campeonato'
-                              : 'Peso mínimo en este campeonato'),
-                          subtitle: const Text('Fija los valores de los coches para que '
-                              'los cambios del catálogo no afecten a este campeonato.'),
+                              ? context.l.pesoMinCreditos
+                              : context.l.pesoMinCampeonato),
+                          subtitle: Text(context.l.pesoMinCampeonatoAyuda),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => Navigator.of(context).push(MaterialPageRoute(
                               builder: (_) => PantallaCochesCampeonato(
@@ -930,7 +920,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                         ),
                       ],
                       const SizedBox(height: 16),
-                      Text('Fabricante', style: Theme.of(context).textTheme.titleSmall),
+                      Text(context.l.fabricante,
+                          style: Theme.of(context).textTheme.titleSmall),
                       SelectorMarcasPermitidas(
                         activo: _limitarMarcas,
                         seleccion: _marcasPermitidas,
@@ -940,30 +931,29 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                     ],
                   ),
                   _Seccion(
-                    titulo: 'Marca en los PDF (opcional)',
+                    titulo: context.l.marcaPdf,
                     children: [
                       Text(
-                        'Título de cabecera y lema del pie en las exportaciones (PDF) de '
-                        'ESTE campeonato. Si lo dejas vacío, se usa un valor por defecto.',
+                        context.l.marcaPdfTexto,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _marcaTitulo,
-                        decoration: const InputDecoration(
-                          labelText: 'Título de cabecera',
-                          hintText: 'Ej: PITWALL o el nombre de tu club',
-                          prefixIcon: Icon(Icons.title),
+                        decoration: InputDecoration(
+                          labelText: context.l.tituloCabecera,
+                          hintText: context.l.tituloCabeceraEjemplo,
+                          prefixIcon: const Icon(Icons.title),
                         ),
                         textCapitalization: TextCapitalization.characters,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _marcaLema,
-                        decoration: const InputDecoration(
-                          labelText: 'Lema del pie',
-                          hintText: 'Ej: tu club · localidad',
-                          prefixIcon: Icon(Icons.notes),
+                        decoration: InputDecoration(
+                          labelText: context.l.lemaPie,
+                          hintText: context.l.lemaPieEjemplo,
+                          prefixIcon: const Icon(Icons.notes),
                         ),
                         maxLines: 2,
                       ),
@@ -974,16 +964,13 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
             ),
             if (!esNuevo)
               _Seccion(
-                titulo: 'Estado',
+                titulo: context.l.estado,
                 children: [
                   SwitchListTile(
                     value: _finalizado,
                     onChanged: (v) => setState(() => _finalizado = v),
-                    title: const Text('Campeonato finalizado'),
-                    subtitle: const Text(
-                        'Temporada cerrada: la clasificación ordena por netos, se '
-                        'habilita la bonificación de cierre y sus verificaciones '
-                        'quedan bloqueadas (solo lectura).'),
+                    title: Text(context.l.campeonatoFinalizadoTitulo),
+                    subtitle: Text(context.l.campeonatoFinalizadoAyuda),
                   ),
                 ],
               ),
@@ -995,7 +982,9 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                       width: 18, height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.check),
-              label: Text(esNuevo ? 'Crear campeonato' : 'Guardar cambios'),
+              label: Text(esNuevo
+                  ? context.l.crearCampeonato
+                  : context.l.guardarCambios),
             ),
           ],
         ),

@@ -1168,7 +1168,7 @@ class _EditorVerificacionState extends ConsumerState<EditorVerificacion> {
           final usaCreditos = campActivo?.usaCreditos ?? false;
           final diferencias =
               _congelada && reglas != null && _reglasVivas != null
-                  ? reglas.diferenciasCon(_reglasVivas!)
+                  ? reglas.diferenciasCon(_reglasVivas!, context.l)
                   : const <String>[];
           return ListView(
             padding: const EdgeInsets.all(20),

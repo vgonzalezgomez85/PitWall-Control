@@ -62,7 +62,7 @@ class GoogleSheetsService {
       return (res.files ?? [])
           .map((f) => HojaResumen(
                 id: f.id!,
-                nombre: f.name ?? 'Sin título',
+                nombre: f.name ?? _auth.textos.sinTitulo,
                 modificada: f.modifiedTime,
               ))
           .toList();
@@ -80,7 +80,7 @@ class GoogleSheetsService {
       return (hoja.sheets ?? [])
           .where((s) => s.properties != null)
           .map((s) => PestanaResumen(
-                titulo: s.properties!.title ?? 'Sin nombre',
+                titulo: s.properties!.title ?? _auth.textos.sinNombre,
                 sheetId: s.properties!.sheetId ?? 0,
               ))
           .toList();

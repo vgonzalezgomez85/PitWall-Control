@@ -19,6 +19,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../services/google_auth_service.dart';
@@ -58,6 +59,7 @@ class _ImportarEquiposSheetsState
   List<EquipoImportado> _previo = [];
 
   Future<void> _cargarHojas() async {
+    final l = context.l;
     setState(() {
       _cargandoHojas = true;
       _error = null;
@@ -67,13 +69,14 @@ class _ImportarEquiposSheetsState
           .read(googleSheetsServiceProvider)
           .listarHojas(buscar: _busqueda);
     } catch (e) {
-      _error = 'No se pudieron listar tus hojas: $e';
+      _error = l.noSePudieronListarHojas('$e');
     } finally {
       if (mounted) setState(() => _cargandoHojas = false);
     }
   }
 
   Future<void> _elegirHoja(HojaResumen h) async {
+    final l = context.l;
     setState(() {
       _hojaSel = h;
       _cargandoPestanas = true;
@@ -89,13 +92,14 @@ class _ImportarEquiposSheetsState
         await _elegirPestana(_pestanas.first);
       }
     } catch (e) {
-      _error = 'No se pudieron listar pestañas: $e';
+      _error = l.noSePudieronListarPestanas('$e');
     } finally {
       if (mounted) setState(() => _cargandoPestanas = false);
     }
   }
 
   Future<void> _elegirPestana(PestanaResumen p) async {
+    final l = context.l;
     setState(() {
       _pestanaSel = p;
       _cargandoFilas = true;
@@ -110,7 +114,7 @@ class _ImportarEquiposSheetsState
       _mapeo = ImportadorEquipos.detectarMapeo(_columnas);
       await _recalcular();
     } catch (e) {
-      _error = 'No se pudo leer la pestaña: $e';
+      _error = l.noSePudoLeerPestana('$e');
     } finally {
       if (mounted) setState(() => _cargandoFilas = false);
     }
@@ -146,6 +150,7 @@ class _ImportarEquiposSheetsState
   }
 
   Future<void> _recalcular() async {
+    final l = context.l;
     final filas = ImportadorEquipos.transformar(_filasArchivo, _mapeo);
     final activo = ref.read(campeonatoActivoProvider);
     if (activo == null) {
@@ -163,11 +168,11 @@ class _ImportarEquiposSheetsState
       if (f.piloto1Nombre.isEmpty) {
         f.estado = 'sin_piloto';
         f.importar = false;
-        f.aviso = 'Sin piloto';
+        f.aviso = l.sinPiloto;
         continue;
       }
       if (esPareja && (f.piloto2Nombre == null || f.piloto2Nombre!.isEmpty)) {
-        f.aviso = 'Falta el segundo piloto (campeonato por parejas)';
+        f.aviso = l.faltaSegundoPiloto;
       }
       if (nombresEquipo.contains(_norm(f.nombreEquipo))) {
         f.estado = 'equipo_existe';
@@ -181,6 +186,7 @@ class _ImportarEquiposSheetsState
       s.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
 
   Future<void> _importar() async {
+    final l = context.l;
     final activo = ref.read(campeonatoActivoProvider)!;
     final db = ref.read(dbProvider);
     final repoEq = ref.read(repoEquiposProvider);
@@ -322,18 +328,15 @@ class _ImportarEquiposSheetsState
       await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Importación completada'),
+          title: Text(l.importacionCompletada),
           content: Text(
-            '✓ Equipos creados: $equiposCreados\n'
-            '✓ Pilotos nuevos: $pilotosNuevos\n'
-            '✓ Pilotos inscritos al campeonato: $pilotosInscritos\n'
-            '✗ Saltados: $saltados\n\n'
-            'A partir de ahora, pulsa "Actualizar desde Drive" en Equipos.',
+            '${l.resumenImportacionEquipos(equiposCreados, pilotosNuevos, pilotosInscritos, saltados)}'
+            '\n\n${l.importacionEquiposAviso}',
           ),
           actions: [
             FilledButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('OK')),
+                child: Text(l.ok)),
           ],
         ),
       );
@@ -341,7 +344,7 @@ class _ImportarEquiposSheetsState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(l.errorDetalle('$e'))),
       );
     } finally {
       if (mounted) setState(() => _importando = false);
@@ -350,12 +353,13 @@ class _ImportarEquiposSheetsState
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l;
     final estadoAsync = ref.watch(estadoGoogleProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Importar equipos desde Sheets')),
+      appBar: AppBar(title: Text(l.importarEquiposDesdeSheets)),
       body: estadoAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(l.errorDetalle('$e'))),
         data: (estado) {
           if (!estado.conectado) return _PantallaNoConectado();
           return _contenido(context);
@@ -366,6 +370,7 @@ class _ImportarEquiposSheetsState
 
   Widget _contenido(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = context.l;
     final n = _previo.where((f) => f.importar).length;
     final activo = ref.watch(campeonatoActivoProvider);
     final esPareja = activo?.formato == 'PAREJAS';
@@ -380,16 +385,16 @@ class _ImportarEquiposSheetsState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('1. Elige la hoja',
+                Text(l.pasoEligeLaHoja(1),
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.search),
-                          hintText: 'Buscar en tus hojas…',
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.search),
+                          hintText: l.buscarEnTusHojas,
                           isDense: true,
                         ),
                         onChanged: (v) => _busqueda = v,
@@ -406,7 +411,7 @@ class _ImportarEquiposSheetsState
                                   CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.refresh),
-                      label: const Text('Buscar'),
+                      label: Text(l.buscar),
                     ),
                   ],
                 ),
@@ -419,7 +424,7 @@ class _ImportarEquiposSheetsState
                         title: Text(h.nombre),
                         subtitle: h.modificada == null
                             ? null
-                            : Text('Modificada: ${h.modificada}'),
+                            : Text(l.hojaModificada('${h.modificada}')),
                         // ignore: deprecated_member_use
                         onChanged: (_) => _elegirHoja(h),
                       )),
@@ -436,7 +441,7 @@ class _ImportarEquiposSheetsState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('2. Elige la pestaña',
+                  Text(l.pasoEligeLaPestana(2),
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   if (_cargandoPestanas)
@@ -445,8 +450,8 @@ class _ImportarEquiposSheetsState
                     DropdownButtonFormField<int?>(
                       initialValue: _pestanaSel?.sheetId,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                          labelText: 'Pestaña', isDense: true),
+                      decoration: InputDecoration(
+                          labelText: l.pestana, isDense: true),
                       items: _pestanas
                           .map((p) => DropdownMenuItem(
                               value: p.sheetId, child: Text(p.titulo)))
@@ -471,37 +476,37 @@ class _ImportarEquiposSheetsState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('3. Asigna columnas',
+                  Text(l.pasoAsignaColumnasN(3),
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 12),
-                  _SecHead('Equipo'),
-                  _sel('Nombre del equipo *', _mapeo.colEquipo,
+                  _SecHead(l.equipo),
+                  _sel(l.nombreDelEquipoObligatorio, _mapeo.colEquipo,
                       (v) { _mapeo.colEquipo = v; _recalcular(); }),
-                  _sel('Copa / categoría', _mapeo.colCopa,
+                  _sel(l.copaCategoria, _mapeo.colCopa,
                       (v) { _mapeo.colCopa = v; _recalcular(); }),
                   const SizedBox(height: 8),
-                  _SecHead('Piloto 1'),
-                  _sel('Nombre *', _mapeo.colP1Nombre,
+                  _SecHead(l.piloto1),
+                  _sel(l.nombreObligatorio, _mapeo.colP1Nombre,
                       (v) { _mapeo.colP1Nombre = v; _recalcular(); }),
-                  _sel('Email', _mapeo.colP1Email,
+                  _sel(l.email, _mapeo.colP1Email,
                       (v) { _mapeo.colP1Email = v; _recalcular(); }),
-                  _sel('Teléfono', _mapeo.colP1Telefono,
+                  _sel(l.telefono, _mapeo.colP1Telefono,
                       (v) { _mapeo.colP1Telefono = v; _recalcular(); }),
-                  _sel('Categoría', _mapeo.colP1Categoria,
+                  _sel(l.categoria, _mapeo.colP1Categoria,
                       (v) { _mapeo.colP1Categoria = v; _recalcular(); }),
-                  _sel('Palmarés', _mapeo.colP1Palmares,
+                  _sel(l.palmares, _mapeo.colP1Palmares,
                       (v) { _mapeo.colP1Palmares = v; _recalcular(); }),
                   const SizedBox(height: 8),
-                  _SecHead(esPareja ? 'Piloto 2' : 'Piloto 2 (opcional)'),
-                  _sel('Nombre', _mapeo.colP2Nombre,
+                  _SecHead(esPareja ? l.piloto2 : l.piloto2Opcional),
+                  _sel(l.nombreCampo, _mapeo.colP2Nombre,
                       (v) { _mapeo.colP2Nombre = v; _recalcular(); }),
-                  _sel('Email', _mapeo.colP2Email,
+                  _sel(l.email, _mapeo.colP2Email,
                       (v) { _mapeo.colP2Email = v; _recalcular(); }),
-                  _sel('Teléfono', _mapeo.colP2Telefono,
+                  _sel(l.telefono, _mapeo.colP2Telefono,
                       (v) { _mapeo.colP2Telefono = v; _recalcular(); }),
-                  _sel('Categoría', _mapeo.colP2Categoria,
+                  _sel(l.categoria, _mapeo.colP2Categoria,
                       (v) { _mapeo.colP2Categoria = v; _recalcular(); }),
-                  _sel('Palmarés', _mapeo.colP2Palmares,
+                  _sel(l.palmares, _mapeo.colP2Palmares,
                       (v) { _mapeo.colP2Palmares = v; _recalcular(); }),
                 ],
               ),
@@ -516,10 +521,10 @@ class _ImportarEquiposSheetsState
                 children: [
                   Row(
                     children: [
-                      Text('4. Vista previa',
+                      Text(l.paso4VistaPrevia,
                           style: Theme.of(context).textTheme.titleMedium),
                       const Spacer(),
-                      Text('$n de ${_previo.length}'),
+                      Text(l.nDeTotal(n, _previo.length)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -527,7 +532,7 @@ class _ImportarEquiposSheetsState
                     const Center(child: CircularProgressIndicator())
                   else if (!_mapeo.esValido)
                     Text(
-                        'Asigna al menos la columna del nombre del equipo y la del primer piloto.',
+                        l.asignaColumnaEquipoYPiloto,
                         style: TextStyle(color: cs.error))
                   else
                     ..._previo.map((f) => _FilaPrevia(
@@ -551,7 +556,7 @@ class _ImportarEquiposSheetsState
                     width: 18, height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.cloud_download_outlined),
-            label: Text('Importar $n equipos'),
+            label: Text(l.importarNEquipos(n)),
           ),
         ],
         if (_error != null) ...[
@@ -563,6 +568,7 @@ class _ImportarEquiposSheetsState
   }
 
   Widget _sel(String label, String? actual, ValueChanged<String?> onChange) {
+    final l = context.l;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: DropdownButtonFormField<String?>(
@@ -570,7 +576,7 @@ class _ImportarEquiposSheetsState
         isExpanded: true,
         decoration: InputDecoration(labelText: label, isDense: true),
         items: [
-          const DropdownMenuItem(value: null, child: Text('— ninguna —')),
+          DropdownMenuItem(value: null, child: Text(l.ninguna)),
           ..._columnas.map((c) => DropdownMenuItem(value: c, child: Text(c))),
         ],
         onChanged: onChange,
@@ -598,6 +604,7 @@ class _SecHead extends StatelessWidget {
 class _PantallaNoConectado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l = context.l;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -607,12 +614,12 @@ class _PantallaNoConectado extends StatelessWidget {
             Icon(Icons.cloud_off_outlined,
                 size: 96, color: Theme.of(context).colorScheme.outline),
             const SizedBox(height: 16),
-            Text('Aún no estás conectado con Google',
+            Text(l.noConectadoGoogle,
                 style: Theme.of(context).textTheme.titleMedium,
                 textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            const Text(
-              'Conecta tu cuenta una sola vez para poder leer las hojas.',
+            Text(
+              l.conectaCuentaHojas,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -620,7 +627,7 @@ class _PantallaNoConectado extends StatelessWidget {
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const PantallaConfiguracionGoogle())),
               icon: const Icon(Icons.settings_outlined),
-              label: const Text('Configurar Google'),
+              label: Text(l.configurarGoogle),
             ),
           ],
         ),
@@ -637,18 +644,19 @@ class _FilaPrevia extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = context.l;
     Color colorEstado;
     String etiqueta;
     switch (fila.estado) {
       case 'equipo_existe':
         colorEstado = cs.outline;
-        etiqueta = 'Ya existe';
+        etiqueta = l.yaExiste;
       case 'sin_piloto':
         colorEstado = cs.error;
-        etiqueta = 'Sin piloto';
+        etiqueta = l.sinPiloto;
       default:
         colorEstado = cs.primary;
-        etiqueta = 'Nuevo';
+        etiqueta = l.nuevo;
     }
     final bloqueado =
         fila.estado == 'equipo_existe' || fila.estado == 'sin_piloto';
@@ -680,7 +688,7 @@ class _FilaPrevia extends StatelessWidget {
                   style: TextStyle(color: cs.onSurfaceVariant),
                 ),
                 if (fila.copa != null)
-                  Text('Copa: ${fila.copa}',
+                  Text(l.copaDosPuntos(fila.copa!),
                       style: TextStyle(color: cs.outline, fontSize: 12)),
                 if (fila.aviso != null)
                   Text(fila.aviso!,

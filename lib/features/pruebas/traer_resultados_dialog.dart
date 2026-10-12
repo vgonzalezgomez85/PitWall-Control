@@ -103,7 +103,7 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
       await widget.ref
           .read(almacenSyncProvider)
           .write(key: _kHostKey, value: host);
-      final carreras = await listarCarreras(host);
+      final carreras = await listarCarreras(host, l);
       if (!mounted) return;
       setState(() {
         _carreras = carreras;
@@ -121,7 +121,8 @@ class _TraerResultadosDialogState extends State<_TraerResultadosDialog> {
     final l = context.l;
     setState(() => _trabajando = true);
     try {
-      final res = await traerResultados(_hostCtrl.text.trim(), c.id);
+      final res =
+          await traerResultados(_hostCtrl.text.trim(), c.id, l);
       final db = widget.ref.read(dbProvider);
       final activo = widget.ref.read(campeonatoActivoProvider);
       if (activo == null) {

@@ -26,6 +26,8 @@ import '../../core/tema.dart';
 import 'aviso_actualizacion.dart';
 import 'servicio_actualizacion.dart';
 
+import '../../core/idioma.dart';
+
 enum _Estado { reposo, buscando, alDia, error }
 
 class PantallaActualizacion extends StatefulWidget {
@@ -92,7 +94,7 @@ class _PantallaActualizacionState extends State<PantallaActualizacion> {
     final estado = context.estado;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Actualizaciones')),
+      appBar: AppBar(title: Text(context.l.actualizaciones)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -109,7 +111,7 @@ class _PantallaActualizacionState extends State<PantallaActualizacion> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Versión instalada',
+                              context.l.versionInstalada,
                               style: Theme.of(context).textTheme.labelLarge,
                             ),
                             const SizedBox(height: 4),
@@ -131,18 +133,19 @@ class _PantallaActualizacionState extends State<PantallaActualizacion> {
                                 height: 16,
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Text('Buscar actualizaciones'),
+                            : Text(context.l.buscarActualizaciones),
                       ),
                     ],
                   ),
                   if (_estado == _Estado.alDia) ...[
                     const SizedBox(height: 12),
-                    Text('Estás al día', style: TextStyle(color: estado.exito)),
+                    Text(context.l.estasAlDia,
+                        style: TextStyle(color: estado.exito)),
                   ],
                   if (_estado == _Estado.error) ...[
                     const SizedBox(height: 12),
                     Text(
-                      'No se pudo comprobar (¿sin conexión?)',
+                      context.l.noSePudoComprobarSinConexion,
                       style: TextStyle(color: estado.aviso),
                     ),
                   ],

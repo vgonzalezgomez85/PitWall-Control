@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../services/google_auth_service.dart';
 import '../../services/google_sheets_service.dart';
@@ -58,6 +59,7 @@ class _ImportarInscripcionesSheetsState
   List<FilaInscripcion> _previo = [];
 
   Future<void> _cargarHojas() async {
+    final l = context.l;
     setState(() {
       _cargandoHojas = true;
       _error = null;
@@ -66,13 +68,14 @@ class _ImportarInscripcionesSheetsState
       final svc = ref.read(googleSheetsServiceProvider);
       _hojas = await svc.listarHojas(buscar: _busqueda);
     } catch (e) {
-      _error = 'No se pudieron listar tus hojas: $e';
+      _error = l.noSePudieronListarHojas('$e');
     } finally {
       if (mounted) setState(() => _cargandoHojas = false);
     }
   }
 
   Future<void> _elegirHoja(HojaResumen h) async {
+    final l = context.l;
     setState(() {
       _hojaSel = h;
       _cargandoPestanas = true;
@@ -88,13 +91,14 @@ class _ImportarInscripcionesSheetsState
         await _elegirPestana(_pestanas.first);
       }
     } catch (e) {
-      _error = 'No se pudieron listar pestañas: $e';
+      _error = l.noSePudieronListarPestanas('$e');
     } finally {
       if (mounted) setState(() => _cargandoPestanas = false);
     }
   }
 
   Future<void> _elegirPestana(PestanaResumen p) async {
+    final l = context.l;
     setState(() {
       _pestanaSel = p;
       _cargandoFilas = true;
@@ -108,7 +112,7 @@ class _ImportarInscripcionesSheetsState
       _mapeo = ImportadorInscripciones.detectarMapeo(_columnas);
       await _recalcular();
     } catch (e) {
-      _error = 'No se pudo leer la pestaña: $e';
+      _error = l.noSePudoLeerPestana('$e');
     } finally {
       if (mounted) setState(() => _cargandoFilas = false);
     }
@@ -179,6 +183,7 @@ class _ImportarInscripcionesSheetsState
   }
 
   Future<void> _importar() async {
+    final l = context.l;
     setState(() => _importando = true);
     int ok = 0, saltados = 0;
     try {
@@ -228,15 +233,14 @@ class _ImportarInscripcionesSheetsState
       await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Importación completada'),
+          title: Text(l.importacionCompletada),
           content: Text(
-              '✓ Inscritos: $ok\n✗ Saltados: $saltados\n\n'
-              'A partir de ahora, pulsa "Actualizar desde Drive" '
-              'en Inscritos para traer nuevas respuestas del formulario.'),
+              '${l.resumenImportacionInscripciones(ok, saltados)}'
+              '\n\n${l.importacionInscripcionesAviso}'),
           actions: [
             FilledButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('OK'))
+                child: Text(l.ok))
           ],
         ),
       );
@@ -244,7 +248,7 @@ class _ImportarInscripcionesSheetsState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(l.errorDetalle('$e'))),
       );
     } finally {
       if (mounted) setState(() => _importando = false);
@@ -253,12 +257,13 @@ class _ImportarInscripcionesSheetsState
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l;
     final estadoAsync = ref.watch(estadoGoogleProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Importar desde Google Sheets')),
+      appBar: AppBar(title: Text(l.importarDesdeGoogleSheets)),
       body: estadoAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(l.errorDetalle('$e'))),
         data: (estado) {
           if (!estado.conectado) {
             return _PantallaNoConectado();
@@ -271,6 +276,7 @@ class _ImportarInscripcionesSheetsState
 
   Widget _contenido(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = context.l;
     final n = _previo.where((f) => f.importar).length;
     final activo = ref.watch(campeonatoActivoProvider);
     final esIndividual = maxPilotosEquipo(activo?.formato ?? 'PAREJAS') == 1;
@@ -286,16 +292,16 @@ class _ImportarInscripcionesSheetsState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('1. Elige la hoja',
+                Text(l.pasoEligeLaHoja(1),
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.search),
-                          hintText: 'Buscar en tus hojas…',
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.search),
+                          hintText: l.buscarEnTusHojas,
                           isDense: true,
                         ),
                         onChanged: (v) => _busqueda = v,
@@ -311,7 +317,7 @@ class _ImportarInscripcionesSheetsState
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.refresh),
-                      label: const Text('Buscar'),
+                      label: Text(l.buscar),
                     ),
                   ],
                 ),
@@ -330,7 +336,7 @@ class _ImportarInscripcionesSheetsState
                               title: Text(h.nombre),
                               subtitle: h.modificada == null
                                   ? null
-                                  : Text('Modificada: ${h.modificada}'),
+                                  : Text(l.hojaModificada('${h.modificada}')),
                             )),
                       ],
                     ),
@@ -348,7 +354,7 @@ class _ImportarInscripcionesSheetsState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('2. Elige la pestaña',
+                  Text(l.pasoEligeLaPestana(2),
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   if (_cargandoPestanas)
@@ -357,8 +363,8 @@ class _ImportarInscripcionesSheetsState
                     DropdownButtonFormField<int?>(
                       initialValue: _pestanaSel?.sheetId,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                          labelText: 'Pestaña', isDense: true),
+                      decoration: InputDecoration(
+                          labelText: l.pestana, isDense: true),
                       items: _pestanas
                           .map((p) => DropdownMenuItem(
                               value: p.sheetId, child: Text(p.titulo)))
@@ -382,15 +388,18 @@ class _ImportarInscripcionesSheetsState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('3. Asigna columnas',
+                  Text(l.pasoAsignaColumnasN(3),
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 12),
-                  _sel(esIndividual ? 'Nombre del piloto *' : 'Nombre del equipo *',
+                  _sel(
+                      esIndividual
+                          ? l.nombreDelPilotoObligatorio
+                          : l.nombreDelEquipoObligatorio,
                       _mapeo.colEquipo,
                       (v) { _mapeo.colEquipo = v; _recalcular(); }),
-                  _sel('Día preferido', _mapeo.colDia,
+                  _sel(l.diaPreferido, _mapeo.colDia,
                       (v) { _mapeo.colDia = v; _recalcular(); }),
-                  _sel('Notas', _mapeo.colNotas,
+                  _sel(l.notas, _mapeo.colNotas,
                       (v) { _mapeo.colNotas = v; _recalcular(); }),
                 ],
               ),
@@ -405,10 +414,10 @@ class _ImportarInscripcionesSheetsState
                 children: [
                   Row(
                     children: [
-                      Text('4. Vista previa',
+                      Text(l.paso4VistaPrevia,
                           style: Theme.of(context).textTheme.titleMedium),
                       const Spacer(),
-                      Text('$n de ${_previo.length}'),
+                      Text(l.nDeTotal(n, _previo.length)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -417,8 +426,8 @@ class _ImportarInscripcionesSheetsState
                   else if (!_mapeo.esValido)
                     Text(
                         esIndividual
-                            ? 'Asigna al menos la columna del nombre del piloto.'
-                            : 'Asigna al menos la columna del nombre del equipo.',
+                            ? l.asignaAlMenosColumnaPiloto
+                            : l.asignaAlMenosColumnaEquipo,
                         style: TextStyle(color: cs.error))
                   else
                     ..._previo.map((f) => _FilaPrevia(fila: f)),
@@ -434,7 +443,9 @@ class _ImportarInscripcionesSheetsState
                     width: 18, height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.cloud_download_outlined),
-            label: Text(esIndividual ? 'Inscribir $n pilotos' : 'Inscribir $n equipos'),
+            label: Text(esIndividual
+                ? l.inscribirNPilotos(n)
+                : l.inscribirNEquipos(n)),
           ),
         ],
         if (_error != null) ...[
@@ -446,6 +457,7 @@ class _ImportarInscripcionesSheetsState
   }
 
   Widget _sel(String label, String? actual, ValueChanged<String?> onChange) {
+    final l = context.l;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: DropdownButtonFormField<String?>(
@@ -453,7 +465,7 @@ class _ImportarInscripcionesSheetsState
         isExpanded: true,
         decoration: InputDecoration(labelText: label, isDense: true),
         items: [
-          const DropdownMenuItem(value: null, child: Text('— ninguna —')),
+          DropdownMenuItem(value: null, child: Text(l.ninguna)),
           ..._columnas.map((c) => DropdownMenuItem(value: c, child: Text(c))),
         ],
         onChanged: onChange,
@@ -465,6 +477,7 @@ class _ImportarInscripcionesSheetsState
 class _PantallaNoConectado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l = context.l;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -474,13 +487,12 @@ class _PantallaNoConectado extends StatelessWidget {
             Icon(Icons.cloud_off_outlined,
                 size: 96, color: Theme.of(context).colorScheme.outline),
             const SizedBox(height: 16),
-            Text('Aún no estás conectado con Google',
+            Text(l.noConectadoGoogle,
                 style: Theme.of(context).textTheme.titleMedium,
                 textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            const Text(
-              'Conecta tu cuenta una sola vez para poder leer las hojas '
-              'donde llegan las respuestas del Google Form.',
+            Text(
+              l.conectaCuentaGoogleForm,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -488,7 +500,7 @@ class _PantallaNoConectado extends StatelessWidget {
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const PantallaConfiguracionGoogle())),
               icon: const Icon(Icons.settings_outlined),
-              label: const Text('Configurar Google'),
+              label: Text(l.configurarGoogle),
             ),
           ],
         ),
@@ -504,18 +516,19 @@ class _FilaPrevia extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = context.l;
     Color color;
     String etiqueta;
     switch (fila.estado) {
       case 'equipo_no_existe':
         color = cs.error;
-        etiqueta = 'No existe';
+        etiqueta = l.noExiste;
       case 'ya_inscrito':
         color = cs.outline;
-        etiqueta = 'Ya inscrito';
+        etiqueta = l.yaInscrito;
       default:
         color = cs.primary;
-        etiqueta = 'Inscribir';
+        etiqueta = l.inscribir;
     }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),

@@ -24,6 +24,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../services/google_auth_service.dart';
 import '../../services/google_sheets_service.dart';
 import '../google/pantalla_configuracion_google.dart';
@@ -124,28 +125,28 @@ class _PantallaImportarCatalogoState
   List<PestanaResumen> _pestanas = [];
   PestanaResumen? _pestanaSel;
 
-  String get _titulo {
+  String _titulo(Textos l) {
     switch (widget.tipo) {
       case TipoCatalogo.coches:
-        return 'Coches';
+        return l.coches;
       case TipoCatalogo.marcas:
-        return 'Marcas';
+        return l.marcas;
       case TipoCatalogo.llantas:
-        return 'Llantas';
+        return l.llantas;
       case TipoCatalogo.engranajes:
-        return 'Engranajes';
+        return l.engranajes;
       case TipoCatalogo.motores:
-        return 'Motores';
+        return l.motores;
       case TipoCatalogo.bancadas:
-        return 'Bancadas';
+        return l.bancadas;
       case TipoCatalogo.chasis:
-        return 'Chasis';
+        return l.chasis;
       case TipoCatalogo.neumaticos:
-        return 'Neumáticos';
+        return l.neumaticos;
       case TipoCatalogo.copas:
-        return 'Copas';
+        return l.copas;
       case TipoCatalogo.clubs:
-        return 'Clubs';
+        return l.clubs;
     }
   }
 
@@ -197,29 +198,21 @@ class _PantallaImportarCatalogoState
   /// fichas) o vaciar (Sustituir) lo que ya hay. Sin riesgo no pregunta.
   Future<bool> _confirmarImportacion() async {
     if (_filasLocales == 0) return true;
+    final l = context.l;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title:
-            Text(_reemplazar ? 'Sustituir el catálogo' : 'Añadir al catálogo'),
+        title: Text(_reemplazar ? l.sustituirCatalogoTitulo : l.anadirCatalogoTitulo),
         content: Text(_reemplazar
-            ? 'Se vaciarán las $_filasLocales fichas actuales antes de importar '
-                'las ${_filas.length} de la hoja.\n\n'
-                'Se pierden los ID de sincronización, las fotos locales de los '
-                'coches y los valores fijados en campeonatos. Lo que solo '
-                'exista en la app y no esté en la hoja desaparece.'
-            : 'Se añadirán las ${_filas.length} filas de la hoja a las '
-                '$_filasLocales fichas que ya tienes.\n\n'
-                'Las filas que ya existan (mismo nombre o clave) quedarán '
-                'duplicadas. Si solo quieres conectar la hoja para traer '
-                'cambios, cancela y usa «Vincular sin importar».'),
+            ? l.sustituirCatalogoTexto(_filasLocales, _filas.length)
+            : l.anadirCatalogoTexto(_filas.length, _filasLocales)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(l.cancelar)),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(_reemplazar ? 'Sí, sustituir' : 'Sí, añadir'),
+            child: Text(_reemplazar ? l.siSustituir : l.siAnadir),
           ),
         ],
       ),
@@ -234,6 +227,7 @@ class _PantallaImportarCatalogoState
     final hoja = _hojaSel;
     final pestana = _pestanaSel;
     if (hoja == null || pestana == null) return;
+    final l = context.l;
     setState(() => _trabajando = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -248,36 +242,32 @@ class _PantallaImportarCatalogoState
       await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Hoja vinculada'),
-          content: Text(
-              'No se ha importado nada ni se ha tocado ninguna ficha del '
-              'catálogo.\n\n'
-              'En la pestaña «$_titulo» ya aparece el botón de sincronización: '
-              '«Actualizar desde Drive» traerá los cambios de la hoja '
-              'emparejando por la columna ID (si la hay) o por nombre, sin '
-              'duplicar las fichas que ya tienes.'),
+          title: Text(l.hojaVinculadaTitulo),
+          content: Text(l.hojaVinculadaTexto(_titulo(l))),
           actions: [
             FilledButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('OK')),
+                child: Text(l.ok)),
           ],
         ),
       );
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Error al vincular: $e')));
+      messenger
+          .showSnackBar(SnackBar(content: Text(l.errorAlVincular('$e'))));
       if (mounted) setState(() => _trabajando = false);
     }
   }
 
   Future<void> _elegirArchivo() async {
+    final l = context.l;
     setState(() {
       _trabajando = true;
       _error = null;
     });
     try {
       final tipo = XTypeGroup(
-        label: 'Archivos',
+        label: l.archivos,
         extensions: ['csv', 'xlsx', 'xls'],
       );
       final xfile = await openFile(acceptedTypeGroups: [tipo]);
@@ -298,7 +288,7 @@ class _PantallaImportarCatalogoState
       _filas = norm.filas;
       _mapeo = _detectarMapeo(_columnas, widget.tipo);
     } catch (e) {
-      _error = 'No se pudo leer el archivo: $e';
+      _error = l.noSePudoLeerArchivo('$e');
     } finally {
       if (mounted) setState(() => _trabajando = false);
     }
@@ -317,6 +307,7 @@ class _PantallaImportarCatalogoState
   }
 
   Future<void> _cargarHojas() async {
+    final l = context.l;
     setState(() {
       _cargandoHojas = true;
       _error = null;
@@ -325,13 +316,14 @@ class _PantallaImportarCatalogoState
       final svc = ref.read(googleSheetsServiceProvider);
       _hojas = await svc.listarHojas(buscar: _busqueda);
     } catch (e) {
-      _error = 'No se pudieron listar tus hojas: $e';
+      _error = l.noSePudieronListarHojas('$e');
     } finally {
       if (mounted) setState(() => _cargandoHojas = false);
     }
   }
 
   Future<void> _elegirHoja(HojaResumen h) async {
+    final l = context.l;
     setState(() {
       _hojaSel = h;
       _cargandoPestanas = true;
@@ -346,13 +338,14 @@ class _PantallaImportarCatalogoState
         await _elegirPestana(_pestanas.first);
       }
     } catch (e) {
-      _error = 'No se pudieron listar pestañas: $e';
+      _error = l.noSePudieronListarPestanas('$e');
     } finally {
       if (mounted) setState(() => _cargandoPestanas = false);
     }
   }
 
   Future<void> _elegirPestana(PestanaResumen p) async {
+    final l = context.l;
     setState(() {
       _pestanaSel = p;
       _trabajando = true;
@@ -368,7 +361,7 @@ class _PantallaImportarCatalogoState
       _filas = norm.filas;
       _mapeo = _detectarMapeo(_columnas, widget.tipo);
     } catch (e) {
-      _error = 'No se pudo leer la pestaña: $e';
+      _error = l.noSePudoLeerPestana('$e');
     } finally {
       if (mounted) setState(() => _trabajando = false);
     }
@@ -551,6 +544,7 @@ class _PantallaImportarCatalogoState
   }
 
   Future<void> _importar() async {
+    final l = context.l;
     if (!await _confirmarImportacion()) return;
     setState(() => _trabajando = true);
     int ok = 0, saltados = 0;
@@ -672,15 +666,14 @@ class _PantallaImportarCatalogoState
       await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Importación completada'),
-          content: Text('✓ Añadidos: $ok\n✗ Saltados: $saltados'
-              '${vinculada ? '\n\nHoja vinculada: a partir de ahora pulsa '
-                  '"Actualizar desde Drive" en la pestaña del catálogo '
-                  'para traer cambios.' : ''}'),
+          title: Text(l.importacionCompletada),
+          content: Text(
+              '${l.resumenImportacionCatalogo(ok, saltados)}'
+              '${vinculada ? l.hojaVinculadaAviso : ''}'),
           actions: [
             FilledButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('OK')),
+                child: Text(l.ok)),
           ],
         ),
       );
@@ -688,7 +681,7 @@ class _PantallaImportarCatalogoState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text(l.errorDetalle('$e'))),
         );
       }
     } finally {
@@ -726,9 +719,10 @@ class _PantallaImportarCatalogoState
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l;
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text('Importar $_titulo')),
+      appBar: AppBar(title: Text(l.importarTitulo(_titulo(l)))),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -739,10 +733,10 @@ class _PantallaImportarCatalogoState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('1. Elige la fuente',
+                  Text(l.pasoEligeLaFuente(1),
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
-                  Text(_ayudaPorTipo(widget.tipo),
+                  Text(_ayudaPorTipo(l, widget.tipo),
                       style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(height: 12),
                   Wrap(
@@ -753,12 +747,12 @@ class _PantallaImportarCatalogoState
                       FilledButton.icon(
                         onPressed: _trabajando ? null : _elegirArchivo,
                         icon: const Icon(Icons.folder_open),
-                        label: const Text('Archivo CSV / Excel'),
+                        label: Text(l.archivoCsvExcel),
                       ),
                       FilledButton.tonalIcon(
                         onPressed: _trabajando ? null : _activarSheets,
                         icon: const Icon(Icons.cloud_outlined),
-                        label: const Text('Google Sheets'),
+                        label: Text(l.googleSheets),
                       ),
                       if (_archivo != null)
                         Text(_archivo!.split('/').last,
@@ -802,10 +796,10 @@ class _PantallaImportarCatalogoState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('2. Asigna las columnas',
+                    Text(l.paso2AsignaLasColumnas,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 12),
-                    ..._selectoresPorTipo(),
+                    ..._selectoresPorTipo(l),
                   ],
                 ),
               ),
@@ -814,9 +808,8 @@ class _PantallaImportarCatalogoState
             SwitchListTile(
               value: _reemplazar,
               onChanged: (v) => setState(() => _reemplazar = v),
-              title: const Text('Sustituir el catálogo existente'),
-              subtitle: const Text(
-                  'Si lo marcas, primero se vacía la tabla y luego se importa.'),
+              title: Text(l.sustituirCatalogoExistente),
+              subtitle: Text(l.sustituirCatalogoExistenteTexto),
             ),
             const SizedBox(height: 8),
             FilledButton.icon(
@@ -830,7 +823,7 @@ class _PantallaImportarCatalogoState
                       width: 18, height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.cloud_download_outlined),
-              label: Text('Importar ${_filas.length} filas'),
+              label: Text(l.importarNFilas(_filas.length)),
             ),
             if (_hojaSel != null && _pestanaSel != null) ...[
               const SizedBox(height: 8),
@@ -839,7 +832,7 @@ class _PantallaImportarCatalogoState
                     ? null
                     : _vincularSinImportar,
                 icon: const Icon(Icons.link),
-                label: const Text('Vincular sin importar'),
+                label: Text(l.vincularSinImportar),
               ),
             ],
           ],
@@ -864,13 +857,10 @@ class _PantallaImportarCatalogoState
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Este catálogo ya tiene $_filasLocales fichas en la app.\n'
-                '• «Importar» añadirá las filas de la hoja como nuevas: las '
-                'que ya existan quedarán duplicadas.\n'
-                '${conHoja ? '• Si solo quieres conectar la hoja, usa «Vincular sin importar»; después, «Actualizar desde Drive» trae los cambios sin duplicar.\n' : ''}'
-                '• «Sustituir el catálogo existente» vacía el catálogo actual: '
-                'se pierden los ID de sincronización, las fotos locales y los '
-                'valores fijados en campeonatos.',
+                '${context.l.avisoCatalogoLlenoIntro(_filasLocales)}\n'
+                '${context.l.avisoCatalogoLlenoImportar}\n'
+                '${conHoja ? '${context.l.avisoCatalogoLlenoVincular}\n' : ''}'
+                '${context.l.avisoCatalogoLlenoSustituir}',
                 style: TextStyle(color: cs.onSurface, fontSize: 13),
               ),
             ),
@@ -887,16 +877,16 @@ class _PantallaImportarCatalogoState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Elige la hoja de Google',
+            Text(context.l.eligeHojaGoogle,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
                   child: TextField(
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.search),
-                      hintText: 'Buscar en tus hojas…',
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      hintText: context.l.buscarEnTusHojas,
                       isDense: true,
                     ),
                     onChanged: (v) => _busqueda = v,
@@ -912,7 +902,7 @@ class _PantallaImportarCatalogoState
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.refresh),
-                  label: const Text('Buscar'),
+                  label: Text(context.l.buscar),
                 ),
               ],
             ),
@@ -932,7 +922,7 @@ class _PantallaImportarCatalogoState
                         title: Text(h.nombre),
                         subtitle: h.modificada == null
                             ? null
-                            : Text('Modificada: ${h.modificada}'),
+                            : Text(context.l.modificadaFecha(h.modificada!)),
                       ),
                   ],
                 ),
@@ -945,8 +935,8 @@ class _PantallaImportarCatalogoState
               DropdownButtonFormField<int?>(
                 initialValue: _pestanaSel?.sheetId,
                 isExpanded: true,
-                decoration:
-                    const InputDecoration(labelText: 'Pestaña', isDense: true),
+                decoration: InputDecoration(
+                    labelText: context.l.pestana, isDense: true),
                 items: _pestanas
                     .map((p) => DropdownMenuItem(
                         value: p.sheetId, child: Text(p.titulo)))
@@ -964,31 +954,29 @@ class _PantallaImportarCatalogoState
     );
   }
 
-  String _ayudaPorTipo(TipoCatalogo t) {
+  String _ayudaPorTipo(Textos l, TipoCatalogo t) {
     switch (t) {
       case TipoCatalogo.coches:
-        return 'CSV/Excel o Google Sheets con columnas: Nombre, Marca, Modelo, '
-            'Peso mínimo, Créditos, Copa(s) (separadas por coma; vacío = todas).';
+        return l.ayudaCatalogoCoches;
       case TipoCatalogo.marcas:
-        return 'CSV/Excel con columnas: Código, Nombre.';
+        return l.ayudaCatalogoMarcas;
       case TipoCatalogo.llantas:
-        return 'CSV/Excel con columnas: Dimensión, Tipo (DELANTERA / TRASERA / AMBAS).';
+        return l.ayudaCatalogoLlantas;
       case TipoCatalogo.engranajes:
-        return 'CSV/Excel o Google Sheets con columnas: Marca, Dientes, Tipo (PIÑÓN / CORONA).';
+        return l.ayudaCatalogoEngranajes;
       case TipoCatalogo.motores:
-        return 'CSV/Excel o Google Sheets con columnas: Motor, RPM, Gauss, '
-            'Copa(s) (separadas por coma; vacío = todas).';
+        return l.ayudaCatalogoMotores;
       case TipoCatalogo.bancadas:
       case TipoCatalogo.chasis:
       case TipoCatalogo.copas:
       case TipoCatalogo.clubs:
-        return 'CSV/Excel con una columna: Nombre.';
+        return l.ayudaCatalogoSimple;
       case TipoCatalogo.neumaticos:
-        return 'CSV/Excel con columnas: Nombre, Referencia (opcional).';
+        return l.ayudaCatalogoNeumaticos;
     }
   }
 
-  List<Widget> _selectoresPorTipo() {
+  List<Widget> _selectoresPorTipo(Textos l) {
     Widget sel(String label, String? actual, ValueChanged<String?> onChange) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 6),
@@ -997,7 +985,7 @@ class _PantallaImportarCatalogoState
           isExpanded: true,
           decoration: InputDecoration(labelText: label, isDense: true),
           items: [
-            const DropdownMenuItem(value: null, child: Text('— ninguna —')),
+            DropdownMenuItem(value: null, child: Text(l.ninguna)),
             ..._columnas.map((c) => DropdownMenuItem(value: c, child: Text(c))),
           ],
           onChanged: onChange,
@@ -1008,80 +996,80 @@ class _PantallaImportarCatalogoState
     switch (widget.tipo) {
       case TipoCatalogo.coches:
         return [
-          sel('Nombre *', _mapeo.colNombre,
+          sel(l.nombreObligatorio, _mapeo.colNombre,
               (v) => setState(() => _mapeo.colNombre = v)),
-          sel('Marca', _mapeo.colMarca,
+          sel(l.marca, _mapeo.colMarca,
               (v) => setState(() => _mapeo.colMarca = v)),
-          sel('Modelo', _mapeo.colModelo,
+          sel(l.modeloCampo, _mapeo.colModelo,
               (v) => setState(() => _mapeo.colModelo = v)),
-          sel('Peso mínimo *', _mapeo.colPesoMin,
+          sel(l.pesoMinimoCampo, _mapeo.colPesoMin,
               (v) => setState(() => _mapeo.colPesoMin = v)),
-          sel('Créditos', _mapeo.colCreditos,
+          sel(l.creditosCampo, _mapeo.colCreditos,
               (v) => setState(() => _mapeo.colCreditos = v)),
-          sel('Copa(s)', _mapeo.colCopa,
+          sel(l.copasCampo, _mapeo.colCopa,
               (v) => setState(() => _mapeo.colCopa = v)),
-          sel('Foto (enlace de Drive)', _mapeo.colFoto,
+          sel(l.fotoEnlaceDrive, _mapeo.colFoto,
               (v) => setState(() => _mapeo.colFoto = v)),
         ];
       case TipoCatalogo.marcas:
         return [
-          sel('Código *', _mapeo.colCodigo,
+          sel(l.codigoObligatorio, _mapeo.colCodigo,
               (v) => setState(() => _mapeo.colCodigo = v)),
-          sel('Nombre *', _mapeo.colNombre,
+          sel(l.nombreObligatorio, _mapeo.colNombre,
               (v) => setState(() => _mapeo.colNombre = v)),
         ];
       case TipoCatalogo.llantas:
         return [
-          sel('Dimensión *', _mapeo.colDimension,
+          sel(l.dimensionObligatoria, _mapeo.colDimension,
               (v) => setState(() => _mapeo.colDimension = v)),
-          sel('Tipo', _mapeo.colTipo,
+          sel(l.tipoCampo, _mapeo.colTipo,
               (v) => setState(() => _mapeo.colTipo = v)),
-          sel('Copa(s)', _mapeo.colCopa,
+          sel(l.copasCampo, _mapeo.colCopa,
               (v) => setState(() => _mapeo.colCopa = v)),
         ];
       case TipoCatalogo.engranajes:
         return [
-          sel('Dientes *', _mapeo.colDientes,
+          sel(l.dientesObligatorio, _mapeo.colDientes,
               (v) => setState(() => _mapeo.colDientes = v)),
-          sel('Diámetro', _mapeo.colDiametro,
+          sel(l.diametro, _mapeo.colDiametro,
               (v) => setState(() => _mapeo.colDiametro = v)),
-          sel('Tipo (piñón/corona)', _mapeo.colTipo,
+          sel(l.tipoPinonCorona, _mapeo.colTipo,
               (v) => setState(() => _mapeo.colTipo = v)),
-          sel('Copa(s)', _mapeo.colCopa,
+          sel(l.copasCampo, _mapeo.colCopa,
               (v) => setState(() => _mapeo.colCopa = v)),
         ];
       case TipoCatalogo.motores:
         return [
-          sel('Motor *', _mapeo.colNombre,
+          sel(l.motorObligatorio, _mapeo.colNombre,
               (v) => setState(() => _mapeo.colNombre = v)),
           sel('RPM', _mapeo.colRpm,
               (v) => setState(() => _mapeo.colRpm = v)),
           sel('Gauss', _mapeo.colGauss,
               (v) => setState(() => _mapeo.colGauss = v)),
-          sel('Copa(s)', _mapeo.colCopa,
+          sel(l.copasCampo, _mapeo.colCopa,
               (v) => setState(() => _mapeo.colCopa = v)),
         ];
       case TipoCatalogo.neumaticos:
         return [
-          sel('Nombre *', _mapeo.colNombre,
+          sel(l.nombreObligatorio, _mapeo.colNombre,
               (v) => setState(() => _mapeo.colNombre = v)),
-          sel('Referencia', _mapeo.colReferencia,
+          sel(l.referenciaCampo, _mapeo.colReferencia,
               (v) => setState(() => _mapeo.colReferencia = v)),
-          sel('Copa(s)', _mapeo.colCopa,
+          sel(l.copasCampo, _mapeo.colCopa,
               (v) => setState(() => _mapeo.colCopa = v)),
         ];
       case TipoCatalogo.bancadas:
         return [
-          sel('Nombre *', _mapeo.colNombre,
+          sel(l.nombreObligatorio, _mapeo.colNombre,
               (v) => setState(() => _mapeo.colNombre = v)),
-          sel('Copa(s)', _mapeo.colCopa,
+          sel(l.copasCampo, _mapeo.colCopa,
               (v) => setState(() => _mapeo.colCopa = v)),
         ];
       case TipoCatalogo.chasis:
       case TipoCatalogo.copas:
       case TipoCatalogo.clubs:
         return [
-          sel('Nombre *', _mapeo.colNombre,
+          sel(l.nombreObligatorio, _mapeo.colNombre,
               (v) => setState(() => _mapeo.colNombre = v)),
         ];
     }

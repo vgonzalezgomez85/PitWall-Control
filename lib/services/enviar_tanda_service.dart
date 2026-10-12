@@ -23,6 +23,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../core/idioma.dart';
+
 class EnvioTandaResultado {
   final bool ok;
   final String mensaje;
@@ -42,13 +44,14 @@ String baseUrl(String host, {int puertoDefecto = 3000}) {
 }
 
 Future<EnvioTandaResultado> enviarTanda({
+  required Textos l,
   required String host, // ip/hostname (+ puerto opcional)
   required String pin,
   required Map<String, dynamic> payload,
   int puertoDefecto = 3000,
 }) async {
   final base = baseUrl(host, puertoDefecto: puertoDefecto);
-  if (base.isEmpty) return EnvioTandaResultado(false, 'Indica la dirección de PitWall.');
+  if (base.isEmpty) return EnvioTandaResultado(false, l.indicaDireccionPitwall);
   try {
     final r = await http
         .post(
@@ -79,10 +82,11 @@ Future<EnvioTandaResultado> enviarTanda({
       // Manager manda el mismo 403 para PIN incorrecto y para "Conexión
       // ecosistema" desactivada (indistinguibles); usamos su texto si lo trae.
       return EnvioTandaResultado(false,
-          (j['error'] ?? 'PIN incorrecto o dispositivo no autorizado.').toString());
+          (j['error'] ?? l.pinIncorrecto).toString());
     }
-    return EnvioTandaResultado(false, (j['error'] ?? 'Error ${r.statusCode}.').toString());
+    return EnvioTandaResultado(false,
+        (j['error'] ?? l.errorCodigoHttp('${r.statusCode}')).toString());
   } catch (e) {
-    return EnvioTandaResultado(false, 'No se pudo conectar con PitWall: $e');
+    return EnvioTandaResultado(false, l.noSePudoConectarPitwall('$e'));
   }
 }

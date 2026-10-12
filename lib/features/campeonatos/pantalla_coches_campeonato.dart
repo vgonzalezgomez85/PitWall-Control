@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import 'repositorio_coches_campeonato.dart';
@@ -107,7 +108,8 @@ class _PantallaCochesCampeonatoState
       final cred = cr.isEmpty ? null : int.tryParse(cr);
       if ((p.isNotEmpty && peso == null) || (cr.isNotEmpty && cred == null)) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Valor no válido en ${c.nombre}.')));
+            content:
+                Text(context.l.valorNoValidoEn(c.nombre))));
         return;
       }
       valores[c.id] = (peso, cred);
@@ -126,7 +128,7 @@ class _PantallaCochesCampeonatoState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('No se pudo guardar: $e')));
+            SnackBar(content: Text(context.l.noSePudoGuardar('$e'))));
         setState(() => _guardando = false);
       }
     }
@@ -138,8 +140,8 @@ class _PantallaCochesCampeonatoState
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(n == 0
-              ? 'Todos los coches ya tenían sus valores fijados.'
-              : 'Fijados los valores del catálogo en $n coches.')));
+              ? context.l.cochesYaFijados
+              : context.l.fijadosCoches(n))));
     }
   }
 
@@ -147,18 +149,15 @@ class _PantallaCochesCampeonatoState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Volver al catálogo'),
-        content: const Text('Se borran los valores fijados en este '
-            'campeonato y todos los coches vuelven a usar el peso mínimo y '
-            'los créditos del catálogo.\n\nLas verificaciones ya validadas '
-            'no cambian: guardan el reglamento con el que se verificaron.'),
+        title: Text(context.l.volverAlCatalogo),
+        content: Text(context.l.volverAlCatalogoTexto),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+              child: Text(context.l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Volver al catálogo')),
+              child: Text(context.l.volverAlCatalogo)),
         ],
       ),
     );
@@ -181,26 +180,26 @@ class _PantallaCochesCampeonatoState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Coches del campeonato'),
+        title: Text(context.l.cochesDelCampeonato),
         actions: [
           PopupMenuButton<String>(
             onSelected: (op) {
               if (op == 'fijar') _fijarDesdeCatalogo();
               if (op == 'catalogo') _volverAlCatalogo();
             },
-            itemBuilder: (_) => const [
+            itemBuilder: (_) => [
               PopupMenuItem(
                 value: 'fijar',
                 child: ListTile(
-                  leading: Icon(Icons.push_pin_outlined),
-                  title: Text('Fijar los valores actuales del catálogo'),
+                  leading: const Icon(Icons.push_pin_outlined),
+                  title: Text(context.l.fijarValoresCatalogo),
                 ),
               ),
               PopupMenuItem(
                 value: 'catalogo',
                 child: ListTile(
-                  leading: Icon(Icons.restore),
-                  title: Text('Volver todos al catálogo'),
+                  leading: const Icon(Icons.restore),
+                  title: Text(context.l.volverTodosAlCatalogo),
                 ),
               ),
             ],
@@ -215,16 +214,14 @@ class _PantallaCochesCampeonatoState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Peso mínimo${usaCreditos ? ' y créditos' : ''} de cada coche '
-                  'en ${_camp!.nombre}. Vacío = se usa el valor del catálogo. '
-                  'Lo que fijes aquí no cambia aunque después se modifique el '
-                  'catálogo (p. ej. para la temporada siguiente).',
+                  context.l.pesoMinCochesTexto(
+                      usaCreditos ? context.l.yCreditos : '',
+                      _camp!.nombre),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Las verificaciones validadas no cambian: guardan el '
-                  'reglamento con el que se verificaron.',
+                  context.l.verifsValidadasNoCambian,
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
@@ -232,9 +229,9 @@ class _PantallaCochesCampeonatoState
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Buscar coche',
-                    prefixIcon: Icon(Icons.search),
+                  decoration: InputDecoration(
+                    labelText: context.l.buscarCoche,
+                    prefixIcon: const Icon(Icons.search),
                     isDense: true,
                   ),
                   onChanged: (v) => setState(() => _busqueda = v),
@@ -246,8 +243,7 @@ class _PantallaCochesCampeonatoState
             child: _coches.isEmpty
                 ? Center(
                     child: Text(
-                      'No hay coches del catálogo con las copas de este '
-                      'campeonato.',
+                      context.l.noHayCochesConCopas,
                       style: TextStyle(color: cs.outline),
                     ),
                   )
@@ -285,7 +281,7 @@ class _PantallaCochesCampeonatoState
                               child: TextField(
                                 controller: _peso[c.id],
                                 decoration: InputDecoration(
-                                  labelText: 'Peso mín. (g)',
+                                  labelText: context.l.pesoMinG,
                                   hintText: c.pesoMin.toStringAsFixed(2),
                                   isDense: true,
                                 ),
@@ -301,7 +297,7 @@ class _PantallaCochesCampeonatoState
                                 child: TextField(
                                   controller: _creditos[c.id],
                                   decoration: InputDecoration(
-                                    labelText: 'Créditos',
+                                    labelText: context.l.menuCreditos,
                                     hintText: '${c.creditosCoche}',
                                     isDense: true,
                                   ),
@@ -330,7 +326,7 @@ class _PantallaCochesCampeonatoState
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.check),
-                  label: const Text('Guardar'),
+                  label: Text(context.l.guardar),
                 ),
               ),
             ),

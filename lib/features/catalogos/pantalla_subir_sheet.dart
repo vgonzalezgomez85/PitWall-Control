@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../google/subidor_catalogo.dart';
 
 /// Revisión de la subida al Google Sheet: muestra las filas nuevas que se
@@ -37,28 +38,30 @@ class _State extends ConsumerState<PantallaSubirSheet> {
   PlanSubida get plan => widget.plan;
 
   Future<void> _aplicar() async {
+    final l = context.l;
     setState(() => _trabajando = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
       final r = await ref.read(subidorCatalogoProvider).aplicar(plan);
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(
-        content: Text('✓ Subido al Sheet: ${r.anadidas} añadidas, '
-            '${r.actualizadas} actualizadas, ${r.borradas} borradas.'
-            '${r.fotosFallidas.isEmpty ? '' : '\n✗ Fotos sin subir: '
-                '${r.fotosFallidas.join('; ')}'}'),
+        content: Text(
+            '${l.subidoSheetResumen(r.anadidas, r.actualizadas, r.borradas)}'
+            '${r.fotosFallidas.isEmpty ? '' : l.fotosSinSubir(r.fotosFallidas.join('; '))}'),
         duration: Duration(seconds: r.fotosFallidas.isEmpty ? 4 : 10),
       ));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Error al subir: $e')));
+      messenger
+          .showSnackBar(SnackBar(content: Text(l.errorAlSubir('$e'))));
       setState(() => _trabajando = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l;
     final cs = Theme.of(context).colorScheme;
     final nuevas = plan.nuevas;
     final conflictos = plan.conflictos;
@@ -68,14 +71,13 @@ class _State extends ConsumerState<PantallaSubirSheet> {
         borrados.where((f) => f.aplicar).length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Subir al Sheet')),
+      appBar: AppBar(title: Text(l.subirAlSheet)),
       body: plan.vacio
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
                 child: Text(
-                  'No hay nada que subir: la hoja ya coincide con la app.\n\n'
-                  '(${plan.identicas} filas idénticas)',
+                  l.nadaQueSubir(plan.identicas),
                   textAlign: TextAlign.center,
                   style: TextStyle(color: cs.outline),
                 ),
@@ -92,17 +94,17 @@ class _State extends ConsumerState<PantallaSubirSheet> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'Se subirán tus cambios al Google Sheet.\n'
-                    '· ${nuevas.length} filas nuevas (se añaden)\n'
-                    '· ${conflictos.length} con diferencias (elige cuáles pisan la hoja)\n'
-                    '${borrados.isNotEmpty ? '· ${borrados.length} borradas en la app, pendientes de borrar en la hoja (elige cuáles)\n' : ''}'
-                    '· ${plan.identicas} idénticas (se ignoran)',
+                    '${l.subidaIntro}\n'
+                    '${l.filasNuevasResumen(nuevas.length)}\n'
+                    '${l.conDiferenciasResumen(conflictos.length)}\n'
+                    '${borrados.isNotEmpty ? '${l.borradasResumen(borrados.length)}\n' : ''}'
+                    '${l.identicasResumen(plan.identicas)}',
                     style: TextStyle(color: cs.onSurface, fontSize: 13),
                   ),
                 ),
                 if (borrados.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  Text('Borradas en la app — ¿borrar también en la hoja?',
+                  Text(l.borradasEnAppPregunta,
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 4),
                   ...borrados.map((f) => Card(
@@ -113,14 +115,14 @@ class _State extends ConsumerState<PantallaSubirSheet> {
                           secondary: Icon(Icons.delete_outline, color: cs.error),
                           title: Text(f.etiqueta),
                           subtitle: Text(f.aplicar
-                              ? 'Se borrará esa fila del Sheet'
-                              : 'Se deja en el Sheet (no se borra)'),
+                              ? l.seBorraraEsaFila
+                              : l.seDejaEnSheet),
                         ),
                       )),
                 ],
                 if (nuevas.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  Text('Filas nuevas',
+                  Text(l.filasNuevasTitulo,
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 4),
                   ...nuevas.map((f) => Card(
@@ -130,13 +132,13 @@ class _State extends ConsumerState<PantallaSubirSheet> {
                           onChanged: (v) => setState(() => f.aplicar = v),
                           secondary: const Icon(Icons.add_circle_outline),
                           title: Text(f.etiqueta),
-                          subtitle: const Text('Se añadirá al Sheet'),
+                          subtitle: Text(l.seAnadiraAlSheet),
                         ),
                       )),
                 ],
                 if (conflictos.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  Text('Diferencias (conflictos)',
+                  Text(l.diferenciasConflictos,
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 4),
                   ...conflictos.map((f) => _TarjetaConflicto(
@@ -159,7 +161,7 @@ class _State extends ConsumerState<PantallaSubirSheet> {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.cloud_upload_outlined),
-                  label: Text('Subir $totalAplicar al Sheet'),
+                  label: Text(l.subirNAlSheet(totalAplicar)),
                 ),
               ),
             ),
@@ -174,6 +176,7 @@ class _TarjetaConflicto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l;
     final cs = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
@@ -193,8 +196,8 @@ class _TarjetaConflicto extends StatelessWidget {
             ),
             Text(
               fila.aplicar
-                  ? 'Se subirá tu versión (pisa la hoja)'
-                  : 'Se mantiene lo del Sheet',
+                  ? l.seSubiraTuVersion
+                  : l.seMantieneSheet,
               style: TextStyle(
                   color: fila.aplicar ? cs.primary : cs.outline, fontSize: 12),
             ),
@@ -217,15 +220,17 @@ class _TarjetaConflicto extends StatelessWidget {
                                 ),
                             children: [
                               TextSpan(
-                                text: 'app: ${d.app.isEmpty ? "(vacío)" : d.app}',
+                                text: l.appValor(
+                                    d.app.isEmpty ? l.vacioParentesis : d.app),
                                 style: TextStyle(
                                     color: cs.primary,
                                     fontWeight: FontWeight.w600),
                               ),
                               const TextSpan(text: '   ·   '),
                               TextSpan(
-                                text:
-                                    'sheet: ${d.sheet.isEmpty ? "(vacío)" : d.sheet}',
+                                text: l.sheetValor(d.sheet.isEmpty
+                                    ? l.vacioParentesis
+                                    : d.sheet),
                                 style: TextStyle(color: cs.outline),
                               ),
                             ],

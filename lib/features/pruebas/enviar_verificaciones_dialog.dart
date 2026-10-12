@@ -96,7 +96,7 @@ class _EnviarVerificacionesDialogState
       final almacen = widget.ref.read(almacenSyncProvider);
       await almacen.write(key: _kHostKey, value: host);
       await almacen.write(key: _kPinKey, value: _pinCtrl.text.trim());
-      final carreras = await listarCarreras(host);
+      final carreras = await listarCarreras(host, l);
       if (!mounted) return;
       setState(() {
         _carreras = carreras;
@@ -125,7 +125,10 @@ class _EnviarVerificacionesDialogState
       }
 
       final res = await enviarVerificaciones(
-          host: _hostCtrl.text.trim(), pin: _pinCtrl.text, payload: payload);
+          l: l,
+          host: _hostCtrl.text.trim(),
+          pin: _pinCtrl.text,
+          payload: payload);
       if (res.ok) {
         await widget.ref
             .read(repoPruebasProvider)

@@ -3,6 +3,7 @@
 # Uso: python3 scripts/arb_anadir.py datos.json
 # datos.json = {"clave": {"es": "...", "ca": "...", "en": "...", "fr": "...",
 #                         "it": "...", "meta": {...opcional: placeholders...}}}
+import fcntl
 import json
 import sys
 from pathlib import Path
@@ -18,6 +19,13 @@ def cargar(idioma):
 
 def main():
     datos = json.load(open(sys.argv[1], encoding="utf-8"))
+    # Cerrojo: permite que varios procesos añadan claves a la vez sin pisarse.
+    with open(RAIZ / "lib/l10n/.arb.lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        anadir(datos)
+
+
+def anadir(datos):
     arbs = {i: cargar(i) for i in IDIOMAS}
     anadidas = 0
     for clave, textos in datos.items():

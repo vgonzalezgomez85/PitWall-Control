@@ -16,10 +16,12 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../services/fotos_coches_drive.dart';
@@ -59,6 +61,16 @@ typedef CeldaPendiente = ({int fila1, int col0, Object? valor});
 class ActualizadorDrive {
   ActualizadorDrive(this.ref);
   final Ref ref;
+
+  /// Textos del idioma elegido en Ajustes (o el del sistema en «Automático»):
+  /// las actualizaciones van en segundo plano y no tienen contexto.
+  Textos get _l {
+    final elegido = ref.read(idiomaProvider);
+    final locale = elegido ??
+        resolverIdioma(
+            PlatformDispatcher.instance.locale, Textos.supportedLocales);
+    return lookupTextos(locale);
+  }
 
   Future<
       ({
@@ -212,7 +224,8 @@ class ActualizadorDrive {
   Future<ResultadoActualizacion> actualizarPilotos(VinculoHoja v) async {
     final activo = ref.read(campeonatoActivoProvider);
     if (activo == null) {
-      return ResultadoActualizacion(ok: false, mensaje: 'Sin campeonato activo');
+      return ResultadoActualizacion(
+          ok: false, mensaje: _l.sinCampeonatoActivoAviso);
     }
     try {
       final datos = await _leerPestana(v);
@@ -264,8 +277,7 @@ class ActualizadorDrive {
           ya++;
         }
       }
-      final resumen =
-          'Nuevos: $nuevos · Inscritos al campeonato: $ya · Saltados: $saltados';
+      final resumen = _l.resumenPilotosActualizados(nuevos, ya, saltados);
       await ref
           .read(repoHojasVinculadasProvider)
           .marcarSync(v.fila.id, resumen);
@@ -282,7 +294,8 @@ class ActualizadorDrive {
   Future<ResultadoActualizacion> actualizarEquipos(VinculoHoja v) async {
     final activo = ref.read(campeonatoActivoProvider);
     if (activo == null) {
-      return ResultadoActualizacion(ok: false, mensaje: 'Sin campeonato activo');
+      return ResultadoActualizacion(
+          ok: false, mensaje: _l.sinCampeonatoActivoAviso);
     }
     try {
       final datos = await _leerPestana(v);
@@ -388,7 +401,7 @@ class ActualizadorDrive {
         nombresEq.add(_norm(f.nombreEquipo));
         nuevos++;
       }
-      final resumen = 'Equipos nuevos: $nuevos · Saltados: $saltados';
+      final resumen = _l.resumenEquiposActualizados(nuevos, saltados);
       await ref.read(repoHojasVinculadasProvider).marcarSync(v.fila.id, resumen);
       return ResultadoActualizacion(
         ok: true, mensaje: resumen, nuevos: nuevos, saltados: saltados,
@@ -1133,15 +1146,16 @@ class ActualizadorDrive {
           v.fila.hojaId, v.fila.pestanaTitulo, pendientes);
 
       var resumen =
-          'Nuevos: $nuevos · Actualizados: $actualizados · Sin cambios: $saltados';
+          _l.resumenCatalogoActualizado(nuevos, actualizados, saltados);
       if (tipo == TipoCatalogo.coches && m.colFoto != null) {
         final f = await _bajarFotosCoches(datos, m, idHeader);
         if (f.bajadas > 0 || f.fallidas.isNotEmpty) {
-          resumen += ' · Fotos: ${f.bajadas}';
+          resumen += _l.resumenFotos(f.bajadas);
           if (f.fallidas.isNotEmpty) {
-            resumen += ' (fallan ${f.fallidas.length}: '
+            resumen += _l.resumenFotosFallan(
+                f.fallidas.length,
                 '${f.fallidas.take(3).join('; ')}'
-                '${f.fallidas.length > 3 ? '…' : ''})';
+                '${f.fallidas.length > 3 ? '…' : ''}');
           }
         }
       }
@@ -1159,11 +1173,13 @@ class ActualizadorDrive {
   Future<ResultadoActualizacion> actualizarInscripciones(VinculoHoja v) async {
     final pruebaId = v.fila.pruebaId;
     if (pruebaId == null) {
-      return ResultadoActualizacion(ok: false, mensaje: 'Sin prueba asignada al vínculo');
+      return ResultadoActualizacion(
+          ok: false, mensaje: _l.sinPruebaAsignadaVinculo);
     }
     final activo = ref.read(campeonatoActivoProvider);
     if (activo == null) {
-      return ResultadoActualizacion(ok: false, mensaje: 'Sin campeonato activo');
+      return ResultadoActualizacion(
+          ok: false, mensaje: _l.sinCampeonatoActivoAviso);
     }
     try {
       final datos = await _leerPestana(v);
@@ -1217,11 +1233,10 @@ class ActualizadorDrive {
         nuevos++;
       }
       final sin = noReconocidos.length;
-      var resumen =
-          'Nuevas inscripciones: $nuevos · Ya inscritos: $ya · No reconocidos: $sin';
+      var resumen = _l.resumenInscripcionesActualizadas(nuevos, ya, sin);
       if (sin > 0) {
-        resumen += ' (${noReconocidos.take(5).join(', ')}'
-            '${sin > 5 ? '…' : ''})';
+        resumen += _l.resumenNoReconocidos('${noReconocidos.take(5).join(', ')}'
+            '${sin > 5 ? '…' : ''}');
       }
       await ref.read(repoHojasVinculadasProvider).marcarSync(v.fila.id, resumen);
       return ResultadoActualizacion(

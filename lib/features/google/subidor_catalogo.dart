@@ -16,10 +16,12 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../services/fotos_coches_drive.dart';
@@ -127,6 +129,16 @@ String _copasStr(String copasJson) {
 class SubidorCatalogo {
   SubidorCatalogo(this.ref);
   final Ref ref;
+
+  /// Textos del idioma elegido en Ajustes (o el del sistema en «Automático»):
+  /// la subida va en segundo plano y no tiene contexto.
+  Textos get _l {
+    final elegido = ref.read(idiomaProvider);
+    final locale = elegido ??
+        resolverIdioma(
+            PlatformDispatcher.instance.locale, Textos.supportedLocales);
+    return lookupTextos(locale);
+  }
 
   AppDatabase get _db => ref.read(dbProvider);
 
@@ -296,7 +308,7 @@ class SubidorCatalogo {
       }
     }
     if (idxCab < 0) {
-      return PlanSubida(error: 'No encuentro la cabecera en la hoja.');
+      return PlanSubida(error: _l.noEncuentroCabecera);
     }
     final headers = raw[idxCab];
     final width = headers.length;
@@ -332,9 +344,7 @@ class SubidorCatalogo {
     final local = await _filasLocales(tipo);
     final keyCols = local.keyFields.map(colDe).toList();
     if (keyCols.any((c) => c == null)) {
-      return PlanSubida(
-          error: 'Faltan columnas clave en el mapeo de la hoja. '
-              'Revisa el vínculo (Importar) para que las columnas cuadren.');
+      return PlanSubida(error: _l.faltanColumnasClaveMapeo);
     }
 
     // Índice de la hoja por clave (nombre/etc., para catálogos sin columna
@@ -517,7 +527,7 @@ class SubidorCatalogo {
       if (idDrive != null) return (diff: null, pendiente: null);
       return (
         diff: DiffColumna(
-            'FOTO', '(foto nueva: se sube a Drive y sustituye al enlace)',
+            'FOTO', _l.fotoNuevaSeSube,
             celdaHoja),
         pendiente: (cocheId: cocheId, fotoPath: fotoPath, col: col),
       );
@@ -528,7 +538,7 @@ class SubidorCatalogo {
       return (diff: DiffColumna('FOTO', enlace, ''), pendiente: null);
     }
     return (
-      diff: DiffColumna('FOTO', '(se sube la foto a Drive)', ''),
+      diff: DiffColumna('FOTO', _l.seSubeFotoADrive, ''),
       pendiente: (cocheId: cocheId, fotoPath: fotoPath, col: col),
     );
   }

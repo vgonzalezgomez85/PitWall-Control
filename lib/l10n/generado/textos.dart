@@ -5765,6 +5765,2493 @@ abstract class Textos {
   /// In es, this message translates to:
   /// **', limitado al tope {tope}'**
   String bonifLimiteTope(int tope);
+
+  /// No description provided for @importarPilotosFinalizado.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar pilotos de un campeonato finalizado'**
+  String get importarPilotosFinalizado;
+
+  /// No description provided for @importarPilotosFinalizadoAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Trae sus pilotos con el saldo de cierre como créditos iniciales.'**
+  String get importarPilotosFinalizadoAyuda;
+
+  /// No description provided for @noImportar.
+  ///
+  /// In es, this message translates to:
+  /// **'No importar'**
+  String get noImportar;
+
+  /// No description provided for @tesoreriaNoCuadra.
+  ///
+  /// In es, this message translates to:
+  /// **'Tesorería: Coordinadora + Club deben sumar el Pagat ({suma} ≠ {pagat}).'**
+  String tesoreriaNoCuadra(String suma, String pagat);
+
+  /// No description provided for @bonifCierrePregunta.
+  ///
+  /// In es, this message translates to:
+  /// **'Has marcado el campeonato como finalizado.\n\nSe regularizará el saldo de cada piloto que haya competido: saldo = mín(saldo actual + bonificación según categoría y nº de carreras, {tope}). Cada ajuste queda registrado como movimiento indicando la bonificación aplicada.\n\nImportante: la bonificación usa la categoría de cierre (revísala antes en Créditos → Revisión de categorías si hay promociones o descensos).\n\n¿Aplicarla ahora?'**
+  String bonifCierrePregunta(String tope);
+
+  /// No description provided for @ahoraNo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora no'**
+  String get ahoraNo;
+
+  /// No description provided for @eliminarCampeonato.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar campeonato'**
+  String get eliminarCampeonato;
+
+  /// No description provided for @eliminarCampeonatoTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar \"{nombre}\"?\n\nSe borrarán también sus pruebas, tandas, inscripciones, resultados, verificaciones y pagos. No se puede deshacer.'**
+  String eliminarCampeonatoTexto(String nombre);
+
+  /// No description provided for @nuevoCampeonato.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo campeonato'**
+  String get nuevoCampeonato;
+
+  /// No description provided for @editarCampeonato.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar campeonato'**
+  String get editarCampeonato;
+
+  /// No description provided for @obligatoriosAviso.
+  ///
+  /// In es, this message translates to:
+  /// **'Obligatorio (*): nombre, al menos una copa y el tipo de motor. Lo demás se puede completar después.'**
+  String get obligatoriosAviso;
+
+  /// No description provided for @datosBasicos.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos básicos'**
+  String get datosBasicos;
+
+  /// No description provided for @nombreCampeonatoObligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre del campeonato *'**
+  String get nombreCampeonatoObligatorio;
+
+  /// No description provided for @nombreCampeonatoEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Liga 2026, Individual LMP-HYP-GT3 Otoño'**
+  String get nombreCampeonatoEjemplo;
+
+  /// No description provided for @formato.
+  ///
+  /// In es, this message translates to:
+  /// **'Formato'**
+  String get formato;
+
+  /// No description provided for @formatoAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Parejas = 2 pilotos por equipo. Individual = 1 piloto'**
+  String get formatoAyuda;
+
+  /// No description provided for @formatoParejas.
+  ///
+  /// In es, this message translates to:
+  /// **'Parejas'**
+  String get formatoParejas;
+
+  /// No description provided for @formatoIndividual.
+  ///
+  /// In es, this message translates to:
+  /// **'Individual'**
+  String get formatoIndividual;
+
+  /// No description provided for @anio.
+  ///
+  /// In es, this message translates to:
+  /// **'Año'**
+  String get anio;
+
+  /// No description provided for @anioInvalido.
+  ///
+  /// In es, this message translates to:
+  /// **'Año inválido'**
+  String get anioInvalido;
+
+  /// No description provided for @activarCampeonatoAlCrear.
+  ///
+  /// In es, this message translates to:
+  /// **'Activar este campeonato al crearlo'**
+  String get activarCampeonatoAlCrear;
+
+  /// No description provided for @campeonatoVisible.
+  ///
+  /// In es, this message translates to:
+  /// **'Campeonato visible'**
+  String get campeonatoVisible;
+
+  /// No description provided for @campeonatoVisibleAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo los campeonatos visibles aparecen en el selector'**
+  String get campeonatoVisibleAyuda;
+
+  /// No description provided for @clubOrgAyudaExportaciones.
+  ///
+  /// In es, this message translates to:
+  /// **'Aparece en la cabecera de las exportaciones (PDF de tandas, verificaciones, clasificación y créditos).'**
+  String get clubOrgAyudaExportaciones;
+
+  /// No description provided for @categoriasCopasObligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Categorías / copas *'**
+  String get categoriasCopasObligatorio;
+
+  /// No description provided for @seleccionaCopasTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona las que se usan en este campeonato. Pueden ser una sola (p.ej. \"Grupo C\") o varias (p.ej. \"LMP + HYP + GT3\").'**
+  String get seleccionaCopasTexto;
+
+  /// No description provided for @anadirNuevaCategoria.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir nueva categoría'**
+  String get anadirNuevaCategoria;
+
+  /// No description provided for @anadirNuevaCategoriaAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Si no la encuentras arriba'**
+  String get anadirNuevaCategoriaAyuda;
+
+  /// No description provided for @motorObligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Motor *'**
+  String get motorObligatorio;
+
+  /// No description provided for @rangoMotorCampeonatoTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Rango de números de motor que la organización sortea entre los equipos en cada prueba. Déjalo vacío si no usáis sorteo.'**
+  String get rangoMotorCampeonatoTexto;
+
+  /// No description provided for @creditosYTesoreria.
+  ///
+  /// In es, this message translates to:
+  /// **'Créditos y tesorería'**
+  String get creditosYTesoreria;
+
+  /// No description provided for @creditosTesoreriaAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Actívalos solo si el campeonato los usa; si no, sus pantallas se ocultan del menú.'**
+  String get creditosTesoreriaAyuda;
+
+  /// No description provided for @usaCreditos.
+  ///
+  /// In es, this message translates to:
+  /// **'Usa sistema de créditos (handicap)'**
+  String get usaCreditos;
+
+  /// No description provided for @usaCreditosAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Sistema de handicap por créditos. Apágalo si el campeonato no lo usa.'**
+  String get usaCreditosAyuda;
+
+  /// No description provided for @topeRegularizacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Tope regularización créditos'**
+  String get topeRegularizacion;
+
+  /// No description provided for @topeRegularizacionAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Máximo de créditos al regularizar al cierre de temporada'**
+  String get topeRegularizacionAyuda;
+
+  /// No description provided for @numeroPositivo.
+  ///
+  /// In es, this message translates to:
+  /// **'Número positivo'**
+  String get numeroPositivo;
+
+  /// No description provided for @gestionaTesoreria.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestiona tesorería (cuotas/pagos)'**
+  String get gestionaTesoreria;
+
+  /// No description provided for @gestionaTesoreriaAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Apágalo si este campeonato no controla el dinero.'**
+  String get gestionaTesoreriaAyuda;
+
+  /// No description provided for @pagatTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'PAGAT es la cuota total. APORTACIÓN COORDINADORA + APORTACIÓN CLUB deben sumar el PAGAT (es el desglose de a dónde va el dinero).'**
+  String get pagatTexto;
+
+  /// No description provided for @pagatObligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagat (€) *'**
+  String get pagatObligatorio;
+
+  /// No description provided for @coordinadoraEurParentesis.
+  ///
+  /// In es, this message translates to:
+  /// **'Coordinadora (€)'**
+  String get coordinadoraEurParentesis;
+
+  /// No description provided for @clubEurParentesis.
+  ///
+  /// In es, this message translates to:
+  /// **'Club (€)'**
+  String get clubEurParentesis;
+
+  /// No description provided for @indicaLaCuota.
+  ///
+  /// In es, this message translates to:
+  /// **'Indica la cuota'**
+  String get indicaLaCuota;
+
+  /// No description provided for @numeroNoValido.
+  ///
+  /// In es, this message translates to:
+  /// **'Número no válido'**
+  String get numeroNoValido;
+
+  /// No description provided for @masOpcionesPuntuacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Más opciones: puntuación, verificación y PDF'**
+  String get masOpcionesPuntuacion;
+
+  /// No description provided for @puntuacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntuación'**
+  String get puntuacion;
+
+  /// No description provided for @numeroDescartes.
+  ///
+  /// In es, this message translates to:
+  /// **'Número de descartes'**
+  String get numeroDescartes;
+
+  /// No description provided for @numeroDescartesAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuántas peores pruebas se descartan al piloto'**
+  String get numeroDescartesAyuda;
+
+  /// No description provided for @entreCeroYCinco.
+  ///
+  /// In es, this message translates to:
+  /// **'Entre 0 y 5'**
+  String get entreCeroYCinco;
+
+  /// No description provided for @tablaDePuntosAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos por posición en cada prueba'**
+  String get tablaDePuntosAyuda;
+
+  /// No description provided for @verificacionAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Anchura de eje, coches y fabricantes que se comprueban al verificar.'**
+  String get verificacionAyuda;
+
+  /// No description provided for @anchuraEjeCategoriasAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Anchura máxima de eje (mm) por categoría. Deja vacío si en esa copa no se comprueba.'**
+  String get anchuraEjeCategoriasAyuda;
+
+  /// No description provided for @pesoMinCreditos.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso mínimo y créditos en este campeonato'**
+  String get pesoMinCreditos;
+
+  /// No description provided for @pesoMinCampeonato.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso mínimo en este campeonato'**
+  String get pesoMinCampeonato;
+
+  /// No description provided for @pesoMinCampeonatoAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Fija los valores de los coches para que los cambios del catálogo no afecten a este campeonato.'**
+  String get pesoMinCampeonatoAyuda;
+
+  /// No description provided for @marcaPdf.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca en los PDF (opcional)'**
+  String get marcaPdf;
+
+  /// No description provided for @marcaPdfTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Título de cabecera y lema del pie en las exportaciones (PDF) de ESTE campeonato. Si lo dejas vacío, se usa un valor por defecto.'**
+  String get marcaPdfTexto;
+
+  /// No description provided for @tituloCabecera.
+  ///
+  /// In es, this message translates to:
+  /// **'Título de cabecera'**
+  String get tituloCabecera;
+
+  /// No description provided for @tituloCabeceraEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: PITWALL o el nombre de tu club'**
+  String get tituloCabeceraEjemplo;
+
+  /// No description provided for @lemaPie.
+  ///
+  /// In es, this message translates to:
+  /// **'Lema del pie'**
+  String get lemaPie;
+
+  /// No description provided for @lemaPieEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: tu club · localidad'**
+  String get lemaPieEjemplo;
+
+  /// No description provided for @campeonatoFinalizadoTitulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Campeonato finalizado'**
+  String get campeonatoFinalizadoTitulo;
+
+  /// No description provided for @campeonatoFinalizadoAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Temporada cerrada: la clasificación ordena por netos, se habilita la bonificación de cierre y sus verificaciones quedan bloqueadas (solo lectura).'**
+  String get campeonatoFinalizadoAyuda;
+
+  /// No description provided for @campeonatos.
+  ///
+  /// In es, this message translates to:
+  /// **'Campeonatos'**
+  String get campeonatos;
+
+  /// No description provided for @activar.
+  ///
+  /// In es, this message translates to:
+  /// **'Activar'**
+  String get activar;
+
+  /// No description provided for @anioTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Año {anio}'**
+  String anioTexto(int anio);
+
+  /// No description provided for @descartesTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Descartes: {n}'**
+  String descartesTexto(int n);
+
+  /// No description provided for @cochesDelCampeonato.
+  ///
+  /// In es, this message translates to:
+  /// **'Coches del campeonato'**
+  String get cochesDelCampeonato;
+
+  /// No description provided for @fijarValoresCatalogo.
+  ///
+  /// In es, this message translates to:
+  /// **'Fijar los valores actuales del catálogo'**
+  String get fijarValoresCatalogo;
+
+  /// No description provided for @volverTodosAlCatalogo.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver todos al catálogo'**
+  String get volverTodosAlCatalogo;
+
+  /// No description provided for @volverAlCatalogo.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver al catálogo'**
+  String get volverAlCatalogo;
+
+  /// No description provided for @volverAlCatalogoTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Se borran los valores fijados en este campeonato y todos los coches vuelven a usar el peso mínimo y los créditos del catálogo.\n\nLas verificaciones ya validadas no cambian: guardan el reglamento con el que se verificaron.'**
+  String get volverAlCatalogoTexto;
+
+  /// No description provided for @valorNoValidoEn.
+  ///
+  /// In es, this message translates to:
+  /// **'Valor no válido en {coche}.'**
+  String valorNoValidoEn(String coche);
+
+  /// No description provided for @buscarCoche.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar coche'**
+  String get buscarCoche;
+
+  /// No description provided for @pesoMinG.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso mín. (g)'**
+  String get pesoMinG;
+
+  /// No description provided for @fijadosCoches.
+  ///
+  /// In es, this message translates to:
+  /// **'Fijados los valores del catálogo en {n, plural, =1{1 coche} other{{n} coches}}.'**
+  String fijadosCoches(int n);
+
+  /// No description provided for @aunNoHayHistorial.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay historial.'**
+  String get aunNoHayHistorial;
+
+  /// No description provided for @cochesYaFijados.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los coches ya tenían sus valores fijados.'**
+  String get cochesYaFijados;
+
+  /// No description provided for @yCreditos.
+  ///
+  /// In es, this message translates to:
+  /// **' y créditos'**
+  String get yCreditos;
+
+  /// No description provided for @pesoMinCochesTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso mínimo{creditos} de cada coche en {campeonato}. Vacío = se usa el valor del catálogo. Lo que fijes aquí no cambia aunque después se modifique el catálogo (p. ej. para la temporada siguiente).'**
+  String pesoMinCochesTexto(String creditos, String campeonato);
+
+  /// No description provided for @verifsValidadasNoCambian.
+  ///
+  /// In es, this message translates to:
+  /// **'Las verificaciones validadas no cambian: guardan el reglamento con el que se verificaron.'**
+  String get verifsValidadasNoCambian;
+
+  /// No description provided for @noHayCochesConCopas.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay coches del catálogo con las copas de este campeonato.'**
+  String get noHayCochesConCopas;
+
+  /// No description provided for @indicaDireccionPitwall.
+  ///
+  /// In es, this message translates to:
+  /// **'Indica la dirección de PitWall.'**
+  String get indicaDireccionPitwall;
+
+  /// No description provided for @errorAlPedirCarreras.
+  ///
+  /// In es, this message translates to:
+  /// **'Error {codigo} al pedir las carreras.'**
+  String errorAlPedirCarreras(String codigo);
+
+  /// No description provided for @errorAlPedirResultados.
+  ///
+  /// In es, this message translates to:
+  /// **'Error {codigo} al pedir los resultados.'**
+  String errorAlPedirResultados(String codigo);
+
+  /// No description provided for @respuestaNoReconocida.
+  ///
+  /// In es, this message translates to:
+  /// **'Respuesta no reconocida ({schema}).'**
+  String respuestaNoReconocida(String schema);
+
+  /// No description provided for @pinIncorrecto.
+  ///
+  /// In es, this message translates to:
+  /// **'PIN incorrecto o dispositivo no autorizado.'**
+  String get pinIncorrecto;
+
+  /// No description provided for @errorCodigoHttp.
+  ///
+  /// In es, this message translates to:
+  /// **'Error {codigo}.'**
+  String errorCodigoHttp(String codigo);
+
+  /// No description provided for @noSePudoConectarPitwall.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo conectar con PitWall: {detalle}'**
+  String noSePudoConectarPitwall(String detalle);
+
+  /// No description provided for @verificacionesEnviadas.
+  ///
+  /// In es, this message translates to:
+  /// **'{n} verificación(es) enviada(s) a {nombre}.'**
+  String verificacionesEnviadas(String n, String nombre);
+
+  /// No description provided for @idiomaDelPdf.
+  ///
+  /// In es, this message translates to:
+  /// **'Idioma del PDF'**
+  String get idiomaDelPdf;
+
+  /// No description provided for @imagenes.
+  ///
+  /// In es, this message translates to:
+  /// **'Imágenes'**
+  String get imagenes;
+
+  /// No description provided for @difValor.
+  ///
+  /// In es, this message translates to:
+  /// **'{titulo}: {antes}{unidad} (ahora {ahora}{unidad})'**
+  String difValor(String titulo, String antes, String unidad, String ahora);
+
+  /// No description provided for @difAnadidas.
+  ///
+  /// In es, this message translates to:
+  /// **'añadidas: {lista}'**
+  String difAnadidas(String lista);
+
+  /// No description provided for @difQuitadas.
+  ///
+  /// In es, this message translates to:
+  /// **'quitadas: {lista}'**
+  String difQuitadas(String lista);
+
+  /// No description provided for @difNombreCoche.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre del coche: {antes} (ahora {ahora})'**
+  String difNombreCoche(String antes, String ahora);
+
+  /// No description provided for @tituloPesoMinimo.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso mínimo'**
+  String get tituloPesoMinimo;
+
+  /// No description provided for @tituloCreditosCoche.
+  ///
+  /// In es, this message translates to:
+  /// **'Créditos del coche'**
+  String get tituloCreditosCoche;
+
+  /// No description provided for @tituloRpmMax.
+  ///
+  /// In es, this message translates to:
+  /// **'RPM máx. del motor'**
+  String get tituloRpmMax;
+
+  /// No description provided for @tituloImanMax.
+  ///
+  /// In es, this message translates to:
+  /// **'Imán máx. del motor'**
+  String get tituloImanMax;
+
+  /// No description provided for @tituloEjeDelMax.
+  ///
+  /// In es, this message translates to:
+  /// **'Eje delantero máx.'**
+  String get tituloEjeDelMax;
+
+  /// No description provided for @tituloEjeTraMax.
+  ///
+  /// In es, this message translates to:
+  /// **'Eje trasero máx.'**
+  String get tituloEjeTraMax;
+
+  /// No description provided for @tituloFabricantesPermitidos.
+  ///
+  /// In es, this message translates to:
+  /// **'Fabricantes permitidos'**
+  String get tituloFabricantesPermitidos;
+
+  /// No description provided for @tituloMarcasCatalogo.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcas del catálogo'**
+  String get tituloMarcasCatalogo;
+
+  /// No description provided for @tituloLlantasDel.
+  ///
+  /// In es, this message translates to:
+  /// **'Llantas delanteras'**
+  String get tituloLlantasDel;
+
+  /// No description provided for @tituloLlantasTra.
+  ///
+  /// In es, this message translates to:
+  /// **'Llantas traseras'**
+  String get tituloLlantasTra;
+
+  /// No description provided for @tituloBancadas.
+  ///
+  /// In es, this message translates to:
+  /// **'Bancadas'**
+  String get tituloBancadas;
+
+  /// No description provided for @tituloNeumaticos.
+  ///
+  /// In es, this message translates to:
+  /// **'Neumáticos'**
+  String get tituloNeumaticos;
+
+  /// No description provided for @coches.
+  ///
+  /// In es, this message translates to:
+  /// **'Coches'**
+  String get coches;
+
+  /// No description provided for @marcas.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcas'**
+  String get marcas;
+
+  /// No description provided for @llantas.
+  ///
+  /// In es, this message translates to:
+  /// **'Llantas'**
+  String get llantas;
+
+  /// No description provided for @engranajes.
+  ///
+  /// In es, this message translates to:
+  /// **'Engranajes'**
+  String get engranajes;
+
+  /// No description provided for @motores.
+  ///
+  /// In es, this message translates to:
+  /// **'Motores'**
+  String get motores;
+
+  /// No description provided for @bancadas.
+  ///
+  /// In es, this message translates to:
+  /// **'Bancadas'**
+  String get bancadas;
+
+  /// No description provided for @neumaticos.
+  ///
+  /// In es, this message translates to:
+  /// **'Neumáticos'**
+  String get neumaticos;
+
+  /// No description provided for @copas.
+  ///
+  /// In es, this message translates to:
+  /// **'Copas'**
+  String get copas;
+
+  /// No description provided for @clubs.
+  ///
+  /// In es, this message translates to:
+  /// **'Clubs'**
+  String get clubs;
+
+  /// No description provided for @llanta.
+  ///
+  /// In es, this message translates to:
+  /// **'Llanta'**
+  String get llanta;
+
+  /// No description provided for @engranaje.
+  ///
+  /// In es, this message translates to:
+  /// **'Engranaje'**
+  String get engranaje;
+
+  /// No description provided for @sinCopaCategoria.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin copa/categoría (no se puede usar)'**
+  String get sinCopaCategoria;
+
+  /// No description provided for @copasEtiqueta.
+  ///
+  /// In es, this message translates to:
+  /// **'Copas: {copas}'**
+  String copasEtiqueta(String copas);
+
+  /// No description provided for @pesoYCreditos.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso mín {peso}g  ·  Créd {creditos}'**
+  String pesoYCreditos(String peso, String creditos);
+
+  /// No description provided for @todasLasCopas.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas las copas'**
+  String get todasLasCopas;
+
+  /// No description provided for @todas.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas'**
+  String get todas;
+
+  /// No description provided for @sinCoincidencias.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin coincidencias'**
+  String get sinCoincidencias;
+
+  /// No description provided for @sinCoches.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin coches'**
+  String get sinCoches;
+
+  /// No description provided for @sinMarcas.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin marcas'**
+  String get sinMarcas;
+
+  /// No description provided for @sinLlantas.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin llantas'**
+  String get sinLlantas;
+
+  /// No description provided for @sinEngranajes.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin engranajes'**
+  String get sinEngranajes;
+
+  /// No description provided for @sinMotores.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin motores'**
+  String get sinMotores;
+
+  /// No description provided for @sinBancadas.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin bancadas'**
+  String get sinBancadas;
+
+  /// No description provided for @sinChasis.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin chasis'**
+  String get sinChasis;
+
+  /// No description provided for @sinNeumaticos.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin neumáticos'**
+  String get sinNeumaticos;
+
+  /// No description provided for @sinCopas.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin copas'**
+  String get sinCopas;
+
+  /// No description provided for @sinClubs.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin clubs'**
+  String get sinClubs;
+
+  /// No description provided for @buscarCochePuntos.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar coche…'**
+  String get buscarCochePuntos;
+
+  /// No description provided for @sinMedidas.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin medidas'**
+  String get sinMedidas;
+
+  /// No description provided for @sinReferencia.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin referencia'**
+  String get sinReferencia;
+
+  /// No description provided for @calculandoCambiosSubir.
+  ///
+  /// In es, this message translates to:
+  /// **'Calculando cambios para subir…'**
+  String get calculandoCambiosSubir;
+
+  /// No description provided for @todoCatalogoExcel.
+  ///
+  /// In es, this message translates to:
+  /// **'Todo el catálogo en Excel'**
+  String get todoCatalogoExcel;
+
+  /// No description provided for @exportarTodoExcel.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar todo a Excel'**
+  String get exportarTodoExcel;
+
+  /// No description provided for @unaPestanaPorCatalogo.
+  ///
+  /// In es, this message translates to:
+  /// **'Una pestaña por catálogo'**
+  String get unaPestanaPorCatalogo;
+
+  /// No description provided for @importarExcelEditado.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar Excel editado'**
+  String get importarExcelEditado;
+
+  /// No description provided for @actualizaPorIdCreaNuevos.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualiza por ID y crea los nuevos'**
+  String get actualizaPorIdCreaNuevos;
+
+  /// No description provided for @bajarDesdeDriveCon.
+  ///
+  /// In es, this message translates to:
+  /// **'Bajar desde Drive ({hoja} · {pestana})'**
+  String bajarDesdeDriveCon(String hoja, String pestana);
+
+  /// No description provided for @subirMisCambiosSheet.
+  ///
+  /// In es, this message translates to:
+  /// **'Subir mis cambios al Sheet'**
+  String get subirMisCambiosSheet;
+
+  /// No description provided for @importarPestanaActual.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar la pestaña actual'**
+  String get importarPestanaActual;
+
+  /// No description provided for @importarCatalogosExcelTitulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar catálogos desde Excel'**
+  String get importarCatalogosExcelTitulo;
+
+  /// No description provided for @importarCatalogosExcelTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Se actualizarán las filas que tengan ID y se crearán las que no lo tengan.\n\nNo se borra nada: las fichas que quites de la hoja seguirán en la app.'**
+  String get importarCatalogosExcelTexto;
+
+  /// No description provided for @resumenCreadosActualizados.
+  ///
+  /// In es, this message translates to:
+  /// **'✓ Creados: {creados} · Actualizados: {actualizados}'**
+  String resumenCreadosActualizados(int creados, int actualizados);
+
+  /// No description provided for @catalogoImportadoLinea.
+  ///
+  /// In es, this message translates to:
+  /// **'• {nombre}: {creados, plural, =1{1 nuevo} other{{creados} nuevos}}, {actualizados, plural, =1{1 actualizado} other{{actualizados} actualizados}}'**
+  String catalogoImportadoLinea(String nombre, int creados, int actualizados);
+
+  /// No description provided for @pestanasIgnoradasAviso.
+  ///
+  /// In es, this message translates to:
+  /// **'⚠ Estas pestañas no se han importado porque su nombre no coincide con ningún catálogo:\n{lista}\nNo renombres las pestañas del fichero exportado.'**
+  String pestanasIgnoradasAviso(String lista);
+
+  /// No description provided for @erroresEtiqueta.
+  ///
+  /// In es, this message translates to:
+  /// **'Errores:\n{lista}'**
+  String erroresEtiqueta(String lista);
+
+  /// No description provided for @eliminarFichaTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar \"{nombre}\"?'**
+  String eliminarFichaTexto(String nombre);
+
+  /// No description provided for @vacioPulsaAnadir.
+  ///
+  /// In es, this message translates to:
+  /// **'{texto}.\nPulsa el + para añadir.'**
+  String vacioPulsaAnadir(String texto);
+
+  /// No description provided for @copasDondeAplica.
+  ///
+  /// In es, this message translates to:
+  /// **'Copas donde aplica'**
+  String get copasDondeAplica;
+
+  /// No description provided for @copasSinMarcarAviso.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin marcar = no se podrá usar en ninguna copa.'**
+  String get copasSinMarcarAviso;
+
+  /// No description provided for @copasMarcarAviso.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca solo las copas donde es válido.'**
+  String get copasMarcarAviso;
+
+  /// No description provided for @nuevoCoche.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo coche'**
+  String get nuevoCoche;
+
+  /// No description provided for @editarCoche.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar coche'**
+  String get editarCoche;
+
+  /// No description provided for @nombreCompletoObligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre completo *'**
+  String get nombreCompletoObligatorio;
+
+  /// No description provided for @nombreCompletoEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: SCALEAUTO-BMW M8 GTE'**
+  String get nombreCompletoEjemplo;
+
+  /// No description provided for @marcaObligatoria.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca *'**
+  String get marcaObligatoria;
+
+  /// No description provided for @modeloObligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Modelo *'**
+  String get modeloObligatorio;
+
+  /// No description provided for @pesoMinimoObligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso mínimo (g) *'**
+  String get pesoMinimoObligatorio;
+
+  /// No description provided for @pesoMinimoAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'No cambia las verificaciones validadas ni los campeonatos con valores fijados'**
+  String get pesoMinimoAyuda;
+
+  /// No description provided for @creditosCoche.
+  ///
+  /// In es, this message translates to:
+  /// **'Créditos coche'**
+  String get creditosCoche;
+
+  /// No description provided for @creditosCocheAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Negativo o positivo'**
+  String get creditosCocheAyuda;
+
+  /// No description provided for @galeria.
+  ///
+  /// In es, this message translates to:
+  /// **'Galería'**
+  String get galeria;
+
+  /// No description provided for @camara.
+  ///
+  /// In es, this message translates to:
+  /// **'Cámara'**
+  String get camara;
+
+  /// No description provided for @quitarFoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar foto'**
+  String get quitarFoto;
+
+  /// No description provided for @nuevaMarca.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva marca'**
+  String get nuevaMarca;
+
+  /// No description provided for @editarMarca.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar marca'**
+  String get editarMarca;
+
+  /// No description provided for @codigoObligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Código *'**
+  String get codigoObligatorio;
+
+  /// No description provided for @marcaCodigoEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: SIT, SCA, SLP'**
+  String get marcaCodigoEjemplo;
+
+  /// No description provided for @nuevaLlanta.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva llanta'**
+  String get nuevaLlanta;
+
+  /// No description provided for @editarLlanta.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar llanta'**
+  String get editarLlanta;
+
+  /// No description provided for @llantaDimensionEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: 15,8 x 8 PL'**
+  String get llantaDimensionEjemplo;
+
+  /// No description provided for @delantera.
+  ///
+  /// In es, this message translates to:
+  /// **'Delantera'**
+  String get delantera;
+
+  /// No description provided for @trasera.
+  ///
+  /// In es, this message translates to:
+  /// **'Trasera'**
+  String get trasera;
+
+  /// No description provided for @ambas.
+  ///
+  /// In es, this message translates to:
+  /// **'Ambas'**
+  String get ambas;
+
+  /// No description provided for @nuevoEngranaje.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo engranaje'**
+  String get nuevoEngranaje;
+
+  /// No description provided for @editarEngranaje.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar engranaje'**
+  String get editarEngranaje;
+
+  /// No description provided for @diametroEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: 6,5'**
+  String get diametroEjemplo;
+
+  /// No description provided for @dientesEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: 12 piñón, 28 corona'**
+  String get dientesEjemplo;
+
+  /// No description provided for @nDientes.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{1 diente} other{{n} dientes}}'**
+  String nDientes(int n);
+
+  /// No description provided for @nuevoMotor.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo motor'**
+  String get nuevoMotor;
+
+  /// No description provided for @editarMotor.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar motor'**
+  String get editarMotor;
+
+  /// No description provided for @motorIdentificadorAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Identificador o modelo'**
+  String get motorIdentificadorAyuda;
+
+  /// No description provided for @nuevaBancada.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva bancada'**
+  String get nuevaBancada;
+
+  /// No description provided for @editarBancada.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar bancada'**
+  String get editarBancada;
+
+  /// No description provided for @bancadaEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Slot.it 1,0 carbono'**
+  String get bancadaEjemplo;
+
+  /// No description provided for @nuevoNeumatico.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo neumático'**
+  String get nuevoNeumatico;
+
+  /// No description provided for @editarNeumatico.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar neumático'**
+  String get editarNeumatico;
+
+  /// No description provided for @neumaticoEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: AS25 19,0 NEGRO'**
+  String get neumaticoEjemplo;
+
+  /// No description provided for @referenciaOpcional.
+  ///
+  /// In es, this message translates to:
+  /// **'Referencia (opcional)'**
+  String get referenciaOpcional;
+
+  /// No description provided for @copaEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: GT, GT2, LMP, HYP'**
+  String get copaEjemplo;
+
+  /// No description provided for @clubNombreEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: EL SOT, GASCLAVAT, SLOTMANIA'**
+  String get clubNombreEjemplo;
+
+  /// No description provided for @chasisEjemplo.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: INYECCIÓN PLÁSTICO NEGRO, 3D'**
+  String get chasisEjemplo;
+
+  /// No description provided for @nuevoChasis.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo Chasis'**
+  String get nuevoChasis;
+
+  /// No description provided for @nuevaCopa.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo Copa'**
+  String get nuevaCopa;
+
+  /// No description provided for @nuevoClub.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo Club'**
+  String get nuevoClub;
+
+  /// No description provided for @importarTitulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar {titulo}'**
+  String importarTitulo(String titulo);
+
+  /// No description provided for @pasoEligeLaFuente.
+  ///
+  /// In es, this message translates to:
+  /// **'{n}. Elige la fuente'**
+  String pasoEligeLaFuente(int n);
+
+  /// No description provided for @archivoCsvExcel.
+  ///
+  /// In es, this message translates to:
+  /// **'Archivo CSV / Excel'**
+  String get archivoCsvExcel;
+
+  /// No description provided for @sustituirCatalogoExistente.
+  ///
+  /// In es, this message translates to:
+  /// **'Sustituir el catálogo existente'**
+  String get sustituirCatalogoExistente;
+
+  /// No description provided for @sustituirCatalogoExistenteTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Si lo marcas, primero se vacía la tabla y luego se importa.'**
+  String get sustituirCatalogoExistenteTexto;
+
+  /// No description provided for @importarNFilas.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{Importar 1 fila} other{Importar {n} filas}}'**
+  String importarNFilas(int n);
+
+  /// No description provided for @vincularSinImportar.
+  ///
+  /// In es, this message translates to:
+  /// **'Vincular sin importar'**
+  String get vincularSinImportar;
+
+  /// No description provided for @sustituirCatalogoTitulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Sustituir el catálogo'**
+  String get sustituirCatalogoTitulo;
+
+  /// No description provided for @anadirCatalogoTitulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir al catálogo'**
+  String get anadirCatalogoTitulo;
+
+  /// No description provided for @sustituirCatalogoTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{Se vaciará la ficha actual} other{Se vaciarán las {n} fichas actuales}} antes de importar {m, plural, =1{la fila de la hoja} other{las {m} filas de la hoja}}.\n\nSe pierden los ID de sincronización, las fotos locales de los coches y los valores fijados en campeonatos. Lo que solo exista en la app y no esté en la hoja desaparece.'**
+  String sustituirCatalogoTexto(int n, int m);
+
+  /// No description provided for @anadirCatalogoTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{Se añadirá la fila de la hoja} other{Se añadirán las {n} filas de la hoja}} a {m, plural, =1{la ficha que ya tienes} other{las {m} fichas que ya tienes}}.\n\nLas filas que ya existan (mismo nombre o clave) quedarán duplicadas. Si solo quieres conectar la hoja para traer cambios, cancela y usa «Vincular sin importar».'**
+  String anadirCatalogoTexto(int n, int m);
+
+  /// No description provided for @siSustituir.
+  ///
+  /// In es, this message translates to:
+  /// **'Sí, sustituir'**
+  String get siSustituir;
+
+  /// No description provided for @siAnadir.
+  ///
+  /// In es, this message translates to:
+  /// **'Sí, añadir'**
+  String get siAnadir;
+
+  /// No description provided for @hojaVinculadaTitulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoja vinculada'**
+  String get hojaVinculadaTitulo;
+
+  /// No description provided for @hojaVinculadaTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'No se ha importado nada ni se ha tocado ninguna ficha del catálogo.\n\nEn la pestaña «{pestana}» ya aparece el botón de sincronización: «Actualizar desde Drive» traerá los cambios de la hoja emparejando por la columna ID (si la hay) o por nombre, sin duplicar las fichas que ya tienes.'**
+  String hojaVinculadaTexto(String pestana);
+
+  /// No description provided for @errorAlVincular.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al vincular: {detalle}'**
+  String errorAlVincular(String detalle);
+
+  /// No description provided for @resumenImportacionCatalogo.
+  ///
+  /// In es, this message translates to:
+  /// **'✓ Añadidos: {ok}\n✗ Saltados: {saltados}'**
+  String resumenImportacionCatalogo(int ok, int saltados);
+
+  /// No description provided for @hojaVinculadaAviso.
+  ///
+  /// In es, this message translates to:
+  /// **'\n\nHoja vinculada: a partir de ahora pulsa \"Actualizar desde Drive\" en la pestaña del catálogo para traer cambios.'**
+  String get hojaVinculadaAviso;
+
+  /// No description provided for @eligeHojaGoogle.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige la hoja de Google'**
+  String get eligeHojaGoogle;
+
+  /// No description provided for @modificadaFecha.
+  ///
+  /// In es, this message translates to:
+  /// **'Modificada: {fecha}'**
+  String modificadaFecha(DateTime fecha);
+
+  /// No description provided for @avisoCatalogoLlenoIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Este catálogo ya tiene {n, plural, =1{1 ficha} other{{n} fichas}} en la app.'**
+  String avisoCatalogoLlenoIntro(int n);
+
+  /// No description provided for @avisoCatalogoLlenoImportar.
+  ///
+  /// In es, this message translates to:
+  /// **'• «Importar» añadirá las filas de la hoja como nuevas: las que ya existan quedarán duplicadas.'**
+  String get avisoCatalogoLlenoImportar;
+
+  /// No description provided for @avisoCatalogoLlenoVincular.
+  ///
+  /// In es, this message translates to:
+  /// **'• Si solo quieres conectar la hoja, usa «Vincular sin importar»; después, «Actualizar desde Drive» trae los cambios sin duplicar.'**
+  String get avisoCatalogoLlenoVincular;
+
+  /// No description provided for @avisoCatalogoLlenoSustituir.
+  ///
+  /// In es, this message translates to:
+  /// **'• «Sustituir el catálogo existente» vacía el catálogo actual: se pierden los ID de sincronización, las fotos locales y los valores fijados en campeonatos.'**
+  String get avisoCatalogoLlenoSustituir;
+
+  /// No description provided for @ayudaCatalogoCoches.
+  ///
+  /// In es, this message translates to:
+  /// **'CSV/Excel o Google Sheets con columnas: Nombre, Marca, Modelo, Peso mínimo, Créditos, Copa(s) (separadas por coma; vacío = todas).'**
+  String get ayudaCatalogoCoches;
+
+  /// No description provided for @ayudaCatalogoMarcas.
+  ///
+  /// In es, this message translates to:
+  /// **'CSV/Excel con columnas: Código, Nombre.'**
+  String get ayudaCatalogoMarcas;
+
+  /// No description provided for @ayudaCatalogoLlantas.
+  ///
+  /// In es, this message translates to:
+  /// **'CSV/Excel con columnas: Dimensión, Tipo (DELANTERA / TRASERA / AMBAS).'**
+  String get ayudaCatalogoLlantas;
+
+  /// No description provided for @ayudaCatalogoEngranajes.
+  ///
+  /// In es, this message translates to:
+  /// **'CSV/Excel o Google Sheets con columnas: Marca, Dientes, Tipo (PIÑÓN / CORONA).'**
+  String get ayudaCatalogoEngranajes;
+
+  /// No description provided for @ayudaCatalogoMotores.
+  ///
+  /// In es, this message translates to:
+  /// **'CSV/Excel o Google Sheets con columnas: Motor, RPM, Gauss, Copa(s) (separadas por coma; vacío = todas).'**
+  String get ayudaCatalogoMotores;
+
+  /// No description provided for @ayudaCatalogoSimple.
+  ///
+  /// In es, this message translates to:
+  /// **'CSV/Excel con una columna: Nombre.'**
+  String get ayudaCatalogoSimple;
+
+  /// No description provided for @ayudaCatalogoNeumaticos.
+  ///
+  /// In es, this message translates to:
+  /// **'CSV/Excel con columnas: Nombre, Referencia (opcional).'**
+  String get ayudaCatalogoNeumaticos;
+
+  /// No description provided for @modeloCampo.
+  ///
+  /// In es, this message translates to:
+  /// **'Modelo'**
+  String get modeloCampo;
+
+  /// No description provided for @pesoMinimoCampo.
+  ///
+  /// In es, this message translates to:
+  /// **'Peso mínimo *'**
+  String get pesoMinimoCampo;
+
+  /// No description provided for @creditosCampo.
+  ///
+  /// In es, this message translates to:
+  /// **'Créditos'**
+  String get creditosCampo;
+
+  /// No description provided for @copasCampo.
+  ///
+  /// In es, this message translates to:
+  /// **'Copa(s)'**
+  String get copasCampo;
+
+  /// No description provided for @fotoEnlaceDrive.
+  ///
+  /// In es, this message translates to:
+  /// **'Foto (enlace de Drive)'**
+  String get fotoEnlaceDrive;
+
+  /// No description provided for @tipoPinonCorona.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo (piñón/corona)'**
+  String get tipoPinonCorona;
+
+  /// No description provided for @referenciaCampo.
+  ///
+  /// In es, this message translates to:
+  /// **'Referencia'**
+  String get referenciaCampo;
+
+  /// No description provided for @dimensionObligatoria.
+  ///
+  /// In es, this message translates to:
+  /// **'Dimensión *'**
+  String get dimensionObligatoria;
+
+  /// No description provided for @tipoCampo.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo'**
+  String get tipoCampo;
+
+  /// No description provided for @dientesObligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Dientes *'**
+  String get dientesObligatorio;
+
+  /// No description provided for @subirAlSheet.
+  ///
+  /// In es, this message translates to:
+  /// **'Subir al Sheet'**
+  String get subirAlSheet;
+
+  /// No description provided for @subidoSheetResumen.
+  ///
+  /// In es, this message translates to:
+  /// **'✓ Subido al Sheet: {anadidas, plural, =1{1 añadida} other{{anadidas} añadidas}}, {actualizadas, plural, =1{1 actualizada} other{{actualizadas} actualizadas}}, {borradas, plural, =1{1 borrada} other{{borradas} borradas}}.'**
+  String subidoSheetResumen(int anadidas, int actualizadas, int borradas);
+
+  /// No description provided for @fotosSinSubir.
+  ///
+  /// In es, this message translates to:
+  /// **'\n✗ Fotos sin subir: {lista}'**
+  String fotosSinSubir(String lista);
+
+  /// No description provided for @errorAlSubir.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al subir: {detalle}'**
+  String errorAlSubir(String detalle);
+
+  /// No description provided for @nadaQueSubir.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay nada que subir: la hoja ya coincide con la app.\n\n({n, plural, =1{1 fila idéntica} other{{n} filas idénticas}})'**
+  String nadaQueSubir(int n);
+
+  /// No description provided for @subidaIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Se subirán tus cambios al Google Sheet.'**
+  String get subidaIntro;
+
+  /// No description provided for @filasNuevasResumen.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{· 1 fila nueva (se añade)} other{· {n} filas nuevas (se añaden)}}'**
+  String filasNuevasResumen(int n);
+
+  /// No description provided for @conDiferenciasResumen.
+  ///
+  /// In es, this message translates to:
+  /// **'· {n} con diferencias (elige cuáles pisan la hoja)'**
+  String conDiferenciasResumen(int n);
+
+  /// No description provided for @borradasResumen.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{· 1 borrada en la app, pendiente de borrar en la hoja (elige cuál)} other{· {n} borradas en la app, pendientes de borrar en la hoja (elige cuáles)}}'**
+  String borradasResumen(int n);
+
+  /// No description provided for @identicasResumen.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{· 1 idéntica (se ignora)} other{· {n} idénticas (se ignoran)}}'**
+  String identicasResumen(int n);
+
+  /// No description provided for @borradasEnAppPregunta.
+  ///
+  /// In es, this message translates to:
+  /// **'Borradas en la app — ¿borrar también en la hoja?'**
+  String get borradasEnAppPregunta;
+
+  /// No description provided for @seBorraraEsaFila.
+  ///
+  /// In es, this message translates to:
+  /// **'Se borrará esa fila del Sheet'**
+  String get seBorraraEsaFila;
+
+  /// No description provided for @seDejaEnSheet.
+  ///
+  /// In es, this message translates to:
+  /// **'Se deja en el Sheet (no se borra)'**
+  String get seDejaEnSheet;
+
+  /// No description provided for @filasNuevasTitulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Filas nuevas'**
+  String get filasNuevasTitulo;
+
+  /// No description provided for @seAnadiraAlSheet.
+  ///
+  /// In es, this message translates to:
+  /// **'Se añadirá al Sheet'**
+  String get seAnadiraAlSheet;
+
+  /// No description provided for @diferenciasConflictos.
+  ///
+  /// In es, this message translates to:
+  /// **'Diferencias (conflictos)'**
+  String get diferenciasConflictos;
+
+  /// No description provided for @subirNAlSheet.
+  ///
+  /// In es, this message translates to:
+  /// **'Subir {n} al Sheet'**
+  String subirNAlSheet(int n);
+
+  /// No description provided for @seSubiraTuVersion.
+  ///
+  /// In es, this message translates to:
+  /// **'Se subirá tu versión (pisa la hoja)'**
+  String get seSubiraTuVersion;
+
+  /// No description provided for @seMantieneSheet.
+  ///
+  /// In es, this message translates to:
+  /// **'Se mantiene lo del Sheet'**
+  String get seMantieneSheet;
+
+  /// No description provided for @appValor.
+  ///
+  /// In es, this message translates to:
+  /// **'app: {valor}'**
+  String appValor(String valor);
+
+  /// No description provided for @sheetValor.
+  ///
+  /// In es, this message translates to:
+  /// **'sheet: {valor}'**
+  String sheetValor(String valor);
+
+  /// No description provided for @vacioParentesis.
+  ///
+  /// In es, this message translates to:
+  /// **'(vacío)'**
+  String get vacioParentesis;
+
+  /// No description provided for @plantillasIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Descarga la plantilla, rellénala con tus datos (borra la fila de ejemplo) y luego impórtala desde la sección correspondiente. La primera fila son las columnas: no la cambies.'**
+  String get plantillasIntro;
+
+  /// No description provided for @descargar.
+  ///
+  /// In es, this message translates to:
+  /// **'Descargar'**
+  String get descargar;
+
+  /// No description provided for @plantillaPilotos.
+  ///
+  /// In es, this message translates to:
+  /// **'Pilotos'**
+  String get plantillaPilotos;
+
+  /// No description provided for @plantillaPilotosTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Para importar pilotos a un campeonato.'**
+  String get plantillaPilotosTexto;
+
+  /// No description provided for @plantillaEquipos.
+  ///
+  /// In es, this message translates to:
+  /// **'Equipos (parejas)'**
+  String get plantillaEquipos;
+
+  /// No description provided for @plantillaEquiposTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Equipos con uno o dos pilotos. Deja en blanco el piloto 2 si es individual.'**
+  String get plantillaEquiposTexto;
+
+  /// No description provided for @plantillaEquiposResistencia.
+  ///
+  /// In es, this message translates to:
+  /// **'Equipos de resistencia (24H/12H)'**
+  String get plantillaEquiposResistencia;
+
+  /// No description provided for @plantillaEquiposResistenciaTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Equipos de 3 a 6 pilotos. Deja en blanco los que no uses. La categoría de cada piloto se toma de su ficha ya importada.'**
+  String get plantillaEquiposResistenciaTexto;
+
+  /// No description provided for @plantillaInscripciones.
+  ///
+  /// In es, this message translates to:
+  /// **'Inscripciones a una prueba'**
+  String get plantillaInscripciones;
+
+  /// No description provided for @plantillaInscripcionesTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Equipos que se inscriben a una prueba, con su preferencia de día.'**
+  String get plantillaInscripcionesTexto;
+
+  /// No description provided for @plantillaParticipantesVerificacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes de verificación libre'**
+  String get plantillaParticipantesVerificacion;
+
+  /// No description provided for @plantillaParticipantesVerificacionTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes de una sesión de verificación libre. Piloto 2 y Equipo son opcionales; si la copa va vacía se elige al importar.'**
+  String get plantillaParticipantesVerificacionTexto;
+
+  /// No description provided for @plantillaCoches.
+  ///
+  /// In es, this message translates to:
+  /// **'Catálogo · Coches'**
+  String get plantillaCoches;
+
+  /// No description provided for @plantillaCochesTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Modelos de coche del catálogo.'**
+  String get plantillaCochesTexto;
+
+  /// No description provided for @plantillaMotores.
+  ///
+  /// In es, this message translates to:
+  /// **'Catálogo · Motores'**
+  String get plantillaMotores;
+
+  /// No description provided for @plantillaMotoresTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Motores homologados (RPM y gauss de referencia).'**
+  String get plantillaMotoresTexto;
+
+  /// No description provided for @plantillaMarcas.
+  ///
+  /// In es, this message translates to:
+  /// **'Catálogo · Marcas'**
+  String get plantillaMarcas;
+
+  /// No description provided for @plantillaMarcasTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcas (código corto + nombre).'**
+  String get plantillaMarcasTexto;
+
+  /// No description provided for @plantillaLlantas.
+  ///
+  /// In es, this message translates to:
+  /// **'Catálogo · Llantas'**
+  String get plantillaLlantas;
+
+  /// No description provided for @plantillaLlantasTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Dimensión y tipo (DELANTERA / TRASERA / AMBAS).'**
+  String get plantillaLlantasTexto;
+
+  /// No description provided for @plantillaEngranajes.
+  ///
+  /// In es, this message translates to:
+  /// **'Catálogo · Engranajes'**
+  String get plantillaEngranajes;
+
+  /// No description provided for @plantillaEngranajesTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Piñones y coronas (tipo, diámetro, dientes).'**
+  String get plantillaEngranajesTexto;
+
+  /// No description provided for @pegaClientIdSecret.
+  ///
+  /// In es, this message translates to:
+  /// **'Pega el Client ID y el Client Secret antes de guardar.'**
+  String get pegaClientIdSecret;
+
+  /// No description provided for @clientIdNoValido.
+  ///
+  /// In es, this message translates to:
+  /// **'El Client ID no parece válido (debe acabar en \".apps.googleusercontent.com\"). Revisa que lo hayas copiado entero de Google Cloud Console.'**
+  String get clientIdNoValido;
+
+  /// No description provided for @credencialesGuardadasAviso.
+  ///
+  /// In es, this message translates to:
+  /// **'Credenciales guardadas. Ahora pulsa \"Conectar con Google\".'**
+  String get credencialesGuardadasAviso;
+
+  /// No description provided for @abriendoNavegadorAutoriza.
+  ///
+  /// In es, this message translates to:
+  /// **'Abriendo el navegador… autoriza y vuelve aquí.'**
+  String get abriendoNavegadorAutoriza;
+
+  /// No description provided for @conectadoGoogleOk.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectado correctamente con Google.'**
+  String get conectadoGoogleOk;
+
+  /// No description provided for @desconectarGoogle.
+  ///
+  /// In es, this message translates to:
+  /// **'Desconectar Google'**
+  String get desconectarGoogle;
+
+  /// No description provided for @desconectarGoogleTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'La app dejará de leer tus hojas hasta que vuelvas a conectarte. ¿Continuar?'**
+  String get desconectarGoogleTexto;
+
+  /// No description provided for @desconectar.
+  ///
+  /// In es, this message translates to:
+  /// **'Desconectar'**
+  String get desconectar;
+
+  /// No description provided for @credencialesProyectoGoogleCloud.
+  ///
+  /// In es, this message translates to:
+  /// **'Credenciales del proyecto Google Cloud'**
+  String get credencialesProyectoGoogleCloud;
+
+  /// No description provided for @credencialesProyectoTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Estas credenciales se crean una sola vez en tu cuenta de Google Cloud. Pulsa \"Cómo conseguirlas\" para una guía paso a paso.'**
+  String get credencialesProyectoTexto;
+
+  /// No description provided for @comoConseguirlas.
+  ///
+  /// In es, this message translates to:
+  /// **'Cómo conseguirlas'**
+  String get comoConseguirlas;
+
+  /// No description provided for @guardarCredenciales.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar credenciales'**
+  String get guardarCredenciales;
+
+  /// No description provided for @permisosSolicitados.
+  ///
+  /// In es, this message translates to:
+  /// **'Permisos solicitados'**
+  String get permisosSolicitados;
+
+  /// No description provided for @permisosTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'• Leer tus hojas de cálculo (Google Sheets — solo lectura)\n• Listar archivos de Drive (Google Drive — solo lectura)\n• Crear y modificar el archivo de copia de la app (Drive — solo el archivo de la app)\n\nPitWall Control no toca ningún archivo tuyo, solo el que crea él.'**
+  String get permisosTexto;
+
+  /// No description provided for @copiaCompartidaDrive.
+  ///
+  /// In es, this message translates to:
+  /// **'Copia compartida en Drive'**
+  String get copiaCompartidaDrive;
+
+  /// No description provided for @copiaCompartidaDriveTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Subir o descargar la base de datos para trabajar entre varios dispositivos.'**
+  String get copiaCompartidaDriveTexto;
+
+  /// No description provided for @conectadoConGoogle.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectado con Google'**
+  String get conectadoConGoogle;
+
+  /// No description provided for @sinConectar.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conectar'**
+  String get sinConectar;
+
+  /// No description provided for @faltanCredencialesGoogle.
+  ///
+  /// In es, this message translates to:
+  /// **'Faltan credenciales del proyecto Google Cloud'**
+  String get faltanCredencialesGoogle;
+
+  /// No description provided for @conectarConGoogle.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectar con Google'**
+  String get conectarConGoogle;
+
+  /// No description provided for @conseguirCredenciales.
+  ///
+  /// In es, this message translates to:
+  /// **'Conseguir credenciales'**
+  String get conseguirCredenciales;
+
+  /// No description provided for @conseguirCredencialesTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo se hace una vez, es gratis y no pide tarjeta. Necesitas la cuenta de Google que tiene tus hojas y tu Drive y unos 10 minutos.'**
+  String get conseguirCredencialesTexto;
+
+  /// No description provided for @verManualCapturas.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver el manual con capturas'**
+  String get verManualCapturas;
+
+  /// No description provided for @guiaPaso1Titulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear un proyecto'**
+  String get guiaPaso1Titulo;
+
+  /// No description provided for @guiaPaso1Texto.
+  ///
+  /// In es, this message translates to:
+  /// **'Entra en Google Cloud Console con tu cuenta de Google. Arriba, pulsa el selector de proyectos → \"Proyecto nuevo\". Nombre: \"PitWall Control\". Pulsa \"Crear\" y comprueba que queda seleccionado.'**
+  String get guiaPaso1Texto;
+
+  /// No description provided for @abrirCloudConsole.
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir Cloud Console'**
+  String get abrirCloudConsole;
+
+  /// No description provided for @guiaPaso2Titulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Activar las dos API'**
+  String get guiaPaso2Titulo;
+
+  /// No description provided for @guiaPaso2Texto.
+  ///
+  /// In es, this message translates to:
+  /// **'Habilita \"Google Sheets API\" y también \"Google Drive API\" (pulsa \"Habilitar\" en cada una). Si no, la conexión fallará.'**
+  String get guiaPaso2Texto;
+
+  /// No description provided for @apiSheets.
+  ///
+  /// In es, this message translates to:
+  /// **'API Sheets'**
+  String get apiSheets;
+
+  /// No description provided for @apiDrive.
+  ///
+  /// In es, this message translates to:
+  /// **'API Drive'**
+  String get apiDrive;
+
+  /// No description provided for @pantallaDeConsentimiento.
+  ///
+  /// In es, this message translates to:
+  /// **'Pantalla de consentimiento'**
+  String get pantallaDeConsentimiento;
+
+  /// No description provided for @guiaPaso3Texto.
+  ///
+  /// In es, this message translates to:
+  /// **'En \"Google Auth Platform\" pulsa \"Comenzar\" y sigue el asistente: 1) nombre \"PitWall Control\" y tu correo de asistencia; 2) Público: elige \"Usuarios externos\" (\"Interno\" solo vale para cuentas de empresa); 3) tu correo de contacto; 4) acepta la política de datos, \"Continuar\" y \"Crear\".'**
+  String get guiaPaso3Texto;
+
+  /// No description provided for @guiaPaso4Titulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir tu cuenta como usuario de prueba'**
+  String get guiaPaso4Titulo;
+
+  /// No description provided for @guiaPaso4Texto.
+  ///
+  /// In es, this message translates to:
+  /// **'En el menú lateral entra en \"Público\" → \"Usuarios de prueba\" → \"Add users\". Escribe el correo de Google con el que vas a conectar Control (y el de quien más vaya a conectarse) y guarda. Sin este paso Google da el \"Error 403: access_denied\".'**
+  String get guiaPaso4Texto;
+
+  /// No description provided for @publico.
+  ///
+  /// In es, this message translates to:
+  /// **'Público'**
+  String get publico;
+
+  /// No description provided for @guiaPaso5Titulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear el cliente OAuth'**
+  String get guiaPaso5Titulo;
+
+  /// No description provided for @guiaPaso5Texto.
+  ///
+  /// In es, this message translates to:
+  /// **'En \"Clientes\" pulsa \"Crear cliente\". Tipo: \"Aplicación de escritorio\". Nombre: \"PitWall Control Desktop\". Pulsa \"Crear\".'**
+  String get guiaPaso5Texto;
+
+  /// No description provided for @clientes.
+  ///
+  /// In es, this message translates to:
+  /// **'Clientes'**
+  String get clientes;
+
+  /// No description provided for @guiaPaso6Titulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar el ID y el secreto'**
+  String get guiaPaso6Titulo;
+
+  /// No description provided for @guiaPaso6Texto.
+  ///
+  /// In es, this message translates to:
+  /// **'Aparece el ID de cliente (acaba en .apps.googleusercontent.com) y el secreto. Cópialos y pulsa \"Descargar JSON\": Google solo enseña el secreto en este momento. Pégalos en la pantalla anterior, pulsa \"Guardar credenciales\" y luego \"Conectar con Google\".'**
+  String get guiaPaso6Texto;
+
+  /// No description provided for @guiaPaso7Titulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Autorizar en el navegador'**
+  String get guiaPaso7Titulo;
+
+  /// No description provided for @guiaPaso7Texto.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige la cuenta del paso 4. Si sale \"Google no ha verificado esta aplicación\", pulsa \"Configuración avanzada\" → \"Ir a PitWall Control (no seguro)\", marca todos los permisos y \"Continuar\".'**
+  String get guiaPaso7Texto;
+
+  /// No description provided for @avisoPrueba7Dias.
+  ///
+  /// In es, this message translates to:
+  /// **'Para que no caduque a los 7 días: mientras la aplicación está en estado \"Prueba\", Google cierra la sesión cada 7 días. En \"Público\" pulsa \"Publicar aplicación\" (pasa a \"En producción\"); para uso propio no necesita verificación.'**
+  String get avisoPrueba7Dias;
+
+  /// No description provided for @cosasQueSuelenFallar.
+  ///
+  /// In es, this message translates to:
+  /// **'Cosas que suelen fallar:'**
+  String get cosasQueSuelenFallar;
+
+  /// No description provided for @pistaUsuariosPrueba.
+  ///
+  /// In es, this message translates to:
+  /// **'Google bloquea la cuenta con la que has entrado porque la app está en modo \"Prueba\" y esa cuenta NO está en la lista de usuarios de prueba. En Google Cloud Console → Google Auth Platform → Público → \"Usuarios de prueba\" → \"Add users\", añade ese correo exacto. O pulsa \"Publicar aplicación\" en esa misma pantalla.'**
+  String get pistaUsuariosPrueba;
+
+  /// No description provided for @pistaCredencialEscritorio.
+  ///
+  /// In es, this message translates to:
+  /// **'El tipo de credencial no es \"Aplicación de escritorio\". Crea de nuevo las credenciales OAuth en Google Cloud Console eligiendo \"Aplicación de escritorio\".'**
+  String get pistaCredencialEscritorio;
+
+  /// No description provided for @pistaClientIdSecreto.
+  ///
+  /// In es, this message translates to:
+  /// **'Client ID o Client Secret incorrectos. Vuelve a copiarlos de Google Cloud Console (Credenciales → tu cliente OAuth) y pégalos sin espacios.'**
+  String get pistaClientIdSecreto;
+
+  /// No description provided for @pistaApisNoActivadas.
+  ///
+  /// In es, this message translates to:
+  /// **'Las APIs de Google Sheets y/o Drive no están activadas en tu proyecto. Ve a \"APIs y servicios → Biblioteca\", busca \"Google Sheets API\" y \"Google Drive API\" y pulsa Habilitar.'**
+  String get pistaApisNoActivadas;
+
+  /// No description provided for @pistaNavegador.
+  ///
+  /// In es, this message translates to:
+  /// **'La app no consiguió abrir el navegador. Cierra esta ventana, espera 2 segundos y vuelve a intentarlo.'**
+  String get pistaNavegador;
+
+  /// No description provided for @pistaRed.
+  ///
+  /// In es, this message translates to:
+  /// **'Problema de red. Verifica que tienes conexión a internet y vuelve a probar.'**
+  String get pistaRed;
+
+  /// No description provided for @pistaGuardarCredenciales.
+  ///
+  /// In es, this message translates to:
+  /// **'No has guardado el Client ID y Client Secret. Rellena los campos y pulsa \"Guardar credenciales\" primero.'**
+  String get pistaGuardarCredenciales;
+
+  /// No description provided for @pistaCredencialPorDefecto.
+  ///
+  /// In es, this message translates to:
+  /// **'Comprueba que el tipo de credenciales en Google Cloud Console es \"Aplicación de escritorio\" y que tu email está añadido como usuario de prueba en la pantalla de consentimiento.'**
+  String get pistaCredencialPorDefecto;
+
+  /// No description provided for @subirCopiaADrive.
+  ///
+  /// In es, this message translates to:
+  /// **'Subir copia a Drive'**
+  String get subirCopiaADrive;
+
+  /// No description provided for @subirCopiaTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Se subirá una copia actual a tu Drive como \"pitwall-backup.zip\". Incluye la base de datos, las fotos de verificaciones y la configuración del programa (credenciales de Google, tema y preferencias); nunca la sesión conectada.\n\nSi ya había una versión anterior, se reemplaza por la nueva.\n\n¿Continuar?'**
+  String get subirCopiaTexto;
+
+  /// No description provided for @restaurarTambienConfig.
+  ///
+  /// In es, this message translates to:
+  /// **'Restaurar también la configuración de la copia'**
+  String get restaurarTambienConfig;
+
+  /// No description provided for @restaurarTambienConfigSub.
+  ///
+  /// In es, this message translates to:
+  /// **'Credenciales de Google, tema y preferencias. Nunca la sesión conectada.'**
+  String get restaurarTambienConfigSub;
+
+  /// No description provided for @siRestaurar.
+  ///
+  /// In es, this message translates to:
+  /// **'Sí, restaurar'**
+  String get siRestaurar;
+
+  /// No description provided for @descargarYRestaurar.
+  ///
+  /// In es, this message translates to:
+  /// **'Descargar y restaurar'**
+  String get descargarYRestaurar;
+
+  /// No description provided for @descargarRestaurarTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Se reemplazará tu base de datos local con la copia que hay en Drive. ⚠️ Cualquier cambio local que no hayas subido se perderá.\n\nDespués tendrás que cerrar y volver a abrir la app.'**
+  String get descargarRestaurarTexto;
+
+  /// No description provided for @copiaDePitwall.
+  ///
+  /// In es, this message translates to:
+  /// **'Copia de PitWall'**
+  String get copiaDePitwall;
+
+  /// No description provided for @restaurarDesdeArchivo.
+  ///
+  /// In es, this message translates to:
+  /// **'Restaurar desde archivo'**
+  String get restaurarDesdeArchivo;
+
+  /// No description provided for @restaurarDesdeArchivoTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Se reemplazará tu base de datos local con la copia de «{nombre}». ⚠️ Cualquier cambio local que no hayas subido se perderá.\n\nNo hace falta conexión con Google para esto.\n\nDespués tendrás que cerrar y volver a abrir la app.'**
+  String restaurarDesdeArchivoTexto(Object nombre);
+
+  /// No description provided for @copiaActualEnDrive.
+  ///
+  /// In es, this message translates to:
+  /// **'Copia actual en Drive'**
+  String get copiaActualEnDrive;
+
+  /// No description provided for @noHayCopiaDriveTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay ninguna copia en Drive. Pulsa \"Subir copia\" para crear la primera.'**
+  String get noHayCopiaDriveTexto;
+
+  /// No description provided for @ultimaSubida.
+  ///
+  /// In es, this message translates to:
+  /// **'Última subida: {fecha}'**
+  String ultimaSubida(Object fecha);
+
+  /// No description provided for @tamanoKB.
+  ///
+  /// In es, this message translates to:
+  /// **'Tamaño: {kb} KB'**
+  String tamanoKB(Object kb);
+
+  /// No description provided for @restaurarDesdeArchivoPuntos.
+  ///
+  /// In es, this message translates to:
+  /// **'Restaurar desde archivo…'**
+  String get restaurarDesdeArchivoPuntos;
+
+  /// No description provided for @comoTrabajarEnEquipo.
+  ///
+  /// In es, this message translates to:
+  /// **'Cómo trabajar en equipo'**
+  String get comoTrabajarEnEquipo;
+
+  /// No description provided for @trabajoEnEquipoTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'• Al empezar a trabajar, pulsa \"Descargar\" para tener la última versión.\n• Al terminar tus cambios, pulsa \"Subir\" para que los demás puedan recibirlos.\n• Si dos personas editan a la vez, gana quien sube último (no hay fusión automática). Lo más práctico: coordinar quién edita en cada momento.'**
+  String get trabajoEnEquipoTexto;
+
+  /// No description provided for @sinConexionGoogle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conexión con Google'**
+  String get sinConexionGoogle;
+
+  /// No description provided for @sinConexionGoogleTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Conéctate con Google para poder subir o descargar la copia.\n\nTambién puedes restaurar una copia guardada como archivo (.zip), sin conexión.'**
+  String get sinConexionGoogleTexto;
+
+  /// No description provided for @importarEquiposDesdeSheets.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar equipos desde Sheets'**
+  String get importarEquiposDesdeSheets;
+
+  /// No description provided for @importacionEquiposAviso.
+  ///
+  /// In es, this message translates to:
+  /// **'A partir de ahora, pulsa \"Actualizar desde Drive\" en Equipos.'**
+  String get importacionEquiposAviso;
+
+  /// No description provided for @conectaCuentaHojas.
+  ///
+  /// In es, this message translates to:
+  /// **'Conecta tu cuenta una sola vez para poder leer las hojas.'**
+  String get conectaCuentaHojas;
+
+  /// No description provided for @nDeTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'{n} de {total}'**
+  String nDeTotal(Object n, Object total);
+
+  /// No description provided for @hojaModificada.
+  ///
+  /// In es, this message translates to:
+  /// **'Modificada: {fecha}'**
+  String hojaModificada(Object fecha);
+
+  /// No description provided for @importarDesdeGoogleSheets.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar desde Google Sheets'**
+  String get importarDesdeGoogleSheets;
+
+  /// No description provided for @importacionInscripcionesAviso.
+  ///
+  /// In es, this message translates to:
+  /// **'A partir de ahora, pulsa \"Actualizar desde Drive\" en Inscritos para traer nuevas respuestas del formulario.'**
+  String get importacionInscripcionesAviso;
+
+  /// No description provided for @conectaCuentaGoogleForm.
+  ///
+  /// In es, this message translates to:
+  /// **'Conecta tu cuenta una sola vez para poder leer las hojas donde llegan las respuestas del Google Form.'**
+  String get conectaCuentaGoogleForm;
+
+  /// No description provided for @diaPreferido.
+  ///
+  /// In es, this message translates to:
+  /// **'Día preferido'**
+  String get diaPreferido;
+
+  /// No description provided for @asignaAlMenosColumnaPiloto.
+  ///
+  /// In es, this message translates to:
+  /// **'Asigna al menos la columna del nombre del piloto.'**
+  String get asignaAlMenosColumnaPiloto;
+
+  /// No description provided for @asignaAlMenosColumnaEquipo.
+  ///
+  /// In es, this message translates to:
+  /// **'Asigna al menos la columna del nombre del equipo.'**
+  String get asignaAlMenosColumnaEquipo;
+
+  /// No description provided for @importarPilotosDesdeSheets.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar pilotos desde Sheets'**
+  String get importarPilotosDesdeSheets;
+
+  /// No description provided for @importacionPilotosAviso.
+  ///
+  /// In es, this message translates to:
+  /// **'A partir de ahora, pulsa \"Actualizar desde Drive\" en Pilotos para traer cambios sin tener que volver a configurar nada.'**
+  String get importacionPilotosAviso;
+
+  /// No description provided for @detectadasAutomaticamente.
+  ///
+  /// In es, this message translates to:
+  /// **'Detectadas automáticamente. Cámbialas si hace falta.'**
+  String get detectadasAutomaticamente;
+
+  /// No description provided for @diagLeidas.
+  ///
+  /// In es, this message translates to:
+  /// **'Leídas {filas} filas · {columnas} columnas detectadas · piloto={piloto}\n1ª fila: {primera}'**
+  String diagLeidas(
+    Object columnas,
+    Object filas,
+    Object piloto,
+    Object primera,
+  );
+
+  /// No description provided for @diagNinguna.
+  ///
+  /// In es, this message translates to:
+  /// **'(ninguna)'**
+  String get diagNinguna;
+
+  /// No description provided for @sinCampeonatoActivoAviso.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin campeonato activo'**
+  String get sinCampeonatoActivoAviso;
+
+  /// No description provided for @sinPruebaAsignadaVinculo.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin prueba asignada al vínculo'**
+  String get sinPruebaAsignadaVinculo;
+
+  /// No description provided for @resumenPilotosActualizados.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevos: {nuevos} · Inscritos al campeonato: {ya} · Saltados: {saltados}'**
+  String resumenPilotosActualizados(Object nuevos, Object saltados, Object ya);
+
+  /// No description provided for @resumenEquiposActualizados.
+  ///
+  /// In es, this message translates to:
+  /// **'Equipos nuevos: {nuevos} · Saltados: {saltados}'**
+  String resumenEquiposActualizados(Object nuevos, Object saltados);
+
+  /// No description provided for @resumenCatalogoActualizado.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevos: {nuevos} · Actualizados: {actualizados} · Sin cambios: {saltados}'**
+  String resumenCatalogoActualizado(
+    Object actualizados,
+    Object nuevos,
+    Object saltados,
+  );
+
+  /// No description provided for @resumenFotos.
+  ///
+  /// In es, this message translates to:
+  /// **' · Fotos: {n}'**
+  String resumenFotos(Object n);
+
+  /// No description provided for @resumenFotosFallan.
+  ///
+  /// In es, this message translates to:
+  /// **' (fallan {n}: {detalle})'**
+  String resumenFotosFallan(Object detalle, Object n);
+
+  /// No description provided for @resumenInscripcionesActualizadas.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevas inscripciones: {nuevos} · Ya inscritos: {ya} · No reconocidos: {sin}'**
+  String resumenInscripcionesActualizadas(Object nuevos, Object sin, Object ya);
+
+  /// No description provided for @resumenNoReconocidos.
+  ///
+  /// In es, this message translates to:
+  /// **' ({detalle})'**
+  String resumenNoReconocidos(Object detalle);
+
+  /// No description provided for @noEncuentroCabecera.
+  ///
+  /// In es, this message translates to:
+  /// **'No encuentro la cabecera en la hoja.'**
+  String get noEncuentroCabecera;
+
+  /// No description provided for @faltanColumnasClaveMapeo.
+  ///
+  /// In es, this message translates to:
+  /// **'Faltan columnas clave en el mapeo de la hoja. Revisa el vínculo (Importar) para que las columnas cuadren.'**
+  String get faltanColumnasClaveMapeo;
+
+  /// No description provided for @fotoNuevaSeSube.
+  ///
+  /// In es, this message translates to:
+  /// **'(foto nueva: se sube a Drive y sustituye al enlace)'**
+  String get fotoNuevaSeSube;
+
+  /// No description provided for @seSubeFotoADrive.
+  ///
+  /// In es, this message translates to:
+  /// **'(se sube la foto a Drive)'**
+  String get seSubeFotoADrive;
+
+  /// No description provided for @copiaSubida.
+  ///
+  /// In es, this message translates to:
+  /// **'Copia subida ({kb} KB · {fotos} fotos).'**
+  String copiaSubida(Object fotos, Object kb);
+
+  /// No description provided for @noHayCopiaEnDrive.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay copia en Drive.'**
+  String get noHayCopiaEnDrive;
+
+  /// No description provided for @zipSinBaseDeDatos.
+  ///
+  /// In es, this message translates to:
+  /// **'El ZIP de backup no contiene la base de datos.'**
+  String get zipSinBaseDeDatos;
+
+  /// No description provided for @configuracionRestaurada.
+  ///
+  /// In es, this message translates to:
+  /// **' · Configuración restaurada'**
+  String get configuracionRestaurada;
+
+  /// No description provided for @reconectaConGoogle.
+  ///
+  /// In es, this message translates to:
+  /// **' — reconecta con Google al reabrir'**
+  String get reconectaConGoogle;
+
+  /// No description provided for @copiaConFotos.
+  ///
+  /// In es, this message translates to:
+  /// **' · {n} fotos'**
+  String copiaConFotos(Object n);
+
+  /// No description provided for @copiaRestaurada.
+  ///
+  /// In es, this message translates to:
+  /// **'Copia restaurada ({detalle}). Cierra y vuelve a abrir la app para que los cambios surtan efecto.'**
+  String copiaRestaurada(Object detalle);
+
+  /// No description provided for @descripcionCopiaDrive.
+  ///
+  /// In es, this message translates to:
+  /// **'Copia de PitWall (BD + fotos de verificaciones).'**
+  String get descripcionCopiaDrive;
+
+  /// No description provided for @authFaltanCredenciales.
+  ///
+  /// In es, this message translates to:
+  /// **'Faltan las credenciales del proyecto Google Cloud. Ve a Configuración → Google y pega el Client ID y el Client Secret.'**
+  String get authFaltanCredenciales;
+
+  /// No description provided for @authNoSePudoAbrirNavegador.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir el navegador para autorizar.'**
+  String get authNoSePudoAbrirNavegador;
+
+  /// No description provided for @authConfiguraCredenciales.
+  ///
+  /// In es, this message translates to:
+  /// **'Configura primero las credenciales de Google Cloud.'**
+  String get authConfiguraCredenciales;
+
+  /// No description provided for @authNoConectado.
+  ///
+  /// In es, this message translates to:
+  /// **'No estás conectado con Google.'**
+  String get authNoConectado;
+
+  /// No description provided for @authSesionCaducada.
+  ///
+  /// In es, this message translates to:
+  /// **'La sesión de Google ha caducado. Vuelve a conectar tu cuenta en Google Sheets (menú lateral).'**
+  String get authSesionCaducada;
+
+  /// No description provided for @authConexionRevocada.
+  ///
+  /// In es, this message translates to:
+  /// **'La conexión con Google ha caducado o fue revocada. Ve a Google Sheets (menú lateral) y pulsa \"Conectar con Google\" para autorizar de nuevo.'**
+  String get authConexionRevocada;
+
+  /// No description provided for @sinTitulo.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin título'**
+  String get sinTitulo;
+
+  /// No description provided for @sinNombre.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin nombre'**
+  String get sinNombre;
+
+  /// No description provided for @fotoNoLegible.
+  ///
+  /// In es, this message translates to:
+  /// **'el archivo no es una imagen JPG/PNG/WEBP legible'**
+  String get fotoNoLegible;
+
+  /// No description provided for @fotoLocalNoEncontrada.
+  ///
+  /// In es, this message translates to:
+  /// **'no se encuentra la foto local {ruta}'**
+  String fotoLocalNoEncontrada(Object ruta);
+
+  /// No description provided for @versionInstalada.
+  ///
+  /// In es, this message translates to:
+  /// **'Versión instalada'**
+  String get versionInstalada;
+
+  /// No description provided for @buscarActualizaciones.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar actualizaciones'**
+  String get buscarActualizaciones;
+
+  /// No description provided for @estasAlDia.
+  ///
+  /// In es, this message translates to:
+  /// **'Estás al día'**
+  String get estasAlDia;
+
+  /// No description provided for @noSePudoComprobarSinConexion.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo comprobar (¿sin conexión?)'**
+  String get noSePudoComprobarSinConexion;
+
+  /// No description provided for @conexionFallida.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo conectar'**
+  String get conexionFallida;
+
+  /// No description provided for @accionSubir.
+  ///
+  /// In es, this message translates to:
+  /// **'Subir'**
+  String get accionSubir;
+
+  /// No description provided for @errorFilaDetalle.
+  ///
+  /// In es, this message translates to:
+  /// **'{hoja} fila {fila}: {detalle}'**
+  String errorFilaDetalle(String hoja, int fila, String detalle);
 }
 
 class _TextosDelegate extends LocalizationsDelegate<Textos> {

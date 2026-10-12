@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../services/google_auth_service.dart';
 import 'pantalla_backup.dart';
@@ -63,20 +64,19 @@ class _PantallaConfiguracionGoogleState
   }
 
   Future<void> _guardarCredenciales() async {
+    final l = context.l;
     final id = _clientId.text.trim();
     final sec = _clientSecret.text.trim();
     if (id.isEmpty || sec.isEmpty) {
       setState(() {
-        _ultimoError = 'Pega el Client ID y el Client Secret antes de guardar.';
+        _ultimoError = l.pegaClientIdSecret;
         _ultimoExito = null;
       });
       return;
     }
     if (!id.endsWith('.apps.googleusercontent.com')) {
       setState(() {
-        _ultimoError =
-            'El Client ID no parece válido (debe acabar en ".apps.googleusercontent.com"). '
-            'Revisa que lo hayas copiado entero de Google Cloud Console.';
+        _ultimoError = l.clientIdNoValido;
         _ultimoExito = null;
       });
       return;
@@ -94,12 +94,13 @@ class _PantallaConfiguracionGoogleState
     if (mounted) {
       setState(() {
         _guardando = false;
-        _ultimoExito = 'Credenciales guardadas. Ahora pulsa "Conectar con Google".';
+        _ultimoExito = l.credencialesGuardadasAviso;
       });
     }
   }
 
   Future<void> _conectar() async {
+    final l = context.l;
     setState(() {
       _conectando = true;
       _ultimoError = null;
@@ -110,10 +111,9 @@ class _PantallaConfiguracionGoogleState
             alAbrirUrl: (url) {
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                      'Abriendo el navegador… autoriza y vuelve aquí.'),
-                  duration: Duration(seconds: 4),
+                SnackBar(
+                  content: Text(l.abriendoNavegadorAutoriza),
+                  duration: const Duration(seconds: 4),
                 ),
               );
             },
@@ -121,7 +121,7 @@ class _PantallaConfiguracionGoogleState
       await ref.read(estadoGoogleProvider.notifier).refrescar();
       if (mounted) {
         setState(() {
-          _ultimoExito = 'Conectado correctamente con Google.';
+          _ultimoExito = l.conectadoGoogleOk;
         });
       }
     } catch (e) {
@@ -136,20 +136,19 @@ class _PantallaConfiguracionGoogleState
   }
 
   Future<void> _desconectar() async {
+    final l = context.l;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Desconectar Google'),
-        content: const Text(
-            'La app dejará de leer tus hojas hasta que vuelvas a conectarte. '
-            '¿Continuar?'),
+        title: Text(l.desconectarGoogle),
+        content: Text(l.desconectarGoogleTexto),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Desconectar')),
+              child: Text(l.desconectar)),
         ],
       ),
     );
@@ -164,6 +163,7 @@ class _PantallaConfiguracionGoogleState
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final cs = Theme.of(context).colorScheme;
+    final l = context.l;
     final estadoAsync = ref.watch(estadoGoogleProvider);
 
     return Scaffold(
@@ -173,7 +173,7 @@ class _PantallaConfiguracionGoogleState
         children: [
           estadoAsync.when(
             loading: () => const SizedBox.shrink(),
-            error: (e, _) => Text('Error: $e'),
+            error: (e, _) => Text(l.errorDetalle('$e')),
             data: (e) => _TarjetaEstado(
               estado: e,
               onConectar: _conectar,
@@ -182,12 +182,11 @@ class _PantallaConfiguracionGoogleState
             ),
           ),
           const SizedBox(height: 24),
-          Text('Credenciales del proyecto Google Cloud',
+          Text(l.credencialesProyectoGoogleCloud,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
-            'Estas credenciales se crean una sola vez en tu cuenta de Google Cloud. '
-            'Pulsa "Cómo conseguirlas" para una guía paso a paso.',
+            l.credencialesProyectoTexto,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
@@ -195,7 +194,7 @@ class _PantallaConfiguracionGoogleState
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const _GuiaGoogleCloud())),
             icon: const Icon(Icons.help_outline),
-            label: const Text('Cómo conseguirlas'),
+            label: Text(l.comoConseguirlas),
           ),
           const SizedBox(height: 20),
           TextField(
@@ -229,7 +228,7 @@ class _PantallaConfiguracionGoogleState
                     width: 18, height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.save_outlined),
-            label: const Text('Guardar credenciales'),
+            label: Text(l.guardarCredenciales),
           ),
           if (_ultimoExito != null) ...[
             const SizedBox(height: 12),
@@ -264,17 +263,12 @@ class _PantallaConfiguracionGoogleState
                     children: [
                       Icon(Icons.info_outline, color: cs.primary),
                       const SizedBox(width: 8),
-                      Text('Permisos solicitados',
+                      Text(l.permisosSolicitados,
                           style: Theme.of(context).textTheme.titleSmall),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    '• Leer tus hojas de cálculo (Google Sheets — solo lectura)\n'
-                    '• Listar archivos de Drive (Google Drive — solo lectura)\n'
-                    '• Crear y modificar el archivo de copia de la app (Drive — solo el archivo de la app)\n\n'
-                    'PitWall Control no toca ningún archivo tuyo, solo el que crea él.',
-                  ),
+                  Text(l.permisosTexto),
                 ],
               ),
             ),
@@ -283,9 +277,8 @@ class _PantallaConfiguracionGoogleState
           Card(
             child: ListTile(
               leading: Icon(Icons.cloud_sync_outlined, color: cs.primary),
-              title: const Text('Copia compartida en Drive'),
-              subtitle: const Text(
-                  'Subir o descargar la base de datos para trabajar entre varios dispositivos.'),
+              title: Text(l.copiaCompartidaDrive),
+              subtitle: Text(l.copiaCompartidaDriveTexto),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const PantallaBackup()),
@@ -314,6 +307,7 @@ class _TarjetaEstado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = context.l;
     final conectado = estado.conectado;
     return Card(
       color: conectado ? cs.primaryContainer : cs.surfaceContainer,
@@ -335,7 +329,7 @@ class _TarjetaEstado extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        conectado ? 'Conectado con Google' : 'Sin conectar',
+                        conectado ? l.conectadoConGoogle : l.sinConectar,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               color: conectado
                                   ? cs.onPrimaryContainer
@@ -347,7 +341,7 @@ class _TarjetaEstado extends StatelessWidget {
                             style: TextStyle(color: cs.onPrimaryContainer)),
                       if (!estado.credencialesListas)
                         Text(
-                          'Faltan credenciales del proyecto Google Cloud',
+                          l.faltanCredencialesGoogle,
                           style: TextStyle(color: cs.error, fontSize: 13),
                         ),
                     ],
@@ -369,13 +363,13 @@ class _TarjetaEstado extends StatelessWidget {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.login),
-                    label: const Text('Conectar con Google'),
+                    label: Text(l.conectarConGoogle),
                   )
                 else
                   OutlinedButton.icon(
                     onPressed: onDesconectar,
                     icon: const Icon(Icons.logout),
-                    label: const Text('Desconectar'),
+                    label: Text(l.desconectar),
                   ),
               ],
             ),
@@ -391,14 +385,14 @@ class _GuiaGoogleCloud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l;
     return Scaffold(
-      appBar: AppBar(title: const Text('Conseguir credenciales')),
+      appBar: AppBar(title: Text(l.conseguirCredenciales)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           Text(
-            'Solo se hace una vez, es gratis y no pide tarjeta. Necesitas la cuenta '
-            'de Google que tiene tus hojas y tu Drive y unos 10 minutos.',
+            l.conseguirCredencialesTexto,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 12),
@@ -407,91 +401,65 @@ class _GuiaGoogleCloud extends StatelessWidget {
                 Uri.parse('https://www.pitwall.es/manual-control.html#google'),
                 mode: LaunchMode.externalApplication),
             icon: const Icon(Icons.menu_book_outlined, size: 16),
-            label: const Text('Ver el manual con capturas'),
+            label: Text(l.verManualCapturas),
           ),
           const SizedBox(height: 16),
           _Paso(
             n: 1,
-            titulo: 'Crear un proyecto',
-            cuerpo:
-                'Entra en Google Cloud Console con tu cuenta de Google. Arriba, '
-                'pulsa el selector de proyectos → "Proyecto nuevo". Nombre: '
-                '"PitWall Control". Pulsa "Crear" y comprueba que queda seleccionado.',
+            titulo: l.guiaPaso1Titulo,
+            cuerpo: l.guiaPaso1Texto,
             urlAccion: 'https://console.cloud.google.com/projectcreate',
-            textoAccion: 'Abrir Cloud Console',
+            textoAccion: l.abrirCloudConsole,
           ),
           _Paso(
             n: 2,
-            titulo: 'Activar las dos API',
-            cuerpo:
-                'Habilita "Google Sheets API" y también "Google Drive API" '
-                '(pulsa "Habilitar" en cada una). Si no, la conexión fallará.',
+            titulo: l.guiaPaso2Titulo,
+            cuerpo: l.guiaPaso2Texto,
             urlAccion:
                 'https://console.cloud.google.com/apis/library/sheets.googleapis.com',
-            textoAccion: 'API Sheets',
+            textoAccion: l.apiSheets,
             urlAccion2:
                 'https://console.cloud.google.com/apis/library/drive.googleapis.com',
-            textoAccion2: 'API Drive',
+            textoAccion2: l.apiDrive,
           ),
           _Paso(
             n: 3,
-            titulo: 'Pantalla de consentimiento',
-            cuerpo:
-                'En "Google Auth Platform" pulsa "Comenzar" y sigue el asistente: '
-                '1) nombre "PitWall Control" y tu correo de asistencia; '
-                '2) Público: elige "Usuarios externos" ("Interno" solo vale para '
-                'cuentas de empresa); 3) tu correo de contacto; '
-                '4) acepta la política de datos, "Continuar" y "Crear".',
+            titulo: l.pantallaDeConsentimiento,
+            cuerpo: l.guiaPaso3Texto,
             urlAccion:
                 'https://console.cloud.google.com/auth/overview/create',
-            textoAccion: 'Pantalla de consentimiento',
+            textoAccion: l.pantallaDeConsentimiento,
           ),
           _Paso(
             n: 4,
-            titulo: 'Añadir tu cuenta como usuario de prueba',
-            cuerpo:
-                'En el menú lateral entra en "Público" → "Usuarios de prueba" → '
-                '"Add users". Escribe el correo de Google con el que vas a conectar '
-                'Control (y el de quien más vaya a conectarse) y guarda. '
-                'Sin este paso Google da el "Error 403: access_denied".',
+            titulo: l.guiaPaso4Titulo,
+            cuerpo: l.guiaPaso4Texto,
             urlAccion: 'https://console.cloud.google.com/auth/audience',
-            textoAccion: 'Público',
+            textoAccion: l.publico,
           ),
           _Paso(
             n: 5,
-            titulo: 'Crear el cliente OAuth',
-            cuerpo:
-                'En "Clientes" pulsa "Crear cliente". Tipo: "Aplicación de '
-                'escritorio". Nombre: "PitWall Control Desktop". Pulsa "Crear".',
+            titulo: l.guiaPaso5Titulo,
+            cuerpo: l.guiaPaso5Texto,
             urlAccion: 'https://console.cloud.google.com/auth/clients',
-            textoAccion: 'Clientes',
+            textoAccion: l.clientes,
           ),
           _Paso(
             n: 6,
-            titulo: 'Copiar el ID y el secreto',
-            cuerpo:
-                'Aparece el ID de cliente (acaba en .apps.googleusercontent.com) y '
-                'el secreto. Cópialos y pulsa "Descargar JSON": Google solo enseña '
-                'el secreto en este momento. Pégalos en la pantalla anterior, '
-                'pulsa "Guardar credenciales" y luego "Conectar con Google".',
+            titulo: l.guiaPaso6Titulo,
+            cuerpo: l.guiaPaso6Texto,
           ),
           _Paso(
             n: 7,
-            titulo: 'Autorizar en el navegador',
-            cuerpo:
-                'Elige la cuenta del paso 4. Si sale "Google no ha verificado esta '
-                'aplicación", pulsa "Configuración avanzada" → "Ir a PitWall '
-                'Control (no seguro)", marca todos los permisos y "Continuar".',
+            titulo: l.guiaPaso7Titulo,
+            cuerpo: l.guiaPaso7Texto,
           ),
           Card(
             color: Theme.of(context).colorScheme.tertiaryContainer,
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Para que no caduque a los 7 días: mientras la aplicación está en '
-                'estado "Prueba", Google cierra la sesión cada 7 días. En '
-                '"Público" pulsa "Publicar aplicación" (pasa a "En producción"); '
-                'para uso propio no necesita verificación.',
+                l.avisoPrueba7Dias,
                 style: TextStyle(
                     color: Theme.of(context).colorScheme.onTertiaryContainer),
               ),
@@ -587,7 +555,8 @@ class _CardError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final pistas = _diagnosticar(mensaje);
+    final l = context.l;
+    final pistas = _diagnosticar(mensaje, l);
     return Card(
       color: cs.errorContainer,
       child: Padding(
@@ -599,7 +568,7 @@ class _CardError extends StatelessWidget {
               children: [
                 Icon(Icons.error_outline, color: cs.onErrorContainer),
                 const SizedBox(width: 8),
-                Text('No se pudo conectar',
+                Text(l.conexionFallida,
                     style: TextStyle(
                         color: cs.onErrorContainer,
                         fontWeight: FontWeight.w700)),
@@ -610,7 +579,7 @@ class _CardError extends StatelessWidget {
                 style: TextStyle(color: cs.onErrorContainer)),
             if (pistas.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text('Cosas que suelen fallar:',
+              Text(l.cosasQueSuelenFallar,
                   style: TextStyle(
                       color: cs.onErrorContainer,
                       fontWeight: FontWeight.w700)),
@@ -637,7 +606,7 @@ class _CardError extends StatelessWidget {
     );
   }
 
-  static List<String> _diagnosticar(String m) {
+  static List<String> _diagnosticar(String m, Textos l) {
     final out = <String>[];
     final low = m.toLowerCase();
 
@@ -645,41 +614,36 @@ class _CardError extends StatelessWidget {
         low.contains('has not completed') ||
         low.contains('verification process') ||
         low.contains('app blocked')) {
-      out.add(
-          'Google bloquea la cuenta con la que has entrado porque la app está en modo "Prueba" y esa cuenta NO está en la lista de usuarios de prueba. En Google Cloud Console → Google Auth Platform → Público → "Usuarios de prueba" → "Add users", añade ese correo exacto. O pulsa "Publicar aplicación" en esa misma pantalla.');
+      out.add(l.pistaUsuariosPrueba);
     }
     if (low.contains('redirect_uri_mismatch') ||
         low.contains('redirect uri mismatch')) {
-      out.add(
-          'El tipo de credencial no es "Aplicación de escritorio". Crea de nuevo las credenciales OAuth en Google Cloud Console eligiendo "Aplicación de escritorio".');
+      out.add(l.pistaCredencialEscritorio);
     }
     if (low.contains('invalid_client') || low.contains('unauthorized')) {
-      out.add(
-          'Client ID o Client Secret incorrectos. Vuelve a copiarlos de Google Cloud Console (Credenciales → tu cliente OAuth) y pégalos sin espacios.');
+      out.add(l.pistaClientIdSecreto);
     }
     if (low.contains('not enabled') ||
         low.contains('api has not been used')) {
-      out.add(
-          'Las APIs de Google Sheets y/o Drive no están activadas en tu proyecto. Ve a "APIs y servicios → Biblioteca", busca "Google Sheets API" y "Google Drive API" y pulsa Habilitar.');
+      out.add(l.pistaApisNoActivadas);
     }
-    if (low.contains('no se pudo abrir el navegador')) {
-      out.add(
-          'La app no consiguió abrir el navegador. Cierra esta ventana, espera 2 segundos y vuelve a intentarlo.');
+    if (low.contains('no se pudo abrir el navegador') ||
+        low.contains(l.authNoSePudoAbrirNavegador.toLowerCase())) {
+      out.add(l.pistaNavegador);
     }
     if (low.contains('socket') ||
         low.contains('connection') ||
         low.contains('timeout')) {
-      out.add(
-          'Problema de red. Verifica que tienes conexión a internet y vuelve a probar.');
+      out.add(l.pistaRed);
     }
     if (low.contains('falta el client id') ||
-        low.contains('faltan las credenciales')) {
-      out.add(
-          'No has guardado el Client ID y Client Secret. Rellena los campos y pulsa "Guardar credenciales" primero.');
+        low.contains('faltan las credenciales') ||
+        low.contains(l.authFaltanCredenciales.toLowerCase()) ||
+        low.contains(l.authConfiguraCredenciales.toLowerCase())) {
+      out.add(l.pistaGuardarCredenciales);
     }
     if (out.isEmpty) {
-      out.add(
-          'Comprueba que el tipo de credenciales en Google Cloud Console es "Aplicación de escritorio" y que tu email está añadido como usuario de prueba en la pantalla de consentimiento.');
+      out.add(l.pistaCredencialPorDefecto);
     }
     return out;
   }

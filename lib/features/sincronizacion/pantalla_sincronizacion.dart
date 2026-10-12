@@ -276,8 +276,7 @@ class _PantallaSincronizacionState
               contentPadding: EdgeInsets.zero,
               title: Text(context.l.sincronizarAutomaticamente),
               subtitle: Text(
-                  '${context.l.cadaNsAppAbierta(intervaloAutoSync.inSeconds)} '
-                  'esté abierta'),
+                  context.l.cadaNsAppAbierta(intervaloAutoSync.inSeconds)),
               value: st.auto,
               onChanged: n.fijarAuto,
             ),

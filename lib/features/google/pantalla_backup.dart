@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../services/drive_backup_service.dart';
 import '../../services/google_auth_service.dart';
@@ -40,25 +41,19 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
   String? _mensajeError;
 
   Future<void> _subir() async {
+    final l = context.l;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Subir copia a Drive'),
-        content: const Text(
-          'Se subirá una copia actual a tu Drive como "pitwall-backup.zip". '
-          'Incluye la base de datos, las fotos de verificaciones y la '
-          'configuración del programa (credenciales de Google, tema y '
-          'preferencias); nunca la sesión conectada.\n\n'
-          'Si ya había una versión anterior, se reemplaza por la nueva.'
-          '\n\n¿Continuar?',
-        ),
+        title: Text(l.subirCopiaADrive),
+        content: Text(l.subirCopiaTexto),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Subir')),
+              child: Text(l.accionSubir)),
         ],
       ),
     );
@@ -86,6 +81,7 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
     required String cuerpo,
     required bool configPorDefecto,
   }) async {
+    final l = context.l;
     var aplicarConfig = configPorDefecto;
     final ok = await showDialog<bool>(
       context: context,
@@ -104,21 +100,18 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
                     setEstadoDialogo(() => aplicarConfig = v ?? false),
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
-                title:
-                    const Text('Restaurar también la configuración de la copia'),
-                subtitle: const Text(
-                    'Credenciales de Google, tema y preferencias. Nunca la '
-                    'sesión conectada.'),
+                title: Text(l.restaurarTambienConfig),
+                subtitle: Text(l.restaurarTambienConfigSub),
               ),
             ],
           ),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancelar')),
+                child: Text(l.cancelar)),
             FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Sí, restaurar')),
+                child: Text(l.siRestaurar)),
           ],
         ),
       ),
@@ -150,11 +143,10 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
       });
 
   Future<void> _descargar() async {
+    final l = context.l;
     final r = await _confirmarRestauracion(
-      titulo: 'Descargar y restaurar',
-      cuerpo: 'Se reemplazará tu base de datos local con la copia que hay en '
-          'Drive. ⚠️ Cualquier cambio local que no hayas subido se perderá.'
-          '\n\nDespués tendrás que cerrar y volver a abrir la app.',
+      titulo: l.descargarYRestaurar,
+      cuerpo: l.descargarRestaurarTexto,
       configPorDefecto: await _configPorDefecto(),
     );
     if (r == null) return;
@@ -167,17 +159,14 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
 
   /// Restaura una copia guardada como archivo (.zip o .db), sin Google.
   Future<void> _restaurarArchivo() async {
+    final l = context.l;
     final xfile = await openFile(acceptedTypeGroups: [
-      const XTypeGroup(label: 'Copia de PitWall', extensions: ['zip', 'db']),
+      XTypeGroup(label: l.copiaDePitwall, extensions: ['zip', 'db']),
     ]);
     if (xfile == null || !mounted) return;
-    final nombre = xfile.name;
     final r = await _confirmarRestauracion(
-      titulo: 'Restaurar desde archivo',
-      cuerpo: 'Se reemplazará tu base de datos local con la copia de '
-          '«$nombre». ⚠️ Cualquier cambio local que no hayas subido se '
-          'perderá.\n\nNo hace falta conexión con Google para esto.'
-          '\n\nDespués tendrás que cerrar y volver a abrir la app.',
+      titulo: l.restaurarDesdeArchivo,
+      cuerpo: l.restaurarDesdeArchivoTexto(xfile.name),
       configPorDefecto: await _configPorDefecto(),
     );
     if (r == null) return;
@@ -192,15 +181,16 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = context.l;
     final estadoAsync = ref.watch(estadoGoogleProvider);
     final infoAsync = ref.watch(infoBackupProvider);
-    final fmt = DateFormat("d MMM y, HH:mm", 'es_ES');
+    final fmt = DateFormat("d MMM y, HH:mm", context.idiomaFechas);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Copia compartida en Drive')),
+      appBar: AppBar(title: Text(l.copiaCompartidaDrive)),
       body: estadoAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(l.errorDetalle('$e'))),
         data: (estado) {
           if (!estado.conectado) {
             return _NoConectado(
@@ -224,21 +214,18 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
                         children: [
                           Icon(Icons.cloud_outlined, color: cs.primary),
                           const SizedBox(width: 8),
-                          Text('Copia actual en Drive',
+                          Text(l.copiaActualEnDrive,
                               style: Theme.of(context).textTheme.titleMedium),
                         ],
                       ),
                       const SizedBox(height: 12),
                       infoAsync.when(
                         loading: () => const LinearProgressIndicator(),
-                        error: (e, _) => Text('Error: $e',
+                        error: (e, _) => Text(l.errorDetalle('$e'),
                             style: TextStyle(color: cs.error)),
                         data: (info) {
                           if (info == null) {
-                            return const Text(
-                              'Aún no hay ninguna copia en Drive. '
-                              'Pulsa "Subir copia" para crear la primera.',
-                            );
+                            return Text(l.noHayCopiaDriveTexto);
                           }
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,11 +234,11 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w700)),
                               if (info.modificado != null)
-                                Text(
-                                    'Última subida: ${fmt.format(info.modificado!.toLocal())}'),
+                                Text(l.ultimaSubida(
+                                    fmt.format(info.modificado!.toLocal()))),
                               if (info.tamano != null)
-                                Text(
-                                    'Tamaño: ${(info.tamano! / 1024).toStringAsFixed(1)} KB'),
+                                Text(l.tamanoKB(
+                                    (info.tamano! / 1024).toStringAsFixed(1))),
                             ],
                           );
                         },
@@ -268,7 +255,7 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
                         width: 18, height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.cloud_upload_outlined),
-                label: const Text('Subir copia a Drive'),
+                label: Text(l.subirCopiaADrive),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -278,7 +265,7 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
                         width: 18, height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.cloud_download_outlined),
-                label: const Text('Descargar y restaurar'),
+                label: Text(l.descargarYRestaurar),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -288,7 +275,7 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
                         width: 18, height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.folder_open_outlined),
-                label: const Text('Restaurar desde archivo…'),
+                label: Text(l.restaurarDesdeArchivoPuntos),
               ),
               if (_mensajeOk != null) ...[
                 const SizedBox(height: 16),
@@ -338,7 +325,7 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
                         children: [
                           Icon(Icons.info_outline, color: cs.outline),
                           const SizedBox(width: 8),
-                          Text('Cómo trabajar en equipo',
+                          Text(l.comoTrabajarEnEquipo,
                               style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   color: cs.onSurface)),
@@ -346,10 +333,7 @@ class _PantallaBackupState extends ConsumerState<PantallaBackup> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '• Al empezar a trabajar, pulsa "Descargar" para tener la última versión.\n'
-                        '• Al terminar tus cambios, pulsa "Subir" para que los demás puedan recibirlos.\n'
-                        '• Si dos personas editan a la vez, gana quien sube último (no hay fusión automática). '
-                        'Lo más práctico: coordinar quién edita en cada momento.',
+                        l.trabajoEnEquipoTexto,
                         style: TextStyle(color: cs.onSurface),
                       ),
                     ],
@@ -380,6 +364,7 @@ class _NoConectado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = context.l;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -388,13 +373,11 @@ class _NoConectado extends StatelessWidget {
           children: [
             Icon(Icons.cloud_off_outlined, size: 96, color: cs.outline),
             const SizedBox(height: 16),
-            Text('Sin conexión con Google',
+            Text(l.sinConexionGoogle,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            const Text(
-              'Conéctate con Google para poder subir o descargar la copia.\n\n'
-              'También puedes restaurar una copia guardada como archivo '
-              '(.zip), sin conexión.',
+            Text(
+              l.sinConexionGoogleTexto,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -402,7 +385,7 @@ class _NoConectado extends StatelessWidget {
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const PantallaConfiguracionGoogle())),
               icon: const Icon(Icons.settings_outlined),
-              label: const Text('Configurar Google'),
+              label: Text(l.configurarGoogle),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -412,7 +395,7 @@ class _NoConectado extends StatelessWidget {
                       width: 18, height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.folder_open_outlined),
-              label: const Text('Restaurar desde archivo…'),
+              label: Text(l.restaurarDesdeArchivoPuntos),
             ),
             if (mensajeOk != null) ...[
               const SizedBox(height: 16),

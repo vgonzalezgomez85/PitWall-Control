@@ -39,7 +39,7 @@ class HojaConFotos {
     required this.filas,
     required this.fotos,
     this.fotoReferencia,
-    this.tituloReferencia = 'Foto referencia',
+    this.tituloReferencia = '',
   })  : assert(filas.length == fotos.length),
         assert(fotoReferencia == null || fotoReferencia.length == filas.length);
 

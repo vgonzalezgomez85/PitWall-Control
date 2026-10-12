@@ -65,3 +65,4 @@ fotos_verificaciones/
 # Local environment
 .env
 .env.local
+lib/l10n/.arb.lock

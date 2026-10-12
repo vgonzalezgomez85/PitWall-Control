@@ -25,6 +25,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../services/excel_catalogos.dart';
@@ -59,8 +60,8 @@ List<String> _decodeCopas(String? s) {
   return const [];
 }
 
-String _resumenCopas(List<String> copas) {
-  if (copas.isEmpty) return 'Sin copa/categoría (no se puede usar)';
+String _resumenCopas(Textos l, List<String> copas) {
+  if (copas.isEmpty) return l.sinCopaCategoria;
   return copas.join(', ');
 }
 
@@ -109,9 +110,9 @@ class _ListaCatalogoState<T> extends State<_ListaCatalogo<T>> {
               children: [
                 Expanded(
                   child: TextField(
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.search),
-                      hintText: 'Buscar…',
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      hintText: context.l.buscarPuntos,
                       isDense: true,
                     ),
                     onChanged: (v) =>
@@ -122,11 +123,11 @@ class _ListaCatalogoState<T> extends State<_ListaCatalogo<T>> {
                   const SizedBox(width: 8),
                   DropdownButton<String?>(
                     value: _copaFiltro,
-                    hint: const Text('Copa'),
+                    hint: Text(context.l.copa),
                     borderRadius: BorderRadius.circular(12),
                     items: [
-                      const DropdownMenuItem<String?>(
-                          value: null, child: Text('Todas')),
+                      DropdownMenuItem<String?>(
+                          value: null, child: Text(context.l.todas)),
                       for (final c in widget.copas)
                         DropdownMenuItem<String?>(value: c, child: Text(c)),
                     ],
@@ -139,7 +140,7 @@ class _ListaCatalogoState<T> extends State<_ListaCatalogo<T>> {
           Expanded(
             child: widget.datos.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
               data: (xs) {
                 if (xs.isEmpty) return _Vacio(texto: widget.vacio);
                 final filtradas = xs.where((x) {
@@ -159,7 +160,7 @@ class _ListaCatalogoState<T> extends State<_ListaCatalogo<T>> {
                   return true;
                 }).toList();
                 if (filtradas.isEmpty) {
-                  return const _Vacio(texto: 'Sin coincidencias');
+                  return _Vacio(texto: context.l.sinCoincidencias);
                 }
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
@@ -187,14 +188,25 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
 
-  static const _titulos = [
-    'Coches', 'Marcas', 'Llantas', 'Engranajes', 'Motores', 'Bancadas', 'Chasis', 'Neumáticos', 'Copas', 'Clubs',
-  ];
+  static const _numTabs = 10;
+
+  List<String> _titulos(Textos l) => [
+        l.coches,
+        l.marcas,
+        l.llantas,
+        l.engranajes,
+        l.motores,
+        l.bancadas,
+        l.chasis,
+        l.neumaticos,
+        l.copas,
+        l.clubs,
+      ];
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: _titulos.length, vsync: this);
+    _tabs = TabController(length: _numTabs, vsync: this);
     // Refrescar el appbar (botón de sync) al cambiar de pestaña.
     _tabs.addListener(() {
       if (mounted) setState(() {});
@@ -223,10 +235,11 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
   }
 
   Future<void> _actualizarDesdeDrive(VinculoHoja v, TipoCatalogo tipo) async {
+    final l = context.l;
     final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(const SnackBar(
-      content: Text('Actualizando desde Drive…'),
-      duration: Duration(seconds: 2),
+    messenger.showSnackBar(SnackBar(
+      content: Text(l.actualizandoDesdeDrive),
+      duration: const Duration(seconds: 2),
     ));
     final res =
         await ref.read(actualizadorDriveProvider).actualizarCatalogo(v, tipo);
@@ -238,11 +251,12 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
   }
 
   Future<void> _subirAlSheet(VinculoHoja v, TipoCatalogo tipo) async {
+    final l = context.l;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    messenger.showSnackBar(const SnackBar(
-      content: Text('Calculando cambios para subir…'),
-      duration: Duration(seconds: 2),
+    messenger.showSnackBar(SnackBar(
+      content: Text(l.calculandoCambiosSubir),
+      duration: const Duration(seconds: 2),
     ));
     try {
       final plan = await ref.read(subidorCatalogoProvider).preparar(v, tipo);
@@ -256,7 +270,7 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
       ));
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(l.errorDetalle('$e'))));
     }
   }
 
@@ -266,12 +280,13 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
         context,
         sugerido:
             'catalogos-pitwall-${DateTime.now().toIso8601String().substring(0, 10)}.xlsx',
-        generar: () => exportarCatalogosExcel(ref.read(dbProvider)),
+        generar: () => exportarCatalogosExcel(ref.read(dbProvider), l: context.l),
       );
 
   /// Reimporta el .xlsx editado: actualiza las filas con ID y crea las que no
   /// lo tienen. Nunca borra: lo que quites de la hoja se queda en la app.
   Future<void> _importarExcel() async {
+    final l = context.l;
     final messenger = ScaffoldMessenger.of(context);
     final xfile = await openFile(acceptedTypeGroups: [
       const XTypeGroup(label: 'Excel', extensions: ['xlsx']),
@@ -281,54 +296,54 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Importar catálogos desde Excel'),
-        content: const Text(
-            'Se actualizarán las filas que tengan ID y se crearán las que no lo '
-            'tengan.\n\nNo se borra nada: las fichas que quites de la hoja '
-            'seguirán en la app.'),
+        title: Text(l.importarCatalogosExcelTitulo),
+        content: Text(l.importarCatalogosExcelTexto),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Importar')),
+              child: Text(l.importar)),
         ],
       ),
     );
     if (confirmar != true) return;
 
     try {
-      messenger.showSnackBar(const SnackBar(
-          content: Text('Importando…'), duration: Duration(seconds: 2)));
+      messenger.showSnackBar(SnackBar(
+          content: Text(l.importando), duration: const Duration(seconds: 2)));
       final bytes = await File(xfile.path).readAsBytes();
-      final res = await importarCatalogosExcel(ref.read(dbProvider), bytes);
+      final res = await importarCatalogosExcel(ref.read(dbProvider), bytes,
+          l: l);
       if (!mounted) return;
       await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Importación completada'),
+          title: Text(l.importacionCompletada),
           content: SingleChildScrollView(
             child: Text(
-              '${res.resumen}\n\n'
+              '${l.resumenCreadosActualizados(res.totalCreados, res.totalActualizados)}\n\n'
               '${[
                 for (final e in {...res.creados.keys, ...res.actualizados.keys})
-                  '• $e: ${res.creados[e] ?? 0} nuevos, ${res.actualizados[e] ?? 0} actualizados'
+                  l.catalogoImportadoLinea(
+                      e, res.creados[e] ?? 0, res.actualizados[e] ?? 0)
               ].join('\n')}'
-              '${res.hojasIgnoradas.isEmpty ? '' : '\n\n⚠ Estas pestañas no se han importado porque su nombre no coincide con ningún catálogo:\n${res.hojasIgnoradas.map((h) => '• $h').join('\n')}\nNo renombres las pestañas del fichero exportado.'}'
-              '${res.errores.isEmpty ? '' : '\n\nErrores:\n${res.errores.take(10).join('\n')}'}',
+              '${res.hojasIgnoradas.isEmpty ? '' : '\n\n${l.pestanasIgnoradasAviso(res.hojasIgnoradas.map((h) => '• $h').join('\n'))}'}'
+              '${res.errores.isEmpty ? '' : '\n\n${l.erroresEtiqueta(res.errores.take(10).join('\n'))}'}',
             ),
           ),
           actions: [
             FilledButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('OK')),
+                child: Text(l.ok)),
           ],
         ),
       );
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Error al importar: $e')));
+      messenger
+          .showSnackBar(SnackBar(content: Text(l.errorAlImportar('$e'))));
     }
   }
 
@@ -336,29 +351,29 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Catálogos'),
+        title: Text(context.l.menuCatalogos),
         actions: [
           PopupMenuButton<String>(
-            tooltip: 'Todo el catálogo en Excel',
+            tooltip: context.l.todoCatalogoExcel,
             icon: const Icon(Icons.table_view_outlined),
             onSelected: (op) =>
                 op == 'exportar' ? _exportarExcel() : _importarExcel(),
-            itemBuilder: (_) => const [
+            itemBuilder: (_) => [
               PopupMenuItem(
                 value: 'exportar',
                 child: ListTile(
-                  leading: Icon(Icons.download_outlined),
-                  title: Text('Exportar todo a Excel'),
-                  subtitle: Text('Una pestaña por catálogo'),
+                  leading: const Icon(Icons.download_outlined),
+                  title: Text(context.l.exportarTodoExcel),
+                  subtitle: Text(context.l.unaPestanaPorCatalogo),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
               PopupMenuItem(
                 value: 'importar',
                 child: ListTile(
-                  leading: Icon(Icons.upload_file_outlined),
-                  title: Text('Importar Excel editado'),
-                  subtitle: Text('Actualiza por ID y crea los nuevos'),
+                  leading: const Icon(Icons.upload_file_outlined),
+                  title: Text(context.l.importarExcelEditado),
+                  subtitle: Text(context.l.actualizaPorIdCreaNuevos),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -374,13 +389,13 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  tooltip:
-                      'Bajar desde Drive (${v.fila.hojaNombre} · ${v.fila.pestanaTitulo})',
+                  tooltip: context.l.bajarDesdeDriveCon(
+                      v.fila.hojaNombre, v.fila.pestanaTitulo),
                   icon: const Icon(Icons.sync),
                   onPressed: () => _actualizarDesdeDrive(v, tipo),
                 ),
                 IconButton(
-                  tooltip: 'Subir mis cambios al Sheet',
+                  tooltip: context.l.subirMisCambiosSheet,
                   icon: const Icon(Icons.cloud_upload_outlined),
                   onPressed: () => _subirAlSheet(v, tipo),
                 ),
@@ -388,7 +403,7 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
             );
           }),
           IconButton(
-            tooltip: 'Importar la pestaña actual',
+            tooltip: context.l.importarPestanaActual,
             icon: const Icon(Icons.file_upload_outlined),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
@@ -401,7 +416,7 @@ class _PantallaCatalogosState extends ConsumerState<PantallaCatalogos>
         bottom: TabBar(
           controller: _tabs,
           isScrollable: true,
-          tabs: _titulos.map((t) => Tab(text: t)).toList(),
+          tabs: _titulos(context.l).map((t) => Tab(text: t)).toList(),
         ),
       ),
       body: TabBarView(
@@ -447,7 +462,7 @@ class _TabCochesState extends ConsumerState<_TabCoches> {
         heroTag: 'fab_coches',
         onPressed: () => _editarCoche(context, ref, null),
         icon: const Icon(Icons.add),
-        label: const Text('Coche'),
+        label: Text(context.l.coche),
       ),
       body: Column(
         children: [
@@ -457,9 +472,9 @@ class _TabCochesState extends ConsumerState<_TabCoches> {
               children: [
                 Expanded(
                   child: TextField(
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.search),
-                      hintText: 'Buscar coche…',
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      hintText: context.l.buscarCochePuntos,
                       isDense: true,
                     ),
                     onChanged: (v) =>
@@ -469,11 +484,11 @@ class _TabCochesState extends ConsumerState<_TabCoches> {
                 const SizedBox(width: 8),
                 DropdownButton<String?>(
                   value: _copaFiltro,
-                  hint: const Text('Copa'),
+                  hint: Text(context.l.copa),
                   borderRadius: BorderRadius.circular(12),
                   items: [
-                    const DropdownMenuItem<String?>(
-                        value: null, child: Text('Todas las copas')),
+                    DropdownMenuItem<String?>(
+                        value: null, child: Text(context.l.todasLasCopas)),
                     for (final c in copas)
                       DropdownMenuItem<String?>(value: c, child: Text(c)),
                   ],
@@ -485,9 +500,9 @@ class _TabCochesState extends ConsumerState<_TabCoches> {
           Expanded(
             child: lista.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
               data: (xs) {
-                if (xs.isEmpty) return const _Vacio(texto: 'Sin coches');
+                if (xs.isEmpty) return _Vacio(texto: context.l.sinCoches);
                 final filtradas = xs.where((c) {
                   if (_busqueda.isNotEmpty &&
                       !'${c.nombre} ${c.marca} ${c.modelo}'
@@ -505,7 +520,7 @@ class _TabCochesState extends ConsumerState<_TabCoches> {
                   return true;
                 }).toList();
                 if (filtradas.isEmpty) {
-                  return const _Vacio(texto: 'Sin coincidencias');
+                  return _Vacio(texto: context.l.sinCoincidencias);
                 }
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
@@ -539,9 +554,9 @@ class _TabCochesState extends ConsumerState<_TabCoches> {
                   title: Text(c.nombre,
                       style: const TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text(
-                    '${c.marca}  ·  Peso mín ${c.pesoMin.toStringAsFixed(2)}g  '
-                    '·  Créd ${c.creditosCoche >= 0 ? '+' : ''}${c.creditosCoche}'
-                    '\nCopas: ${_resumenCopas(_decodeCopas(c.copasJson))}',
+                    '${c.marca}  ·  '
+                    '${context.l.pesoYCreditos(c.pesoMin.toStringAsFixed(2), '${c.creditosCoche >= 0 ? '+' : ''}${c.creditosCoche}')}'
+                    '\n${context.l.copasEtiqueta(_resumenCopas(context.l, _decodeCopas(c.copasJson)))}',
                   ),
                   isThreeLine: true,
                   trailing: PopupMenuButton<String>(
@@ -557,9 +572,9 @@ class _TabCochesState extends ConsumerState<_TabCoches> {
                         }
                       }
                     },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'editar', child: Text('Editar')),
-                      PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(value: 'editar', child: Text(context.l.editar)),
+                      PopupMenuItem(value: 'borrar', child: Text(context.l.eliminar)),
                     ],
                   ),
                 ),
@@ -576,6 +591,7 @@ class _TabCochesState extends ConsumerState<_TabCoches> {
 
   Future<void> _editarCoche(
       BuildContext context, WidgetRef ref, CatalogoCoche? c) async {
+    final l = context.l;
     final nombre = TextEditingController(text: c?.nombre ?? '');
     final marca = TextEditingController(text: c?.marca ?? '');
     final modelo = TextEditingController(text: c?.modelo ?? '');
@@ -589,7 +605,7 @@ class _TabCochesState extends ConsumerState<_TabCoches> {
       context: context,
       builder: (_) {
         return _DialogoCocheBancada(
-          titulo: c == null ? 'Nuevo coche' : 'Editar coche',
+          titulo: c == null ? l.nuevoCoche : l.editarCoche,
           copasIniciales: copasIniciales,
           contenidoExtra: Column(
             mainAxisSize: MainAxisSize.min,
@@ -598,33 +614,32 @@ class _TabCochesState extends ConsumerState<_TabCoches> {
               const SizedBox(height: 8),
               TextField(
                 controller: nombre,
-                decoration: const InputDecoration(
-                    labelText: 'Nombre completo *',
-                    helperText: 'Ej: SCALEAUTO-BMW M8 GTE'),
+                decoration: InputDecoration(
+                    labelText: l.nombreCompletoObligatorio,
+                    helperText: l.nombreCompletoEjemplo),
               ),
               TextField(
                 controller: marca,
-                decoration: const InputDecoration(labelText: 'Marca *'),
+                decoration: InputDecoration(labelText: l.marcaObligatoria),
               ),
               TextField(
                 controller: modelo,
-                decoration: const InputDecoration(labelText: 'Modelo *'),
+                decoration: InputDecoration(labelText: l.modeloObligatorio),
               ),
               TextField(
                 controller: peso,
-                decoration: const InputDecoration(
-                    labelText: 'Peso mínimo (g) *',
-                    helperText: 'No cambia las verificaciones validadas ni '
-                        'los campeonatos con valores fijados',
+                decoration: InputDecoration(
+                    labelText: l.pesoMinimoObligatorio,
+                    helperText: l.pesoMinimoAyuda,
                     helperMaxLines: 2),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
               ),
               TextField(
                 controller: cred,
-                decoration: const InputDecoration(
-                    labelText: 'Créditos coche',
-                    helperText: 'Negativo o positivo'),
+                decoration: InputDecoration(
+                    labelText: l.creditosCoche,
+                    helperText: l.creditosCocheAyuda),
                 keyboardType: TextInputType.number,
               ),
             ],
@@ -671,6 +686,7 @@ class _SelectorFotoCoche extends StatelessWidget {
   final ValueNotifier<String?> foto;
 
   Future<void> _elegir(BuildContext context, ImageSource src) async {
+    final l = context.l;
     try {
       final xfile = await ImagePicker().pickImage(
         source: src,
@@ -687,7 +703,7 @@ class _SelectorFotoCoche extends StatelessWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo añadir la foto: $e')),
+        SnackBar(content: Text(l.noSePudoAnadirFoto('$e'))),
       );
     }
   }
@@ -735,16 +751,16 @@ class _SelectorFotoCoche extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: () => _elegir(context, ImageSource.gallery),
                     icon: const Icon(Icons.photo_library_outlined, size: 18),
-                    label: const Text('Galería'),
+                    label: Text(context.l.galeria),
                   ),
                   OutlinedButton.icon(
                     onPressed: () => _elegir(context, ImageSource.camera),
                     icon: const Icon(Icons.camera_alt_outlined, size: 18),
-                    label: const Text('Cámara'),
+                    label: Text(context.l.camara),
                   ),
                   if (path != null)
                     IconButton(
-                      tooltip: 'Quitar foto',
+                      tooltip: context.l.quitarFoto,
                       onPressed: () => foto.value = null,
                       icon: const Icon(Icons.delete_outline),
                     ),
@@ -797,15 +813,15 @@ class _DialogoCocheBancadaState extends ConsumerState<_DialogoCocheBancada> {
             children: [
               widget.contenidoExtra,
               const SizedBox(height: 16),
-              Text('Copas donde aplica',
+              Text(context.l.copasDondeAplica,
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: Theme.of(context).colorScheme.primary)),
               const SizedBox(height: 4),
               Text(
                 _copas.isEmpty
-                    ? 'Sin marcar = no se podrá usar en ninguna copa.'
-                    : 'Marca solo las copas donde es válido.',
+                    ? context.l.copasSinMarcarAviso
+                    : context.l.copasMarcarAviso,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 8),
@@ -841,11 +857,11 @@ class _DialogoCocheBancadaState extends ConsumerState<_DialogoCocheBancada> {
         TextButton(
             onPressed: () =>
                 Navigator.pop(context, (ok: false, copas: _copas)),
-            child: const Text('Cancelar')),
+            child: Text(context.l.cancelar)),
         FilledButton(
             onPressed: () =>
                 Navigator.pop(context, (ok: true, copas: _copas)),
-            child: const Text('Guardar')),
+            child: Text(context.l.guardar)),
       ],
     );
   }
@@ -861,13 +877,13 @@ class _TabMarcas extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return _ListaCatalogo<CatalogoMarca>(
       datos: ref.watch(marcasCatalogoProvider),
-      vacio: 'Sin marcas',
+      vacio: context.l.sinMarcas,
       textoBuscable: (m) => '${m.codigo} ${m.nombre}',
       fab: FloatingActionButton.extended(
         heroTag: 'fab_marcas',
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
-        label: const Text('Marca'),
+        label: Text(context.l.marca),
       ),
       item: (m) => Card(
         child: ListTile(
@@ -884,9 +900,9 @@ class _TabMarcas extends ConsumerWidget {
                 }
               }
             },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'editar', child: Text('Editar')),
-              PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'editar', child: Text(context.l.editar)),
+              PopupMenuItem(value: 'borrar', child: Text(context.l.eliminar)),
             ],
           ),
         ),
@@ -901,29 +917,31 @@ class _TabMarcas extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(m == null ? 'Nueva marca' : 'Editar marca'),
+        title: Text(m == null ? context.l.nuevaMarca : context.l.editarMarca),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: codigo,
-              decoration: const InputDecoration(
-                  labelText: 'Código *', helperText: 'Ej: SIT, SCA, SLP'),
+              decoration: InputDecoration(
+                  labelText: context.l.codigoObligatorio,
+                  helperText: context.l.marcaCodigoEjemplo),
               textCapitalization: TextCapitalization.characters,
             ),
             TextField(
               controller: nombre,
-              decoration: const InputDecoration(labelText: 'Nombre completo *'),
+              decoration:
+                  InputDecoration(labelText: context.l.nombreCompletoObligatorio),
             ),
           ],
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(context.l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Guardar')),
+              child: Text(context.l.guardar)),
         ],
       ),
     );
@@ -949,7 +967,7 @@ class _TabLlantas extends ConsumerWidget {
     final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
     return _ListaCatalogo<CatalogoLlanta>(
       datos: ref.watch(llantasCatalogoProvider),
-      vacio: 'Sin llantas',
+      vacio: context.l.sinLlantas,
       textoBuscable: (l) => '${l.dimension} ${l.tipo}',
       copasJsonDe: (l) => l.copasJson,
       copas: copas,
@@ -957,7 +975,7 @@ class _TabLlantas extends ConsumerWidget {
         heroTag: 'fab_llantas',
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
-        label: const Text('Llanta'),
+        label: Text(context.l.llanta),
       ),
       item: (l) => Card(
         child: ListTile(
@@ -972,7 +990,7 @@ class _TabLlantas extends ConsumerWidget {
           title: Text(l.dimension),
           subtitle: Text(
             '${l.tipo}'
-            '\nCopas: ${_resumenCopas(_decodeCopas(l.copasJson))}',
+            '\n${context.l.copasEtiqueta(_resumenCopas(context.l, _decodeCopas(l.copasJson)))}',
           ),
           isThreeLine: true,
           trailing: PopupMenuButton<String>(
@@ -986,9 +1004,9 @@ class _TabLlantas extends ConsumerWidget {
                 }
               }
             },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'editar', child: Text('Editar')),
-              PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'editar', child: Text(context.l.editar)),
+              PopupMenuItem(value: 'borrar', child: Text(context.l.eliminar)),
             ],
           ),
         ),
@@ -1004,7 +1022,7 @@ class _TabLlantas extends ConsumerWidget {
     final res = await showDialog<({bool ok, Set<String> copas})>(
       context: context,
       builder: (_) => _DialogoCocheBancada(
-        titulo: l == null ? 'Nueva llanta' : 'Editar llanta',
+        titulo: l == null ? context.l.nuevaLlanta : context.l.editarLlanta,
         copasIniciales: copasIni,
         contenidoExtra: StatefulBuilder(
           builder: (ctx, setSt) => Column(
@@ -1012,18 +1030,21 @@ class _TabLlantas extends ConsumerWidget {
             children: [
               TextField(
                 controller: dim,
-                decoration: const InputDecoration(
-                    labelText: 'Dimensión *',
-                    helperText: 'Ej: 15,8 x 8 PL'),
+                decoration: InputDecoration(
+                    labelText: context.l.dimensionObligatoria,
+                    helperText: context.l.llantaDimensionEjemplo),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: tipo,
-                decoration: const InputDecoration(labelText: 'Tipo'),
-                items: const [
-                  DropdownMenuItem(value: 'DELANTERA', child: Text('Delantera')),
-                  DropdownMenuItem(value: 'TRASERA', child: Text('Trasera')),
-                  DropdownMenuItem(value: 'AMBAS', child: Text('Ambas')),
+                decoration: InputDecoration(labelText: context.l.tipoCampo),
+                items: [
+                  DropdownMenuItem(
+                      value: 'DELANTERA', child: Text(context.l.delantera)),
+                  DropdownMenuItem(
+                      value: 'TRASERA', child: Text(context.l.trasera)),
+                  DropdownMenuItem(
+                      value: 'AMBAS', child: Text(context.l.ambas)),
                 ],
                 onChanged: (v) => setSt(() => tipo = v ?? 'DELANTERA'),
               ),
@@ -1058,7 +1079,7 @@ class _TabEngranajes extends ConsumerWidget {
     final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
     return _ListaCatalogo<CatalogoEngranaje>(
       datos: ref.watch(engranajesCatalogoProvider),
-      vacio: 'Sin engranajes',
+      vacio: context.l.sinEngranajes,
       textoBuscable: (g) => '${g.diametro ?? ''} ${g.dientes} ${g.tipo}',
       copasJsonDe: (g) => g.copasJson,
       copas: copas,
@@ -1066,7 +1087,7 @@ class _TabEngranajes extends ConsumerWidget {
         heroTag: 'fab_engranajes',
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
-        label: const Text('Engranaje'),
+        label: Text(context.l.engranaje),
       ),
       item: (g) => Card(
         child: ListTile(
@@ -1077,10 +1098,10 @@ class _TabEngranajes extends ConsumerWidget {
             color: cs.primary,
           ),
           title: Text(
-              '${g.diametro != null ? '⌀${g.diametro} · ' : ''}${g.dientes} dientes'),
+              '${g.diametro != null ? '⌀${g.diametro} · ' : ''}${context.l.nDientes(g.dientes)}'),
           subtitle: Text(
-            '${g.tipo == 'PINON' ? 'Piñón' : 'Corona'}'
-            '\nCopas: ${_resumenCopas(_decodeCopas(g.copasJson))}',
+            '${g.tipo == 'PINON' ? context.l.pinon : context.l.corona}'
+            '\n${context.l.copasEtiqueta(_resumenCopas(context.l, _decodeCopas(g.copasJson)))}',
           ),
           isThreeLine: true,
           trailing: PopupMenuButton<String>(
@@ -1095,9 +1116,9 @@ class _TabEngranajes extends ConsumerWidget {
                 }
               }
             },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'editar', child: Text('Editar')),
-              PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'editar', child: Text(context.l.editar)),
+              PopupMenuItem(value: 'borrar', child: Text(context.l.eliminar)),
             ],
           ),
         ),
@@ -1115,7 +1136,7 @@ class _TabEngranajes extends ConsumerWidget {
     final res = await showDialog<({bool ok, Set<String> copas})>(
       context: context,
       builder: (_) => _DialogoCocheBancada(
-        titulo: g == null ? 'Nuevo engranaje' : 'Editar engranaje',
+        titulo: g == null ? context.l.nuevoEngranaje : context.l.editarEngranaje,
         copasIniciales: copasIni,
         contenidoExtra: StatefulBuilder(
           builder: (ctx, setSt) => Column(
@@ -1123,27 +1144,30 @@ class _TabEngranajes extends ConsumerWidget {
             children: [
               DropdownButtonFormField<String>(
                 initialValue: tipo,
-                decoration: const InputDecoration(labelText: 'Tipo'),
-                items: const [
-                  DropdownMenuItem(value: 'PINON', child: Text('Piñón')),
-                  DropdownMenuItem(value: 'CORONA', child: Text('Corona')),
+                decoration: InputDecoration(labelText: context.l.tipoCampo),
+                items: [
+                  DropdownMenuItem(
+                      value: 'PINON', child: Text(context.l.pinon)),
+                  DropdownMenuItem(
+                      value: 'CORONA', child: Text(context.l.corona)),
                 ],
                 onChanged: (v) => setSt(() => tipo = v ?? 'PINON'),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: diametro,
-                decoration: const InputDecoration(
-                    labelText: 'Diámetro', helperText: 'Ej: 6,5'),
+                decoration: InputDecoration(
+                    labelText: context.l.diametro,
+                    helperText: context.l.diametroEjemplo),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: dientes,
-                decoration: const InputDecoration(
-                    labelText: 'Dientes *',
-                    helperText: 'Ej: 12 piñón, 28 corona'),
+                decoration: InputDecoration(
+                    labelText: context.l.dientesObligatorio,
+                    helperText: context.l.dientesEjemplo),
                 keyboardType: TextInputType.number,
               ),
             ],
@@ -1179,7 +1203,7 @@ class _TabMotores extends ConsumerWidget {
     final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
     return _ListaCatalogo<CatalogoMotore>(
       datos: ref.watch(motoresCatalogoProvider),
-      vacio: 'Sin motores',
+      vacio: context.l.sinMotores,
       textoBuscable: (mo) => mo.nombre,
       copasJsonDe: (mo) => mo.copasJson,
       copas: copas,
@@ -1187,7 +1211,7 @@ class _TabMotores extends ConsumerWidget {
         heroTag: 'fab_motores',
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
-        label: const Text('Motor'),
+        label: Text(context.l.motor),
       ),
       item: (mo) {
         final medidas = [
@@ -1200,8 +1224,8 @@ class _TabMotores extends ConsumerWidget {
             title: Text(mo.nombre,
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(
-              '${medidas.isEmpty ? 'Sin medidas' : medidas}'
-              '\nCopas: ${_resumenCopas(_decodeCopas(mo.copasJson))}',
+              '${medidas.isEmpty ? context.l.sinMedidas : medidas}'
+              '\n${context.l.copasEtiqueta(_resumenCopas(context.l, _decodeCopas(mo.copasJson)))}',
             ),
             isThreeLine: true,
             trailing: PopupMenuButton<String>(
@@ -1215,9 +1239,9 @@ class _TabMotores extends ConsumerWidget {
                   }
                 }
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'editar', child: Text('Editar')),
-                PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'editar', child: Text(context.l.editar)),
+                PopupMenuItem(value: 'borrar', child: Text(context.l.eliminar)),
               ],
             ),
           ),
@@ -1237,15 +1261,16 @@ class _TabMotores extends ConsumerWidget {
     final res = await showDialog<({bool ok, Set<String> copas})>(
       context: context,
       builder: (_) => _DialogoCocheBancada(
-        titulo: mo == null ? 'Nuevo motor' : 'Editar motor',
+        titulo: mo == null ? context.l.nuevoMotor : context.l.editarMotor,
         copasIniciales: copasIniciales,
         contenidoExtra: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nombre,
-              decoration: const InputDecoration(
-                  labelText: 'Motor *', helperText: 'Identificador o modelo'),
+              decoration: InputDecoration(
+                  labelText: context.l.motorObligatorio,
+                  helperText: context.l.motorIdentificadorAyuda),
             ),
             TextField(
               controller: rpm,
@@ -1295,8 +1320,9 @@ class _TabChasis extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return _SimpleTab(
-      vacio: 'Sin chasis',
-      botonLabel: 'Chasis',
+      vacio: context.l.sinChasis,
+      botonLabel: context.l.chasis,
+      tituloNuevo: context.l.nuevoChasis,
       observar: (r) => r.watch(chasisCatalogoProvider),
       titulo: (c) => c.nombre,
       onCrear: (txt) => ref.read(repoCatalogosProvider).crearChasis(txt),
@@ -1304,7 +1330,7 @@ class _TabChasis extends ConsumerWidget {
           ref.read(repoCatalogosProvider).actualizarChasis(item.id, txt),
       onBorrar: (item) =>
           ref.read(repoCatalogosProvider).borrarChasis(item.id),
-      hint: 'Ej: INYECCIÓN PLÁSTICO NEGRO, 3D',
+      hint: context.l.chasisEjemplo,
     );
   }
 }
@@ -1319,7 +1345,7 @@ class _TabBancadas extends ConsumerWidget {
     final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
     return _ListaCatalogo<CatalogoBancada>(
       datos: ref.watch(bancadasCatalogoProvider),
-      vacio: 'Sin bancadas',
+      vacio: context.l.sinBancadas,
       textoBuscable: (b) => b.nombre,
       copasJsonDe: (b) => b.copasJson,
       copas: copas,
@@ -1327,13 +1353,13 @@ class _TabBancadas extends ConsumerWidget {
         heroTag: 'fab_bancadas',
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
-        label: const Text('Bancada'),
+        label: Text(context.l.bancada),
       ),
       item: (b) => Card(
         child: ListTile(
           title: Text(b.nombre),
-          subtitle:
-              Text('Copas: ${_resumenCopas(_decodeCopas(b.copasJson))}'),
+          subtitle: Text(
+              context.l.copasEtiqueta(_resumenCopas(context.l, _decodeCopas(b.copasJson)))),
           trailing: PopupMenuButton<String>(
             onSelected: (op) async {
               if (op == 'editar') {
@@ -1345,9 +1371,9 @@ class _TabBancadas extends ConsumerWidget {
                 }
               }
             },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'editar', child: Text('Editar')),
-              PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'editar', child: Text(context.l.editar)),
+              PopupMenuItem(value: 'borrar', child: Text(context.l.eliminar)),
             ],
           ),
         ),
@@ -1362,13 +1388,14 @@ class _TabBancadas extends ConsumerWidget {
     final res = await showDialog<({bool ok, Set<String> copas})>(
       context: context,
       builder: (_) => _DialogoCocheBancada(
-        titulo: b == null ? 'Nueva bancada' : 'Editar bancada',
+        titulo: b == null ? context.l.nuevaBancada : context.l.editarBancada,
         copasIniciales: copasIni,
         contenidoExtra: TextField(
           controller: nombre,
           autofocus: true,
-          decoration: const InputDecoration(
-              labelText: 'Nombre *', helperText: 'Ej: Slot.it 1,0 carbono'),
+          decoration: InputDecoration(
+              labelText: context.l.nombreObligatorio,
+              helperText: context.l.bancadaEjemplo),
         ),
       ),
     );
@@ -1399,7 +1426,7 @@ class _TabNeumaticos extends ConsumerWidget {
     final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
     return _ListaCatalogo<CatalogoNeumatico>(
       datos: ref.watch(neumaticosCatalogoProvider),
-      vacio: 'Sin neumáticos',
+      vacio: context.l.sinNeumaticos,
       textoBuscable: (n) => '${n.nombre} ${n.referencia ?? ''}',
       copasJsonDe: (n) => n.copasJson,
       copas: copas,
@@ -1407,15 +1434,15 @@ class _TabNeumaticos extends ConsumerWidget {
         heroTag: 'fab_neumaticos',
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
-        label: const Text('Neumático'),
+        label: Text(context.l.neumatico),
       ),
       item: (n) => Card(
         child: ListTile(
           leading: const Icon(Icons.circle_outlined),
           title: Text(n.nombre),
           subtitle: Text(
-            '${n.referencia ?? 'Sin referencia'}'
-            '\nCopas: ${_resumenCopas(_decodeCopas(n.copasJson))}',
+            '${n.referencia ?? context.l.sinReferencia}'
+            '\n${context.l.copasEtiqueta(_resumenCopas(context.l, _decodeCopas(n.copasJson)))}',
           ),
           isThreeLine: true,
           trailing: PopupMenuButton<String>(
@@ -1429,9 +1456,9 @@ class _TabNeumaticos extends ConsumerWidget {
                 }
               }
             },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'editar', child: Text('Editar')),
-              PopupMenuItem(value: 'borrar', child: Text('Eliminar')),
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'editar', child: Text(context.l.editar)),
+              PopupMenuItem(value: 'borrar', child: Text(context.l.eliminar)),
             ],
           ),
         ),
@@ -1447,20 +1474,20 @@ class _TabNeumaticos extends ConsumerWidget {
     final res = await showDialog<({bool ok, Set<String> copas})>(
       context: context,
       builder: (_) => _DialogoCocheBancada(
-        titulo: n == null ? 'Nuevo neumático' : 'Editar neumático',
+        titulo: n == null ? context.l.nuevoNeumatico : context.l.editarNeumatico,
         copasIniciales: copasIni,
         contenidoExtra: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
                 controller: nombre,
-                decoration: const InputDecoration(
-                    labelText: 'Nombre *',
-                    helperText: 'Ej: AS25 19,0 NEGRO')),
+                decoration: InputDecoration(
+                    labelText: context.l.nombreObligatorio,
+                    helperText: context.l.neumaticoEjemplo)),
             TextField(
                 controller: ref_,
-                decoration:
-                    const InputDecoration(labelText: 'Referencia (opcional)')),
+                decoration: InputDecoration(
+                    labelText: context.l.referenciaOpcional)),
           ],
         ),
       ),
@@ -1483,8 +1510,9 @@ class _TabCopas extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return _SimpleTab(
-      vacio: 'Sin copas',
-      botonLabel: 'Copa',
+      vacio: context.l.sinCopas,
+      botonLabel: context.l.copa,
+      tituloNuevo: context.l.nuevaCopa,
       observar: (r) => r.watch(copasCatalogoProvider),
       titulo: (b) => b.nombre,
       onCrear: (txt) => ref.read(repoCatalogosProvider).crearCopa(txt),
@@ -1492,7 +1520,7 @@ class _TabCopas extends ConsumerWidget {
           ref.read(repoCatalogosProvider).actualizarCopa(item.id, txt),
       onBorrar: (item) =>
           ref.read(repoCatalogosProvider).borrarCopa(item.id),
-      hint: 'Ej: GT, GT2, LMP, HYP',
+      hint: context.l.copaEjemplo,
     );
   }
 }
@@ -1502,8 +1530,9 @@ class _TabClubs extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return _SimpleTab(
-      vacio: 'Sin clubs',
-      botonLabel: 'Club',
+      vacio: context.l.sinClubs,
+      botonLabel: context.l.club,
+      tituloNuevo: context.l.nuevoClub,
       observar: (r) => r.watch(clubsCatalogoProvider),
       titulo: (b) => b.nombre,
       onCrear: (txt) => ref.read(repoCatalogosProvider).crearClub(txt),
@@ -1511,7 +1540,7 @@ class _TabClubs extends ConsumerWidget {
           ref.read(repoCatalogosProvider).actualizarClub(item.id, txt),
       onBorrar: (item) =>
           ref.read(repoCatalogosProvider).borrarClub(item.id),
-      hint: 'Ej: EL SOT, GASCLAVAT, SLOTMANIA',
+      hint: context.l.clubNombreEjemplo,
     );
   }
 }
@@ -1523,6 +1552,7 @@ class _SimpleTab<T> extends ConsumerStatefulWidget {
   const _SimpleTab({
     required this.vacio,
     required this.botonLabel,
+    required this.tituloNuevo,
     required this.observar,
     required this.titulo,
     required this.onCrear,
@@ -1533,6 +1563,10 @@ class _SimpleTab<T> extends ConsumerStatefulWidget {
 
   final String vacio;
   final String botonLabel;
+
+  /// Título del diálogo al crear (p. ej. «Nuevo Chasis»); el literal viene de
+  /// los textos, no se compone con `botonLabel`.
+  final String tituloNuevo;
   final AsyncValue<List<T>> Function(WidgetRef) observar;
   final String Function(T) titulo;
   final Future<void> Function(String) onCrear;
@@ -1559,7 +1593,7 @@ class _SimpleTabState<T> extends ConsumerState<_SimpleTab<T>> {
       ),
       body: lista.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(context.l.errorDetalle('$e'))),
         data: (xs) {
           final filtrados = _busqueda.isEmpty
               ? xs
@@ -1572,9 +1606,9 @@ class _SimpleTabState<T> extends ConsumerState<_SimpleTab<T>> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
                 child: TextField(
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.search),
-                    hintText: 'Buscar…',
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: context.l.buscarPuntos,
                     isDense: true,
                   ),
                   onChanged: (v) =>
@@ -1584,7 +1618,9 @@ class _SimpleTabState<T> extends ConsumerState<_SimpleTab<T>> {
               Expanded(
                 child: filtrados.isEmpty
                     ? _Vacio(
-                        texto: xs.isEmpty ? widget.vacio : 'Sin coincidencias')
+                        texto: xs.isEmpty
+                            ? widget.vacio
+                            : context.l.sinCoincidencias)
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
                         itemCount: filtrados.length,
@@ -1604,11 +1640,11 @@ class _SimpleTabState<T> extends ConsumerState<_SimpleTab<T>> {
                                     if (ok) await widget.onBorrar(x);
                                   }
                                 },
-                                itemBuilder: (_) => const [
+                                itemBuilder: (_) => [
                                   PopupMenuItem(
-                                      value: 'editar', child: Text('Editar')),
+                                      value: 'editar', child: Text(context.l.editar)),
                                   PopupMenuItem(
-                                      value: 'borrar', child: Text('Eliminar')),
+                                      value: 'borrar', child: Text(context.l.eliminar)),
                                 ],
                               ),
                             ),
@@ -1629,20 +1665,20 @@ class _SimpleTabState<T> extends ConsumerState<_SimpleTab<T>> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(item == null ? 'Nuevo ${widget.botonLabel}' : 'Editar'),
+        title: Text(item == null ? widget.tituloNuevo : context.l.editar),
         content: TextField(
           controller: t,
           autofocus: true,
-          decoration:
-              InputDecoration(labelText: 'Nombre *', helperText: widget.hint),
+          decoration: InputDecoration(
+              labelText: context.l.nombreObligatorio, helperText: widget.hint),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
+              child: Text(context.l.cancelar)),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Guardar')),
+              child: Text(context.l.guardar)),
         ],
       ),
     );
@@ -1665,7 +1701,7 @@ class _Vacio extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Text(
-          '$texto.\nPulsa el + para añadir.',
+          context.l.vacioPulsaAnadir(texto),
           textAlign: TextAlign.center,
           style: TextStyle(color: Theme.of(context).colorScheme.outline),
         ),
@@ -1678,15 +1714,15 @@ Future<bool> _confirmarBorrar(BuildContext context, String nombre) async {
   final ok = await showDialog<bool>(
     context: context,
     builder: (_) => AlertDialog(
-      title: const Text('Eliminar'),
-      content: Text('¿Eliminar "$nombre"?'),
+      title: Text(context.l.eliminar),
+      content: Text(context.l.eliminarFichaTexto(nombre)),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar')),
+            child: Text(context.l.cancelar)),
         FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar')),
+            child: Text(context.l.eliminar)),
       ],
     ),
   );

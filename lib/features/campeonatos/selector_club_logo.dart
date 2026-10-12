@@ -42,7 +42,8 @@ class SelectorClubLogo extends StatelessWidget {
     final l = context.l;
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final xfile = await elegirImagenDeArchivo();
+      final xfile =
+          await elegirImagenDeArchivo(etiqueta: context.l.imagenes);
       if (xfile == null) return;
       final preparado = prepararLogoClub(await xfile.readAsBytes());
       if (preparado == null) {

@@ -161,11 +161,11 @@ void main() {
   testWidgets('elegir Català en Ajustes cambia la app al momento',
       (tester) async {
     final c = await _montar(tester, null);
-    // Sin elegir nada: español (aunque el sistema de los tests sea inglés).
-    expect(find.text('Pruebas'), findsOneWidget);
-    await tester.tap(find.text('Ajustes').first);
+    // Sin elegir nada se sigue el sistema (inglés en los tests).
+    expect(find.text('Races'), findsOneWidget);
+    await tester.tap(find.text('Settings').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Idioma'));
+    await tester.tap(find.text('Language'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Català'));
     await tester.pumpAndSettle();

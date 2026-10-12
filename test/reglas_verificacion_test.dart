@@ -17,7 +17,9 @@
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'package:drift/drift.dart' show BooleanExpressionOperators, Value;
 import 'package:drift/native.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pitwall/core/idioma.dart';
 import 'package:pitwall/data/database/app_database.dart';
 import 'package:pitwall/domain/reglas_verificacion.dart';
 import 'package:pitwall/features/campeonatos/repositorio_coches_campeonato.dart';
@@ -127,11 +129,11 @@ void main() {
     });
 
     test('diferencias legibles', () {
-      final d = congeladas.diferenciasCon(actuales);
+      final d = congeladas.diferenciasCon(actuales, lookupTextos(const Locale('es')));
       expect(d, contains('Peso mínimo: 20 g (ahora 22 g)'));
       expect(d, contains('Eje delantero máx.: 65 mm (ahora 64 mm)'));
       expect(d.any((x) => x.contains('añadidas: NSR')), isTrue);
-      expect(congeladas.diferenciasCon(congeladas), isEmpty);
+      expect(congeladas.diferenciasCon(congeladas, lookupTextos(const Locale('es'))), isEmpty);
     });
   });
 

@@ -21,6 +21,8 @@ import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+
+import '../core/idioma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -37,7 +39,7 @@ Future<IdiomaExport?> elegirIdiomaExport(
   final sel = await showDialog<IdiomaExport>(
     context: context,
     builder: (_) => SimpleDialog(
-      title: const Text('Idioma del PDF'),
+      title: Text(context.l.idiomaDelPdf),
       children: [
         for (final i in IdiomaExport.values)
           ListTile(

@@ -17,6 +17,7 @@
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,6 +26,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../core/entorno.dart';
+import '../core/idioma.dart';
 import '../core/proveedores.dart';
 import 'almacen_local.dart';
 import 'config_backup.dart';
@@ -55,6 +57,16 @@ class ResultadoBackup {
 class DriveBackupService {
   DriveBackupService(this.ref);
   final Ref ref;
+
+  /// Textos del idioma elegido en Ajustes (o el del sistema en «Automático»):
+  /// el backup va en segundo plano y no tiene contexto.
+  Textos get _l {
+    final elegido = ref.read(idiomaProvider);
+    final locale = elegido ??
+        resolverIdioma(
+            PlatformDispatcher.instance.locale, Textos.supportedLocales);
+    return lookupTextos(locale);
+  }
 
   /// Nombre del backup actual (ZIP con BD + fotos).
   static const _nombreArchivo = 'pitwall-backup.zip';
@@ -169,8 +181,7 @@ class DriveBackupService {
           await api.files.create(
             drive.File()
               ..name = _nombreArchivo
-              ..description =
-                  'Copia de PitWall (BD + fotos de verificaciones).',
+              ..description = _l.descripcionCopiaDrive,
             uploadMedia: media,
             uploadOptions: opciones,
           );
@@ -188,9 +199,8 @@ class DriveBackupService {
       await snap.delete();
       return ResultadoBackup(
           ok: true,
-          mensaje:
-              'Copia subida (${(zipped.length / 1024).toStringAsFixed(1)} KB · '
-              '$numFotos fotos).');
+          mensaje: _l.copiaSubida(
+              (zipped.length / 1024).toStringAsFixed(1), numFotos));
     } catch (e) {
       return ResultadoBackup(ok: false, mensaje: '$e');
     }
@@ -207,7 +217,7 @@ class DriveBackupService {
       if (info == null) {
         return ResultadoBackup(
           ok: false,
-          mensaje: 'No hay copia en Drive.',
+          mensaje: _l.noHayCopiaEnDrive,
         );
       }
       final auth = ref.read(googleAuthServiceProvider);
@@ -274,7 +284,7 @@ class DriveBackupService {
           }
         }
         if (dbEntry == null) {
-          throw 'El ZIP de backup no contiene la base de datos.';
+          throw _l.zipSinBaseDeDatos;
         }
         dbBytes = Uint8List.fromList(dbEntry.content as List<int>);
         configJson = ConfigBackup.leerDeZip(archive);
@@ -310,21 +320,20 @@ class DriveBackupService {
       if (aplicarConfig && configJson != null) {
         final reconectar = await ConfigBackup.aplicar(
             ref.read(almacenSyncProvider), configJson);
-        extraConfig = ' · Configuración restaurada';
+        extraConfig = _l.configuracionRestaurada;
         if (reconectar) {
-          extraConfig += ' — reconecta con Google al reabrir';
+          extraConfig += _l.reconectaConGoogle;
         }
       }
 
       // Invalidar provider para que se reabra al re-acceder.
       ref.invalidate(dbProvider);
 
-      final extra = numFotos > 0 ? ' · $numFotos fotos' : '';
+      final extra = numFotos > 0 ? _l.copiaConFotos(numFotos) : '';
       return ResultadoBackup(
         ok: true,
-        mensaje:
-            'Copia restaurada (${(bytes.length / 1024).toStringAsFixed(1)} KB$extra$extraConfig). '
-            'Cierra y vuelve a abrir la app para que los cambios surtan efecto.',
+        mensaje: _l.copiaRestaurada(
+            '${(bytes.length / 1024).toStringAsFixed(1)} KB$extra$extraConfig'),
       );
     } catch (e) {
       return ResultadoBackup(ok: false, mensaje: '$e');

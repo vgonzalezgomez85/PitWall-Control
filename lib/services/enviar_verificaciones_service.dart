@@ -26,6 +26,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../core/idioma.dart';
+
 import 'enviar_tanda_service.dart' show baseUrl;
 
 class EnvioVerificacionesResultado {
@@ -37,6 +39,7 @@ class EnvioVerificacionesResultado {
 }
 
 Future<EnvioVerificacionesResultado> enviarVerificaciones({
+  required Textos l,
   required String host,
   required String pin,
   required Map<String, dynamic> payload,
@@ -44,7 +47,7 @@ Future<EnvioVerificacionesResultado> enviarVerificaciones({
 }) async {
   final base = baseUrl(host, puertoDefecto: puertoDefecto);
   if (base.isEmpty) {
-    return EnvioVerificacionesResultado(false, 'Indica la dirección de PitWall.');
+    return EnvioVerificacionesResultado(false, l.indicaDireccionPitwall);
   }
   try {
     final r = await http
@@ -67,7 +70,8 @@ Future<EnvioVerificacionesResultado> enviarVerificaciones({
     if (r.statusCode == 200 && j['ok'] == true) {
       return EnvioVerificacionesResultado(
         true,
-        '${j['count'] ?? '?'} verificación(es) enviada(s) a ${j['name'] ?? 'PitWall'}.',
+        l.verificacionesEnviadas(
+            '${j['count'] ?? '?'}', '${j['name'] ?? 'PitWall'}'),
         url: j['url']?.toString(),
         raceId: (j['raceId'] as num?)?.toInt(),
       );
@@ -76,11 +80,11 @@ Future<EnvioVerificacionesResultado> enviarVerificaciones({
       // Manager manda el mismo 403 para PIN incorrecto y para "Conexión
       // ecosistema" desactivada (indistinguibles); usamos su texto si lo trae.
       return EnvioVerificacionesResultado(false,
-          (j['error'] ?? 'PIN incorrecto o dispositivo no autorizado.').toString());
+          (j['error'] ?? l.pinIncorrecto).toString());
     }
     return EnvioVerificacionesResultado(
         false, (j['error'] ?? 'Error ${r.statusCode}.').toString());
   } catch (e) {
-    return EnvioVerificacionesResultado(false, 'No se pudo conectar con PitWall: $e');
+    return EnvioVerificacionesResultado(false, l.noSePudoConectarPitwall('$e'));
   }
 }

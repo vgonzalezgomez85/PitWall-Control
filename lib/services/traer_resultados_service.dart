@@ -24,6 +24,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../core/idioma.dart';
+
 import 'enviar_tanda_service.dart' show baseUrl;
 
 /// Carrera del listado de Manager.
@@ -75,14 +77,14 @@ String _errorDe(http.Response r, String generico) {
   return generico;
 }
 
-Future<List<CarreraManager>> listarCarreras(String host) async {
+Future<List<CarreraManager>> listarCarreras(String host, Textos l) async {
   final base = baseUrl(host);
-  if (base.isEmpty) throw 'Indica la dirección de PitWall.';
+  if (base.isEmpty) throw l.indicaDireccionPitwall;
   final r = await http
       .get(Uri.parse('$base/link/races'))
       .timeout(const Duration(seconds: 10));
   if (r.statusCode != 200) {
-    throw _errorDe(r, 'Error ${r.statusCode} al pedir las carreras.');
+    throw _errorDe(r, l.errorAlPedirCarreras('${r.statusCode}'));
   }
   final j = jsonDecode(r.body) as Map<String, dynamic>;
   final races = (j['races'] as List?) ?? const [];
@@ -97,17 +99,18 @@ Future<List<CarreraManager>> listarCarreras(String host) async {
       .toList();
 }
 
-Future<ResultadosRemotos> traerResultados(String host, int raceId) async {
+Future<ResultadosRemotos> traerResultados(
+    String host, int raceId, Textos l) async {
   final base = baseUrl(host);
   final r = await http
       .get(Uri.parse('$base/link/races/$raceId/results.json'))
       .timeout(const Duration(seconds: 15));
   if (r.statusCode != 200) {
-    throw _errorDe(r, 'Error ${r.statusCode} al pedir los resultados.');
+    throw _errorDe(r, l.errorAlPedirResultados('${r.statusCode}'));
   }
   final j = jsonDecode(r.body) as Map<String, dynamic>;
   if (j['schema'] != 'pitwall.resultados/v1') {
-    throw 'Respuesta no reconocida (${j['schema']}).';
+    throw l.respuestaNoReconocida('${j['schema']}');
   }
   final filas = <ResultadoRemoto>[];
   for (final t in (j['tandas'] as List? ?? const [])) {

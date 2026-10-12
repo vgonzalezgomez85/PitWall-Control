@@ -14,6 +14,14 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.41.0] — 2026-10-12
+### Añadido
+- **La traducción llega a las últimas pantallas (fase 5)**: campeonatos (editor, lista y coches del campeonato), catálogos (coches, marcas, llantas, engranajes, motores, bancadas, chasis, neumáticos, copas y clubs), Google (configuración, copia de seguridad en Drive, importar desde Sheets y subir el catálogo), plantillas CSV, novedades, actualizaciones y los mensajes de error de los servicios (importadores, envíos a PitWall y sincronización). **Con esto la app queda traducida entera** al español, català, English, français e italiano.
+- **Los PDF ya salen también en catalán**, y al exportar se propone el idioma de la app (el del sistema en «Automático»), recordando el último que elijas.
+
+### Mejorado
+- **La app arranca en el idioma del sistema** (antes empezaba en español hasta elegir idioma en Ajustes → Apariencia). Si el sistema está en un idioma que la app no tiene, sigue en español.
+
 ## [1.40.0] — 2026-10-12
 ### Añadido
 - **La traducción avanza a los participantes, la clasificación, la tesorería, los créditos y el wifi (fase 4)**: se traducen las fichas y listas de pilotos y equipos (con sus importadores de CSV/Excel y la puntuación previa), la clasificación (general y por copa, con la tabla de puntos y el editor a mano), la tesorería (reparto de la cuota, movimientos y la caja de cada prueba), los créditos (historial, ajuste manual, bonificación de cierre y revisión de categorías) y «Verificar en equipo (wifi)» (emparejamiento, avisos de conflicto y resumen de lo que viaja). El resto de pantallas se irá traduciendo por fases y, mientras tanto, sigue en español.

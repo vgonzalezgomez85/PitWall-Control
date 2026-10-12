@@ -18,6 +18,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../core/idioma.dart';
 import '../../services/exportar_pdf.dart';
 
 /// Una plantilla CSV descargable para usar luego en un importador.
@@ -38,98 +39,99 @@ class _Plantilla {
   });
 }
 
-const _plantillas = <_Plantilla>[
-  _Plantilla(
-    titulo: 'Pilotos',
-    descripcion: 'Para importar pilotos a un campeonato.',
-    icono: Icons.people_alt_outlined,
-    archivo: 'plantilla-pilotos.csv',
-    cabeceras: ['Nombre', 'Categoría', 'Créditos iniciales', 'Créditos actuales', 'Palmarés'],
-    ejemplo: ['Juan Ejemplo', 'ORO', '28', '28', 'Top 3 liga 2025'],
-  ),
-  _Plantilla(
-    titulo: 'Equipos (parejas)',
-    descripcion: 'Equipos con uno o dos pilotos. Deja en blanco el piloto 2 si es individual.',
-    icono: Icons.groups_outlined,
-    archivo: 'plantilla-equipos.csv',
-    cabeceras: [
-      'Equipo', 'Copa',
-      'Piloto 1', 'Categoría 1', 'Email 1', 'Teléfono 1',
-      'Piloto 2', 'Categoría 2', 'Email 2', 'Teléfono 2',
-    ],
-    ejemplo: [
-      'EQUIPO EJEMPLO', 'GT',
-      'Juan Ejemplo', 'ORO', 'juan@ejemplo.com', '600000000',
-      'Ana Ejemplo', 'PLATA', 'ana@ejemplo.com', '600000001',
-    ],
-  ),
-  _Plantilla(
-    titulo: 'Equipos de resistencia (24H/12H)',
-    descripcion: 'Equipos de 3 a 6 pilotos. Deja en blanco los que no uses. '
-        'La categoría de cada piloto se toma de su ficha ya importada.',
-    icono: Icons.diversity_3_outlined,
-    archivo: 'plantilla-equipos-resistencia.csv',
-    cabeceras: ['Equipo', 'Copa', 'Piloto 1', 'Piloto 2', 'Piloto 3', 'Piloto 4', 'Piloto 5'],
-    ejemplo: ['EQUIPO EJEMPLO', 'GRUPO C1', 'Juan Ejemplo', 'Ana Ejemplo', 'Luis Ejemplo', 'Marta Ejemplo', ''],
-  ),
-  _Plantilla(
-    titulo: 'Inscripciones a una prueba',
-    descripcion: 'Equipos que se inscriben a una prueba, con su preferencia de día.',
-    icono: Icons.how_to_reg_outlined,
-    archivo: 'plantilla-inscripciones.csv',
-    cabeceras: ['Equipo', 'Día', 'Notas'],
-    ejemplo: ['EQUIPO EJEMPLO', 'Viernes', ''],
-  ),
-  _Plantilla(
-    titulo: 'Participantes de verificación libre',
-    descripcion: 'Participantes de una sesión de verificación libre. Piloto 2 '
-        'y Equipo son opcionales; si la copa va vacía se elige al importar.',
-    icono: Icons.fact_check_outlined,
-    archivo: 'plantilla-participantes-verificacion.csv',
-    cabeceras: ['Piloto 1', 'Piloto 2', 'Equipo', 'Copa'],
-    ejemplo: ['Juan Ejemplo', '', '', 'GT'],
-  ),
-  _Plantilla(
-    titulo: 'Catálogo · Coches',
-    descripcion: 'Modelos de coche del catálogo.',
-    icono: Icons.directions_car_outlined,
-    archivo: 'plantilla-coches.csv',
-    cabeceras: ['Nombre', 'Marca', 'Modelo', 'Peso mínimo', 'Créditos', 'Copa'],
-    ejemplo: ['SCALEAUTO-PORSCHE 911', 'Scaleauto', 'Porsche 911', '17', '0', 'GT'],
-  ),
-  _Plantilla(
-    titulo: 'Catálogo · Motores',
-    descripcion: 'Motores homologados (RPM y gauss de referencia).',
-    icono: Icons.bolt_outlined,
-    archivo: 'plantilla-motores.csv',
-    cabeceras: ['Nombre', 'RPM', 'Gauss', 'Copa'],
-    ejemplo: ['SLOT.IT 21K', '21000', '350', 'SLOT.IT'],
-  ),
-  _Plantilla(
-    titulo: 'Catálogo · Marcas',
-    descripcion: 'Marcas (código corto + nombre).',
-    icono: Icons.sell_outlined,
-    archivo: 'plantilla-marcas.csv',
-    cabeceras: ['Código', 'Nombre'],
-    ejemplo: ['SIT', 'Slot.it'],
-  ),
-  _Plantilla(
-    titulo: 'Catálogo · Llantas',
-    descripcion: 'Dimensión y tipo (DELANTERA / TRASERA / AMBAS).',
-    icono: Icons.circle_outlined,
-    archivo: 'plantilla-llantas.csv',
-    cabeceras: ['Dimensión', 'Tipo'],
-    ejemplo: ['15,8 x 8', 'TRASERA'],
-  ),
-  _Plantilla(
-    titulo: 'Catálogo · Engranajes',
-    descripcion: 'Piñones y coronas (tipo, diámetro, dientes).',
-    icono: Icons.settings_outlined,
-    archivo: 'plantilla-engranajes.csv',
-    cabeceras: ['Tipo', 'Diametro', 'Dientes'],
-    ejemplo: ['CORONA', '6,5', '28'],
-  ),
-];
+/// Plantillas CSV descargables. Títulos y descripciones se traducen; las
+/// cabeceras y filas de ejemplo son el contenido del CSV que reconocen los
+/// importadores y se mantienen en español.
+List<_Plantilla> _plantillas(Textos l) => [
+      _Plantilla(
+        titulo: l.plantillaPilotos,
+        descripcion: l.plantillaPilotosTexto,
+        icono: Icons.people_alt_outlined,
+        archivo: 'plantilla-pilotos.csv',
+        cabeceras: ['Nombre', 'Categoría', 'Créditos iniciales', 'Créditos actuales', 'Palmarés'],
+        ejemplo: ['Juan Ejemplo', 'ORO', '28', '28', 'Top 3 liga 2025'],
+      ),
+      _Plantilla(
+        titulo: l.plantillaEquipos,
+        descripcion: l.plantillaEquiposTexto,
+        icono: Icons.groups_outlined,
+        archivo: 'plantilla-equipos.csv',
+        cabeceras: [
+          'Equipo', 'Copa',
+          'Piloto 1', 'Categoría 1', 'Email 1', 'Teléfono 1',
+          'Piloto 2', 'Categoría 2', 'Email 2', 'Teléfono 2',
+        ],
+        ejemplo: [
+          'EQUIPO EJEMPLO', 'GT',
+          'Juan Ejemplo', 'ORO', 'juan@ejemplo.com', '600000000',
+          'Ana Ejemplo', 'PLATA', 'ana@ejemplo.com', '600000001',
+        ],
+      ),
+      _Plantilla(
+        titulo: l.plantillaEquiposResistencia,
+        descripcion: l.plantillaEquiposResistenciaTexto,
+        icono: Icons.diversity_3_outlined,
+        archivo: 'plantilla-equipos-resistencia.csv',
+        cabeceras: ['Equipo', 'Copa', 'Piloto 1', 'Piloto 2', 'Piloto 3', 'Piloto 4', 'Piloto 5'],
+        ejemplo: ['EQUIPO EJEMPLO', 'GRUPO C1', 'Juan Ejemplo', 'Ana Ejemplo', 'Luis Ejemplo', 'Marta Ejemplo', ''],
+      ),
+      _Plantilla(
+        titulo: l.plantillaInscripciones,
+        descripcion: l.plantillaInscripcionesTexto,
+        icono: Icons.how_to_reg_outlined,
+        archivo: 'plantilla-inscripciones.csv',
+        cabeceras: ['Equipo', 'Día', 'Notas'],
+        ejemplo: ['EQUIPO EJEMPLO', 'Viernes', ''],
+      ),
+      _Plantilla(
+        titulo: l.plantillaParticipantesVerificacion,
+        descripcion: l.plantillaParticipantesVerificacionTexto,
+        icono: Icons.fact_check_outlined,
+        archivo: 'plantilla-participantes-verificacion.csv',
+        cabeceras: ['Piloto 1', 'Piloto 2', 'Equipo', 'Copa'],
+        ejemplo: ['Juan Ejemplo', '', '', 'GT'],
+      ),
+      _Plantilla(
+        titulo: l.plantillaCoches,
+        descripcion: l.plantillaCochesTexto,
+        icono: Icons.directions_car_outlined,
+        archivo: 'plantilla-coches.csv',
+        cabeceras: ['Nombre', 'Marca', 'Modelo', 'Peso mínimo', 'Créditos', 'Copa'],
+        ejemplo: ['SCALEAUTO-PORSCHE 911', 'Scaleauto', 'Porsche 911', '17', '0', 'GT'],
+      ),
+      _Plantilla(
+        titulo: l.plantillaMotores,
+        descripcion: l.plantillaMotoresTexto,
+        icono: Icons.bolt_outlined,
+        archivo: 'plantilla-motores.csv',
+        cabeceras: ['Nombre', 'RPM', 'Gauss', 'Copa'],
+        ejemplo: ['SLOT.IT 21K', '21000', '350', 'SLOT.IT'],
+      ),
+      _Plantilla(
+        titulo: l.plantillaMarcas,
+        descripcion: l.plantillaMarcasTexto,
+        icono: Icons.sell_outlined,
+        archivo: 'plantilla-marcas.csv',
+        cabeceras: ['Código', 'Nombre'],
+        ejemplo: ['SIT', 'Slot.it'],
+      ),
+      _Plantilla(
+        titulo: l.plantillaLlantas,
+        descripcion: l.plantillaLlantasTexto,
+        icono: Icons.circle_outlined,
+        archivo: 'plantilla-llantas.csv',
+        cabeceras: ['Dimensión', 'Tipo'],
+        ejemplo: ['15,8 x 8', 'TRASERA'],
+      ),
+      _Plantilla(
+        titulo: l.plantillaEngranajes,
+        descripcion: l.plantillaEngranajesTexto,
+        icono: Icons.settings_outlined,
+        archivo: 'plantilla-engranajes.csv',
+        cabeceras: ['Tipo', 'Diametro', 'Dientes'],
+        ejemplo: ['CORONA', '6,5', '28'],
+      ),
+    ];
 
 /// Apartado global para descargar plantillas CSV en blanco (con las columnas
 /// que reconocen los importadores) y rellenarlas para luego importar.
@@ -153,9 +155,10 @@ class PantallaPlantillasCsv extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l;
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Plantillas CSV')),
+      appBar: AppBar(title: Text(l.plantillasCsv)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -171,9 +174,7 @@ class PantallaPlantillasCsv extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Descarga la plantilla, rellénala con tus datos (borra la fila '
-                    'de ejemplo) y luego impórtala desde la sección correspondiente. '
-                    'La primera fila son las columnas: no la cambies.',
+                    l.plantillasIntro,
                     style: TextStyle(color: cs.onSurface, fontSize: 13),
                   ),
                 ),
@@ -181,7 +182,7 @@ class PantallaPlantillasCsv extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          ..._plantillas.map((p) => Card(
+          ..._plantillas(l).map((p) => Card(
                 child: Padding(
                   padding: const EdgeInsets.all(14),
                   child: Row(
@@ -216,7 +217,7 @@ class PantallaPlantillasCsv extends StatelessWidget {
                       FilledButton.tonalIcon(
                         onPressed: () => _descargar(context, p),
                         icon: const Icon(Icons.download_outlined, size: 18),
-                        label: const Text('Descargar'),
+                        label: Text(l.descargar),
                       ),
                     ],
                   ),
