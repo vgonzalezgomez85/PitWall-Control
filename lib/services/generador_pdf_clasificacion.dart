@@ -70,7 +70,7 @@ class GeneradorPdfClasificacion {
     CalculoClasificacion.asignarPosiciones(filas);
 
     // Identidad visual compartida (Base 02 + logos patrocinadores).
-    final marca = await MarcaPdf.cargar();
+    final marca = await MarcaPdf.cargar(campeonato: campeonato, idioma: idioma);
     final tituloMarca = (campeonato.marcaTitulo?.trim().isNotEmpty ?? false)
         ? campeonato.marcaTitulo!.trim()
         : marcaTituloPorDefecto;

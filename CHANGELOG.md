@@ -14,6 +14,10 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.29.0] — 2026-10-12
+### Añadido
+- **Club organizador y logo del campeonato.** Nueva sección «Club organizador» en el editor de campeonato (visible también al crearlo): nombre del club y su logo (PNG o JPG; se reduce a 400 px y se guarda dentro del campeonato, así que viaja en las copias de seguridad). La cabecera de los PDF muestra el logo a la izquierda del título, sobre fondo blanco, y «Organiza: …» debajo del subtítulo, traducido al idioma de la exportación. Afecta a los PDF de tandas, verificaciones, resumen de verificaciones, clasificación y créditos.
+
 ## [1.28.0] — 2026-10-12
 ### Mejorado
 - **El editor de campeonato, por secciones.** El formulario largo se divide en tarjetas: **Datos básicos**, **Categorías / copas**, **Motor**, **Créditos y tesorería**, **Puntuación**, **Verificación** (anchura de eje, coches y fabricantes), **Marca en los PDF** y **Estado**.

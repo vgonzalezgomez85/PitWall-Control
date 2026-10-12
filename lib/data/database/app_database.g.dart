@@ -320,6 +320,28 @@ class $CampeonatosTable extends Campeonatos
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _clubOrganizadorMeta = const VerificationMeta(
+    'clubOrganizador',
+  );
+  @override
+  late final GeneratedColumn<String> clubOrganizador = GeneratedColumn<String>(
+    'club_organizador',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _logoClubMeta = const VerificationMeta(
+    'logoClub',
+  );
+  @override
+  late final GeneratedColumn<Uint8List> logoClub = GeneratedColumn<Uint8List>(
+    'logo_club',
+    aliasedName,
+    true,
+    type: DriftSqlType.blob,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _esVerificacionLibreMeta =
       const VerificationMeta('esVerificacionLibre');
   @override
@@ -374,6 +396,8 @@ class $CampeonatosTable extends Campeonatos
     marcasPermitidasJson,
     marcaTitulo,
     marcaLema,
+    clubOrganizador,
+    logoClub,
     esVerificacionLibre,
     creadoEn,
   ];
@@ -593,6 +617,21 @@ class $CampeonatosTable extends Campeonatos
         marcaLema.isAcceptableOrUnknown(data['marca_lema']!, _marcaLemaMeta),
       );
     }
+    if (data.containsKey('club_organizador')) {
+      context.handle(
+        _clubOrganizadorMeta,
+        clubOrganizador.isAcceptableOrUnknown(
+          data['club_organizador']!,
+          _clubOrganizadorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('logo_club')) {
+      context.handle(
+        _logoClubMeta,
+        logoClub.isAcceptableOrUnknown(data['logo_club']!, _logoClubMeta),
+      );
+    }
     if (data.containsKey('es_verificacion_libre')) {
       context.handle(
         _esVerificacionLibreMeta,
@@ -721,6 +760,14 @@ class $CampeonatosTable extends Campeonatos
         DriftSqlType.string,
         data['${effectivePrefix}marca_lema'],
       ),
+      clubOrganizador: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}club_organizador'],
+      ),
+      logoClub: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}logo_club'],
+      ),
       esVerificacionLibre: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}es_verificacion_libre'],
@@ -805,6 +852,11 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   final String? marcaTitulo;
   final String? marcaLema;
 
+  /// Club organizador y su logo (PNG, ya reducido), para la cabecera de las
+  /// exportaciones.
+  final String? clubOrganizador;
+  final Uint8List? logoClub;
+
   /// Si true, no es un campeonato real sino el contenedor interno de una
   /// sesión de "verificación libre" (carrera esporádica, control en el club…):
   /// guarda su reglamento de verificación y no aparece en el selector ni en
@@ -838,6 +890,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     required this.marcasPermitidasJson,
     this.marcaTitulo,
     this.marcaLema,
+    this.clubOrganizador,
+    this.logoClub,
     required this.esVerificacionLibre,
     required this.creadoEn,
   });
@@ -879,6 +933,12 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     }
     if (!nullToAbsent || marcaLema != null) {
       map['marca_lema'] = Variable<String>(marcaLema);
+    }
+    if (!nullToAbsent || clubOrganizador != null) {
+      map['club_organizador'] = Variable<String>(clubOrganizador);
+    }
+    if (!nullToAbsent || logoClub != null) {
+      map['logo_club'] = Variable<Uint8List>(logoClub);
     }
     map['es_verificacion_libre'] = Variable<bool>(esVerificacionLibre);
     map['creado_en'] = Variable<DateTime>(creadoEn);
@@ -923,6 +983,12 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       marcaLema: marcaLema == null && nullToAbsent
           ? const Value.absent()
           : Value(marcaLema),
+      clubOrganizador: clubOrganizador == null && nullToAbsent
+          ? const Value.absent()
+          : Value(clubOrganizador),
+      logoClub: logoClub == null && nullToAbsent
+          ? const Value.absent()
+          : Value(logoClub),
       esVerificacionLibre: Value(esVerificacionLibre),
       creadoEn: Value(creadoEn),
     );
@@ -962,6 +1028,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       ),
       marcaTitulo: serializer.fromJson<String?>(json['marcaTitulo']),
       marcaLema: serializer.fromJson<String?>(json['marcaLema']),
+      clubOrganizador: serializer.fromJson<String?>(json['clubOrganizador']),
+      logoClub: serializer.fromJson<Uint8List?>(json['logoClub']),
       esVerificacionLibre: serializer.fromJson<bool>(
         json['esVerificacionLibre'],
       ),
@@ -998,6 +1066,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       'marcasPermitidasJson': serializer.toJson<String>(marcasPermitidasJson),
       'marcaTitulo': serializer.toJson<String?>(marcaTitulo),
       'marcaLema': serializer.toJson<String?>(marcaLema),
+      'clubOrganizador': serializer.toJson<String?>(clubOrganizador),
+      'logoClub': serializer.toJson<Uint8List?>(logoClub),
       'esVerificacionLibre': serializer.toJson<bool>(esVerificacionLibre),
       'creadoEn': serializer.toJson<DateTime>(creadoEn),
     };
@@ -1030,6 +1100,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     String? marcasPermitidasJson,
     Value<String?> marcaTitulo = const Value.absent(),
     Value<String?> marcaLema = const Value.absent(),
+    Value<String?> clubOrganizador = const Value.absent(),
+    Value<Uint8List?> logoClub = const Value.absent(),
     bool? esVerificacionLibre,
     DateTime? creadoEn,
   }) => Campeonato(
@@ -1063,6 +1135,10 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     marcasPermitidasJson: marcasPermitidasJson ?? this.marcasPermitidasJson,
     marcaTitulo: marcaTitulo.present ? marcaTitulo.value : this.marcaTitulo,
     marcaLema: marcaLema.present ? marcaLema.value : this.marcaLema,
+    clubOrganizador: clubOrganizador.present
+        ? clubOrganizador.value
+        : this.clubOrganizador,
+    logoClub: logoClub.present ? logoClub.value : this.logoClub,
     esVerificacionLibre: esVerificacionLibre ?? this.esVerificacionLibre,
     creadoEn: creadoEn ?? this.creadoEn,
   );
@@ -1128,6 +1204,10 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           ? data.marcaTitulo.value
           : this.marcaTitulo,
       marcaLema: data.marcaLema.present ? data.marcaLema.value : this.marcaLema,
+      clubOrganizador: data.clubOrganizador.present
+          ? data.clubOrganizador.value
+          : this.clubOrganizador,
+      logoClub: data.logoClub.present ? data.logoClub.value : this.logoClub,
       esVerificacionLibre: data.esVerificacionLibre.present
           ? data.esVerificacionLibre.value
           : this.esVerificacionLibre,
@@ -1164,6 +1244,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           ..write('marcasPermitidasJson: $marcasPermitidasJson, ')
           ..write('marcaTitulo: $marcaTitulo, ')
           ..write('marcaLema: $marcaLema, ')
+          ..write('clubOrganizador: $clubOrganizador, ')
+          ..write('logoClub: $logoClub, ')
           ..write('esVerificacionLibre: $esVerificacionLibre, ')
           ..write('creadoEn: $creadoEn')
           ..write(')'))
@@ -1198,6 +1280,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     marcasPermitidasJson,
     marcaTitulo,
     marcaLema,
+    clubOrganizador,
+    $driftBlobEquality.hash(logoClub),
     esVerificacionLibre,
     creadoEn,
   ]);
@@ -1231,6 +1315,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           other.marcasPermitidasJson == this.marcasPermitidasJson &&
           other.marcaTitulo == this.marcaTitulo &&
           other.marcaLema == this.marcaLema &&
+          other.clubOrganizador == this.clubOrganizador &&
+          $driftBlobEquality.equals(other.logoClub, this.logoClub) &&
           other.esVerificacionLibre == this.esVerificacionLibre &&
           other.creadoEn == this.creadoEn);
 }
@@ -1262,6 +1348,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   final Value<String> marcasPermitidasJson;
   final Value<String?> marcaTitulo;
   final Value<String?> marcaLema;
+  final Value<String?> clubOrganizador;
+  final Value<Uint8List?> logoClub;
   final Value<bool> esVerificacionLibre;
   final Value<DateTime> creadoEn;
   const CampeonatosCompanion({
@@ -1291,6 +1379,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.marcasPermitidasJson = const Value.absent(),
     this.marcaTitulo = const Value.absent(),
     this.marcaLema = const Value.absent(),
+    this.clubOrganizador = const Value.absent(),
+    this.logoClub = const Value.absent(),
     this.esVerificacionLibre = const Value.absent(),
     this.creadoEn = const Value.absent(),
   });
@@ -1321,6 +1411,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.marcasPermitidasJson = const Value.absent(),
     this.marcaTitulo = const Value.absent(),
     this.marcaLema = const Value.absent(),
+    this.clubOrganizador = const Value.absent(),
+    this.logoClub = const Value.absent(),
     this.esVerificacionLibre = const Value.absent(),
     this.creadoEn = const Value.absent(),
   }) : nombre = Value(nombre),
@@ -1353,6 +1445,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Expression<String>? marcasPermitidasJson,
     Expression<String>? marcaTitulo,
     Expression<String>? marcaLema,
+    Expression<String>? clubOrganizador,
+    Expression<Uint8List>? logoClub,
     Expression<bool>? esVerificacionLibre,
     Expression<DateTime>? creadoEn,
   }) {
@@ -1384,6 +1478,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
         'marcas_permitidas_json': marcasPermitidasJson,
       if (marcaTitulo != null) 'marca_titulo': marcaTitulo,
       if (marcaLema != null) 'marca_lema': marcaLema,
+      if (clubOrganizador != null) 'club_organizador': clubOrganizador,
+      if (logoClub != null) 'logo_club': logoClub,
       if (esVerificacionLibre != null)
         'es_verificacion_libre': esVerificacionLibre,
       if (creadoEn != null) 'creado_en': creadoEn,
@@ -1417,6 +1513,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Value<String>? marcasPermitidasJson,
     Value<String?>? marcaTitulo,
     Value<String?>? marcaLema,
+    Value<String?>? clubOrganizador,
+    Value<Uint8List?>? logoClub,
     Value<bool>? esVerificacionLibre,
     Value<DateTime>? creadoEn,
   }) {
@@ -1447,6 +1545,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       marcasPermitidasJson: marcasPermitidasJson ?? this.marcasPermitidasJson,
       marcaTitulo: marcaTitulo ?? this.marcaTitulo,
       marcaLema: marcaLema ?? this.marcaLema,
+      clubOrganizador: clubOrganizador ?? this.clubOrganizador,
+      logoClub: logoClub ?? this.logoClub,
       esVerificacionLibre: esVerificacionLibre ?? this.esVerificacionLibre,
       creadoEn: creadoEn ?? this.creadoEn,
     );
@@ -1535,6 +1635,12 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     if (marcaLema.present) {
       map['marca_lema'] = Variable<String>(marcaLema.value);
     }
+    if (clubOrganizador.present) {
+      map['club_organizador'] = Variable<String>(clubOrganizador.value);
+    }
+    if (logoClub.present) {
+      map['logo_club'] = Variable<Uint8List>(logoClub.value);
+    }
     if (esVerificacionLibre.present) {
       map['es_verificacion_libre'] = Variable<bool>(esVerificacionLibre.value);
     }
@@ -1573,6 +1679,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
           ..write('marcasPermitidasJson: $marcasPermitidasJson, ')
           ..write('marcaTitulo: $marcaTitulo, ')
           ..write('marcaLema: $marcaLema, ')
+          ..write('clubOrganizador: $clubOrganizador, ')
+          ..write('logoClub: $logoClub, ')
           ..write('esVerificacionLibre: $esVerificacionLibre, ')
           ..write('creadoEn: $creadoEn')
           ..write(')'))
@@ -17043,6 +17151,8 @@ typedef $$CampeonatosTableCreateCompanionBuilder =
       Value<String> marcasPermitidasJson,
       Value<String?> marcaTitulo,
       Value<String?> marcaLema,
+      Value<String?> clubOrganizador,
+      Value<Uint8List?> logoClub,
       Value<bool> esVerificacionLibre,
       Value<DateTime> creadoEn,
     });
@@ -17074,6 +17184,8 @@ typedef $$CampeonatosTableUpdateCompanionBuilder =
       Value<String> marcasPermitidasJson,
       Value<String?> marcaTitulo,
       Value<String?> marcaLema,
+      Value<String?> clubOrganizador,
+      Value<Uint8List?> logoClub,
       Value<bool> esVerificacionLibre,
       Value<DateTime> creadoEn,
     });
@@ -17427,6 +17539,16 @@ class $$CampeonatosTableFilterComposer
 
   ColumnFilters<String> get marcaLema => $composableBuilder(
     column: $table.marcaLema,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get clubOrganizador => $composableBuilder(
+    column: $table.clubOrganizador,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get logoClub => $composableBuilder(
+    column: $table.logoClub,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17805,6 +17927,16 @@ class $$CampeonatosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get clubOrganizador => $composableBuilder(
+    column: $table.clubOrganizador,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<Uint8List> get logoClub => $composableBuilder(
+    column: $table.logoClub,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get esVerificacionLibre => $composableBuilder(
     column: $table.esVerificacionLibre,
     builder: (column) => ColumnOrderings(column),
@@ -17936,6 +18068,14 @@ class $$CampeonatosTableAnnotationComposer
 
   GeneratedColumn<String> get marcaLema =>
       $composableBuilder(column: $table.marcaLema, builder: (column) => column);
+
+  GeneratedColumn<String> get clubOrganizador => $composableBuilder(
+    column: $table.clubOrganizador,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<Uint8List> get logoClub =>
+      $composableBuilder(column: $table.logoClub, builder: (column) => column);
 
   GeneratedColumn<bool> get esVerificacionLibre => $composableBuilder(
     column: $table.esVerificacionLibre,
@@ -18238,6 +18378,8 @@ class $$CampeonatosTableTableManager
                 Value<String> marcasPermitidasJson = const Value.absent(),
                 Value<String?> marcaTitulo = const Value.absent(),
                 Value<String?> marcaLema = const Value.absent(),
+                Value<String?> clubOrganizador = const Value.absent(),
+                Value<Uint8List?> logoClub = const Value.absent(),
                 Value<bool> esVerificacionLibre = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
               }) => CampeonatosCompanion(
@@ -18267,6 +18409,8 @@ class $$CampeonatosTableTableManager
                 marcasPermitidasJson: marcasPermitidasJson,
                 marcaTitulo: marcaTitulo,
                 marcaLema: marcaLema,
+                clubOrganizador: clubOrganizador,
+                logoClub: logoClub,
                 esVerificacionLibre: esVerificacionLibre,
                 creadoEn: creadoEn,
               ),
@@ -18298,6 +18442,8 @@ class $$CampeonatosTableTableManager
                 Value<String> marcasPermitidasJson = const Value.absent(),
                 Value<String?> marcaTitulo = const Value.absent(),
                 Value<String?> marcaLema = const Value.absent(),
+                Value<String?> clubOrganizador = const Value.absent(),
+                Value<Uint8List?> logoClub = const Value.absent(),
                 Value<bool> esVerificacionLibre = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
               }) => CampeonatosCompanion.insert(
@@ -18327,6 +18473,8 @@ class $$CampeonatosTableTableManager
                 marcasPermitidasJson: marcasPermitidasJson,
                 marcaTitulo: marcaTitulo,
                 marcaLema: marcaLema,
+                clubOrganizador: clubOrganizador,
+                logoClub: logoClub,
                 esVerificacionLibre: esVerificacionLibre,
                 creadoEn: creadoEn,
               ),

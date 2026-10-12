@@ -115,7 +115,7 @@ class GeneradorPdfCreditos {
     filas.sort((a, b) => b.actual.compareTo(a.actual));
 
     final df = DateFormat('dd/MM/yyyy HH:mm');
-    final marca = await MarcaPdf.cargar();
+    final marca = await MarcaPdf.cargar(campeonato: activo, idioma: idioma);
     return pdfUnaHoja(
       filas: filas.length + 3, // hero + pie
       columnas: 5,

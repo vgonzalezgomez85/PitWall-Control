@@ -52,6 +52,7 @@ const Map<String, List<String>> _textos = {
   'Con el apoyo de': ['Con el apoyo de', 'With the support of', 'Con il supporto di', 'Avec le soutien de'],
   'pilotos': ['pilotos', 'drivers', 'piloti', 'pilotes'],
   'equipos': ['equipos', 'teams', 'squadre', 'équipes'],
+  'Organiza': ['Organiza', 'Organised by', 'Organizza', 'Organisé par'],
   // Verificaciones
   'Verificación': ['Verificación', 'Scrutineering', 'Verifica', 'Vérification'],
   'Ficha': ['Ficha', 'Sheet', 'Scheda', 'Fiche'],

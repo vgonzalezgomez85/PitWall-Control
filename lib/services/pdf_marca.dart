@@ -21,14 +21,26 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../data/database/app_database.dart';
+import 'exportar_config.dart';
+
 /// Identidad visual compartida de todos los PDF que exporta la app:
 /// cabecera con degradado rojo y el título en la fuente Base 02, pie con
-/// el lema y los logos de los patrocinadores, y paleta común.
+/// el lema y los logos de los patrocinadores, y paleta común. Si el
+/// campeonato tiene club organizador y logo, la cabecera los muestra.
 class MarcaPdf {
-  MarcaPdf._(this.fuenteTitulo, this.logos);
+  MarcaPdf._(this.fuenteTitulo, this.logos,
+      {this.club, this.logoClub, this.etiquetaOrganiza = 'Organiza'});
 
   final pw.Font? fuenteTitulo;
   final List<pw.MemoryImage> logos;
+
+  /// Club organizador del campeonato (cabecera: «Organiza: …»).
+  final String? club;
+
+  /// Logo del club organizador (cabecera, a la izquierda del título).
+  final pw.MemoryImage? logoClub;
+  final String etiquetaOrganiza;
 
   // Paleta de marca para PDFs.
   static const texto = PdfColor.fromInt(0xFF1A1A1A);
@@ -56,16 +68,28 @@ class MarcaPdf {
 
   /// Carga la fuente y los logos. Tolerante: si falta algún asset se sigue
   /// sin él (el PDF sale igualmente, con fuente estándar o sin logos).
-  static Future<MarcaPdf> cargar() async {
+  /// Con [campeonato], añade su club organizador y logo a la cabecera.
+  static Future<MarcaPdf> cargar(
+      {Campeonato? campeonato, IdiomaExport idioma = IdiomaExport.es}) async {
     final fuenteData = await _asset('assets/fonts/Base_02.ttf');
     final fuente =
         fuenteData == null ? null : pw.Font.ttf(fuenteData.buffer.asByteData());
     final logoSlotIt = await _asset('assets/logos/slot-it.png');
     final logoPolicar = await _asset('assets/logos/policar.png');
-    return MarcaPdf._(fuente, [
-      if (logoSlotIt != null) pw.MemoryImage(logoSlotIt),
-      if (logoPolicar != null) pw.MemoryImage(logoPolicar),
-    ]);
+    final club = campeonato?.clubOrganizador?.trim();
+    final logoClub = campeonato?.logoClub;
+    return MarcaPdf._(
+      fuente,
+      [
+        if (logoSlotIt != null) pw.MemoryImage(logoSlotIt),
+        if (logoPolicar != null) pw.MemoryImage(logoPolicar),
+      ],
+      club: (club?.isEmpty ?? true) ? null : club,
+      logoClub: (logoClub == null || logoClub.isEmpty)
+          ? null
+          : pw.MemoryImage(logoClub),
+      etiquetaOrganiza: tr(idioma, 'Organiza'),
+    );
   }
 
   /// Cabecera estándar: el título en Base 02 sobre degradado rojo,
@@ -91,6 +115,20 @@ class MarcaPdf {
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
+          // Logo del club sobre fondo blanco: sobre el degradado rojo un logo
+          // oscuro o transparente no se vería.
+          if (logoClub != null) ...[
+            pw.Container(
+              height: 52,
+              padding: const pw.EdgeInsets.all(4),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.white,
+                borderRadius: pw.BorderRadius.circular(8),
+              ),
+              child: pw.Image(logoClub!, fit: pw.BoxFit.contain),
+            ),
+            pw.SizedBox(width: 14),
+          ],
           pw.Expanded(
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -114,6 +152,14 @@ class MarcaPdf {
                     letterSpacing: 1,
                   ),
                 ),
+                if (club != null) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    '$etiquetaOrganiza: $club',
+                    style: const pw.TextStyle(
+                        color: PdfColors.white, fontSize: 9),
+                  ),
+                ],
               ],
             ),
           ),

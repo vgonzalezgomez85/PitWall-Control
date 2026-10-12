@@ -165,7 +165,7 @@ class GeneradorPdfMangas {
         prueba.fecha == null ? '' : fmtFecha.format(prueba.fecha!);
 
     // Identidad visual compartida (Base 02 + logos patrocinadores).
-    final marca = await MarcaPdf.cargar();
+    final marca = await MarcaPdf.cargar(campeonato: activo, idioma: idioma);
     final tituloMarca = (activo?.marcaTitulo?.trim().isNotEmpty ?? false)
         ? activo!.marcaTitulo!.trim()
         : marcaTituloPorDefecto;

@@ -16,14 +16,17 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:drift/drift.dart' show BooleanExpressionOperators, OrderingTerm, Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/seeds.dart';
+import '../../services/logo_club.dart';
 import '../clasificacion/pantalla_editor_tabla_puntos.dart';
 import '../creditos/repositorio_creditos.dart';
 import 'pantalla_coches_campeonato.dart';
@@ -75,6 +78,10 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   Set<String> _marcasPermitidas = {};
   final _marcaTitulo = TextEditingController();
   final _marcaLema = TextEditingController();
+  final _club = TextEditingController();
+
+  /// Logo del club organizador (PNG ya reducido), o null.
+  Uint8List? _logoClub;
 
   String _formato = 'PAREJAS';
   bool _activo = true;
@@ -138,6 +145,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
     _limitarMarcas = _marcasPermitidas.isNotEmpty;
     _marcaTitulo.text = c.marcaTitulo ?? '';
     _marcaLema.text = c.marcaLema ?? '';
+    _club.text = c.clubOrganizador ?? '';
+    _logoClub = c.logoClub;
     _formato = c.formato;
     _activo = c.activo;
     _usaCreditos = c.usaCreditos;
@@ -185,6 +194,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
     }
     _marcaTitulo.dispose();
     _marcaLema.dispose();
+    _club.dispose();
     super.dispose();
   }
 
@@ -304,6 +314,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       // Marca propia del campeonato en los PDF (vacío = valor por defecto).
       final mTitulo = _marcaTitulo.text.trim();
       final mLema = _marcaLema.text.trim();
+      final club = _club.text.trim();
       final marcasJson =
           marcasPermitidasAJson(_limitarMarcas ? _marcasPermitidas : {});
 
@@ -332,6 +343,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
             marcasPermitidasJson: Value(marcasJson),
             marcaTitulo: Value(mTitulo.isEmpty ? null : mTitulo),
             marcaLema: Value(mLema.isEmpty ? null : mLema),
+            clubOrganizador: Value(club.isEmpty ? null : club),
+            logoClub: Value(_logoClub),
           ),
         );
         if (_usaCreditos && _importarDesdeId != null) {
@@ -370,6 +383,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
           marcasPermitidasJson: Value(marcasJson),
           marcaTitulo: Value(mTitulo.isEmpty ? null : mTitulo),
           marcaLema: Value(mLema.isEmpty ? null : mLema),
+          clubOrganizador: Value(club.isEmpty ? null : club),
+          logoClub: Value(_logoClub),
         ));
         // Al finalizar, el peso mínimo y los créditos de sus coches quedan
         // fijados con los del catálogo (lo ya fijado no se toca): cambiar
@@ -475,6 +490,24 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
     if (mounted) Navigator.of(context).pop();
   }
 
+  Future<void> _elegirLogo() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final xfile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (xfile == null) return;
+      final logo = prepararLogoClub(await xfile.readAsBytes());
+      if (logo == null) {
+        messenger.showSnackBar(const SnackBar(
+            content: Text('No se puede leer esa imagen. Usa un PNG o JPG.')));
+        return;
+      }
+      setState(() => _logoClub = logo);
+    } catch (e) {
+      messenger.showSnackBar(
+          SnackBar(content: Text('No se pudo añadir el logo: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_cargando) {
@@ -564,6 +597,69 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                   subtitle: const Text(
                       'Solo los campeonatos visibles aparecen en el selector'),
                 ),
+              ],
+            ),
+            _Seccion(
+              titulo: 'Club organizador',
+              descripcion: 'Aparece en la cabecera de las exportaciones '
+                  '(PDF de tandas, verificaciones, clasificación y créditos).',
+              children: [
+                TextFormField(
+                  controller: _club,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre del club',
+                    hintText: 'Ej: Club Slot Barcelona',
+                    prefixIcon: Icon(Icons.flag_outlined),
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Container(
+                      width: 96,
+                      height: 72,
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        // Blanco, como en la cabecera del PDF.
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: Theme.of(context).colorScheme.outlineVariant),
+                      ),
+                      child: _logoClub == null
+                          ? Icon(Icons.image_outlined,
+                              color: Theme.of(context).colorScheme.outline)
+                          : Image.memory(_logoClub!, fit: BoxFit.contain),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.upload_outlined),
+                            label: Text(_logoClub == null
+                                ? 'Elegir logo'
+                                : 'Cambiar logo'),
+                            onPressed: _elegirLogo,
+                          ),
+                          if (_logoClub != null)
+                            TextButton.icon(
+                              icon: const Icon(Icons.delete_outline),
+                              label: const Text('Quitar'),
+                              onPressed: () =>
+                                  setState(() => _logoClub = null),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text('PNG o JPG. Se reduce a ${ladoMaximoLogoClub}px.',
+                    style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
             _Seccion(

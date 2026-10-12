@@ -75,6 +75,10 @@ class Campeonatos extends Table {
   /// pie). Si están vacíos se usa la marca global de la app.
   TextColumn get marcaTitulo => text().nullable()();
   TextColumn get marcaLema => text().nullable()();
+  /// Club organizador y su logo (PNG, ya reducido), para la cabecera de las
+  /// exportaciones.
+  TextColumn get clubOrganizador => text().nullable()();
+  BlobColumn get logoClub => blob().nullable()();
   /// Si true, no es un campeonato real sino el contenedor interno de una
   /// sesión de "verificación libre" (carrera esporádica, control en el club…):
   /// guarda su reglamento de verificación y no aparece en el selector ni en

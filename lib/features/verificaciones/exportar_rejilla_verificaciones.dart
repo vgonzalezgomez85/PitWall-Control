@@ -43,7 +43,7 @@ Future<Uint8List> generarPdfRejilla({
   required Campeonato campeonato,
   required Prueba prueba,
 }) async {
-  final marca = await MarcaPdf.cargar();
+  final marca = await MarcaPdf.cargar(campeonato: campeonato);
   final titulo = (campeonato.marcaTitulo?.trim().isNotEmpty ?? false)
       ? campeonato.marcaTitulo!.trim()
       : marcaTituloPorDefecto;
