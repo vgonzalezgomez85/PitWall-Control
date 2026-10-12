@@ -28,6 +28,8 @@ import 'package:pitwall/data/database/app_database.dart';
 import 'package:pitwall/data/database/sync_triggers.dart';
 import 'package:pitwall/domain/generador_mangas.dart';
 import 'package:pitwall/features/pruebas/repositorio_pruebas.dart';
+import 'package:pitwall/features/resultados/repositorio_resultados.dart';
+import 'package:pitwall/features/clasificacion/repositorio_clasificacion_manual.dart';
 import 'package:pitwall/features/equipos/repositorio_equipos.dart';
 import 'package:pitwall/features/pilotos/repositorio_pilotos.dart';
 import 'package:pitwall/features/pruebas/repositorio_inscripciones_prueba.dart';
@@ -534,6 +536,84 @@ void main() {
       expect(r.bajas, 1);
       expect(await tandas(dos), isEmpty);
       expect(await asignada(dos, _equipoA), isFalse);
+    });
+  });
+
+  group('resultados (v4)', () {
+    setUp(() async {
+      await uno.fijarDispositivoSync('Control 1');
+      await dos.fijarDispositivoSync('Control 2');
+    });
+
+    Future<Map<int, int?>> posiciones(AppDatabase db, int mangaId) async => {
+          for (final x in await (db.select(db.resultados)
+                ..where((t) => t.mangaId.equals(mangaId)))
+              .get())
+            x.pilotoId: x.posicion,
+        };
+
+    test('las posiciones puestas en un Control llegan al otro', () async {
+      final repo = RepositorioResultados(uno);
+      await repo.asignarPosicionEquipo(
+          mangaId: _manga, equipoId: _equipoA, campeonatoId: 1, posicion: 1);
+      await repo.asignarPosicionEquipo(
+          mangaId: _manga, equipoId: _equipoB, campeonatoId: 1, posicion: 2);
+      final r = await _traer(dos, uno);
+      expect(r.resultados, 1);
+      expect(await posiciones(dos, _manga), {1: 1, 2: 1, 3: 2, 4: 2});
+      expect((await _traer(dos, uno)).cambios, 0);
+      expect((await _traer(uno, dos)).cambios, 0);
+    });
+
+    test('mover un carril no pisa los resultados del otro Control', () async {
+      await RepositorioResultados(uno).asignarPosicionEquipo(
+          mangaId: _manga, equipoId: _equipoA, campeonatoId: 1, posicion: 1);
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      await dos.into(dos.inscripciones).insert(InscripcionesCompanion.insert(
+          mangaId: _manga, equipoId: _equipoB, carrilSalida: const Value('2')));
+      await _traer(uno, dos);
+      await _traer(dos, uno);
+      for (final db in [uno, dos]) {
+        expect(await posiciones(db, _manga), {1: 1, 2: 1});
+        final parrilla = await (db.select(db.inscripciones)
+              ..where((t) => t.mangaId.equals(_manga)))
+            .get();
+        expect(parrilla.map((c) => c.equipoId), [_equipoB]);
+      }
+    });
+
+    test('la clasificación manual hecha en los dos usa una sola tanda',
+        () async {
+      await RepositorioClasificacionManual(uno).guardarPunto(
+          pruebaId: _prueba, equipoId: _equipoA, pilotoId: 1, puntos: 10);
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      await RepositorioClasificacionManual(dos).guardarPunto(
+          pruebaId: _prueba, equipoId: _equipoB, pilotoId: 3, puntos: 8);
+      await _traer(uno, dos);
+      await _traer(dos, uno);
+      for (final db in [uno, dos]) {
+        final importadas = await (db.select(db.mangas)
+              ..where((t) => t.nombre.equals('IMPORTADA')))
+            .get();
+        expect(importadas, hasLength(1));
+        // Gana el último en guardar (los resultados de una tanda van juntos).
+        expect(await posiciones(db, importadas.single.id), {3: null});
+      }
+    });
+
+    test('las correcciones manuales por copa viajan', () async {
+      await RepositorioClasificacionManual(uno).guardarOverrideCopa(
+          campeonatoId: 1, copa: 'GT', pruebaId: _prueba, pilotoId: 1,
+          puntos: 25);
+      expect((await _traer(dos, uno)).resultados, 1);
+      final o = await dos.select(dos.overridesCopa).getSingle();
+      expect((o.copa, o.pilotoId, o.puntos), ('GT', 1, 25));
+      // Borrarla también viaja.
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      await RepositorioClasificacionManual(uno).guardarOverrideCopa(
+          campeonatoId: 1, copa: 'GT', pruebaId: _prueba, pilotoId: 1);
+      await _traer(dos, uno);
+      expect(await dos.select(dos.overridesCopa).get(), isEmpty);
     });
   });
 }

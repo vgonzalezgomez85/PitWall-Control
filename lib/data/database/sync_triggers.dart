@@ -43,6 +43,15 @@ const _uuidNuevo = 'lower(hex(randomblob(16)))';
 String _distinto(List<String> cols) =>
     cols.map((c) => 'NEW.$c IS NOT OLD.$c').join(' OR ');
 
+/// Triggers de versiones anteriores que se sustituyen (se borran al abrir).
+const triggersSyncObsoletos = ['sync1_mangas_ins'];
+
+/// Tandas especiales que la app crea sola, una por prueba, cuando le hacen
+/// falta (clasificación manual / importada y resultados generales). Llevan un
+/// uuid fijo derivado de la prueba: si dos Controls la crean cada uno por su
+/// lado, es la misma tanda.
+const tandasUnicasPorPrueba = ['IMPORTADA', 'Resultados generales'];
+
 /// Sentencias que crean los triggers de sincronización (idempotentes).
 List<String> sentenciasTriggersSync() {
   String firmarInsert(String tabla, String donde, {bool uuid = false}) => '''
@@ -106,7 +115,17 @@ END''',
         '(SELECT uuid FROM equipos WHERE id = OLD.equipo_id)'),
     // Tandas: la tanda y su parrilla (inscripciones = carriles) son una
     // sola unidad; cualquier cambio de carril firma la tanda.
-    firmarInsert('mangas', 'id = NEW.id', uuid: true),
+    '''
+CREATE TRIGGER IF NOT EXISTS sync2_mangas_ins AFTER INSERT ON mangas
+WHEN NEW.mod_ms IS NULL BEGIN
+  UPDATE mangas SET uuid = coalesce(NEW.uuid,
+      CASE WHEN NEW.nombre IN (${tandasUnicasPorPrueba.map((n) => "'$n'").join(', ')})
+        THEN lower(NEW.nombre) || ':' ||
+             (SELECT uuid FROM pruebas WHERE id = NEW.prueba_id)
+        ELSE $_uuidNuevo END),
+    mod_ms = $_ahora, mod_por = $_yo
+  WHERE id = NEW.id;
+END''',
     firmarUpdate('mangas', colsManga, 'id = NEW.id'),
     borrado('mangas', 'OLD.uuid'),
     '''
@@ -122,6 +141,28 @@ END''',
     '''
 CREATE TRIGGER IF NOT EXISTS sync1_inscripciones_del AFTER DELETE ON inscripciones BEGIN
   ${firmarManga('OLD.manga_id')}
+END''',
+    // Resultados: los de cada tanda son una unidad (firma aparte).
+    for (final (ev, fila) in [
+      ('INSERT', 'NEW'),
+      ('UPDATE', 'NEW'),
+      ('DELETE', 'OLD'),
+    ])
+      '''
+CREATE TRIGGER IF NOT EXISTS sync1_resultados_${ev.toLowerCase()} AFTER $ev ON resultados BEGIN
+  UPDATE mangas SET res_mod_ms = $_ahora, res_mod_por = $_yo
+  WHERE id = $fila.manga_id${ev == 'UPDATE' ? ' OR id = OLD.manga_id' : ''};
+END''',
+    // Correcciones manuales por copa: una unidad por prueba.
+    for (final (ev, fila) in [
+      ('INSERT', 'NEW'),
+      ('UPDATE', 'NEW'),
+      ('DELETE', 'OLD'),
+    ])
+      '''
+CREATE TRIGGER IF NOT EXISTS sync1_overrides_copa_${ev.toLowerCase()} AFTER $ev ON overrides_copa BEGIN
+  UPDATE pruebas SET ovr_mod_ms = $_ahora, ovr_mod_por = $_yo
+  WHERE id = $fila.prueba_id${ev == 'UPDATE' ? ' OR id = OLD.prueba_id' : ''};
 END''',
     // Campeonatos y pruebas: de momento solo necesitan uuid.
     '''

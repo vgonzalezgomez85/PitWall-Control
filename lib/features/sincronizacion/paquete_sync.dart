@@ -38,7 +38,7 @@ import 'package:drift/drift.dart';
 import '../../data/database/app_database.dart';
 import 'dispositivo_sync.dart';
 
-const schemaPaqueteSync = 'pitwall.sync/v3';
+const schemaPaqueteSync = 'pitwall.sync/v4';
 
 /// Referencia portable a una fila: id en el Control de origen + nombre y,
 /// si la tabla lo tiene, su uuid (que manda al casar).
@@ -107,6 +107,21 @@ Future<Map<String, dynamic>> generarPaqueteSync(
         ..where((t) => t.id.isIn(idsPilotos)))
       .get();
   final pilotoPorId = {for (final p in pilotos) p.id: p};
+  // Resultados de cada tanda y correcciones manuales por copa de la prueba.
+  final resultados = mangaPorId.isEmpty
+      ? <Resultado>[]
+      : await (db.select(db.resultados)
+            ..where((t) => t.mangaId.isIn(mangaPorId.keys))
+            ..orderBy([(t) => OrderingTerm.asc(t.id)]))
+          .get();
+  final overrides = await (db.select(db.overridesCopa)
+        ..where((t) =>
+            t.pruebaId.equals(pruebaId) & t.campeonatoId.equals(camp.id)))
+      .get();
+  final todosPilotos = {
+    for (final p in await db.select(db.pilotos).get()) p.id: p,
+  };
+
   // Parrilla de cada tanda: quién va en qué carril.
   final carriles = mangaPorId.isEmpty
       ? <Inscripcione>[]
@@ -227,8 +242,34 @@ Future<Map<String, dynamic>> generarPaqueteSync(
             ],
             'modMs': m.modMs ?? 0,
             'modPor': m.modPor,
+            'resultados': [
+              for (final x in resultados)
+                if (x.mangaId == m.id &&
+                    todosPilotos[x.pilotoId]?.uuid != null &&
+                    equipoPorId[x.equipoId]?.uuid != null)
+                  {
+                    'piloto': todosPilotos[x.pilotoId]!.uuid,
+                    'equipo': equipoPorId[x.equipoId]!.uuid,
+                    'puntos': x.puntos,
+                    'posicion': x.posicion,
+                    'aRestar': x.aRestar,
+                  },
+            ],
+            'resModMs': m.resModMs ?? 0,
+            'resModPor': m.resModPor,
           },
     ],
+    'overrides': [
+      for (final o in overrides)
+        if (todosPilotos[o.pilotoId]?.uuid != null)
+          {
+            'copa': o.copa,
+            'piloto': todosPilotos[o.pilotoId]!.uuid,
+            'puntos': o.puntos,
+          },
+    ],
+    'ovrModMs': prueba.ovrModMs ?? 0,
+    'ovrModPor': prueba.ovrModPor,
     'borradosRegistro': [
       for (final b in registro)
         {

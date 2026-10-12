@@ -14,6 +14,14 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.36.0] — 2026-10-12
+### Añadido
+- **Los resultados también viajan entre Controls** («Verificar en equipo (wifi)»): posiciones y puntos de cada tanda (puestos a mano, importados o traídos de PitWall), la clasificación rellenada a mano y las correcciones por copa. La clasificación se recalcula sola en cada Control. Los resultados de una tanda viajan juntos y con su propia firma: poner resultados en un Control y mover carriles en otro no se pisan.
+- La tanda especial que crean la clasificación manual o importada («IMPORTADA») y la de «Resultados generales» es la misma en todos los Controls aunque la cree cada uno por su lado.
+
+### Mejorado
+- Esquema 52: firma propia para los resultados de cada tanda y para las correcciones por copa de cada prueba.
+
 ## [1.35.0] — 2026-10-12
 ### Añadido
 - **Las tandas y los carriles también viajan entre Controls** («Verificar en equipo (wifi)»). Crear o generar tandas (también «Sustituir tandas existentes»), cambiar su nombre, hora o número de carriles, poner o mover a alguien de carril, los pisters y borrar una tanda llegan solos a los demás Controls. Cada tanda viaja con su parrilla completa: si dos tocan la misma tanda a la vez, gana la última entera. Al llegar, cada Control vuelve a calcular qué inscritos tienen tanda.

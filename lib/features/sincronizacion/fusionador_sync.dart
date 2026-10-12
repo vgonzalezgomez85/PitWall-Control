@@ -27,6 +27,8 @@
 //  - Perfil del piloto en el campeonato (categoría, créditos iniciales…).
 //  - Inscripción a la prueba (alta y preferencia/notas), o su baja.
 //  - Tanda (por uuid) con su parrilla de carriles, o su borrado.
+//  - Resultados de cada tanda (todos juntos, firma aparte de la parrilla).
+//  - Correcciones manuales por copa de la prueba (todas juntas).
 //  - Verificación de (manga, equipo), o su borrado.
 //  - Copa de un equipo en la prueba.
 //  - Tesorería de un equipo en la prueba (pago + wildcard + "Coord. total").
@@ -50,6 +52,7 @@ class ResultadoFusionSync {
   int perfiles = 0;
   int inscritos = 0;
   int tandas = 0;
+  int resultados = 0;
   int bajas = 0;
   int verifNuevas = 0;
   int verifActualizadas = 0;
@@ -68,6 +71,7 @@ class ResultadoFusionSync {
       perfiles +
       inscritos +
       tandas +
+      resultados +
       bajas +
       verifNuevas +
       verifActualizadas +
@@ -83,6 +87,7 @@ class ResultadoFusionSync {
       if (perfiles > 0) '$perfiles perfiles',
       if (inscritos > 0) '$inscritos inscritos',
       if (tandas > 0) '$tandas tandas',
+      if (resultados > 0) 'resultados de $resultados tandas',
       if (bajas > 0) '$bajas bajas',
       if (verifNuevas > 0) '$verifNuevas verificaciones nuevas',
       if (verifActualizadas > 0) '$verifActualizadas actualizadas',
@@ -168,6 +173,9 @@ class FusionadorSync {
           r, camp, paquete['perfiles'] as List? ?? const [], pilotoPorUuid);
       // Tandas y parrillas (necesitan los equipos ya fusionados).
       await _fusionarMangas(r, prueba, paquete['mangas'] as List? ?? const []);
+      await _fusionarResultados(
+          r, prueba, paquete['mangas'] as List? ?? const []);
+      await _fusionarOverrides(r, prueba, camp, paquete);
 
       final mangas = await (db.select(db.mangas)
             ..where((t) => t.pruebaId.equals(pruebaId)))
@@ -331,6 +339,92 @@ class FusionadorSync {
               modMs: Value(tsR),
               modPor: Value(porR)));
     }
+  }
+
+  /// Resultados de cada tanda: si gana el remoto, se sustituyen todos.
+  Future<void> _fusionarResultados(
+      ResultadoFusionSync r, Prueba prueba, List lista) async {
+    Map<String, int>? idPorUuidPiloto;
+    Map<String, int>? idPorUuidEquipo;
+    for (final raw in lista) {
+      final j = raw as Map<String, dynamic>;
+      final tsR = (j['resModMs'] as num?)?.toInt() ?? 0;
+      final porR = j['resModPor'] as String?;
+      if (tsR == 0) continue;
+      final m = await (db.select(db.mangas)
+            ..where((t) => t.uuid.equals(j['uuid'] as String)))
+          .getSingleOrNull();
+      if (m == null || m.pruebaId != prueba.id) continue;
+      if (!ganaRemoto(tsR, porR, m.resModMs ?? 0, m.resModPor)) continue;
+      idPorUuidPiloto ??= {
+        for (final p in await db.select(db.pilotos).get())
+          if (p.uuid != null) p.uuid!: p.id,
+      };
+      idPorUuidEquipo ??= {
+        for (final e in await (db.select(db.equipos)
+              ..where((t) => t.campeonatoId.equals(prueba.campeonatoId)))
+            .get())
+          if (e.uuid != null) e.uuid!: e.id,
+      };
+      await (db.delete(db.resultados)..where((t) => t.mangaId.equals(m.id)))
+          .go();
+      for (final x in (j['resultados'] as List? ?? const [])) {
+        final xj = x as Map<String, dynamic>;
+        final pid = idPorUuidPiloto[xj['piloto']];
+        final eid = idPorUuidEquipo[xj['equipo']];
+        if (pid == null || eid == null) {
+          r.avisos.add('Resultados de «${m.nombre}»: falta aquí un piloto o '
+              'un equipo; esa fila no se copia.');
+          continue;
+        }
+        await db.into(db.resultados).insert(ResultadosCompanion.insert(
+              mangaId: m.id,
+              pilotoId: pid,
+              equipoId: eid,
+              puntos: Value((xj['puntos'] as num?)?.toInt() ?? 0),
+              posicion: Value((xj['posicion'] as num?)?.toInt()),
+              aRestar: Value((xj['aRestar'] as num?)?.toInt() ?? 0),
+            ));
+      }
+      // Los triggers de resultados habrán firmado con la hora de ahora.
+      await (db.update(db.mangas)..where((t) => t.id.equals(m.id))).write(
+          MangasCompanion(resModMs: Value(tsR), resModPor: Value(porR)));
+      r.resultados++;
+    }
+  }
+
+  /// Correcciones manuales por copa de la prueba: todas juntas.
+  Future<void> _fusionarOverrides(ResultadoFusionSync r, Prueba prueba,
+      Campeonato camp, Map<String, dynamic> paquete) async {
+    final tsR = (paquete['ovrModMs'] as num?)?.toInt() ?? 0;
+    final porR = paquete['ovrModPor'] as String?;
+    if (tsR == 0 ||
+        !ganaRemoto(tsR, porR, prueba.ovrModMs ?? 0, prueba.ovrModPor)) {
+      return;
+    }
+    final idPorUuid = {
+      for (final p in await db.select(db.pilotos).get())
+        if (p.uuid != null) p.uuid!: p.id,
+    };
+    await (db.delete(db.overridesCopa)
+          ..where((t) =>
+              t.pruebaId.equals(prueba.id) & t.campeonatoId.equals(camp.id)))
+        .go();
+    for (final raw in (paquete['overrides'] as List? ?? const [])) {
+      final j = raw as Map<String, dynamic>;
+      final pid = idPorUuid[j['piloto']];
+      if (pid == null) continue;
+      await db.into(db.overridesCopa).insertOnConflictUpdate(
+          OverridesCopaCompanion.insert(
+              campeonatoId: camp.id,
+              copa: j['copa'] as String,
+              pilotoId: pid,
+              pruebaId: prueba.id,
+              puntos: (j['puntos'] as num).toInt()));
+    }
+    await (db.update(db.pruebas)..where((t) => t.id.equals(prueba.id))).write(
+        PruebasCompanion(ovrModMs: Value(tsR), ovrModPor: Value(porR)));
+    r.resultados++;
   }
 
   Future<void> _recalcularAsignadas(int pruebaId) async {

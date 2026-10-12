@@ -208,6 +208,10 @@ class Pruebas extends Table {
   /// Identificador global, igual en todos los Controls (sincronización).
   /// Las filas anteriores a la v1.34 lo reciben derivado de su id y nombre.
   TextColumn get uuid => text().nullable()();
+  /// Último cambio de las correcciones manuales por copa de esta prueba
+  /// (`overrides_copa`), firmado por triggers.
+  IntColumn get ovrModMs => integer().nullable()();
+  TextColumn get ovrModPor => text().nullable()();
 }
 
 class Mangas extends Table {
@@ -225,6 +229,10 @@ class Mangas extends Table {
   /// por triggers (ver sync_triggers.dart).
   IntColumn get modMs => integer().nullable()();
   TextColumn get modPor => text().nullable()();
+  /// Último cambio de los resultados de la tanda (firma aparte de la de la
+  /// parrilla: poner resultados y mover carriles no se pisan).
+  IntColumn get resModMs => integer().nullable()();
+  TextColumn get resModPor => text().nullable()();
 }
 
 class Inscripciones extends Table {

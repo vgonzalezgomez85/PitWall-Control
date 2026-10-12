@@ -70,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 51;
+  int get schemaVersion => 52;
 
   /// Nombre con el que este dispositivo firma sus cambios (lo fija main.dart
   /// con el de la sincronización). Se guarda en `sync_local` al abrir la BD.
@@ -107,6 +107,9 @@ class AppDatabase extends _$AppDatabase {
         // antiguas y nombre de este dispositivo (una copia restaurada trae el
         // del dispositivo de origen).
         beforeOpen: (detalles) async {
+          for (final t in triggersSyncObsoletos) {
+            await customStatement('DROP TRIGGER IF EXISTS $t');
+          }
           for (final sql in sentenciasTriggersSync()) {
             await customStatement(sql);
           }
@@ -559,6 +562,17 @@ class AppDatabase extends _$AppDatabase {
             ]) {
               await _aplicar(() => customStatement(
                   'ALTER TABLE mangas ADD COLUMN $c'));
+            }
+          }
+          if (from < 52) {
+            // Sincronización de resultados y correcciones manuales.
+            for (final c in ['res_mod_ms INTEGER', 'res_mod_por TEXT']) {
+              await _aplicar(() => customStatement(
+                  'ALTER TABLE mangas ADD COLUMN $c'));
+            }
+            for (final c in ['ovr_mod_ms INTEGER', 'ovr_mod_por TEXT']) {
+              await _aplicar(() => customStatement(
+                  'ALTER TABLE pruebas ADD COLUMN $c'));
             }
           }
         },

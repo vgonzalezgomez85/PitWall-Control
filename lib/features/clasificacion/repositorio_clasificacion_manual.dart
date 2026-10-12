@@ -61,7 +61,9 @@ class RepositorioClasificacionManual {
   Future<int> _mangaImportada(int pruebaId) async {
     final ex = await (db.select(db.mangas)
           ..where((t) =>
-              t.pruebaId.equals(pruebaId) & t.nombre.equals('IMPORTADA')))
+              t.pruebaId.equals(pruebaId) & t.nombre.equals('IMPORTADA'))
+          ..orderBy([(t) => OrderingTerm.asc(t.id)])
+          ..limit(1))
         .getSingleOrNull();
     if (ex != null) return ex.id;
     return db.into(db.mangas).insert(MangasCompanion.insert(

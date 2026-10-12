@@ -243,7 +243,9 @@ class ImportadorClasificacion {
     for (final p in analisis.pruebasReconocidas.values) {
       final existente = await (db.select(db.mangas)
             ..where((t) =>
-                t.pruebaId.equals(p.id) & t.nombre.equals('IMPORTADA')))
+                t.pruebaId.equals(p.id) & t.nombre.equals('IMPORTADA'))
+            ..orderBy([(t) => d.OrderingTerm.asc(t.id)])
+            ..limit(1))
           .getSingleOrNull();
       if (existente != null) {
         mangaPorPrueba[p.id] = existente.id;

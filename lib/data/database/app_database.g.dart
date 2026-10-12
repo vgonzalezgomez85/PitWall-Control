@@ -4716,6 +4716,28 @@ class $PruebasTable extends Pruebas with TableInfo<$PruebasTable, Prueba> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _ovrModMsMeta = const VerificationMeta(
+    'ovrModMs',
+  );
+  @override
+  late final GeneratedColumn<int> ovrModMs = GeneratedColumn<int>(
+    'ovr_mod_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ovrModPorMeta = const VerificationMeta(
+    'ovrModPor',
+  );
+  @override
+  late final GeneratedColumn<String> ovrModPor = GeneratedColumn<String>(
+    'ovr_mod_por',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4727,6 +4749,8 @@ class $PruebasTable extends Pruebas with TableInfo<$PruebasTable, Prueba> {
     estado,
     managerRaceId,
     uuid,
+    ovrModMs,
+    ovrModPor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4803,6 +4827,18 @@ class $PruebasTable extends Pruebas with TableInfo<$PruebasTable, Prueba> {
         uuid.isAcceptableOrUnknown(data['uuid']!, _uuidMeta),
       );
     }
+    if (data.containsKey('ovr_mod_ms')) {
+      context.handle(
+        _ovrModMsMeta,
+        ovrModMs.isAcceptableOrUnknown(data['ovr_mod_ms']!, _ovrModMsMeta),
+      );
+    }
+    if (data.containsKey('ovr_mod_por')) {
+      context.handle(
+        _ovrModPorMeta,
+        ovrModPor.isAcceptableOrUnknown(data['ovr_mod_por']!, _ovrModPorMeta),
+      );
+    }
     return context;
   }
 
@@ -4848,6 +4884,14 @@ class $PruebasTable extends Pruebas with TableInfo<$PruebasTable, Prueba> {
         DriftSqlType.string,
         data['${effectivePrefix}uuid'],
       ),
+      ovrModMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}ovr_mod_ms'],
+      ),
+      ovrModPor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ovr_mod_por'],
+      ),
     );
   }
 
@@ -4874,6 +4918,11 @@ class Prueba extends DataClass implements Insertable<Prueba> {
   /// Identificador global, igual en todos los Controls (sincronización).
   /// Las filas anteriores a la v1.34 lo reciben derivado de su id y nombre.
   final String? uuid;
+
+  /// Último cambio de las correcciones manuales por copa de esta prueba
+  /// (`overrides_copa`), firmado por triggers.
+  final int? ovrModMs;
+  final String? ovrModPor;
   const Prueba({
     required this.id,
     required this.campeonatoId,
@@ -4884,6 +4933,8 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     required this.estado,
     this.managerRaceId,
     this.uuid,
+    this.ovrModMs,
+    this.ovrModPor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4905,6 +4956,12 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     if (!nullToAbsent || uuid != null) {
       map['uuid'] = Variable<String>(uuid);
     }
+    if (!nullToAbsent || ovrModMs != null) {
+      map['ovr_mod_ms'] = Variable<int>(ovrModMs);
+    }
+    if (!nullToAbsent || ovrModPor != null) {
+      map['ovr_mod_por'] = Variable<String>(ovrModPor);
+    }
     return map;
   }
 
@@ -4923,6 +4980,12 @@ class Prueba extends DataClass implements Insertable<Prueba> {
           ? const Value.absent()
           : Value(managerRaceId),
       uuid: uuid == null && nullToAbsent ? const Value.absent() : Value(uuid),
+      ovrModMs: ovrModMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ovrModMs),
+      ovrModPor: ovrModPor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ovrModPor),
     );
   }
 
@@ -4941,6 +5004,8 @@ class Prueba extends DataClass implements Insertable<Prueba> {
       estado: serializer.fromJson<String>(json['estado']),
       managerRaceId: serializer.fromJson<int?>(json['managerRaceId']),
       uuid: serializer.fromJson<String?>(json['uuid']),
+      ovrModMs: serializer.fromJson<int?>(json['ovrModMs']),
+      ovrModPor: serializer.fromJson<String?>(json['ovrModPor']),
     );
   }
   @override
@@ -4956,6 +5021,8 @@ class Prueba extends DataClass implements Insertable<Prueba> {
       'estado': serializer.toJson<String>(estado),
       'managerRaceId': serializer.toJson<int?>(managerRaceId),
       'uuid': serializer.toJson<String?>(uuid),
+      'ovrModMs': serializer.toJson<int?>(ovrModMs),
+      'ovrModPor': serializer.toJson<String?>(ovrModPor),
     };
   }
 
@@ -4969,6 +5036,8 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     String? estado,
     Value<int?> managerRaceId = const Value.absent(),
     Value<String?> uuid = const Value.absent(),
+    Value<int?> ovrModMs = const Value.absent(),
+    Value<String?> ovrModPor = const Value.absent(),
   }) => Prueba(
     id: id ?? this.id,
     campeonatoId: campeonatoId ?? this.campeonatoId,
@@ -4981,6 +5050,8 @@ class Prueba extends DataClass implements Insertable<Prueba> {
         ? managerRaceId.value
         : this.managerRaceId,
     uuid: uuid.present ? uuid.value : this.uuid,
+    ovrModMs: ovrModMs.present ? ovrModMs.value : this.ovrModMs,
+    ovrModPor: ovrModPor.present ? ovrModPor.value : this.ovrModPor,
   );
   Prueba copyWithCompanion(PruebasCompanion data) {
     return Prueba(
@@ -4997,6 +5068,8 @@ class Prueba extends DataClass implements Insertable<Prueba> {
           ? data.managerRaceId.value
           : this.managerRaceId,
       uuid: data.uuid.present ? data.uuid.value : this.uuid,
+      ovrModMs: data.ovrModMs.present ? data.ovrModMs.value : this.ovrModMs,
+      ovrModPor: data.ovrModPor.present ? data.ovrModPor.value : this.ovrModPor,
     );
   }
 
@@ -5011,7 +5084,9 @@ class Prueba extends DataClass implements Insertable<Prueba> {
           ..write('orden: $orden, ')
           ..write('estado: $estado, ')
           ..write('managerRaceId: $managerRaceId, ')
-          ..write('uuid: $uuid')
+          ..write('uuid: $uuid, ')
+          ..write('ovrModMs: $ovrModMs, ')
+          ..write('ovrModPor: $ovrModPor')
           ..write(')'))
         .toString();
   }
@@ -5027,6 +5102,8 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     estado,
     managerRaceId,
     uuid,
+    ovrModMs,
+    ovrModPor,
   );
   @override
   bool operator ==(Object other) =>
@@ -5040,7 +5117,9 @@ class Prueba extends DataClass implements Insertable<Prueba> {
           other.orden == this.orden &&
           other.estado == this.estado &&
           other.managerRaceId == this.managerRaceId &&
-          other.uuid == this.uuid);
+          other.uuid == this.uuid &&
+          other.ovrModMs == this.ovrModMs &&
+          other.ovrModPor == this.ovrModPor);
 }
 
 class PruebasCompanion extends UpdateCompanion<Prueba> {
@@ -5053,6 +5132,8 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
   final Value<String> estado;
   final Value<int?> managerRaceId;
   final Value<String?> uuid;
+  final Value<int?> ovrModMs;
+  final Value<String?> ovrModPor;
   const PruebasCompanion({
     this.id = const Value.absent(),
     this.campeonatoId = const Value.absent(),
@@ -5063,6 +5144,8 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     this.estado = const Value.absent(),
     this.managerRaceId = const Value.absent(),
     this.uuid = const Value.absent(),
+    this.ovrModMs = const Value.absent(),
+    this.ovrModPor = const Value.absent(),
   });
   PruebasCompanion.insert({
     this.id = const Value.absent(),
@@ -5074,6 +5157,8 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     this.estado = const Value.absent(),
     this.managerRaceId = const Value.absent(),
     this.uuid = const Value.absent(),
+    this.ovrModMs = const Value.absent(),
+    this.ovrModPor = const Value.absent(),
   }) : campeonatoId = Value(campeonatoId),
        nombre = Value(nombre),
        orden = Value(orden);
@@ -5087,6 +5172,8 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     Expression<String>? estado,
     Expression<int>? managerRaceId,
     Expression<String>? uuid,
+    Expression<int>? ovrModMs,
+    Expression<String>? ovrModPor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -5098,6 +5185,8 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
       if (estado != null) 'estado': estado,
       if (managerRaceId != null) 'manager_race_id': managerRaceId,
       if (uuid != null) 'uuid': uuid,
+      if (ovrModMs != null) 'ovr_mod_ms': ovrModMs,
+      if (ovrModPor != null) 'ovr_mod_por': ovrModPor,
     });
   }
 
@@ -5111,6 +5200,8 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     Value<String>? estado,
     Value<int?>? managerRaceId,
     Value<String?>? uuid,
+    Value<int?>? ovrModMs,
+    Value<String?>? ovrModPor,
   }) {
     return PruebasCompanion(
       id: id ?? this.id,
@@ -5122,6 +5213,8 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
       estado: estado ?? this.estado,
       managerRaceId: managerRaceId ?? this.managerRaceId,
       uuid: uuid ?? this.uuid,
+      ovrModMs: ovrModMs ?? this.ovrModMs,
+      ovrModPor: ovrModPor ?? this.ovrModPor,
     );
   }
 
@@ -5155,6 +5248,12 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     if (uuid.present) {
       map['uuid'] = Variable<String>(uuid.value);
     }
+    if (ovrModMs.present) {
+      map['ovr_mod_ms'] = Variable<int>(ovrModMs.value);
+    }
+    if (ovrModPor.present) {
+      map['ovr_mod_por'] = Variable<String>(ovrModPor.value);
+    }
     return map;
   }
 
@@ -5169,7 +5268,9 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
           ..write('orden: $orden, ')
           ..write('estado: $estado, ')
           ..write('managerRaceId: $managerRaceId, ')
-          ..write('uuid: $uuid')
+          ..write('uuid: $uuid, ')
+          ..write('ovrModMs: $ovrModMs, ')
+          ..write('ovrModPor: $ovrModPor')
           ..write(')'))
         .toString();
   }
@@ -5287,6 +5388,28 @@ class $MangasTable extends Mangas with TableInfo<$MangasTable, Manga> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _resModMsMeta = const VerificationMeta(
+    'resModMs',
+  );
+  @override
+  late final GeneratedColumn<int> resModMs = GeneratedColumn<int>(
+    'res_mod_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _resModPorMeta = const VerificationMeta(
+    'resModPor',
+  );
+  @override
+  late final GeneratedColumn<String> resModPor = GeneratedColumn<String>(
+    'res_mod_por',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -5299,6 +5422,8 @@ class $MangasTable extends Mangas with TableInfo<$MangasTable, Manga> {
     uuid,
     modMs,
     modPor,
+    resModMs,
+    resModPor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5379,6 +5504,18 @@ class $MangasTable extends Mangas with TableInfo<$MangasTable, Manga> {
         modPor.isAcceptableOrUnknown(data['mod_por']!, _modPorMeta),
       );
     }
+    if (data.containsKey('res_mod_ms')) {
+      context.handle(
+        _resModMsMeta,
+        resModMs.isAcceptableOrUnknown(data['res_mod_ms']!, _resModMsMeta),
+      );
+    }
+    if (data.containsKey('res_mod_por')) {
+      context.handle(
+        _resModPorMeta,
+        resModPor.isAcceptableOrUnknown(data['res_mod_por']!, _resModPorMeta),
+      );
+    }
     return context;
   }
 
@@ -5428,6 +5565,14 @@ class $MangasTable extends Mangas with TableInfo<$MangasTable, Manga> {
         DriftSqlType.string,
         data['${effectivePrefix}mod_por'],
       ),
+      resModMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}res_mod_ms'],
+      ),
+      resModPor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}res_mod_por'],
+      ),
     );
   }
 
@@ -5455,6 +5600,11 @@ class Manga extends DataClass implements Insertable<Manga> {
   /// por triggers (ver sync_triggers.dart).
   final int? modMs;
   final String? modPor;
+
+  /// Último cambio de los resultados de la tanda (firma aparte de la de la
+  /// parrilla: poner resultados y mover carriles no se pisan).
+  final int? resModMs;
+  final String? resModPor;
   const Manga({
     required this.id,
     required this.pruebaId,
@@ -5466,6 +5616,8 @@ class Manga extends DataClass implements Insertable<Manga> {
     this.uuid,
     this.modMs,
     this.modPor,
+    this.resModMs,
+    this.resModPor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5490,6 +5642,12 @@ class Manga extends DataClass implements Insertable<Manga> {
     if (!nullToAbsent || modPor != null) {
       map['mod_por'] = Variable<String>(modPor);
     }
+    if (!nullToAbsent || resModMs != null) {
+      map['res_mod_ms'] = Variable<int>(resModMs);
+    }
+    if (!nullToAbsent || resModPor != null) {
+      map['res_mod_por'] = Variable<String>(resModPor);
+    }
     return map;
   }
 
@@ -5513,6 +5671,12 @@ class Manga extends DataClass implements Insertable<Manga> {
       modPor: modPor == null && nullToAbsent
           ? const Value.absent()
           : Value(modPor),
+      resModMs: resModMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resModMs),
+      resModPor: resModPor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resModPor),
     );
   }
 
@@ -5532,6 +5696,8 @@ class Manga extends DataClass implements Insertable<Manga> {
       uuid: serializer.fromJson<String?>(json['uuid']),
       modMs: serializer.fromJson<int?>(json['modMs']),
       modPor: serializer.fromJson<String?>(json['modPor']),
+      resModMs: serializer.fromJson<int?>(json['resModMs']),
+      resModPor: serializer.fromJson<String?>(json['resModPor']),
     );
   }
   @override
@@ -5548,6 +5714,8 @@ class Manga extends DataClass implements Insertable<Manga> {
       'uuid': serializer.toJson<String?>(uuid),
       'modMs': serializer.toJson<int?>(modMs),
       'modPor': serializer.toJson<String?>(modPor),
+      'resModMs': serializer.toJson<int?>(resModMs),
+      'resModPor': serializer.toJson<String?>(resModPor),
     };
   }
 
@@ -5562,6 +5730,8 @@ class Manga extends DataClass implements Insertable<Manga> {
     Value<String?> uuid = const Value.absent(),
     Value<int?> modMs = const Value.absent(),
     Value<String?> modPor = const Value.absent(),
+    Value<int?> resModMs = const Value.absent(),
+    Value<String?> resModPor = const Value.absent(),
   }) => Manga(
     id: id ?? this.id,
     pruebaId: pruebaId ?? this.pruebaId,
@@ -5575,6 +5745,8 @@ class Manga extends DataClass implements Insertable<Manga> {
     uuid: uuid.present ? uuid.value : this.uuid,
     modMs: modMs.present ? modMs.value : this.modMs,
     modPor: modPor.present ? modPor.value : this.modPor,
+    resModMs: resModMs.present ? resModMs.value : this.resModMs,
+    resModPor: resModPor.present ? resModPor.value : this.resModPor,
   );
   Manga copyWithCompanion(MangasCompanion data) {
     return Manga(
@@ -5592,6 +5764,8 @@ class Manga extends DataClass implements Insertable<Manga> {
       uuid: data.uuid.present ? data.uuid.value : this.uuid,
       modMs: data.modMs.present ? data.modMs.value : this.modMs,
       modPor: data.modPor.present ? data.modPor.value : this.modPor,
+      resModMs: data.resModMs.present ? data.resModMs.value : this.resModMs,
+      resModPor: data.resModPor.present ? data.resModPor.value : this.resModPor,
     );
   }
 
@@ -5607,7 +5781,9 @@ class Manga extends DataClass implements Insertable<Manga> {
           ..write('pistersMangaId: $pistersMangaId, ')
           ..write('uuid: $uuid, ')
           ..write('modMs: $modMs, ')
-          ..write('modPor: $modPor')
+          ..write('modPor: $modPor, ')
+          ..write('resModMs: $resModMs, ')
+          ..write('resModPor: $resModPor')
           ..write(')'))
         .toString();
   }
@@ -5624,6 +5800,8 @@ class Manga extends DataClass implements Insertable<Manga> {
     uuid,
     modMs,
     modPor,
+    resModMs,
+    resModPor,
   );
   @override
   bool operator ==(Object other) =>
@@ -5638,7 +5816,9 @@ class Manga extends DataClass implements Insertable<Manga> {
           other.pistersMangaId == this.pistersMangaId &&
           other.uuid == this.uuid &&
           other.modMs == this.modMs &&
-          other.modPor == this.modPor);
+          other.modPor == this.modPor &&
+          other.resModMs == this.resModMs &&
+          other.resModPor == this.resModPor);
 }
 
 class MangasCompanion extends UpdateCompanion<Manga> {
@@ -5652,6 +5832,8 @@ class MangasCompanion extends UpdateCompanion<Manga> {
   final Value<String?> uuid;
   final Value<int?> modMs;
   final Value<String?> modPor;
+  final Value<int?> resModMs;
+  final Value<String?> resModPor;
   const MangasCompanion({
     this.id = const Value.absent(),
     this.pruebaId = const Value.absent(),
@@ -5663,6 +5845,8 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     this.uuid = const Value.absent(),
     this.modMs = const Value.absent(),
     this.modPor = const Value.absent(),
+    this.resModMs = const Value.absent(),
+    this.resModPor = const Value.absent(),
   });
   MangasCompanion.insert({
     this.id = const Value.absent(),
@@ -5675,6 +5859,8 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     this.uuid = const Value.absent(),
     this.modMs = const Value.absent(),
     this.modPor = const Value.absent(),
+    this.resModMs = const Value.absent(),
+    this.resModPor = const Value.absent(),
   }) : pruebaId = Value(pruebaId),
        nombre = Value(nombre);
   static Insertable<Manga> custom({
@@ -5688,6 +5874,8 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     Expression<String>? uuid,
     Expression<int>? modMs,
     Expression<String>? modPor,
+    Expression<int>? resModMs,
+    Expression<String>? resModPor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -5700,6 +5888,8 @@ class MangasCompanion extends UpdateCompanion<Manga> {
       if (uuid != null) 'uuid': uuid,
       if (modMs != null) 'mod_ms': modMs,
       if (modPor != null) 'mod_por': modPor,
+      if (resModMs != null) 'res_mod_ms': resModMs,
+      if (resModPor != null) 'res_mod_por': resModPor,
     });
   }
 
@@ -5714,6 +5904,8 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     Value<String?>? uuid,
     Value<int?>? modMs,
     Value<String?>? modPor,
+    Value<int?>? resModMs,
+    Value<String?>? resModPor,
   }) {
     return MangasCompanion(
       id: id ?? this.id,
@@ -5726,6 +5918,8 @@ class MangasCompanion extends UpdateCompanion<Manga> {
       uuid: uuid ?? this.uuid,
       modMs: modMs ?? this.modMs,
       modPor: modPor ?? this.modPor,
+      resModMs: resModMs ?? this.resModMs,
+      resModPor: resModPor ?? this.resModPor,
     );
   }
 
@@ -5762,6 +5956,12 @@ class MangasCompanion extends UpdateCompanion<Manga> {
     if (modPor.present) {
       map['mod_por'] = Variable<String>(modPor.value);
     }
+    if (resModMs.present) {
+      map['res_mod_ms'] = Variable<int>(resModMs.value);
+    }
+    if (resModPor.present) {
+      map['res_mod_por'] = Variable<String>(resModPor.value);
+    }
     return map;
   }
 
@@ -5777,7 +5977,9 @@ class MangasCompanion extends UpdateCompanion<Manga> {
           ..write('pistersMangaId: $pistersMangaId, ')
           ..write('uuid: $uuid, ')
           ..write('modMs: $modMs, ')
-          ..write('modPor: $modPor')
+          ..write('modPor: $modPor, ')
+          ..write('resModMs: $resModMs, ')
+          ..write('resModPor: $resModPor')
           ..write(')'))
         .toString();
   }
@@ -23822,6 +24024,8 @@ typedef $$PruebasTableCreateCompanionBuilder =
       Value<String> estado,
       Value<int?> managerRaceId,
       Value<String?> uuid,
+      Value<int?> ovrModMs,
+      Value<String?> ovrModPor,
     });
 typedef $$PruebasTableUpdateCompanionBuilder =
     PruebasCompanion Function({
@@ -23834,6 +24038,8 @@ typedef $$PruebasTableUpdateCompanionBuilder =
       Value<String> estado,
       Value<int?> managerRaceId,
       Value<String?> uuid,
+      Value<int?> ovrModMs,
+      Value<String?> ovrModPor,
     });
 
 final class $$PruebasTableReferences
@@ -24064,6 +24270,16 @@ class $$PruebasTableFilterComposer
 
   ColumnFilters<String> get uuid => $composableBuilder(
     column: $table.uuid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get ovrModMs => $composableBuilder(
+    column: $table.ovrModMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ovrModPor => $composableBuilder(
+    column: $table.ovrModPor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -24315,6 +24531,16 @@ class $$PruebasTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get ovrModMs => $composableBuilder(
+    column: $table.ovrModMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ovrModPor => $composableBuilder(
+    column: $table.ovrModPor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CampeonatosTableOrderingComposer get campeonatoId {
     final $$CampeonatosTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -24373,6 +24599,12 @@ class $$PruebasTableAnnotationComposer
 
   GeneratedColumn<String> get uuid =>
       $composableBuilder(column: $table.uuid, builder: (column) => column);
+
+  GeneratedColumn<int> get ovrModMs =>
+      $composableBuilder(column: $table.ovrModMs, builder: (column) => column);
+
+  GeneratedColumn<String> get ovrModPor =>
+      $composableBuilder(column: $table.ovrModPor, builder: (column) => column);
 
   $$CampeonatosTableAnnotationComposer get campeonatoId {
     final $$CampeonatosTableAnnotationComposer composer = $composerBuilder(
@@ -24622,6 +24854,8 @@ class $$PruebasTableTableManager
                 Value<String> estado = const Value.absent(),
                 Value<int?> managerRaceId = const Value.absent(),
                 Value<String?> uuid = const Value.absent(),
+                Value<int?> ovrModMs = const Value.absent(),
+                Value<String?> ovrModPor = const Value.absent(),
               }) => PruebasCompanion(
                 id: id,
                 campeonatoId: campeonatoId,
@@ -24632,6 +24866,8 @@ class $$PruebasTableTableManager
                 estado: estado,
                 managerRaceId: managerRaceId,
                 uuid: uuid,
+                ovrModMs: ovrModMs,
+                ovrModPor: ovrModPor,
               ),
           createCompanionCallback:
               ({
@@ -24644,6 +24880,8 @@ class $$PruebasTableTableManager
                 Value<String> estado = const Value.absent(),
                 Value<int?> managerRaceId = const Value.absent(),
                 Value<String?> uuid = const Value.absent(),
+                Value<int?> ovrModMs = const Value.absent(),
+                Value<String?> ovrModPor = const Value.absent(),
               }) => PruebasCompanion.insert(
                 id: id,
                 campeonatoId: campeonatoId,
@@ -24654,6 +24892,8 @@ class $$PruebasTableTableManager
                 estado: estado,
                 managerRaceId: managerRaceId,
                 uuid: uuid,
+                ovrModMs: ovrModMs,
+                ovrModPor: ovrModPor,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -24897,6 +25137,8 @@ typedef $$MangasTableCreateCompanionBuilder =
       Value<String?> uuid,
       Value<int?> modMs,
       Value<String?> modPor,
+      Value<int?> resModMs,
+      Value<String?> resModPor,
     });
 typedef $$MangasTableUpdateCompanionBuilder =
     MangasCompanion Function({
@@ -24910,6 +25152,8 @@ typedef $$MangasTableUpdateCompanionBuilder =
       Value<String?> uuid,
       Value<int?> modMs,
       Value<String?> modPor,
+      Value<int?> resModMs,
+      Value<String?> resModPor,
     });
 
 final class $$MangasTableReferences
@@ -25057,6 +25301,16 @@ class $$MangasTableFilterComposer
 
   ColumnFilters<String> get modPor => $composableBuilder(
     column: $table.modPor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get resModMs => $composableBuilder(
+    column: $table.resModMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get resModPor => $composableBuilder(
+    column: $table.resModPor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -25238,6 +25492,16 @@ class $$MangasTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get resModMs => $composableBuilder(
+    column: $table.resModMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get resModPor => $composableBuilder(
+    column: $table.resModPor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PruebasTableOrderingComposer get pruebaId {
     final $$PruebasTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -25301,6 +25565,12 @@ class $$MangasTableAnnotationComposer
 
   GeneratedColumn<String> get modPor =>
       $composableBuilder(column: $table.modPor, builder: (column) => column);
+
+  GeneratedColumn<int> get resModMs =>
+      $composableBuilder(column: $table.resModMs, builder: (column) => column);
+
+  GeneratedColumn<String> get resModPor =>
+      $composableBuilder(column: $table.resModPor, builder: (column) => column);
 
   $$PruebasTableAnnotationComposer get pruebaId {
     final $$PruebasTableAnnotationComposer composer = $composerBuilder(
@@ -25470,6 +25740,8 @@ class $$MangasTableTableManager
                 Value<String?> uuid = const Value.absent(),
                 Value<int?> modMs = const Value.absent(),
                 Value<String?> modPor = const Value.absent(),
+                Value<int?> resModMs = const Value.absent(),
+                Value<String?> resModPor = const Value.absent(),
               }) => MangasCompanion(
                 id: id,
                 pruebaId: pruebaId,
@@ -25481,6 +25753,8 @@ class $$MangasTableTableManager
                 uuid: uuid,
                 modMs: modMs,
                 modPor: modPor,
+                resModMs: resModMs,
+                resModPor: resModPor,
               ),
           createCompanionCallback:
               ({
@@ -25494,6 +25768,8 @@ class $$MangasTableTableManager
                 Value<String?> uuid = const Value.absent(),
                 Value<int?> modMs = const Value.absent(),
                 Value<String?> modPor = const Value.absent(),
+                Value<int?> resModMs = const Value.absent(),
+                Value<String?> resModPor = const Value.absent(),
               }) => MangasCompanion.insert(
                 id: id,
                 pruebaId: pruebaId,
@@ -25505,6 +25781,8 @@ class $$MangasTableTableManager
                 uuid: uuid,
                 modMs: modMs,
                 modPor: modPor,
+                resModMs: resModMs,
+                resModPor: resModPor,
               ),
           withReferenceMapper: (p0) => p0
               .map(
