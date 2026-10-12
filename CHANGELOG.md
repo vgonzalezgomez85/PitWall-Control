@@ -14,6 +14,12 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.28.0] — 2026-10-12
+### Mejorado
+- **El editor de campeonato, por secciones.** El formulario largo se divide en tarjetas: **Datos básicos**, **Categorías / copas**, **Motor**, **Créditos y tesorería**, **Puntuación**, **Verificación** (anchura de eje, coches y fabricantes), **Marca en los PDF** y **Estado**.
+- **Crear un campeonato es más corto.** Arriba se indica qué es obligatorio (nombre, al menos una copa y el tipo de motor); puntuación, verificación y PDF quedan plegados en «Más opciones», para completarlos ahora o después. Si algo de ahí tiene un error al guardar, se despliega solo.
+- **La tabla de puntos también se edita desde el campeonato** (sección Puntuación, al editar el campeonato activo). Sigue disponible en Clasificación → «⋯».
+
 ## [1.27.0] — 2026-10-12
 ### Añadido
 - **Inicio dice qué toca ahora.** La tarjeta de la **próxima prueba** tiene botones directos: **Inscritos**, **Verificar** (abre la prueba en la pestaña Verificar) y **Resultados**. Debajo, **Pendientes** con su número: verificaciones sin validar y pagos sin cobrar de la próxima prueba, y pruebas ya disputadas sin resultados. Cada tarjeta lleva a donde se resuelve; si no queda nada, sale «Todo al día».

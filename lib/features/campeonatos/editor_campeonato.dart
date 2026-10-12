@@ -24,6 +24,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/seeds.dart';
+import '../clasificacion/pantalla_editor_tabla_puntos.dart';
 import '../creditos/repositorio_creditos.dart';
 import 'pantalla_coches_campeonato.dart';
 import 'repositorio_coches_campeonato.dart';
@@ -94,6 +95,16 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       _anchuraEjeCtrl.putIfAbsent('$copa|$lado', () => TextEditingController());
   bool _cargando = true;
   bool _guardando = false;
+
+  /// Al crear: muestra las secciones opcionales (puntuación, verificación,
+  /// PDF), que empiezan plegadas.
+  bool _masOpciones = false;
+
+  /// La tabla de puntos se edita sobre el campeonato activo: solo se ofrece
+  /// al editar ese campeonato.
+  bool get _esElActivo =>
+      widget.campeonatoId != null &&
+      ref.read(campeonatoActivoProvider)?.id == widget.campeonatoId;
 
   @override
   void initState() {
@@ -233,7 +244,11 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   }
 
   Future<void> _guardar() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      // Un error en una sección plegada no se vería: se despliega todo.
+      if (!_masOpciones) setState(() => _masOpciones = true);
+      return;
+    }
     if (_copasSel.isEmpty) {
       _aviso('Selecciona al menos una copa / categoría.');
       return;
@@ -466,7 +481,6 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final esNuevo = widget.campeonatoId == null;
-    final cs = Theme.of(context).colorScheme;
     final catalogoAsync = ref.watch(_catalogoCopasProvider);
 
     return Scaffold(
@@ -486,429 +500,464 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            TextFormField(
-              controller: _nombre,
-              decoration: const InputDecoration(
-                labelText: 'Nombre del campeonato *',
-                helperText: 'Ej: Liga 2026, Individual LMP-HYP-GT3 Otoño',
-                prefixIcon: Icon(Icons.emoji_events_outlined),
+            if (esNuevo)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  'Obligatorio (*): nombre, al menos una copa y el tipo de '
+                  'motor. Lo demás se puede completar después.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
               ),
-              textCapitalization: TextCapitalization.words,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Indica un nombre' : null,
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _formato,
-              decoration: const InputDecoration(
-                labelText: 'Formato',
-                prefixIcon: Icon(Icons.groups_outlined),
-                helperText:
-                    'Parejas = 2 pilotos por equipo. Individual = 1 piloto',
-              ),
-              items: const [
-                DropdownMenuItem(value: 'PAREJAS', child: Text('Parejas')),
-                DropdownMenuItem(value: 'INDIVIDUAL', child: Text('Individual')),
-                DropdownMenuItem(value: '24H', child: Text('24h')),
-                DropdownMenuItem(value: '12H', child: Text('12h')),
-              ],
-              onChanged: (v) => setState(() => _formato = v ?? 'PAREJAS'),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _anio,
-              decoration: const InputDecoration(
-                labelText: 'Año',
-                prefixIcon: Icon(Icons.calendar_today_outlined),
-              ),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                final n = int.tryParse(v ?? '');
-                if (n == null || n < 2000 || n > 2100) return 'Año inválido';
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 28),
-            Text('Categorías / copas',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w700,
-                    )),
-            const SizedBox(height: 4),
-            Text(
-              'Selecciona las que se usan en este campeonato. Pueden ser una sola '
-              '(p.ej. "Grupo C") o varias (p.ej. "LMP + HYP + GT3").',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            catalogoAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text('Error: $e'),
-              data: (copas) {
-                // Asegurar que las copas ya seleccionadas (aunque no estén
-                // en el catálogo) aparezcan también
-                final todas = {...copas, ..._copasSel}.toList()..sort();
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: todas
-                      .map((c) => FilterChip(
-                            label: Text(c),
-                            selected: _copasSel.contains(c),
-                            onSelected: (v) => setState(() {
-                              if (v) {
-                                _copasSel.add(c);
-                              } else {
-                                _copasSel.remove(c);
-                              }
-                            }),
-                          ))
-                      .toList(),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-            Row(
+            _Seccion(
+              titulo: 'Datos básicos',
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _nuevaCopa,
-                    decoration: const InputDecoration(
-                      labelText: 'Añadir nueva categoría',
-                      helperText: 'Si no la encuentras arriba',
-                      isDense: true,
-                    ),
-                    onSubmitted: (_) => _anadirCopaNueva(),
+                TextFormField(
+                  controller: _nombre,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre del campeonato *',
+                    helperText: 'Ej: Liga 2026, Individual LMP-HYP-GT3 Otoño',
+                    prefixIcon: Icon(Icons.emoji_events_outlined),
                   ),
+                  textCapitalization: TextCapitalization.words,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Indica un nombre' : null,
                 ),
-                const SizedBox(width: 8),
-                FilledButton.icon(
-                  onPressed: _anadirCopaNueva,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Añadir'),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _formato,
+                  decoration: const InputDecoration(
+                    labelText: 'Formato',
+                    prefixIcon: Icon(Icons.groups_outlined),
+                    helperText:
+                        'Parejas = 2 pilotos por equipo. Individual = 1 piloto',
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'PAREJAS', child: Text('Parejas')),
+                    DropdownMenuItem(value: 'INDIVIDUAL', child: Text('Individual')),
+                    DropdownMenuItem(value: '24H', child: Text('24h')),
+                    DropdownMenuItem(value: '12H', child: Text('12h')),
+                  ],
+                  onChanged: (v) => setState(() => _formato = v ?? 'PAREJAS'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _anio,
+                  decoration: const InputDecoration(
+                    labelText: 'Año',
+                    prefixIcon: Icon(Icons.calendar_today_outlined),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (v) {
+                    final n = int.tryParse(v ?? '');
+                    if (n == null || n < 2000 || n > 2100) return 'Año inválido';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 4),
+                SwitchListTile(
+                  value: _activo,
+                  onChanged: (v) => setState(() => _activo = v),
+                  title: Text(esNuevo
+                      ? 'Activar este campeonato al crearlo'
+                      : 'Campeonato visible'),
+                  subtitle: const Text(
+                      'Solo los campeonatos visibles aparecen en el selector'),
                 ),
               ],
             ),
-            if (_copasSel.isNotEmpty) ...[
-              const SizedBox(height: 28),
-              Text('Anchura de eje (verificación)',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: cs.primary,
-                        fontWeight: FontWeight.w700,
-                      )),
-              const SizedBox(height: 4),
-              Text(
-                'Anchura máxima de eje (mm) por categoría. Deja vacío si en '
-                'esa copa no se comprueba.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 8),
-              for (final copa in _copasSel.toList()..sort()) ...[
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text('Copa $copa',
-                      style: Theme.of(context).textTheme.labelMedium),
+            _Seccion(
+              titulo: 'Categorías / copas *',
+              children: [
+                Text(
+                  'Selecciona las que se usan en este campeonato. Pueden ser una sola '
+                  '(p.ej. "Grupo C") o varias (p.ej. "LMP + HYP + GT3").',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
+                const SizedBox(height: 12),
+                catalogoAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Text('Error: $e'),
+                  data: (copas) {
+                    // Asegurar que las copas ya seleccionadas (aunque no estén
+                    // en el catálogo) aparezcan también
+                    final todas = {...copas, ..._copasSel}.toList()..sort();
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: todas
+                          .map((c) => FilterChip(
+                                label: Text(c),
+                                selected: _copasSel.contains(c),
+                                onSelected: (v) => setState(() {
+                                  if (v) {
+                                    _copasSel.add(c);
+                                  } else {
+                                    _copasSel.remove(c);
+                                  }
+                                }),
+                              ))
+                          .toList(),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _nuevaCopa,
+                        decoration: const InputDecoration(
+                          labelText: 'Añadir nueva categoría',
+                          helperText: 'Si no la encuentras arriba',
+                          isDense: true,
+                        ),
+                        onSubmitted: (_) => _anadirCopaNueva(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      onPressed: _anadirCopaNueva,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Añadir'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            _Seccion(
+              titulo: 'Motor *',
+              children: [
+                SelectorTipoMotor(
+                  valor: _tipoMotor,
+                  onCambio: (v) => setState(() => _tipoMotor = v),
+                ),
+                if (tipoMotorConSorteo(_tipoMotor)) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Rango de números de motor que la organización sortea entre los '
+                  'equipos en cada prueba. Déjalo vacío si no usáis sorteo.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _motorMin,
+                        decoration: const InputDecoration(
+                          labelText: 'Motor desde',
+                          prefixIcon: Icon(Icons.tag),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _motorMax,
+                        decoration: const InputDecoration(
+                          labelText: 'Motor hasta',
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (v) {
+                          final min = int.tryParse(_motorMin.text.trim());
+                          final max = int.tryParse(v?.trim() ?? '');
+                          if (min == null && max == null) return null;
+                          if (min == null || max == null) {
+                            return 'Indica ambos';
+                          }
+                          if (max < min) return 'Hasta ≥ desde';
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                ],
+              ],
+            ),
+            _Seccion(
+              titulo: 'Créditos y tesorería',
+              descripcion: 'Actívalos solo si el campeonato los usa; si no, sus pantallas se ocultan del menú.',
+              children: [
+                // --- Créditos (handicap) ---
+                Text('Créditos', style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 4),
+                SwitchListTile(
+                  value: _usaCreditos,
+                  onChanged: (v) => setState(() => _usaCreditos = v),
+                  title: const Text('Usa sistema de créditos (handicap)'),
+                  subtitle: const Text(
+                      'Sistema de handicap por créditos. Apágalo si el campeonato no lo usa.'),
+                ),
+                if (esNuevo && _usaCreditos) _selectorImportarPilotos(),
+                if (_usaCreditos) ...[
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _tope,
+                    decoration: const InputDecoration(
+                      labelText: 'Tope regularización créditos',
+                      helperText:
+                          'Máximo de créditos al regularizar al cierre de temporada',
+                      prefixIcon: Icon(Icons.toll_outlined),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (v) {
+                      final n = int.tryParse(v ?? '');
+                      if (n == null || n < 1) return 'Número positivo';
+                      return null;
+                    },
+                  ),
+                ],
+
+                const SizedBox(height: 24),
+
+                // --- Tesorería (cuotas/pagos) ---
+                Text('Tesorería', style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 4),
+                SwitchListTile(
+                  value: _usaTesoreria,
+                  onChanged: (v) => setState(() => _usaTesoreria = v),
+                  title: const Text('Gestiona tesorería (cuotas/pagos)'),
+                  subtitle: const Text(
+                      'Apágalo si este campeonato no controla el dinero.'),
+                ),
+                if (_usaTesoreria) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'PAGAT es la cuota total. APORTACIÓN COORDINADORA + APORTACIÓN CLUB '
+                    'deben sumar el PAGAT (es el desglose de a dónde va el dinero).',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
                     children: [
                       Expanded(
                         child: TextFormField(
-                          controller: _anchuraCtrl(copa, 'del'),
+                          controller: _cuotaPagat,
                           decoration: const InputDecoration(
-                            labelText: 'Máx delantero (mm)',
-                            prefixIcon: Icon(Icons.straighten_outlined),
-                            isDense: true,
+                            labelText: 'Pagat (€) *',
+                            prefixIcon: Icon(Icons.payments_outlined),
                           ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
+                          validator: (v) {
+                            final t = v?.trim() ?? '';
+                            if (t.isEmpty) return 'Indica la cuota';
+                            if (double.tryParse(t.replaceAll(',', '.')) == null) {
+                              return 'Número no válido';
+                            }
+                            return null;
+                          },
+                          keyboardType:
+                              const TextInputType.numberWithOptions(decimal: true),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextFormField(
-                          controller: _anchuraCtrl(copa, 'tra'),
+                          controller: _cuotaCoord,
                           decoration: const InputDecoration(
-                            labelText: 'Máx trasero (mm)',
-                            prefixIcon: Icon(Icons.straighten_outlined),
-                            isDense: true,
+                            labelText: 'Coordinadora (€)',
                           ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
+                          keyboardType:
+                              const TextInputType.numberWithOptions(decimal: true),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _cuotaClub,
+                          decoration: const InputDecoration(
+                            labelText: 'Club (€)',
+                          ),
+                          keyboardType:
+                              const TextInputType.numberWithOptions(decimal: true),
                         ),
                       ),
                     ],
                   ),
-                ),
+                ],
+
+                const SizedBox(height: 24),
               ],
-            ],
-
-            const SizedBox(height: 28),
-            Text('Reglas',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w700,
-                    )),
-            const SizedBox(height: 12),
-
-            // --- Créditos (handicap) ---
-            Text('Créditos', style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 4),
-            SwitchListTile(
-              value: _usaCreditos,
-              onChanged: (v) => setState(() => _usaCreditos = v),
-              title: const Text('Usa sistema de créditos (handicap)'),
-              subtitle: const Text(
-                  'Sistema de handicap por créditos. Apágalo si el campeonato no lo usa.'),
             ),
-            if (esNuevo && _usaCreditos) _selectorImportarPilotos(),
-            if (_usaCreditos) ...[
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _tope,
-                decoration: const InputDecoration(
-                  labelText: 'Tope regularización créditos',
-                  helperText:
-                      'Máximo de créditos al regularizar al cierre de temporada',
-                  prefixIcon: Icon(Icons.toll_outlined),
+            // Al crear, lo opcional queda plegado. Visibility mantiene los
+            // campos montados para que el formulario los siga validando.
+            if (esNuevo && !_masOpciones)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.expand_more),
+                  label: const Text(
+                      'Más opciones: puntuación, verificación y PDF'),
+                  onPressed: () => setState(() => _masOpciones = true),
                 ),
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  final n = int.tryParse(v ?? '');
-                  if (n == null || n < 1) return 'Número positivo';
-                  return null;
-                },
               ),
-            ],
-
-            const SizedBox(height: 24),
-
-            // --- Tesorería (cuotas/pagos) ---
-            Text('Tesorería', style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 4),
-            SwitchListTile(
-              value: _usaTesoreria,
-              onChanged: (v) => setState(() => _usaTesoreria = v),
-              title: const Text('Gestiona tesorería (cuotas/pagos)'),
-              subtitle: const Text(
-                  'Apágalo si este campeonato no controla el dinero.'),
-            ),
-            if (_usaTesoreria) ...[
-              const SizedBox(height: 12),
-              Text(
-                'PAGAT es la cuota total. APORTACIÓN COORDINADORA + APORTACIÓN CLUB '
-                'deben sumar el PAGAT (es el desglose de a dónde va el dinero).',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 12),
-              Row(
+            Visibility(
+              visible: !esNuevo || _masOpciones,
+              maintainState: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _cuotaPagat,
-                      decoration: const InputDecoration(
-                        labelText: 'Pagat (€) *',
-                        prefixIcon: Icon(Icons.payments_outlined),
+                  _Seccion(
+                    titulo: 'Puntuación',
+                    children: [
+                      TextFormField(
+                        controller: _descartes,
+                        decoration: const InputDecoration(
+                          labelText: 'Número de descartes',
+                          helperText: 'Cuántas peores pruebas se descartan al piloto',
+                          prefixIcon: Icon(Icons.delete_outline),
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (v) {
+                          final n = int.tryParse(v ?? '');
+                          if (n == null || n < 0 || n > 5) return 'Entre 0 y 5';
+                          return null;
+                        },
                       ),
-                      validator: (v) {
-                        final t = v?.trim() ?? '';
-                        if (t.isEmpty) return 'Indica la cuota';
-                        if (double.tryParse(t.replaceAll(',', '.')) == null) {
-                          return 'Número no válido';
-                        }
-                        return null;
-                      },
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                    ),
+                      if (_esElActivo) ...[
+                        const SizedBox(height: 8),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.format_list_numbered_outlined),
+                          title: const Text('Tabla de puntos'),
+                          subtitle: const Text('Puntos por posición en cada prueba'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => const PantallaEditorTablaPuntos())),
+                        ),
+                      ],
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _cuotaCoord,
-                      decoration: const InputDecoration(
-                        labelText: 'Coordinadora (€)',
+                  _Seccion(
+                    titulo: 'Verificación',
+                    descripcion: 'Anchura de eje, coches y fabricantes que se comprueban al verificar.',
+                    children: [
+                      if (_copasSel.isNotEmpty) ...[
+                        Text('Anchura de eje', style: Theme.of(context).textTheme.titleSmall),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Anchura máxima de eje (mm) por categoría. Deja vacío si en '
+                          'esa copa no se comprueba.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 8),
+                        for (final copa in _copasSel.toList()..sort()) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text('Copa $copa',
+                                style: Theme.of(context).textTheme.labelMedium),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _anchuraCtrl(copa, 'del'),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Máx delantero (mm)',
+                                      prefixIcon: Icon(Icons.straighten_outlined),
+                                      isDense: true,
+                                    ),
+                                    keyboardType: const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _anchuraCtrl(copa, 'tra'),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Máx trasero (mm)',
+                                      prefixIcon: Icon(Icons.straighten_outlined),
+                                      isDense: true,
+                                    ),
+                                    keyboardType: const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+
+                      if (!esNuevo) ...[
+                        const SizedBox(height: 16),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.directions_car_outlined),
+                          title: Text(_usaCreditos
+                              ? 'Peso mínimo y créditos en este campeonato'
+                              : 'Peso mínimo en este campeonato'),
+                          subtitle: const Text('Fija los valores de los coches para que '
+                              'los cambios del catálogo no afecten a este campeonato.'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => PantallaCochesCampeonato(
+                                  campeonatoId: widget.campeonatoId!))),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      Text('Fabricante', style: Theme.of(context).textTheme.titleSmall),
+                      SelectorMarcasPermitidas(
+                        activo: _limitarMarcas,
+                        seleccion: _marcasPermitidas,
+                        onActivo: (v) => setState(() => _limitarMarcas = v),
+                        onCambio: (sel) => setState(() => _marcasPermitidas = sel),
                       ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _cuotaClub,
-                      decoration: const InputDecoration(
-                        labelText: 'Club (€)',
+                  _Seccion(
+                    titulo: 'Marca en los PDF (opcional)',
+                    children: [
+                      Text(
+                        'Título de cabecera y lema del pie en las exportaciones (PDF) de '
+                        'ESTE campeonato. Si lo dejas vacío, se usa un valor por defecto.',
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                    ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _marcaTitulo,
+                        decoration: const InputDecoration(
+                          labelText: 'Título de cabecera',
+                          hintText: 'Ej: PITWALL o el nombre de tu club',
+                          prefixIcon: Icon(Icons.title),
+                        ),
+                        textCapitalization: TextCapitalization.characters,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _marcaLema,
+                        decoration: const InputDecoration(
+                          labelText: 'Lema del pie',
+                          hintText: 'Ej: tu club · localidad',
+                          prefixIcon: Icon(Icons.notes),
+                        ),
+                        maxLines: 2,
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-
-            const SizedBox(height: 24),
-
-            // --- Puntuación ---
-            Text('Puntuación', style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 4),
-            TextFormField(
-              controller: _descartes,
-              decoration: const InputDecoration(
-                labelText: 'Número de descartes',
-                helperText: 'Cuántas peores pruebas se descartan al piloto',
-                prefixIcon: Icon(Icons.delete_outline),
-              ),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                final n = int.tryParse(v ?? '');
-                if (n == null || n < 0 || n > 5) return 'Entre 0 y 5';
-                return null;
-              },
-            ),
-            if (!esNuevo) ...[
-              const SizedBox(height: 28),
-              Text('Coches (verificación)',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: cs.primary,
-                        fontWeight: FontWeight.w700,
-                      )),
-              const SizedBox(height: 4),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.directions_car_outlined),
-                title: Text(_usaCreditos
-                    ? 'Peso mínimo y créditos en este campeonato'
-                    : 'Peso mínimo en este campeonato'),
-                subtitle: const Text('Fija los valores de los coches para que '
-                    'los cambios del catálogo no afecten a este campeonato.'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => PantallaCochesCampeonato(
-                        campeonatoId: widget.campeonatoId!))),
-              ),
-            ],
-            const SizedBox(height: 28),
-            Text('Motor (verificación)',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w700,
-                    )),
-            const SizedBox(height: 4),
-            SelectorTipoMotor(
-              valor: _tipoMotor,
-              onCambio: (v) => setState(() => _tipoMotor = v),
-            ),
-            if (tipoMotorConSorteo(_tipoMotor)) ...[
-            const SizedBox(height: 16),
-            Text(
-              'Rango de números de motor que la organización sortea entre los '
-              'equipos en cada prueba. Déjalo vacío si no usáis sorteo.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _motorMin,
-                    decoration: const InputDecoration(
-                      labelText: 'Motor desde',
-                      prefixIcon: Icon(Icons.tag),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    controller: _motorMax,
-                    decoration: const InputDecoration(
-                      labelText: 'Motor hasta',
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (v) {
-                      final min = int.tryParse(_motorMin.text.trim());
-                      final max = int.tryParse(v?.trim() ?? '');
-                      if (min == null && max == null) return null;
-                      if (min == null || max == null) {
-                        return 'Indica ambos';
-                      }
-                      if (max < min) return 'Hasta ≥ desde';
-                      return null;
-                    },
-                  ),
-                ),
-              ],
-            ),
-            ],
-            const SizedBox(height: 28),
-            Text('Fabricante (verificación)',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w700,
-                    )),
-            SelectorMarcasPermitidas(
-              activo: _limitarMarcas,
-              seleccion: _marcasPermitidas,
-              onActivo: (v) => setState(() => _limitarMarcas = v),
-              onCambio: (sel) => setState(() => _marcasPermitidas = sel),
-            ),
-            const SizedBox(height: 28),
-            Text('Marca en los PDF (opcional)',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w700,
-                    )),
-            const SizedBox(height: 4),
-            Text(
-              'Título de cabecera y lema del pie en las exportaciones (PDF) de '
-              'ESTE campeonato. Si lo dejas vacío, se usa un valor por defecto.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _marcaTitulo,
-              decoration: const InputDecoration(
-                labelText: 'Título de cabecera',
-                hintText: 'Ej: PITWALL o el nombre de tu club',
-                prefixIcon: Icon(Icons.title),
-              ),
-              textCapitalization: TextCapitalization.characters,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _marcaLema,
-              decoration: const InputDecoration(
-                labelText: 'Lema del pie',
-                hintText: 'Ej: tu club · localidad',
-                prefixIcon: Icon(Icons.notes),
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              value: _activo,
-              onChanged: (v) => setState(() => _activo = v),
-              title: Text(esNuevo
-                  ? 'Activar este campeonato al crearlo'
-                  : 'Campeonato visible'),
-              subtitle: const Text(
-                  'Solo los campeonatos visibles aparecen en el selector'),
             ),
             if (!esNuevo)
-              SwitchListTile(
-                value: _finalizado,
-                onChanged: (v) => setState(() => _finalizado = v),
-                title: const Text('Campeonato finalizado'),
-                subtitle: const Text(
-                    'Temporada cerrada: la clasificación ordena por netos, se '
-                    'habilita la bonificación de cierre y sus verificaciones '
-                    'quedan bloqueadas (solo lectura).'),
+              _Seccion(
+                titulo: 'Estado',
+                children: [
+                  SwitchListTile(
+                    value: _finalizado,
+                    onChanged: (v) => setState(() => _finalizado = v),
+                    title: const Text('Campeonato finalizado'),
+                    subtitle: const Text(
+                        'Temporada cerrada: la clasificación ordena por netos, se '
+                        'habilita la bonificación de cierre y sus verificaciones '
+                        'quedan bloqueadas (solo lectura).'),
+                  ),
+                ],
               ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -927,3 +976,44 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   }
 }
 
+/// Tarjeta de una sección del editor, con su título y una explicación
+/// opcional.
+class _Seccion extends StatelessWidget {
+  const _Seccion({
+    required this.titulo,
+    this.descripcion,
+    required this.children,
+  });
+
+  final String titulo;
+  final String? descripcion;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(titulo,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w700,
+                    )),
+            if (descripcion != null) ...[
+              const SizedBox(height: 4),
+              Text(descripcion!,
+                  style: Theme.of(context).textTheme.bodySmall),
+            ],
+            const SizedBox(height: 12),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
