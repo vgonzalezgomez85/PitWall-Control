@@ -6,6 +6,8 @@ Flutter desktop app **PitWall Control** — offline manager for slot-car champio
 
 The whole codebase is **Spanish**: identifiers, comments, UI strings, commit messages, and the changelog. Write new code in Spanish to match (e.g. `pantalla_`, `repositorio_`, `editor_`, `importador_` prefixes). Do not translate existing identifiers.
 
+The **UI is translated** (ES · CA · EN · FR · IT) with gen-l10n: dictionaries in `lib/l10n/app_<lang>.arb` (Spanish `app_es.arb` is the template; keys in Spanish camelCase), generated class `Textos` in `lib/l10n/generado/` (regenerated on build, don't hand-edit). Use `context.l.clave` (`lib/core/idioma.dart`); every new user-visible string goes into the five ARB files, never as a literal. Translation is being rolled out screen by screen: screens not migrated yet still have Spanish literals. Follow PitWall Manager terminology (tanda = Round/Batteria, manga = Heat/Manche). PDF exports have their own small dictionary in `lib/services/exportar_config.dart`.
+
 ## Commands
 
 - `flutter analyze` — lint/typecheck.

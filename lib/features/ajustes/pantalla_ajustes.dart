@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/entorno.dart';
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../actualizacion/pantalla_actualizacion.dart';
 import '../google/pantalla_backup.dart';
@@ -35,53 +36,98 @@ class PantallaAjustes extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final oscuro = ref.watch(temaOscuroProvider);
+    final idioma = ref.watch(idiomaProvider);
+    final l = context.l;
 
     void abrir(Widget destino) => Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => destino));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajustes')),
+      appBar: AppBar(title: Text(l.menuAjustes)),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
-          const _Seccion('Datos'),
+          _Seccion(l.seccionDatos),
           _Opcion(
             icono: Icons.cloud_sync_outlined,
-            titulo: 'Copias de seguridad',
-            subtitulo:
-                'Subir o restaurar la copia en Drive, o restaurar desde archivo',
+            titulo: l.copiasSeguridad,
+            subtitulo: l.copiasSeguridadSub,
             onTap: () => abrir(const PantallaBackup()),
           ),
           _Opcion(
             icono: Icons.cloud_outlined,
-            titulo: 'Google (Sheets y Drive)',
-            subtitulo: 'Conectar la cuenta y las credenciales de Google Cloud',
+            titulo: l.googleSheetsDrive,
+            subtitulo: l.googleSub,
             onTap: () => abrir(const PantallaConfiguracionGoogle()),
           ),
           _Opcion(
             icono: Icons.file_download_outlined,
-            titulo: 'Plantillas CSV',
-            subtitulo: 'Descargar plantillas para importar pilotos, equipos…',
+            titulo: l.plantillasCsv,
+            subtitulo: l.plantillasCsvSub,
             onTap: () => abrir(const PantallaPlantillasCsv()),
           ),
-          const _Seccion('Apariencia'),
+          _Seccion(l.seccionApariencia),
+          // Fila + lista al pulsar (un desplegable a la derecha no cabe en
+          // el móvil).
+          ListTile(
+            leading: const Icon(Icons.translate),
+            title: Text(l.idioma),
+            subtitle: Text(idioma == null
+                ? l.idiomaAutomatico
+                : idiomasApp
+                    .firstWhere((i) => i.$1 == idioma.languageCode,
+                        orElse: () => idiomasApp.first)
+                    .$2),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              // (codigo,) para distinguir «Automático» (null) de cancelar.
+              final elegido = await showDialog<(String?,)>(
+                context: context,
+                builder: (ctx) => SimpleDialog(
+                  title: Text(l.idioma),
+                  children: [
+                    RadioGroup<String?>(
+                      groupValue: idioma?.languageCode,
+                      onChanged: (c) => Navigator.pop(ctx, (c,)),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final (codigo, nombre) in [
+                            (null, l.idiomaAutomatico),
+                            ...idiomasApp,
+                          ])
+                            RadioListTile<String?>(
+                              value: codigo,
+                              title: Text(nombre),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+              if (elegido != null) {
+                await ref.read(idiomaProvider.notifier).elegir(elegido.$1);
+              }
+            },
+          ),
           SwitchListTile(
             secondary: const Icon(Icons.dark_mode_outlined),
-            title: const Text('Modo oscuro'),
+            title: Text(l.modoOscuro),
             value: oscuro,
             onChanged: (_) => ref.read(temaOscuroProvider.notifier).alternar(),
           ),
-          const _Seccion('Acerca de'),
+          _Seccion(l.seccionAcercaDe),
           FutureBuilder<PackageInfo>(
             future: PackageInfo.fromPlatform(),
             builder: (context, snap) {
               final v = snap.data?.version;
               return _Opcion(
                 icono: Icons.new_releases_outlined,
-                titulo: 'Novedades',
+                titulo: l.novedades,
                 subtitulo: v == null
-                    ? 'Historial de versiones'
-                    : 'Versión $v${esEntornoDev ? ' DEV' : ''} · historial de versiones',
+                    ? l.historialVersiones
+                    : l.versionHistorial('$v${esEntornoDev ? ' DEV' : ''}'),
                 onTap: () => abrir(const PantallaChangelog()),
               );
             },
@@ -89,8 +135,8 @@ class PantallaAjustes extends ConsumerWidget {
           if (!esEntornoDev)
             _Opcion(
               icono: Icons.system_update_alt,
-              titulo: 'Actualizaciones',
-              subtitulo: 'Buscar una versión nueva y descargarla',
+              titulo: l.actualizaciones,
+              subtitulo: l.actualizacionesSub,
               onTap: () => abrir(const PantallaActualizacion()),
             ),
         ],

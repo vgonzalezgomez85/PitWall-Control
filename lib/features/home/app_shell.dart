@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/entorno.dart';
+import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/logo_pitwall.dart';
 import '../../data/database/app_database.dart';
@@ -46,9 +47,28 @@ class _Destino {
       this.icono, this.iconoSel, this.titulo, this.pantalla, this.grupo);
   final IconData icono;
   final IconData iconoSel;
+  /// Identificador del destino (en español; no se muestra tal cual).
   final String titulo;
   final Widget pantalla;
   final _Grupo grupo;
+
+  /// Nombre en el idioma de la app.
+  String etiqueta(BuildContext context) {
+    final l = context.l;
+    return switch (titulo) {
+      'Inicio' => l.menuInicio,
+      'Pruebas' => l.menuPruebas,
+      'Participantes' => l.menuParticipantes,
+      'Clasificación' => l.menuClasificacion,
+      'Tesorería' => l.menuTesoreria,
+      'Créditos' => l.menuCreditos,
+      'Verificación libre' => l.menuVerificacionLibre,
+      'Catálogos' => l.menuCatalogos,
+      'Gestionar campeonatos' => l.menuGestionarCampeonatos,
+      'Ajustes' => l.menuAjustes,
+      _ => titulo,
+    };
+  }
 }
 
 const _destinos = <_Destino>[
@@ -74,10 +94,11 @@ const _destinos = <_Destino>[
       PantallaAjustes(), _Grupo.ajustes),
 ];
 
-const _titulosGrupo = {
-  _Grupo.campeonato: 'CAMPEONATO',
-  _Grupo.herramientas: 'HERRAMIENTAS',
-};
+String _tituloGrupo(BuildContext context, _Grupo g) => switch (g) {
+      _Grupo.campeonato => context.l.grupoCampeonato,
+      _Grupo.herramientas => context.l.grupoHerramientas,
+      _Grupo.ajustes => context.l.menuAjustes,
+    };
 
 /// Destinos visibles según las reglas del campeonato activo: oculta Tesorería
 /// y/o Créditos cuando el campeonato no los usa.
@@ -104,7 +125,7 @@ class AppShell extends ConsumerWidget {
     return campeonatosAsync.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
+      error: (e, _) => Scaffold(body: Center(child: Text(context.l.errorDetalle('$e')))),
       data: (campeonatos) {
         if (campeonatos.isEmpty) {
           return const _Vacio();
@@ -235,11 +256,11 @@ class _ShellMovil extends ConsumerWidget {
             NavigationDestination(
               icon: Icon(destinos[i].icono),
               selectedIcon: Icon(destinos[i].iconoSel),
-              label: destinos[i].titulo,
+              label: destinos[i].etiqueta(context),
             ),
-          const NavigationDestination(
-            icon: Icon(Icons.menu),
-            label: 'Más',
+          NavigationDestination(
+            icon: const Icon(Icons.menu),
+            label: context.l.menuMas,
           ),
         ],
       ),
@@ -272,7 +293,7 @@ class _ShellMovil extends ConsumerWidget {
               leading: Icon(i == indice
                   ? destinos[i].iconoSel
                   : destinos[i].icono),
-              title: Text(destinos[i].titulo),
+              title: Text(destinos[i].etiqueta(ctx)),
               selected: i == indice,
               onTap: () => ir(i),
             );
@@ -281,7 +302,7 @@ class _ShellMovil extends ConsumerWidget {
           child: ListView(
             shrinkWrap: true,
             children: [
-              cabecera('CAMPEONATO ACTIVO'),
+              cabecera(ctx.l.grupoCampeonatoActivo),
               for (final c in campeonatos)
                 ListTile(
                   leading: Icon(c.id == activo?.id
@@ -295,7 +316,7 @@ class _ShellMovil extends ConsumerWidget {
                 ),
               for (final g in [_Grupo.campeonato, _Grupo.herramientas])
                 if (enMas.any((i) => destinos[i].grupo == g)) ...[
-                  cabecera(_titulosGrupo[g]!),
+                  cabecera(_tituloGrupo(ctx, g)),
                   for (final i in enMas)
                     if (destinos[i].grupo == g) item(i),
                 ],
@@ -344,7 +365,7 @@ class _BarraLateral extends ConsumerWidget {
       if (g == _Grupo.ajustes) continue;
       if (g != grupoAnterior) {
         principales.add(_CabeceraGrupo(
-          titulo: _titulosGrupo[g]!,
+          titulo: _tituloGrupo(context, g),
           extendida: extendida,
           primera: grupoAnterior == null,
         ));
@@ -446,7 +467,7 @@ class _ItemMenu extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         child: Tooltip(
-          message: destino.titulo,
+          message: destino.etiqueta(context),
           child: Material(
             color: fondo,
             borderRadius: BorderRadius.circular(16),
@@ -475,7 +496,7 @@ class _ItemMenu extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    destino.titulo,
+                    destino.etiqueta(context),
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: seleccionado
@@ -572,15 +593,16 @@ class _SelectorCampeonatoRail extends ConsumerWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: PopupMenuButton<int>(
-          tooltip: 'Campeonato: ${activo.nombre}',
+          tooltip: context.l.tooltipCampeonato(activo.nombre),
           icon: Icon(Icons.emoji_events, color: color.primary),
           onSelected: elegir,
           itemBuilder: (_) => [
             for (final c in campeonatos)
               PopupMenuItem(value: c.id, child: Text(c.nombre)),
             const PopupMenuDivider(),
-            const PopupMenuItem(
-                value: _gestionar, child: Text('Gestionar campeonatos…')),
+            PopupMenuItem(
+                value: _gestionar,
+                child: Text(context.l.gestionarCampeonatosPuntos)),
           ],
         ),
       );
@@ -597,7 +619,7 @@ class _SelectorCampeonatoRail extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Campeonato activo',
+          Text(context.l.campeonatoActivo,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: color.onPrimaryContainer.withValues(alpha: 0.8),
                   )),
@@ -616,7 +638,7 @@ class _SelectorCampeonatoRail extends ConsumerWidget {
                   DropdownMenuItem(value: c.id, child: Text(c.nombre)),
                 DropdownMenuItem(
                   value: _gestionar,
-                  child: Text('Gestionar campeonatos…',
+                  child: Text(context.l.gestionarCampeonatosPuntos,
                       style: TextStyle(
                         fontWeight: FontWeight.w500,
                         color: color.onPrimaryContainer.withValues(alpha: 0.8),
@@ -710,46 +732,46 @@ class _Vacio extends StatelessWidget {
             children: [
               const LogoPitwall(size: 96),
               const SizedBox(height: 24),
-              Text('Aún no hay campeonatos',
+              Text(context.l.vacioTitulo,
                   style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 8),
               Text(
-                'Crea el primer campeonato para empezar a gestionar pruebas y resultados.',
+                context.l.vacioTexto,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Crear campeonato'),
+                label: Text(context.l.crearCampeonato),
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const EditorCampeonato())),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 icon: const Icon(Icons.fact_check_outlined),
-                label: const Text('Solo verificar coches'),
+                label: Text(context.l.soloVerificarCoches),
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const PantallaVerificacionLibre())),
               ),
               const SizedBox(height: 28),
               // Sin campeonato también hay que poder preparar el catálogo y,
               // desde Ajustes, conectar Google o restaurar una copia.
-              const Wrap(
+              Wrap(
                 alignment: WrapAlignment.center,
                 children: [
                   _OpcionVacio(
                     child: _AccionSecundaria(
                       icono: Icons.inventory_2_outlined,
-                      etiqueta: 'Catálogos',
-                      destino: PantallaCatalogos(),
+                      etiqueta: context.l.menuCatalogos,
+                      destino: const PantallaCatalogos(),
                     ),
                   ),
                   _OpcionVacio(
                     child: _AccionSecundaria(
                       icono: Icons.settings_outlined,
-                      etiqueta: 'Ajustes y copias',
-                      destino: PantallaAjustes(),
+                      etiqueta: context.l.ajustesYCopias,
+                      destino: const PantallaAjustes(),
                     ),
                   ),
                 ],

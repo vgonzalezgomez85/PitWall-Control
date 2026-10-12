@@ -17,6 +17,8 @@
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'package:flutter/material.dart';
 
+import '../idioma.dart';
+
 /// Opción de una [AccionBarra] con submenú (p. ej. «Exportar» → PDF / CSV).
 class OpcionAccion {
   const OpcionAccion(this.icono, this.etiqueta, this.onTap);
@@ -148,7 +150,7 @@ class _MenuMas extends StatelessWidget {
         );
 
     return PopupMenuButton<VoidCallback>(
-      tooltip: 'Más opciones',
+      tooltip: context.l.masOpciones,
       icon: const Icon(Icons.more_vert),
       onSelected: (f) => f(),
       itemBuilder: (_) => [

@@ -16,11 +16,11 @@
 // Additional permission under GPLv3 section 7: distribution through application
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/idioma.dart';
 import 'core/proveedores.dart';
 import 'core/tema.dart';
 import 'data/database/app_database.dart';
@@ -90,13 +90,12 @@ class _AppPitWallState extends ConsumerState<AppPitWall> {
       theme: TemaApp.claro(),
       darkTheme: TemaApp.oscuro(),
       themeMode: oscuro ? ThemeMode.dark : ThemeMode.light,
-      locale: const Locale('es', 'ES'),
-      supportedLocales: const [Locale('es', 'ES'), Locale('en', 'US')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      // Idioma de Ajustes; sin elegir, el del sistema (o español).
+      locale: ref.watch(idiomaProvider),
+      supportedLocales: Textos.supportedLocales,
+      localeResolutionCallback: (sistema, soportados) =>
+          resolverIdioma(sistema, soportados),
+      localizationsDelegates: Textos.localizationsDelegates,
       home: _semillaLista
           ? const AppShell()
           : const Scaffold(body: Center(child: CircularProgressIndicator())),

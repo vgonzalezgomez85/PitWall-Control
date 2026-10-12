@@ -1,0 +1,145 @@
+{
+  "@@locale": "es",
+  "menuInicio": "Inicio",
+  "menuPruebas": "Pruebas",
+  "menuParticipantes": "Participantes",
+  "menuClasificacion": "Clasificación",
+  "menuTesoreria": "Tesorería",
+  "menuCreditos": "Créditos",
+  "menuVerificacionLibre": "Verificación libre",
+  "menuCatalogos": "Catálogos",
+  "menuGestionarCampeonatos": "Gestionar campeonatos",
+  "menuAjustes": "Ajustes",
+  "menuMas": "Más",
+  "grupoCampeonato": "CAMPEONATO",
+  "grupoHerramientas": "HERRAMIENTAS",
+  "grupoCampeonatoActivo": "CAMPEONATO ACTIVO",
+  "campeonatoActivo": "Campeonato activo",
+  "gestionarCampeonatosPuntos": "Gestionar campeonatos…",
+  "tooltipCampeonato": "Campeonato: {nombre}",
+  "@tooltipCampeonato": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDetalle": "Error: {detalle}",
+  "@errorDetalle": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "vacioTitulo": "Aún no hay campeonatos",
+  "vacioTexto": "Crea el primer campeonato para empezar a gestionar pruebas y resultados.",
+  "crearCampeonato": "Crear campeonato",
+  "soloVerificarCoches": "Solo verificar coches",
+  "ajustesYCopias": "Ajustes y copias",
+  "masOpciones": "Más opciones",
+  "statPilotos": "pilotos",
+  "statEquipos": "equipos",
+  "statPruebas": "pruebas",
+  "pendientes": "Pendientes",
+  "proximaPrueba": "Próxima prueba",
+  "noHayPruebasPendientes": "No hay pruebas pendientes",
+  "botonInscritos": "Inscritos",
+  "botonVerificar": "Verificar",
+  "botonResultados": "Resultados",
+  "pendVerificaciones": "{n, plural, =1{verificación sin validar} other{verificaciones sin validar}}",
+  "@pendVerificaciones": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "pendPagos": "{n, plural, =1{pago sin cobrar} other{pagos sin cobrar}}",
+  "@pendPagos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "pendSinResultados": "{n, plural, =1{prueba ya disputada sin resultados} other{pruebas ya disputadas sin resultados}}",
+  "@pendSinResultados": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "todoAlDia": "Todo al día",
+  "todoAlDiaSinPruebas": "No hay pruebas pendientes ni resultados por registrar.",
+  "todoAlDiaEnPrueba": "Sin verificaciones ni pagos pendientes en {prueba}.",
+  "@todoAlDiaEnPrueba": {
+    "placeholders": {
+      "prueba": {
+        "type": "String"
+      }
+    }
+  },
+  "liderCampeonato": "Líder del campeonato",
+  "sinResultadosTodavia": "Sin resultados todavía",
+  "puntosAbrev": "{puntos} pts",
+  "@puntosAbrev": {
+    "placeholders": {
+      "puntos": {
+        "type": "int"
+      }
+    }
+  },
+  "seccionDatos": "Datos",
+  "copiasSeguridad": "Copias de seguridad",
+  "copiasSeguridadSub": "Subir o restaurar la copia en Drive, o restaurar desde archivo",
+  "googleSheetsDrive": "Google (Sheets y Drive)",
+  "googleSub": "Conectar la cuenta y las credenciales de Google Cloud",
+  "plantillasCsv": "Plantillas CSV",
+  "plantillasCsvSub": "Descargar plantillas para importar pilotos, equipos…",
+  "seccionApariencia": "Apariencia",
+  "modoOscuro": "Modo oscuro",
+  "idioma": "Idioma",
+  "idiomaAutomatico": "Automático (idioma del sistema)",
+  "seccionAcercaDe": "Acerca de",
+  "novedades": "Novedades",
+  "historialVersiones": "Historial de versiones",
+  "versionHistorial": "Versión {version} · historial de versiones",
+  "@versionHistorial": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "actualizaciones": "Actualizaciones",
+  "actualizacionesSub": "Buscar una versión nueva y descargarla",
+  "actDescargaIncompleta": "La descarga no llegó completa. Inténtalo otra vez.",
+  "actDescargaAtascada": "La descarga se ha atascado. Inténtalo otra vez.",
+  "actNoSePudoDescargar": "No se pudo descargar la actualización. Inténtalo de nuevo o descárgala desde pitwall.es.",
+  "actHayVersionNueva": "Hay una versión nueva: v{version}",
+  "@actHayVersionNueva": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "actDescargaNueva": "Descarga la nueva versión para tener las últimas mejoras.",
+  "cancelar": "Cancelar",
+  "masTarde": "Más tarde",
+  "actPermisoAndroid": "Android pedirá permiso para instalar apps de esta fuente la primera vez. Después, vuelve a pulsar «Actualizar».",
+  "actSeAbriraNavegador": "Se abrirá el navegador para descargar el instalador de esta versión.",
+  "actActualizar": "Actualizar",
+  "actDescargar": "Descargar",
+  "actDescargando": "Descargando…",
+  "actDescargandoPct": "Descargando… {pct} %",
+  "@actDescargandoPct": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  }
+}

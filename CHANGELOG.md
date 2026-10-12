@@ -14,6 +14,11 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.37.0] — 2026-10-12
+### Añadido
+- **La app empieza a estar en varios idiomas: español, català, English, français e italiano.** Nuevo ajuste **Ajustes → Apariencia → Idioma**, que cambia la app al momento (también «Automático», que sigue el idioma del sistema). En esta primera fase están traducidos el menú (lateral y del móvil), el Inicio, Ajustes y el aviso de versión nueva; el resto de pantallas se irá traduciendo por fases y, mientras tanto, sigue en español. Las fechas del Inicio salen en el formato de cada idioma.
+- Mientras la traducción no esté completa, la app arranca en español aunque el sistema esté en otro idioma (salvo que se elija «Automático»).
+
 ## [1.36.0] — 2026-10-12
 ### Añadido
 - **Los resultados también viajan entre Controls** («Verificar en equipo (wifi)»): posiciones y puntos de cada tanda (puestos a mano, importados o traídos de PitWall), la clasificación rellenada a mano y las correcciones por copa. La clasificación se recalcula sola en cada Control. Los resultados de una tanda viajan juntos y con su propia firma: poner resultados en un Control y mover carriles en otro no se pisan.

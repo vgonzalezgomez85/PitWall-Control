@@ -26,6 +26,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/entorno.dart';
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import 'actualizacion.dart';
 import 'servicio_actualizacion.dart';
@@ -79,9 +80,9 @@ class _TarjetaActualizacionState extends State<TarjetaActualizacion> {
   }
 
   String _mensajeError(MotivoFallo motivo) => switch (motivo) {
-        MotivoFallo.apkIncompleto => 'La descarga no llegó completa. Inténtalo otra vez.',
-        MotivoFallo.atascada => 'La descarga se ha atascado. Inténtalo otra vez.',
-        _ => 'No se pudo descargar la actualización. Inténtalo de nuevo o descárgala desde pitwall.es.',
+        MotivoFallo.apkIncompleto => context.l.actDescargaIncompleta,
+        MotivoFallo.atascada => context.l.actDescargaAtascada,
+        _ => context.l.actNoSePudoDescargar,
       };
 
   @override
@@ -107,7 +108,7 @@ class _TarjetaActualizacionState extends State<TarjetaActualizacion> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Hay una versión nueva: v${nueva.version}',
+                    context.l.actHayVersionNueva(nueva.version),
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -118,7 +119,7 @@ class _TarjetaActualizacionState extends State<TarjetaActualizacion> {
             ),
             const SizedBox(height: 8),
             Text(
-              nueva.notas ?? 'Descarga la nueva versión para tener las últimas mejoras.',
+              nueva.notas ?? context.l.actDescargaNueva,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 14),
@@ -139,21 +140,20 @@ class _TarjetaActualizacionState extends State<TarjetaActualizacion> {
                 if (_descargando)
                   TextButton(
                     onPressed: () => _descarga?.cancelar(),
-                    child: const Text('Cancelar'),
+                    child: Text(context.l.cancelar),
                   )
                 else if (widget.onMasTarde != null)
                   TextButton(
                     onPressed: widget.onMasTarde,
-                    child: const Text('Más tarde'),
+                    child: Text(context.l.masTarde),
                   ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
               nueva.esApk
-                  ? 'Android pedirá permiso para instalar apps de esta fuente la primera vez. '
-                      'Después, vuelve a pulsar «Actualizar».'
-                  : 'Se abrirá el navegador para descargar el instalador de esta versión.',
+                  ? context.l.actPermisoAndroid
+                  : context.l.actSeAbriraNavegador,
               style: Theme.of(context)
                   .textTheme
                   .bodySmall
@@ -166,8 +166,9 @@ class _TarjetaActualizacionState extends State<TarjetaActualizacion> {
   }
 
   String _textoBoton(Actualizacion nueva) {
-    if (!_descargando) return nueva.esApk ? 'Actualizar' : 'Descargar';
-    return _pct == null ? 'Descargando…' : 'Descargando… $_pct %';
+    final l = context.l;
+    if (!_descargando) return nueva.esApk ? l.actActualizar : l.actDescargar;
+    return _pct == null ? l.actDescargando : l.actDescargandoPct(_pct!);
   }
 }
 

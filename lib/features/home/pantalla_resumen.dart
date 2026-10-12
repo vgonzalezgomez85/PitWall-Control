@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/idioma.dart';
 import '../../core/tema.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
@@ -163,7 +164,7 @@ class PantallaResumen extends ConsumerWidget {
     final resumen = resumenAsync.asData?.value;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Inicio')),
+      appBar: AppBar(title: Text(context.l.menuInicio)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -183,16 +184,16 @@ class PantallaResumen extends ConsumerWidget {
                           _StatChip(
                               icono: Icons.people_alt_outlined,
                               valor: '${resumen.numPilotos}',
-                              etiqueta: 'pilotos'),
+                              etiqueta: context.l.statPilotos),
                           _StatChip(
                               icono: Icons.groups_outlined,
                               valor: '${resumen.numEquipos}',
-                              etiqueta: 'equipos'),
+                              etiqueta: context.l.statEquipos),
                           _StatChip(
                               icono: Icons.event_outlined,
                               valor:
                                   '${resumen.pruebasTerminadas}/${resumen.numPruebas}',
-                              etiqueta: 'pruebas'),
+                              etiqueta: context.l.statPruebas),
                         ],
                       );
                 final cabecera = Row(
@@ -204,7 +205,7 @@ class PantallaResumen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Campeonato activo',
+                          Text(context.l.campeonatoActivo,
                               style: Theme.of(context)
                                   .textTheme
                                   .labelLarge
@@ -248,7 +249,7 @@ class PantallaResumen extends ConsumerWidget {
           const SizedBox(height: 16),
           _TarjetaProxima(prueba: resumen?.proxima),
           const SizedBox(height: 24),
-          Text('Pendientes', style: Theme.of(context).textTheme.titleLarge),
+          Text(context.l.pendientes, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           _Pendientes(proxima: resumen?.proxima),
           const SizedBox(height: 24),
@@ -315,7 +316,7 @@ class _TarjetaProxima extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final fmt = DateFormat("EEEE d 'de' MMMM", 'es_ES');
+    final fmt = DateFormat.MMMMEEEEd(context.idiomaFechas);
     final p = prueba;
     void abrir(Widget destino) => Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => destino));
@@ -341,13 +342,13 @@ class _TarjetaProxima extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Próxima prueba',
+                        Text(context.l.proximaPrueba,
                             style: Theme.of(context)
                                 .textTheme
                                 .labelMedium
                                 ?.copyWith(color: cs.outline)),
                         Text(
-                          p?.nombre ?? 'No hay pruebas pendientes',
+                          p?.nombre ?? context.l.noHayPruebasPendientes,
                           style: Theme.of(context).textTheme.titleLarge,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -375,20 +376,20 @@ class _TarjetaProxima extends StatelessWidget {
                   children: [
                     OutlinedButton.icon(
                       icon: const Icon(Icons.how_to_reg_outlined),
-                      label: const Text('Inscritos'),
+                      label: Text(context.l.botonInscritos),
                       onPressed: () =>
                           abrir(PantallaInscritos(pruebaId: p.id)),
                     ),
                     FilledButton.icon(
                       icon: const Icon(Icons.fact_check_outlined),
-                      label: const Text('Verificar'),
+                      label: Text(context.l.botonVerificar),
                       onPressed: () => abrir(DetallePrueba(
                           pruebaId: p.id,
                           pestanaInicial: PestanaPrueba.verificar)),
                     ),
                     OutlinedButton.icon(
                       icon: const Icon(Icons.emoji_events_outlined),
-                      label: const Text('Resultados'),
+                      label: Text(context.l.botonResultados),
                       onPressed: () => abrir(DetallePrueba(
                           pruebaId: p.id,
                           pestanaInicial: PestanaPrueba.resultados)),
@@ -427,9 +428,7 @@ class _Pendientes extends ConsumerWidget {
       if (p != null && (datos?.verifSinValidar ?? 0) > 0)
         _TarjetaPendiente(
           numero: datos!.verifSinValidar,
-          texto: datos.verifSinValidar == 1
-              ? 'verificación sin validar'
-              : 'verificaciones sin validar',
+          texto: context.l.pendVerificaciones(datos.verifSinValidar),
           detalle: p.nombre,
           onTap: () => abrir(DetallePrueba(
               pruebaId: p.id, pestanaInicial: PestanaPrueba.verificar)),
@@ -437,7 +436,7 @@ class _Pendientes extends ConsumerWidget {
       if (p != null && sinCobrar > 0)
         _TarjetaPendiente(
           numero: sinCobrar,
-          texto: sinCobrar == 1 ? 'pago sin cobrar' : 'pagos sin cobrar',
+          texto: context.l.pendPagos(sinCobrar),
           detalle: p.nombre,
           onTap: () => abrir(DetallePrueba(
               pruebaId: p.id, pestanaInicial: PestanaPrueba.caja)),
@@ -445,9 +444,7 @@ class _Pendientes extends ConsumerWidget {
       if ((datos?.sinResultados.length ?? 0) > 0)
         _TarjetaPendiente(
           numero: datos!.sinResultados.length,
-          texto: datos.sinResultados.length == 1
-              ? 'prueba ya disputada sin resultados'
-              : 'pruebas ya disputadas sin resultados',
+          texto: context.l.pendSinResultados(datos.sinResultados.length),
           detalle: datos.sinResultados.map((x) => x.nombre).join(', '),
           // Con una sola, directo a sus resultados; si hay varias, a la lista.
           onTap: datos.sinResultados.length == 1
@@ -466,10 +463,10 @@ class _Pendientes extends ConsumerWidget {
         child: ListTile(
           leading: Icon(Icons.check_circle_outline,
               color: context.estado.exito),
-          title: const Text('Todo al día'),
+          title: Text(context.l.todoAlDia),
           subtitle: Text(p == null
-              ? 'No hay pruebas pendientes ni resultados por registrar.'
-              : 'Sin verificaciones ni pagos pendientes en ${p.nombre}.',
+              ? context.l.todoAlDiaSinPruebas
+              : context.l.todoAlDiaEnPrueba(p.nombre),
               style: TextStyle(color: cs.outline)),
         ),
       );
@@ -556,19 +553,19 @@ class _TarjetaLider extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Líder del campeonato',
+                    Text(context.l.liderCampeonato,
                         style: Theme.of(context)
                             .textTheme
                             .labelMedium
                             ?.copyWith(color: cs.outline)),
                     Text(
-                      nombre ?? 'Sin resultados todavía',
+                      nombre ?? context.l.sinResultadosTodavia,
                       style: Theme.of(context).textTheme.titleMedium,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (nombre != null)
                       Text(
-                        '${equipo ?? ''}  ·  $puntos pts',
+                        '${equipo ?? ''}  ·  ${context.l.puntosAbrev(puntos ?? 0)}',
                         style: TextStyle(color: cs.outline, fontSize: 13),
                         overflow: TextOverflow.ellipsis,
                       ),
