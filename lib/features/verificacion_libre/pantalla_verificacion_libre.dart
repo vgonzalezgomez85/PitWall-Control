@@ -52,6 +52,7 @@ class PantallaVerificacionLibre extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Verificación libre')),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_sesion_libre',
         onPressed: () => _nuevaSesion(context),
         icon: const Icon(Icons.add),
         label: const Text('Nueva sesión'),
@@ -155,6 +156,7 @@ class PantallaSesionLibre extends ConsumerWidget {
               'o impórtalos desde un archivo o Google Sheets con el botón '
               'de importar de arriba.',
           botonFlotante: FloatingActionButton.extended(
+            heroTag: 'fab_participante_libre',
             onPressed: () => _anadirParticipante(context, ref, s),
             icon: const Icon(Icons.person_add_alt_1),
             label: const Text('Añadir participante'),

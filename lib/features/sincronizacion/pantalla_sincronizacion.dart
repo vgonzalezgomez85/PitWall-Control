@@ -336,8 +336,13 @@ class _PantallaSincronizacionState
 /// Icono para las barras de las pantallas de verificación: indica si la
 /// sincronización está encendida y abre su pantalla.
 class BotonSincronizacion extends ConsumerWidget {
-  const BotonSincronizacion({super.key, required this.pruebaId});
+  const BotonSincronizacion(
+      {super.key, required this.pruebaId, this.conTexto = false});
   final int pruebaId;
+
+  /// Botón con texto (barra de acciones de la pestaña Verificar) en vez de
+  /// solo icono.
+  final bool conTexto;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -346,17 +351,28 @@ class BotonSincronizacion extends ConsumerWidget {
         .where((c) => c.error == null && c.claveOk)
         .length;
     final activaAqui = st.activo && st.pruebaId == pruebaId;
+    final icono = Badge(
+      isLabelVisible: activaAqui,
+      label: Text('$conectados'),
+      child: Icon(activaAqui ? Icons.sync : Icons.sync_disabled_outlined),
+    );
+    void abrir() => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => PantallaSincronizacion(pruebaId: pruebaId)));
+    if (conTexto) {
+      return OutlinedButton.icon(
+        icon: icono,
+        label: Text(activaAqui
+            ? 'Verificar entre varios · $conectados'
+            : 'Verificar entre varios'),
+        onPressed: abrir,
+      );
+    }
     return IconButton(
       tooltip: activaAqui
           ? 'Verificar entre varios · $conectados conectados'
           : 'Verificar entre varios',
-      icon: Badge(
-        isLabelVisible: activaAqui,
-        label: Text('$conectados'),
-        child: Icon(activaAqui ? Icons.sync : Icons.sync_disabled_outlined),
-      ),
-      onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => PantallaSincronizacion(pruebaId: pruebaId))),
+      icon: icono,
+      onPressed: abrir,
     );
   }
 }

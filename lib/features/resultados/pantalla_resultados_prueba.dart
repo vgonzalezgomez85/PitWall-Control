@@ -116,14 +116,79 @@ final resultadosPruebaProvider = StreamProvider.autoDispose
 });
 
 class PantallaResultadosPrueba extends ConsumerWidget {
-  const PantallaResultadosPrueba({super.key, required this.pruebaId});
+  const PantallaResultadosPrueba(
+      {super.key, required this.pruebaId, this.embebida = false});
 
   final int pruebaId;
+
+  /// Dentro de la pestaña Resultados de la prueba: sin barra superior propia
+  /// (sus acciones van en la barra de la pestaña).
+  final bool embebida;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final dataAsync = ref.watch(resultadosPruebaProvider(pruebaId));
+
+    final cuerpo = dataAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+      data: (filas) {
+        if (filas.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.emoji_events_outlined,
+                      size: 96, color: cs.outline),
+                  const SizedBox(height: 16),
+                  Text('No hay inscritos en esta prueba',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Inscribe equipos y genera las mangas. Luego podrás '
+                    'importar los resultados del cronometraje aquí.',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final conResultado = filas.where((f) => f.posicion != null).length;
+
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+          children: [
+            Card(
+              color: cs.surfaceContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(Icons.emoji_events_outlined, color: cs.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '$conResultado de ${filas.length} equipos con resultado registrado.',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...filas.map((f) => _FilaResultadoPrueba(
+                  fila: f, pruebaId: pruebaId,
+                )),
+          ],
+        );
+      },
+    );
+    if (embebida) return cuerpo;
 
     return Scaffold(
       appBar: AppBar(
@@ -141,64 +206,7 @@ class PantallaResultadosPrueba extends ConsumerWidget {
           ),
         ],
       ),
-      body: dataAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (filas) {
-          if (filas.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.emoji_events_outlined,
-                        size: 96, color: cs.outline),
-                    const SizedBox(height: 16),
-                    Text('No hay inscritos en esta prueba',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Inscribe equipos y genera las mangas. Luego podrás '
-                      'importar los resultados del cronometraje aquí.',
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          final conResultado = filas.where((f) => f.posicion != null).length;
-
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-            children: [
-              Card(
-                color: cs.surfaceContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Icon(Icons.emoji_events_outlined, color: cs.primary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '$conResultado de ${filas.length} equipos con resultado registrado.',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...filas.map((f) => _FilaResultadoPrueba(
-                    fila: f, pruebaId: pruebaId,
-                  )),
-            ],
-          );
-        },
-      ),
+      body: cuerpo,
     );
   }
 }

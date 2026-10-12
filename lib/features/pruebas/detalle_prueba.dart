@@ -17,6 +17,7 @@
 // stores (e.g. Apple App Store, Google Play) is permitted. See LICENSE-EXCEPTION.
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -27,26 +28,79 @@ import '../../services/exportar_pdf.dart';
 import '../../services/generador_pdf_mangas.dart';
 import '../../services/generador_tanda_json.dart';
 import '../../services/generador_pdf_verificaciones.dart';
+import '../resultados/pantalla_importar_resultados_prueba.dart';
 import '../resultados/pantalla_resultados_prueba.dart';
 import '../tesoreria/pantalla_tesoreria_prueba.dart';
-import '../verificaciones/pantalla_rejilla_verificaciones.dart';
-import '../verificaciones/pantalla_resumen_verificaciones.dart';
 import '../verificaciones/pantalla_sorteo_motores.dart';
+import '../verificaciones/pestana_verificar_prueba.dart';
 import 'detalle_manga.dart';
 import 'editor_manga.dart';
 import 'enviar_tanda_dialog.dart';
 import 'enviar_verificaciones_dialog.dart';
 import 'traer_resultados_dialog.dart';
 import 'editor_prueba.dart';
-import '../sincronizacion/pantalla_sincronizacion.dart';
 import 'pantalla_editar_mangas.dart';
 import 'pantalla_inscritos.dart';
 import 'repositorio_pruebas.dart';
 
-class DetallePrueba extends ConsumerWidget {
-  const DetallePrueba({super.key, required this.pruebaId});
+/// Pestañas de una prueba, en el orden del día de carrera.
+enum PestanaPrueba { preparar, verificar, resultados, caja }
+
+/// Pantalla de una prueba organizada por fases: Preparar (inscritos y
+/// mangas), Verificar, Resultados y Caja (solo si el campeonato usa
+/// tesorería). Lo que saca datos fuera (PDF, archivo o envío a PitWall) va en
+/// el botón «Compartir» de la barra superior.
+class DetallePrueba extends ConsumerStatefulWidget {
+  const DetallePrueba({
+    super.key,
+    required this.pruebaId,
+    this.pestanaInicial = PestanaPrueba.preparar,
+  });
 
   final int pruebaId;
+  final PestanaPrueba pestanaInicial;
+
+  @override
+  ConsumerState<DetallePrueba> createState() => _DetallePruebaState();
+}
+
+class _DetallePruebaState extends ConsumerState<DetallePrueba>
+    with TickerProviderStateMixin {
+  TabController? _tab;
+  List<PestanaPrueba> _pestanas = const [];
+  late PestanaPrueba _actual = widget.pestanaInicial;
+
+  /// Pestañas ya abiertas: las demás no se construyen hasta la primera visita.
+  final _visitadas = <PestanaPrueba>{};
+
+  int get pruebaId => widget.pruebaId;
+
+  @override
+  void dispose() {
+    _tab?.dispose();
+    super.dispose();
+  }
+
+  /// (Re)crea el controlador si cambia el número de pestañas (Caja aparece o
+  /// desaparece según el campeonato), conservando la pestaña elegida.
+  void _ajustarPestanas(List<PestanaPrueba> pestanas) {
+    if (_tab != null && listEquals(pestanas, _pestanas)) return;
+    // El TabBar todavía escucha al controlador viejo durante este frame.
+    final viejo = _tab;
+    if (viejo != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => viejo.dispose());
+    }
+    _pestanas = pestanas;
+    if (!pestanas.contains(_actual)) _actual = PestanaPrueba.preparar;
+    _tab = TabController(
+      length: pestanas.length,
+      initialIndex: pestanas.indexOf(_actual),
+      vsync: this,
+    )..addListener(() {
+        final p = _pestanas[_tab!.index];
+        if (p != _actual) setState(() => _actual = p);
+      });
+  }
 
   void _abrir(BuildContext context, Widget destino) {
     Navigator.of(context)
@@ -138,16 +192,62 @@ class DetallePrueba extends ConsumerWidget {
     }
   }
 
-  void _irAlInicio(BuildContext context, WidgetRef ref) {
-    Navigator.of(context).popUntil((r) => r.isFirst);
-    ref.read(shellIndiceProvider.notifier).ir(0);
-  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final db = ref.watch(dbProvider);
     final pruebaAsync = ref.watch(_pruebaProvider(pruebaId));
     final mangasAsync = ref.watch(mangasPruebaProvider(pruebaId));
+    final usaTesoreria =
+        ref.watch(campeonatoActivoProvider)?.usaTesoreria ?? true;
+    _ajustarPestanas([
+      PestanaPrueba.preparar,
+      PestanaPrueba.verificar,
+      PestanaPrueba.resultados,
+      if (usaTesoreria) PestanaPrueba.caja,
+    ]);
+    _visitadas.add(_actual);
+
+    Widget contenido(PestanaPrueba p) {
+      if (!_visitadas.contains(p)) return const SizedBox.shrink();
+      switch (p) {
+        case PestanaPrueba.preparar:
+          return _ContenidoPrueba(
+            pruebaId: pruebaId,
+            db: db,
+            pruebaAsync: pruebaAsync,
+            mangasAsync: mangasAsync,
+            onAbrir: (d) => _abrir(context, d),
+          );
+        case PestanaPrueba.verificar:
+          return PestanaVerificarPrueba(pruebaId: pruebaId);
+        case PestanaPrueba.resultados:
+          return Column(
+            children: [
+              _BarraAcciones(children: [
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.file_upload_outlined),
+                  label: const Text('Importar del cronometraje'),
+                  onPressed: () => _abrir(context,
+                      PantallaImportarResultadosPrueba(pruebaId: pruebaId)),
+                ),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.cloud_download_outlined),
+                  label: const Text('Traer resultados de PitWall'),
+                  onPressed: () =>
+                      mostrarTraerResultados(context, ref, pruebaId),
+                ),
+              ]),
+              Expanded(
+                child: PantallaResultadosPrueba(
+                    pruebaId: pruebaId, embebida: true),
+              ),
+            ],
+          );
+        case PestanaPrueba.caja:
+          return PantallaTesoreriaPrueba(pruebaId: pruebaId, embebida: true);
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -155,57 +255,146 @@ class DetallePrueba extends ConsumerWidget {
           data: (p) => Text(p?.nombre ?? 'Prueba'),
           orElse: () => const Text('Prueba'),
         ),
-      ),
-      body: Row(
-        children: [
-          _PanelPrueba(
-            pruebaId: pruebaId,
-            onInicio: () => _irAlInicio(context, ref),
-            onAbrir: (d) => _abrir(context, d),
-            onExportar: (op) => _exportarPdf(context, ref, op),
-            onEnviar: () => mostrarEnviarTanda(context, ref, pruebaId),
-            onEnviarVerificaciones: () =>
-                mostrarEnviarVerificaciones(context, ref, pruebaId),
-            onTraerResultados: () =>
-                mostrarTraerResultados(context, ref, pruebaId),
+        actions: [
+          TextButton.icon(
+            icon: const Icon(Icons.edit_outlined),
+            label: const Text('Editar'),
+            onPressed: () =>
+                _abrir(context, EditorPrueba(pruebaId: pruebaId)),
           ),
-          const VerticalDivider(width: 1, thickness: 1),
-          Expanded(
-            child: _ContenidoPrueba(
-              pruebaId: pruebaId,
-              db: db,
-              pruebaAsync: pruebaAsync,
-              mangasAsync: mangasAsync,
-            ),
+          const SizedBox(width: 4),
+          _BotonCompartir(
+            onElegir: (op) {
+              switch (op) {
+                case 'mangas':
+                case 'verifs':
+                case 'tanda':
+                  _exportarPdf(context, ref, op);
+                case 'enviar':
+                  mostrarEnviarTanda(context, ref, pruebaId);
+                case 'enviar_verifs':
+                  mostrarEnviarVerificaciones(context, ref, pruebaId);
+              }
+            },
           ),
+          const SizedBox(width: 12),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => EditorManga(pruebaId: pruebaId),
-          ),
+        bottom: TabBar(
+          controller: _tab,
+          tabs: [
+            for (final p in _pestanas)
+              switch (p) {
+                PestanaPrueba.preparar => const Tab(
+                    icon: Icon(Icons.how_to_reg_outlined), text: 'Preparar'),
+                PestanaPrueba.verificar => const Tab(
+                    icon: Icon(Icons.fact_check_outlined), text: 'Verificar'),
+                PestanaPrueba.resultados => const Tab(
+                    icon: Icon(Icons.emoji_events_outlined),
+                    text: 'Resultados'),
+                PestanaPrueba.caja => const Tab(
+                    icon: Icon(Icons.payments_outlined), text: 'Caja'),
+              },
+          ],
         ),
-        icon: const Icon(Icons.add),
-        label: const Text('Nueva manga'),
+      ),
+      // IndexedStack y no TabBarView: cada pestaña conserva su estado
+      // (búsquedas, scroll) al ir y volver.
+      body: IndexedStack(
+        index: _pestanas.indexOf(_actual),
+        children: [for (final p in _pestanas) contenido(p)],
+      ),
+      floatingActionButton: _actual == PestanaPrueba.preparar
+          ? FloatingActionButton.extended(
+              heroTag: 'fab_nueva_manga',
+              onPressed: () =>
+                  _abrir(context, EditorManga(pruebaId: pruebaId)),
+              icon: const Icon(Icons.add),
+              label: const Text('Nueva manga'),
+            )
+          : null,
+    );
+  }
+}
+
+/// Fila de botones con texto al principio de una pestaña.
+class _BarraAcciones extends StatelessWidget {
+  const _BarraAcciones({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Wrap(spacing: 8, runSpacing: 8, children: children),
       ),
     );
   }
 }
 
-/// Contenido principal de la prueba (cabecera + lista de mangas).
+/// «Compartir»: todo lo que saca datos de la prueba (PDF, archivo para
+/// PitWall o envío por la red).
+class _BotonCompartir extends StatelessWidget {
+  const _BotonCompartir({required this.onElegir});
+  final void Function(String op) onElegir;
+
+  @override
+  Widget build(BuildContext context) {
+    PopupMenuItem<String> opcion(
+            String valor, IconData icono, String titulo, String? sub) =>
+        PopupMenuItem(
+          value: valor,
+          child: ListTile(
+            leading: Icon(icono),
+            title: Text(titulo),
+            subtitle: sub == null ? null : Text(sub),
+            contentPadding: EdgeInsets.zero,
+          ),
+        );
+
+    return PopupMenuButton<String>(
+      tooltip: 'Compartir',
+      onSelected: onElegir,
+      itemBuilder: (_) => [
+        opcion('mangas', Icons.flag_outlined, 'PDF de mangas', null),
+        opcion('verifs', Icons.fact_check_outlined, 'PDF de verificaciones',
+            null),
+        const PopupMenuDivider(),
+        opcion('enviar', Icons.wifi_tethering, 'Enviar mangas a PitWall',
+            'Por wifi, sin archivo'),
+        opcion('enviar_verifs', Icons.fact_check_outlined,
+            'Enviar verificaciones a PitWall', 'Solo consulta en Manager'),
+        opcion('tanda', Icons.download_outlined, 'Archivo para PitWall (JSON)',
+            'Para importarlo a mano en Manager'),
+      ],
+      child: IgnorePointer(
+        child: FilledButton.tonalIcon(
+          icon: const Icon(Icons.ios_share),
+          label: const Text('Compartir'),
+          onPressed: () {},
+        ),
+      ),
+    );
+  }
+}
+
+/// Pestaña Preparar: cabecera, accesos a inscritos y mangas, y lista de
+/// mangas.
 class _ContenidoPrueba extends StatelessWidget {
   const _ContenidoPrueba({
     required this.pruebaId,
     required this.db,
     required this.pruebaAsync,
     required this.mangasAsync,
+    required this.onAbrir,
   });
 
   final int pruebaId;
   final dynamic db;
   final AsyncValue<Prueba?> pruebaAsync;
   final AsyncValue<List<Manga>> mangasAsync;
+  final void Function(Widget destino) onAbrir;
 
   @override
   Widget build(BuildContext context) {
@@ -222,6 +411,31 @@ class _ContenidoPrueba extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
             children: [
               _CabeceraPrueba(prueba: prueba),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    icon: const Icon(Icons.how_to_reg_outlined),
+                    label: const Text('Inscritos'),
+                    onPressed: () =>
+                        onAbrir(PantallaInscritos(pruebaId: pruebaId)),
+                  ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.swap_horiz),
+                    label: const Text('Editar mangas'),
+                    onPressed: () =>
+                        onAbrir(PantallaEditarMangas(pruebaId: pruebaId)),
+                  ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.casino_outlined),
+                    label: const Text('Sorteo de motores'),
+                    onPressed: () =>
+                        onAbrir(PantallaSorteoMotores(pruebaId: pruebaId)),
+                  ),
+                ],
+              ),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -275,151 +489,6 @@ class _ContenidoPrueba extends StatelessWidget {
   }
 }
 
-/// Panel lateral fijo de la prueba: replica las acciones de la barra superior
-/// para tenerlas siempre accesibles, con un acceso para volver al inicio.
-class _PanelPrueba extends StatelessWidget {
-  const _PanelPrueba({
-    required this.pruebaId,
-    required this.onInicio,
-    required this.onAbrir,
-    required this.onExportar,
-    required this.onEnviar,
-    required this.onEnviarVerificaciones,
-    required this.onTraerResultados,
-  });
-
-  final int pruebaId;
-  final VoidCallback onInicio;
-  final void Function(Widget destino) onAbrir;
-  final Future<void> Function(String op) onExportar;
-  final VoidCallback onEnviar;
-  final VoidCallback onEnviarVerificaciones;
-  final VoidCallback onTraerResultados;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    void abrir(Widget destino) => onAbrir(destino);
-    Future<void> exportar(String op) => onExportar(op);
-
-    return SizedBox(
-      width: 250,
-      child: Material(
-        color: cs.surface,
-        child: SafeArea(
-          right: false,
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              Container(
-                width: double.infinity,
-                color: cs.primaryContainer,
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-                child: Text('Opciones de la prueba',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: cs.onPrimaryContainer,
-                          fontWeight: FontWeight.w700,
-                        )),
-              ),
-            ListTile(
-              leading: const Icon(Icons.home_outlined),
-              title: const Text('Inicio'),
-              onTap: onInicio,
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.how_to_reg_outlined),
-              title: const Text('Inscritos a la prueba'),
-              onTap: () => abrir(PantallaInscritos(pruebaId: pruebaId)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.emoji_events_outlined),
-              title: const Text('Resultados'),
-              onTap: () =>
-                  abrir(PantallaResultadosPrueba(pruebaId: pruebaId)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.fact_check_outlined),
-              title: const Text('Verificaciones'),
-              onTap: () =>
-                  abrir(PantallaResumenVerificaciones(pruebaId: pruebaId)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.table_chart_outlined),
-              title: const Text('Resum. Verifi.'),
-              onTap: () =>
-                  abrir(PantallaRejillaVerificaciones(pruebaId: pruebaId)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.sync),
-              title: const Text('Verificar entre varios'),
-              subtitle: const Text('Varios Controls a la vez, por wifi'),
-              onTap: () => abrir(PantallaSincronizacion(pruebaId: pruebaId)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.swap_horiz),
-              title: const Text('Editar mangas'),
-              onTap: () => abrir(PantallaEditarMangas(pruebaId: pruebaId)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.casino_outlined),
-              title: const Text('Sorteo de motores'),
-              onTap: () => abrir(PantallaSorteoMotores(pruebaId: pruebaId)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.payments_outlined),
-              title: const Text('Tesorería de la prueba'),
-              onTap: () => abrir(PantallaTesoreriaPrueba(pruebaId: pruebaId)),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.flag_outlined),
-              title: const Text('PDF de mangas'),
-              onTap: () => exportar('mangas'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.fact_check_outlined),
-              title: const Text('PDF de verificaciones'),
-              onTap: () => exportar('verifs'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.download_outlined),
-              title: const Text('Exportar tanda (JSON)'),
-              subtitle: const Text('Para importar en PitWall'),
-              onTap: () => exportar('tanda'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.wifi_tethering),
-              title: const Text('Enviar a PitWall'),
-              subtitle: const Text('Por WiFi/LAN, sin fichero'),
-              onTap: onEnviar,
-            ),
-            ListTile(
-              leading: const Icon(Icons.fact_check_outlined),
-              title: const Text('Enviar verificaciones a PitWall'),
-              subtitle: const Text('Solo consulta: no editables en Manager'),
-              onTap: onEnviarVerificaciones,
-            ),
-            ListTile(
-              leading: const Icon(Icons.cloud_download_outlined),
-              title: const Text('Traer resultados de PitWall'),
-              subtitle: const Text('Posiciones → puntos del campeonato'),
-              onTap: onTraerResultados,
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.edit_outlined),
-              title: const Text('Editar prueba'),
-              onTap: () => abrir(EditorPrueba(pruebaId: pruebaId)),
-            ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 final _pruebaProvider = StreamProvider.autoDispose
     .family<Prueba?, int>((ref, id) {

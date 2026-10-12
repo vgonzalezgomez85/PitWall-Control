@@ -134,7 +134,7 @@ class PantallaVerificaciones extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              ...filas.map((f) => _TarjetaVerificacion(
+              ...filas.map((f) => TarjetaVerificacion(
                     fila: f,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(
@@ -210,9 +210,11 @@ class _Pildora extends StatelessWidget {
   }
 }
 
-class _TarjetaVerificacion extends StatelessWidget {
-  const _TarjetaVerificacion(
-      {required this.fila, required this.onTap, this.onLongPress});
+/// Tarjeta de un equipo con el estado de su verificación (pendiente, en
+/// revisión o validada). También la usa la pestaña Verificar de la prueba.
+class TarjetaVerificacion extends StatelessWidget {
+  const TarjetaVerificacion(
+      {super.key, required this.fila, required this.onTap, this.onLongPress});
 
   final VerificacionConEquipo fila;
   final VoidCallback onTap;

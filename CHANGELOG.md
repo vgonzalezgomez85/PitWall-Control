@@ -14,6 +14,17 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.26.0] — 2026-10-12
+### Mejorado
+- **La pantalla de una prueba se organiza por fases, en pestañas:** **Preparar** (inscritos, mangas y sorteo de motores), **Verificar**, **Resultados** y **Caja** (solo si el campeonato usa tesorería). Sustituye al panel lateral de 17 opciones, y el contenido ocupa todo el ancho.
+- **Verificar un coche, más directo.** La pestaña Verificar muestra todas las mangas con sus equipos y el estado de cada verificación; al pulsar un equipo se abre su verificación. Antes había que pasar por la lista de verificaciones y elegir la manga. Desde ahí también se abren el resumen de verificaciones (la rejilla) y «Verificar entre varios».
+- **Botón «Compartir» en la prueba** con todo lo que saca datos: PDF de mangas, PDF de verificaciones, enviar mangas o verificaciones a PitWall y archivo para PitWall (JSON).
+- **Resultados** reúne la tabla de la prueba con «Importar del cronometraje» y «Traer resultados de PitWall».
+- **«Gestionar campeonatos» en el bloque Herramientas del menú**, siempre a mano (sale de Ajustes).
+
+### Corregido
+- Varios botones flotantes compartían etiqueta de animación al convivir en el menú nuevo (Catálogos, Verificación libre, Campeonatos); ahora cada uno tiene la suya.
+
 ## [1.25.0] — 2026-10-12
 ### Mejorado
 - **Menú lateral más sencillo, en tres bloques.** Arriba, **Campeonato** (Inicio · Pruebas · Participantes · Clasificación · Tesorería · Créditos); debajo, **Herramientas** (Verificación libre · Catálogos); y al pie, **Ajustes**. Todas las entradas cambian la vista sin abrir pantallas encima, así que el menú no desaparece al entrar en Catálogos o Verificación libre.

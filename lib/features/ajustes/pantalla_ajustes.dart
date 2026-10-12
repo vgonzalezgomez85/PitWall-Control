@@ -21,15 +21,13 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/entorno.dart';
 import '../../core/proveedores.dart';
-import '../campeonatos/pantalla_campeonatos.dart';
 import '../google/pantalla_backup.dart';
 import '../google/pantalla_configuracion_google.dart';
 import '../plantillas/pantalla_plantillas_csv.dart';
 import 'pantalla_changelog.dart';
 
 /// Ajustes: todo lo que no es el trabajo diario con un campeonato, en un solo
-/// sitio (gestión de campeonatos, Google, copias, plantillas, apariencia y
-/// novedades).
+/// sitio (Google, copias, plantillas, apariencia y novedades).
 class PantallaAjustes extends ConsumerWidget {
   const PantallaAjustes({super.key});
 
@@ -45,13 +43,6 @@ class PantallaAjustes extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
-          const _Seccion('Campeonatos'),
-          _Opcion(
-            icono: Icons.emoji_events_outlined,
-            titulo: 'Gestionar campeonatos',
-            subtitulo: 'Crear, editar, activar o eliminar campeonatos',
-            onTap: () => abrir(const PantallaCampeonatos()),
-          ),
           const _Seccion('Datos'),
           _Opcion(
             icono: Icons.cloud_sync_outlined,

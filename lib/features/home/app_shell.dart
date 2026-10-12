@@ -68,6 +68,8 @@ const _destinos = <_Destino>[
       PantallaVerificacionLibre(), _Grupo.herramientas),
   _Destino(Icons.inventory_2_outlined, Icons.inventory_2, 'Catálogos',
       PantallaCatalogos(), _Grupo.herramientas),
+  _Destino(Icons.emoji_events_outlined, Icons.emoji_events,
+      'Gestionar campeonatos', PantallaCampeonatos(), _Grupo.herramientas),
   _Destino(Icons.settings_outlined, Icons.settings, 'Ajustes',
       PantallaAjustes(), _Grupo.ajustes),
 ];

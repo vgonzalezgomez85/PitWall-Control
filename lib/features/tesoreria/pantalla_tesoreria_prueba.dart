@@ -32,9 +32,14 @@ String _normalizar(String s) => s
     .replaceAll(RegExp('[úùü]'), 'u');
 
 class PantallaTesoreriaPrueba extends ConsumerStatefulWidget {
-  const PantallaTesoreriaPrueba({super.key, required this.pruebaId});
+  const PantallaTesoreriaPrueba(
+      {super.key, required this.pruebaId, this.embebida = false});
 
   final int pruebaId;
+
+  /// Dentro de la pestaña Caja de la prueba: sin barra superior propia; el
+  /// buscador va arriba del contenido.
+  final bool embebida;
 
   @override
   ConsumerState<PantallaTesoreriaPrueba> createState() =>
@@ -71,129 +76,138 @@ class _PantallaTesoreriaPruebaState
     final dataAsync = ref.watch(pagosPruebaProvider(pruebaId));
     final eur = NumberFormat.currency(locale: 'es_ES', symbol: '€');
 
+    final buscador = Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: TextField(
+        controller: _buscador,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.search),
+          hintText: 'Buscar piloto o equipo…',
+          suffixIcon: _busqueda.isEmpty
+              ? null
+              : IconButton(
+                  tooltip: 'Borrar',
+                  icon: const Icon(Icons.close),
+                  onPressed: () => setState(() {
+                    _buscador.clear();
+                    _busqueda = '';
+                  }),
+                ),
+        ),
+        onChanged: (v) =>
+            setState(() => _busqueda = _normalizar(v.trim())),
+      ),
+    );
+    final cuerpo = dataAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+      data: (lista) {
+        if (lista.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.group_off_outlined,
+                      size: 96, color: cs.outline),
+                  const SizedBox(height: 16),
+                  Text('Sin equipos inscritos',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Primero inscribe equipos a la prueba.',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        final totalRecaudado =
+            lista.fold<double>(0, (s, p) => s + p.total);
+        final pagados = lista.where((p) => p.hayPago).length;
+        final exentos = lista.where((p) => p.exento).length;
+        final aPagar = lista.length - exentos;
+        final visibles = lista.where(_coincide).toList();
+
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+          children: [
+            Card(
+              color: cs.surfaceContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Recaudado en la prueba',
+                              style: TextStyle(
+                                  color: cs.outline, fontSize: 13)),
+                          Text(eur.format(totalRecaudado),
+                              style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800)),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('$pagados / $aPagar pagados',
+                            style: TextStyle(
+                                color: pagados >= aPagar
+                                    ? Colors.green.shade700
+                                    : cs.outline)),
+                        if (exentos > 0)
+                          Text('$exentos no pagan',
+                              style: TextStyle(
+                                  color: cs.outline, fontSize: 12)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (visibles.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(32),
+                child: Text('Nadie coincide con "${_buscador.text.trim()}".',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: cs.outline)),
+              ),
+            // Con clave: al filtrar, cada fila conserva su propio estado.
+            ...visibles.map((p) => FilaPagoEquipo(
+                  key: ValueKey(p.equipoId),
+                  pruebaId: pruebaId,
+                  pago: p,
+                  eur: eur,
+                )),
+          ],
+        );
+      },
+    );
+
+    if (widget.embebida) {
+      return Column(children: [
+        Padding(padding: const EdgeInsets.only(top: 12), child: buscador),
+        Expanded(child: cuerpo),
+      ]);
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tesorería de la prueba'),
         // Buscador fijo arriba: localizar rápido quién va a pagar.
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(64),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: TextField(
-              controller: _buscador,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
-                hintText: 'Buscar piloto o equipo…',
-                suffixIcon: _busqueda.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: 'Borrar',
-                        icon: const Icon(Icons.close),
-                        onPressed: () => setState(() {
-                          _buscador.clear();
-                          _busqueda = '';
-                        }),
-                      ),
-              ),
-              onChanged: (v) =>
-                  setState(() => _busqueda = _normalizar(v.trim())),
-            ),
-          ),
+          child: buscador,
         ),
       ),
-      body: dataAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (lista) {
-          if (lista.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.group_off_outlined,
-                        size: 96, color: cs.outline),
-                    const SizedBox(height: 16),
-                    Text('Sin equipos inscritos',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Primero inscribe equipos a la prueba.',
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-          final totalRecaudado =
-              lista.fold<double>(0, (s, p) => s + p.total);
-          final pagados = lista.where((p) => p.hayPago).length;
-          final exentos = lista.where((p) => p.exento).length;
-          final aPagar = lista.length - exentos;
-          final visibles = lista.where(_coincide).toList();
-
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-            children: [
-              Card(
-                color: cs.surfaceContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Recaudado en la prueba',
-                                style: TextStyle(
-                                    color: cs.outline, fontSize: 13)),
-                            Text(eur.format(totalRecaudado),
-                                style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800)),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('$pagados / $aPagar pagados',
-                              style: TextStyle(
-                                  color: pagados >= aPagar
-                                      ? Colors.green.shade700
-                                      : cs.outline)),
-                          if (exentos > 0)
-                            Text('$exentos no pagan',
-                                style: TextStyle(
-                                    color: cs.outline, fontSize: 12)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (visibles.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Text('Nadie coincide con "${_buscador.text.trim()}".',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: cs.outline)),
-                ),
-              // Con clave: al filtrar, cada fila conserva su propio estado.
-              ...visibles.map((p) => FilaPagoEquipo(
-                    key: ValueKey(p.equipoId),
-                    pruebaId: pruebaId,
-                    pago: p,
-                    eur: eur,
-                  )),
-            ],
-          );
-        },
-      ),
+      body: cuerpo,
     );
   }
 }

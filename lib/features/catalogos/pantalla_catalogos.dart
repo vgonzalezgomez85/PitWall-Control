@@ -444,6 +444,7 @@ class _TabCochesState extends ConsumerState<_TabCoches> {
     final copas = ref.watch(_copasDisponiblesProvider).asData?.value ?? const [];
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_coches',
         onPressed: () => _editarCoche(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Coche'),
@@ -863,6 +864,7 @@ class _TabMarcas extends ConsumerWidget {
       vacio: 'Sin marcas',
       textoBuscable: (m) => '${m.codigo} ${m.nombre}',
       fab: FloatingActionButton.extended(
+        heroTag: 'fab_marcas',
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Marca'),
@@ -1322,6 +1324,7 @@ class _TabBancadas extends ConsumerWidget {
       copasJsonDe: (b) => b.copasJson,
       copas: copas,
       fab: FloatingActionButton.extended(
+        heroTag: 'fab_bancadas',
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Bancada'),
@@ -1401,6 +1404,7 @@ class _TabNeumaticos extends ConsumerWidget {
       copasJsonDe: (n) => n.copasJson,
       copas: copas,
       fab: FloatingActionButton.extended(
+        heroTag: 'fab_neumaticos',
         onPressed: () => _editar(context, ref, null),
         icon: const Icon(Icons.add),
         label: const Text('Neumático'),
@@ -1548,6 +1552,7 @@ class _SimpleTabState<T> extends ConsumerState<_SimpleTab<T>> {
     final lista = widget.observar(ref);
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => _editar(context, null),
         icon: const Icon(Icons.add),
         label: Text(widget.botonLabel),

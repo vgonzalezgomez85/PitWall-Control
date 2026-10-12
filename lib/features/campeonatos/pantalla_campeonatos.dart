@@ -33,6 +33,7 @@ class PantallaCampeonatos extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Campeonatos')),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_campeonatos',
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const EditorCampeonato()),
         ),
