@@ -28,6 +28,7 @@ import '../../services/exportar_pdf.dart';
 import '../../services/generador_pdf_mangas.dart';
 import '../../services/generador_tanda_json.dart';
 import '../../services/generador_pdf_verificaciones.dart';
+import '../campeonatos/selector_tipo_motor.dart';
 import '../resultados/pantalla_importar_resultados_prueba.dart';
 import '../resultados/pantalla_resultados_prueba.dart';
 import '../tesoreria/pantalla_tesoreria_prueba.dart';
@@ -198,8 +199,11 @@ class _DetallePruebaState extends ConsumerState<DetallePrueba>
     final db = ref.watch(dbProvider);
     final pruebaAsync = ref.watch(_pruebaProvider(pruebaId));
     final mangasAsync = ref.watch(mangasPruebaProvider(pruebaId));
-    final usaTesoreria =
-        ref.watch(campeonatoActivoProvider)?.usaTesoreria ?? true;
+    final campeonato = ref.watch(campeonatoActivoProvider);
+    final usaTesoreria = campeonato?.usaTesoreria ?? true;
+    // Con motor propio no hay nada que sortear.
+    final conSorteo =
+        tipoMotorConSorteo(tipoMotorDeBd(campeonato?.tipoMotor));
     _ajustarPestanas([
       PestanaPrueba.preparar,
       PestanaPrueba.verificar,
@@ -217,6 +221,7 @@ class _DetallePruebaState extends ConsumerState<DetallePrueba>
             db: db,
             pruebaAsync: pruebaAsync,
             mangasAsync: mangasAsync,
+            conSorteo: conSorteo,
             onAbrir: (d) => _abrir(context, d),
           );
         case PestanaPrueba.verificar:
@@ -387,6 +392,7 @@ class _ContenidoPrueba extends StatelessWidget {
     required this.db,
     required this.pruebaAsync,
     required this.mangasAsync,
+    required this.conSorteo,
     required this.onAbrir,
   });
 
@@ -395,6 +401,10 @@ class _ContenidoPrueba extends StatelessWidget {
   final AsyncValue<Prueba?> pruebaAsync;
   final AsyncValue<List<Manga>> mangasAsync;
   final void Function(Widget destino) onAbrir;
+
+  /// Solo se muestra «Sorteo de motores» si el campeonato es de sorteo o
+  /// mixto.
+  final bool conSorteo;
 
   @override
   Widget build(BuildContext context) {
@@ -428,12 +438,13 @@ class _ContenidoPrueba extends StatelessWidget {
                     onPressed: () =>
                         onAbrir(PantallaEditarMangas(pruebaId: pruebaId)),
                   ),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.casino_outlined),
-                    label: const Text('Sorteo de motores'),
-                    onPressed: () =>
-                        onAbrir(PantallaSorteoMotores(pruebaId: pruebaId)),
-                  ),
+                  if (conSorteo)
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.casino_outlined),
+                      label: const Text('Sorteo de motores'),
+                      onPressed: () =>
+                          onAbrir(PantallaSorteoMotores(pruebaId: pruebaId)),
+                    ),
                 ],
               ),
               const SizedBox(height: 24),

@@ -28,7 +28,8 @@ import 'package:pitwall/services/almacen_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Monta la pantalla de una prueba con un equipo inscrito en una manga.
-Future<void> _montar(WidgetTester tester, {required bool usaTesoreria}) async {
+Future<void> _montar(WidgetTester tester,
+    {required bool usaTesoreria, String? tipoMotor}) async {
   tester.view.physicalSize = const Size(1400, 1000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -42,7 +43,8 @@ Future<void> _montar(WidgetTester tester, {required bool usaTesoreria}) async {
             nombre: 'Test',
             formato: 'INDIVIDUAL',
             anio: 2026,
-            usaTesoreria: Value(usaTesoreria)));
+            usaTesoreria: Value(usaTesoreria),
+            tipoMotor: Value(tipoMotor)));
     camp = await (db.select(db.campeonatos)
           ..where((t) => t.id.equals(campId)))
         .getSingle();
@@ -105,6 +107,8 @@ void main() {
     expect(find.text('Compartir'), findsOneWidget);
     // Preparar: accesos y lista de mangas.
     expect(find.text('Inscritos'), findsOneWidget);
+    // Sin tipo de motor elegido cuenta como mixto: hay sorteo.
+    expect(find.text('Sorteo de motores'), findsOneWidget);
     expect(find.text('Jueves'), findsOneWidget);
     expect(find.text('Nueva manga'), findsOneWidget);
 
@@ -132,8 +136,10 @@ void main() {
     await _desmontar(tester);
   });
 
-  testWidgets('sin tesorería no hay pestaña Caja', (tester) async {
-    await _montar(tester, usaTesoreria: false);
+  testWidgets('sin tesorería no hay Caja y con motor propio no hay sorteo',
+      (tester) async {
+    await _montar(tester, usaTesoreria: false, tipoMotor: 'PROPIO');
+    expect(find.text('Sorteo de motores'), findsNothing);
     expect(find.text('Caja'), findsNothing);
     expect(find.text('Resultados'), findsOneWidget);
     expect(tester.takeException(), isNull);

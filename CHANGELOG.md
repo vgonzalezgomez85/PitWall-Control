@@ -14,6 +14,10 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.26.1] — 2026-10-12
+### Mejorado
+- **«Sorteo de motores» solo aparece si el campeonato lo usa.** En la pestaña Preparar de la prueba el botón se muestra con motor de sorteo o mixto, y se oculta si el campeonato es de motor propio.
+
 ## [1.26.0] — 2026-10-12
 ### Mejorado
 - **La pantalla de una prueba se organiza por fases, en pestañas:** **Preparar** (inscritos, mangas y sorteo de motores), **Verificar**, **Resultados** y **Caja** (solo si el campeonato usa tesorería). Sustituye al panel lateral de 17 opciones, y el contenido ocupa todo el ancho.
