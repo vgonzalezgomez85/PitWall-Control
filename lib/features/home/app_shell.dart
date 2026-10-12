@@ -149,6 +149,25 @@ class _ShellConContenidoState extends ConsumerState<_ShellConContenido> {
     final extendida = ancho > 1100;
     _visitados.add(destinos[indice].titulo);
 
+    final contenido = IndexedStack(
+      index: indice,
+      children: [
+        for (final d in destinos)
+          _visitados.contains(d.titulo) ? d.pantalla : const SizedBox.shrink(),
+      ],
+    );
+
+    // Móvil: barra inferior en vez del menú lateral, que en un teléfono se
+    // come el ancho de la pantalla.
+    if (ancho < anchoMovil) {
+      return _ShellMovil(
+        indice: indice,
+        destinos: destinos,
+        campeonatos: widget.campeonatos,
+        contenido: contenido,
+      );
+    }
+
     return Scaffold(
       body: Row(
         children: [
@@ -159,19 +178,134 @@ class _ShellConContenidoState extends ConsumerState<_ShellConContenido> {
             destinos: destinos,
           ),
           const VerticalDivider(width: 1, thickness: 1),
-          Expanded(
-            child: IndexedStack(
-              index: indice,
-              children: [
-                for (final d in destinos)
-                  _visitados.contains(d.titulo)
-                      ? d.pantalla
-                      : const SizedBox.shrink(),
-              ],
+          Expanded(child: contenido),
+        ],
+      ),
+    );
+  }
+}
+
+/// Por debajo de este ancho (móvil en vertical) el menú pasa abajo.
+const anchoMovil = 600.0;
+
+/// Destinos que van en la barra inferior del móvil; el resto, en «Más».
+const _titulosBarraMovil = ['Inicio', 'Pruebas', 'Participantes', 'Clasificación'];
+
+/// Navegación de móvil: barra inferior con los destinos de diario y «Más»
+/// (campeonato activo, el resto de destinos y Ajustes) en una hoja.
+class _ShellMovil extends ConsumerWidget {
+  const _ShellMovil({
+    required this.indice,
+    required this.destinos,
+    required this.campeonatos,
+    required this.contenido,
+  });
+
+  final int indice;
+  final List<_Destino> destinos;
+  final List<Campeonato> campeonatos;
+  final Widget contenido;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enBarra = [
+      for (var i = 0; i < destinos.length; i++)
+        if (_titulosBarraMovil.contains(destinos[i].titulo)) i
+    ];
+    final enMas = [
+      for (var i = 0; i < destinos.length; i++)
+        if (!enBarra.contains(i)) i
+    ];
+    final seleccion = enBarra.indexOf(indice);
+
+    return Scaffold(
+      body: contenido,
+      bottomNavigationBar: NavigationBar(
+        // Un destino de «Más» activo marca el botón «Más».
+        selectedIndex: seleccion >= 0 ? seleccion : enBarra.length,
+        onDestinationSelected: (i) {
+          if (i < enBarra.length) {
+            ref.read(shellIndiceProvider.notifier).ir(enBarra[i]);
+          } else {
+            _abrirMas(context, ref, enMas);
+          }
+        },
+        destinations: [
+          for (final i in enBarra)
+            NavigationDestination(
+              icon: Icon(destinos[i].icono),
+              selectedIcon: Icon(destinos[i].iconoSel),
+              label: destinos[i].titulo,
             ),
+          const NavigationDestination(
+            icon: Icon(Icons.menu),
+            label: 'Más',
           ),
         ],
       ),
+    );
+  }
+
+  void _abrirMas(BuildContext context, WidgetRef ref, List<int> enMas) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        final activo = ref.read(campeonatoActivoProvider);
+        void ir(int i) {
+          Navigator.of(ctx).pop();
+          ref.read(shellIndiceProvider.notifier).ir(i);
+        }
+
+        Widget cabecera(String t) => Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
+              child: Text(t,
+                  style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(ctx).colorScheme.outline,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                      )),
+            );
+
+        Widget item(int i) => ListTile(
+              leading: Icon(i == indice
+                  ? destinos[i].iconoSel
+                  : destinos[i].icono),
+              title: Text(destinos[i].titulo),
+              selected: i == indice,
+              onTap: () => ir(i),
+            );
+
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              cabecera('CAMPEONATO ACTIVO'),
+              for (final c in campeonatos)
+                ListTile(
+                  leading: Icon(c.id == activo?.id
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked),
+                  title: Text(c.nombre),
+                  onTap: () {
+                    ref.read(campeonatoActivoProvider.notifier).seleccionar(c);
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+              for (final g in [_Grupo.campeonato, _Grupo.herramientas])
+                if (enMas.any((i) => destinos[i].grupo == g)) ...[
+                  cabecera(_titulosGrupo[g]!),
+                  for (final i in enMas)
+                    if (destinos[i].grupo == g) item(i),
+                ],
+              const Divider(),
+              for (final i in enMas)
+                if (destinos[i].grupo == _Grupo.ajustes) item(i),
+            ],
+          ),
+        );
+      },
     );
   }
 }

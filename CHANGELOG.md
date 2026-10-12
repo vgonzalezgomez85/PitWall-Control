@@ -14,6 +14,12 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.30.0] — 2026-10-12
+### Añadido
+- **Menú para móvil.** En pantallas estrechas (un teléfono en vertical) el menú lateral se sustituye por una **barra inferior** con Inicio, Pruebas, Participantes y Clasificación, más un botón **«Más»** que abre una hoja con el **campeonato activo** (para cambiarlo), Tesorería, Créditos, Verificación libre, Catálogos, Gestionar campeonatos y Ajustes. En tablet y escritorio sigue el menú lateral.
+### Corregido
+- En el móvil, la cabecera del Inicio se salía de la pantalla: las cifras del campeonato (pilotos, equipos, pruebas) ahora van debajo del nombre cuando no caben al lado.
+
 ## [1.29.1] — 2026-10-12
 ### Corregido
 - **«Elegir logo» no abría nada en el Mac.** La app se quedaba esperando: el selector de imágenes de móvil no funciona en escritorio. Ahora en Mac y Windows se abre el selector de archivos del sistema (PNG, JPG, WebP, GIF o BMP); en Android sigue abriendo la galería.

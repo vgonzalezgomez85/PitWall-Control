@@ -169,66 +169,77 @@ class PantallaResumen extends ConsumerWidget {
             color: color.primaryContainer,
             child: Padding(
               padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Icon(Icons.emoji_events,
-                      size: 40, color: color.onPrimaryContainer),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Campeonato activo',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelLarge
-                                ?.copyWith(
-                                  color: color.onPrimaryContainer
-                                      .withValues(alpha: 0.8),
-                                )),
-                        const SizedBox(height: 4),
-                        Text(
-                          activo?.nombre ?? '—',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(color: color.onPrimaryContainer),
-                        ),
-                        if (activo != null)
+              // En un móvil las cifras no caben junto al nombre: van debajo.
+              child: LayoutBuilder(builder: (context, c) {
+                final estrecha = c.maxWidth < 520;
+                final cifras = resumen == null
+                    ? null
+                    : Wrap(
+                        spacing: 8,
+                        children: [
+                          _StatChip(
+                              icono: Icons.people_alt_outlined,
+                              valor: '${resumen.numPilotos}',
+                              etiqueta: 'pilotos'),
+                          _StatChip(
+                              icono: Icons.groups_outlined,
+                              valor: '${resumen.numEquipos}',
+                              etiqueta: 'equipos'),
+                          _StatChip(
+                              icono: Icons.event_outlined,
+                              valor:
+                                  '${resumen.pruebasTerminadas}/${resumen.numPruebas}',
+                              etiqueta: 'pruebas'),
+                        ],
+                      );
+                final cabecera = Row(
+                  children: [
+                    Icon(Icons.emoji_events,
+                        size: 40, color: color.onPrimaryContainer),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Campeonato activo',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelLarge
+                                  ?.copyWith(
+                                    color: color.onPrimaryContainer
+                                        .withValues(alpha: 0.8),
+                                  )),
+                          const SizedBox(height: 4),
                           Text(
-                            activo.formato,
+                            activo?.nombre ?? '—',
                             style: Theme.of(context)
                                 .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: color.onPrimaryContainer
-                                      .withValues(alpha: 0.8),
-                                ),
+                                .titleLarge
+                                ?.copyWith(color: color.onPrimaryContainer),
                           ),
-                      ],
+                          if (activo != null)
+                            Text(
+                              activo.formato,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: color.onPrimaryContainer
+                                        .withValues(alpha: 0.8),
+                                  ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  if (resumen != null)
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        _StatChip(
-                            icono: Icons.people_alt_outlined,
-                            valor: '${resumen.numPilotos}',
-                            etiqueta: 'pilotos'),
-                        _StatChip(
-                            icono: Icons.groups_outlined,
-                            valor: '${resumen.numEquipos}',
-                            etiqueta: 'equipos'),
-                        _StatChip(
-                            icono: Icons.event_outlined,
-                            valor:
-                                '${resumen.pruebasTerminadas}/${resumen.numPruebas}',
-                            etiqueta: 'pruebas'),
-                      ],
-                    ),
-                ],
-              ),
+                    if (!estrecha && cifras != null) cifras,
+                  ],
+                );
+                if (!estrecha || cifras == null) return cabecera;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [cabecera, const SizedBox(height: 12), cifras],
+                );
+              }),
             ),
           ),
           const SizedBox(height: 16),
