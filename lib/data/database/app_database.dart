@@ -19,6 +19,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
 import '../../core/entorno.dart';
+import 'sync_triggers.dart';
 import 'tables.dart';
 
 part 'app_database.g.dart';
@@ -58,6 +59,8 @@ part 'app_database.g.dart';
     HojasVinculadas,
     SyncCola,
     BorradosSync,
+    SyncLocal,
+    BorradosRegistro,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -67,7 +70,17 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 49;
+  int get schemaVersion => 50;
+
+  /// Nombre con el que este dispositivo firma sus cambios (lo fija main.dart
+  /// con el de la sincronización). Se guarda en `sync_local` al abrir la BD.
+  static String Function() nombreDispositivo = () => 'Control';
+
+  /// Cambia el nombre de este dispositivo que usan los triggers de firma.
+  Future<void> fijarDispositivoSync(String nombre) => customStatement(
+      'INSERT OR REPLACE INTO sync_local (clave, valor) '
+      "VALUES ('dispositivo', ?)",
+      [nombre]);
 
   /// Ejecuta un ALTER/CREATE que puede fallar si el cambio ya está aplicado.
   /// Tolera "duplicate column", "already exists" para no romper en DBs de dev
@@ -89,6 +102,18 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
+        },
+        // Cada vez que se abre: triggers de sincronización, uuid de las filas
+        // antiguas y nombre de este dispositivo (una copia restaurada trae el
+        // del dispositivo de origen).
+        beforeOpen: (detalles) async {
+          for (final sql in sentenciasTriggersSync()) {
+            await customStatement(sql);
+          }
+          for (final sql in sentenciasUuidHeredado()) {
+            await customStatement(sql);
+          }
+          await fijarDispositivoSync(nombreDispositivo());
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
@@ -503,6 +528,27 @@ class AppDatabase extends _$AppDatabase {
                 'ALTER TABLE campeonatos ADD COLUMN club_organizador TEXT'));
             await _aplicar(() => customStatement(
                 'ALTER TABLE campeonatos ADD COLUMN logo_club BLOB'));
+          }
+          if (from < 50) {
+            // Sincronización de altas entre Controls: uuid global, marca de
+            // cambio y registro de borrados (triggers en beforeOpen).
+            for (final t in ['pilotos', 'equipos', 'campeonatos', 'pruebas']) {
+              await _aplicar(() => customStatement(
+                  'ALTER TABLE $t ADD COLUMN uuid TEXT'));
+            }
+            for (final t in [
+              'pilotos',
+              'equipos',
+              'piloto_campeonato',
+              'inscripciones_prueba',
+            ]) {
+              await _aplicar(() => customStatement(
+                  'ALTER TABLE $t ADD COLUMN mod_ms INTEGER'));
+              await _aplicar(() => customStatement(
+                  'ALTER TABLE $t ADD COLUMN mod_por TEXT'));
+            }
+            await _aplicar(() => m.createTable(syncLocal));
+            await _aplicar(() => m.createTable(borradosRegistro));
           }
         },
       );

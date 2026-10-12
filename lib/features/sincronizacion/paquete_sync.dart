@@ -19,33 +19,49 @@
 // Paquete de sincronización entre Controls (schema `pitwall.sync/v1`).
 //
 // Un Control sirve el estado COMPLETO de una prueba: verificaciones, borrados
-// de verificaciones, copa por prueba y tesorería de cada inscrito. Como es el
-// estado completo (incluido lo que ese Control recibió de otros), los cambios
-// se propagan en cadena aunque no todos se hayan sincronizado entre sí.
+// de verificaciones, copa por prueba y tesorería de cada inscrito y, desde la
+// v2, las altas: pilotos y equipos del campeonato (con sus miembros), el
+// perfil de cada piloto en el campeonato, las inscripciones a la prueba y los
+// borrados de todo ello. Como es el estado completo (incluido lo que ese
+// Control recibió de otros), los cambios se propagan en cadena aunque no
+// todos se hayan sincronizado entre sí.
 //
-// Mangas, equipos y coches viajan con su id Y su nombre: todos los Controls
-// deberían partir de la misma copia de la BD, pero si los ids no cuadran se
-// casan por nombre (ver fusionador_sync.dart).
+// Pilotos y equipos se identifican por su uuid (igual en todos los Controls,
+// ver sync_triggers.dart). Mangas y coches viajan con su id Y su nombre: si
+// los ids no cuadran se casan por nombre (ver fusionador_sync.dart).
 
 import 'dart:convert';
+
+import 'package:drift/drift.dart';
 
 import '../../data/database/app_database.dart';
 import 'dispositivo_sync.dart';
 
-const schemaPaqueteSync = 'pitwall.sync/v1';
+const schemaPaqueteSync = 'pitwall.sync/v2';
 
-/// Referencia portable a una fila: id en el Control de origen + nombre.
+/// Referencia portable a una fila: id en el Control de origen + nombre y,
+/// si la tabla lo tiene, su uuid (que manda al casar).
 class RefSync {
-  const RefSync(this.id, this.nombre);
+  const RefSync(this.id, this.nombre, [this.uuid]);
   final int id;
   final String nombre;
+  final String? uuid;
 
-  Map<String, dynamic> toJson() => {'id': id, 'nombre': nombre};
+  Map<String, dynamic> toJson() =>
+      {'id': id, 'nombre': nombre, 'uuid': ?uuid};
   static RefSync? fromJson(Object? j) {
     if (j is! Map) return null;
-    return RefSync((j['id'] as num).toInt(), j['nombre'] as String);
+    return RefSync((j['id'] as num).toInt(), j['nombre'] as String,
+        j['uuid'] as String?);
   }
 }
+
+/// Tablas cuyos borrados viajan (ver `borrados_registro`).
+const tablasBorradosSync = [
+  'equipos',
+  'piloto_campeonato',
+  'inscripciones_prueba',
+];
 
 /// Genera el paquete de la prueba [pruebaId] de este Control.
 Future<Map<String, dynamic>> generarPaqueteSync(
@@ -64,6 +80,33 @@ Future<Map<String, dynamic>> generarPaqueteSync(
         ..where((t) => t.campeonatoId.equals(camp.id)))
       .get();
   final equipoPorId = {for (final e in equipos) e.id: e};
+  RefSync refEquipo(Equipo e) => RefSync(e.id, e.nombre, e.uuid);
+
+  // Miembros de cada equipo (tabla de unión; si está vacía, piloto1/2).
+  final miembros = await (db.select(db.equipoPilotos)
+        ..where((t) => t.equipoId.isIn(equipoPorId.keys))
+        ..orderBy([(t) => OrderingTerm.asc(t.orden)]))
+      .get();
+  final miembrosDe = <int, List<int>>{};
+  for (final m in miembros) {
+    miembrosDe.putIfAbsent(m.equipoId, () => []).add(m.pilotoId);
+  }
+  List<int> pilotosDe(Equipo e) =>
+      miembrosDe[e.id] ?? [e.piloto1Id, ?e.piloto2Id];
+  final perfiles = await (db.select(db.pilotoCampeonato)
+        ..where((t) => t.campeonatoId.equals(camp.id)))
+      .get();
+  final idsPilotos = {
+    for (final e in equipos) ...pilotosDe(e),
+    for (final p in perfiles) p.pilotoId,
+  };
+  final pilotos = await (db.select(db.pilotos)
+        ..where((t) => t.id.isIn(idsPilotos)))
+      .get();
+  final pilotoPorId = {for (final p in pilotos) p.id: p};
+  final registro = await (db.select(db.borradosRegistro)
+        ..where((t) => t.tabla.isIn(tablasBorradosSync)))
+      .get();
   final coches = await db.select(db.catalogoCoches).get();
   final cochePorId = {for (final c in coches) c.id: c};
 
@@ -96,7 +139,7 @@ Future<Map<String, dynamic>> generarPaqueteSync(
     fotos.addAll(nombresFotos(v.fotosJson));
     listaVerifs.add({
       'manga': RefSync(m.id, m.nombre).toJson(),
-      'equipo': RefSync(e.id, e.nombre).toJson(),
+      'equipo': refEquipo(e).toJson(),
       'coche': coche == null ? null : RefSync(coche.id, coche.nombre).toJson(),
       'datos': v.toJson(),
     });
@@ -107,16 +150,68 @@ Future<Map<String, dynamic>> generarPaqueteSync(
     'schemaVersion': db.schemaVersion,
     'dispositivo': DispositivoSync.nombre,
     'ahoraMs': ahoraMsSync(),
-    'campeonato': RefSync(camp.id, camp.nombre).toJson(),
-    'prueba': RefSync(prueba.id, prueba.nombre).toJson(),
+    'campeonato': RefSync(camp.id, camp.nombre, camp.uuid).toJson(),
+    'prueba': RefSync(prueba.id, prueba.nombre, prueba.uuid).toJson(),
+    'pilotos': [
+      for (final p in pilotos)
+        if (p.uuid != null)
+          {
+            'uuid': p.uuid,
+            'nombre': p.nombre,
+            'telefono': p.telefono,
+            'email': p.email,
+            'esCoordinadora': p.esCoordinadora,
+            'palmaresGlobal': p.palmaresGlobal,
+            'modMs': p.modMs ?? 0,
+            'modPor': p.modPor,
+          },
+    ],
+    'equipos': [
+      for (final e in equipos)
+        if (e.uuid != null)
+          {
+            'uuid': e.uuid,
+            'nombre': e.nombre,
+            'copa': e.copa,
+            'activo': e.activo,
+            'miembros': [
+              for (final id in pilotosDe(e))
+                if (pilotoPorId[id]?.uuid != null) pilotoPorId[id]!.uuid,
+            ],
+            'modMs': e.modMs ?? 0,
+            'modPor': e.modPor,
+          },
+    ],
+    'perfiles': [
+      for (final pc in perfiles)
+        if (pilotoPorId[pc.pilotoId]?.uuid != null)
+          {
+            'piloto': pilotoPorId[pc.pilotoId]!.uuid,
+            'categoria': pc.categoria,
+            'categoriaFinal': pc.categoriaFinal,
+            'creditosIniciales': pc.creditosIniciales,
+            'saldoTemporadaAnterior': pc.saldoTemporadaAnterior,
+            'palmaresLocal': pc.palmaresLocal,
+            'modMs': pc.modMs ?? 0,
+            'modPor': pc.modPor,
+          },
+    ],
+    'borradosRegistro': [
+      for (final b in registro)
+        {
+          'tabla': b.tabla,
+          'clave': b.clave,
+          'borradoMs': b.borradoMs,
+          'borradoPor': b.borradoPor,
+        },
+    ],
     'verificaciones': listaVerifs,
     'borrados': [
       for (final b in borrados)
         if (mangaPorId[b.mangaId] != null && equipoPorId[b.equipoId] != null)
           {
             'manga': RefSync(b.mangaId, mangaPorId[b.mangaId]!.nombre).toJson(),
-            'equipo':
-                RefSync(b.equipoId, equipoPorId[b.equipoId]!.nombre).toJson(),
+            'equipo': refEquipo(equipoPorId[b.equipoId]!).toJson(),
             'borradoMs': b.borradoMs,
             'borradoPor': b.borradoPor,
           },
@@ -125,8 +220,12 @@ Future<Map<String, dynamic>> generarPaqueteSync(
       for (final i in inscripciones)
         if (equipoPorId[i.equipoId] != null)
           {
-            'equipo': RefSync(i.equipoId, equipoPorId[i.equipoId]!.nombre)
-                .toJson(),
+            'equipo': refEquipo(equipoPorId[i.equipoId]!).toJson(),
+            'preferenciaDia': i.preferenciaDia,
+            'notas': i.notas,
+            'fechaInscripcionMs': i.fechaInscripcion.millisecondsSinceEpoch,
+            'modMs': i.modMs ?? 0,
+            'modPor': i.modPor,
             'copa': i.copa,
             'copaModificadaMs': i.copaModificadaMs,
             'tesoreriaModificadaMs': i.tesoreriaModificadaMs,

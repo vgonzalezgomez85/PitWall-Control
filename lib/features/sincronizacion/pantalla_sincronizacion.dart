@@ -26,6 +26,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/proveedores.dart';
 import '../../core/tema.dart';
 import '../../services/almacen_local.dart';
 import 'dispositivo_sync.dart';
@@ -80,6 +81,8 @@ class _PantallaSincronizacionState
     await DispositivoSync.cambiar(
         ref.read(almacenSyncProvider), _nombre.text);
     _nombre.text = DispositivoSync.nombre;
+    // Los triggers de la BD firman los cambios con este nombre.
+    await ref.read(dbProvider).fijarDispositivoSync(DispositivoSync.nombre);
     final n = ref.read(sincronizacionProvider.notifier);
     // Se vuelve a anunciar en la red con el nombre nuevo.
     if (ref.read(sincronizacionProvider).activo) {
@@ -144,16 +147,18 @@ class _PantallaSincronizacionState
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Text(
-                'Varios Controls pueden verificar esta prueba a la vez. '
+                'Varios Controls pueden trabajar en esta prueba a la vez. '
                 'Cada uno guarda en su dispositivo y se pasan los cambios por '
-                'la wifi: verificaciones, fotos, copa y cobros.\n\n'
+                'la wifi: verificaciones con sus fotos, copa y cobros, y '
+                'también las altas: pilotos, equipos, su categoría en el '
+                'campeonato e inscritos a la prueba (y sus bajas).\n\n'
                 '• Todos en la misma wifi. No hace falta internet: vale un '
                 'router sin conexión o el punto de acceso de un móvil.\n'
-                '• Antes del evento, partid todos de la misma copia de datos '
-                '(campeonato, prueba, tandas y equipos).\n'
+                '• La primera vez, partid todos de la misma copia de datos. '
+                'Las tandas y los carriles todavía no viajan: montadlos antes '
+                'en un Control y repartid la copia.\n'
                 '• La misma clave del evento en todos, y la hora automática '
-                'activada: si dos tocan la misma verificación, gana el último '
-                'cambio.',
+                'activada: si dos tocan lo mismo, gana el último cambio.',
                 style: gris,
               ),
             ),

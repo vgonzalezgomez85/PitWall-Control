@@ -23,6 +23,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/proveedores.dart';
 import 'core/tema.dart';
+import 'data/database/app_database.dart';
 import 'features/home/app_shell.dart';
 import 'features/pruebas/repositorio_pruebas.dart';
 import 'features/sincronizacion/dispositivo_sync.dart';
@@ -38,6 +39,8 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final almacen = AlmacenLocal(prefs);
   DispositivoSync.cargar(almacen);
+  // La BD firma los cambios sincronizables con este nombre (triggers).
+  AppDatabase.nombreDispositivo = () => DispositivoSync.nombre;
   runApp(
     ProviderScope(
       overrides: [

@@ -25,6 +25,9 @@ import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pitwall/data/database/app_database.dart';
+import 'package:pitwall/data/database/sync_triggers.dart';
+import 'package:pitwall/features/equipos/repositorio_equipos.dart';
+import 'package:pitwall/features/pilotos/repositorio_pilotos.dart';
 import 'package:pitwall/features/pruebas/repositorio_inscripciones_prueba.dart';
 import 'package:pitwall/features/sincronizacion/fusionador_sync.dart';
 import 'package:pitwall/features/sincronizacion/paquete_sync.dart';
@@ -68,6 +71,22 @@ Future<AppDatabase> _baseComun() async {
   await db.into(db.catalogoCoches).insert(CatalogoCochesCompanion.insert(
       nombre: 'SCALEAUTO-BMW M8', marca: 'SCA', modelo: 'M8', pesoMin: 70,
       creditosCoche: const Value(-4)));
+  // Como una copia restaurada de antes de la sincronización: mismos uuid en
+  // las dos BDs (derivados de id y nombre) y sin marca de cambio.
+  for (final t in ['pilotos', 'equipos', 'campeonatos', 'pruebas']) {
+    await db.customStatement('UPDATE $t SET uuid = NULL');
+  }
+  for (final sql in sentenciasUuidHeredado()) {
+    await db.customStatement(sql);
+  }
+  for (final t in [
+    'pilotos',
+    'equipos',
+    'piloto_campeonato',
+    'inscripciones_prueba'
+  ]) {
+    await db.customStatement('UPDATE $t SET mod_ms = NULL, mod_por = NULL');
+  }
   return db;
 }
 
@@ -241,5 +260,162 @@ void main() {
     } finally {
       await srv.parar();
     }
+  });
+
+  group('altas (v2)', () {
+    setUp(() async {
+      await uno.fijarDispositivoSync('Control 1');
+      await dos.fijarDispositivoSync('Control 2');
+    });
+
+    Future<Equipo?> equipoLlamado(AppDatabase db, String nombre) =>
+        (db.select(db.equipos)..where((t) => t.nombre.equals(nombre)))
+            .getSingleOrNull();
+    Future<InscripcionesPruebaData?> inscripcion(
+            AppDatabase db, int equipoId) =>
+        (db.select(db.inscripcionesPrueba)
+              ..where((t) =>
+                  t.pruebaId.equals(_prueba) & t.equipoId.equals(equipoId)))
+            .getSingleOrNull();
+    Future<void> pausa() =>
+        Future<void>.delayed(const Duration(milliseconds: 5));
+
+    test('un alta en un Control llega entera al otro', () async {
+      // En el 1: piloto nuevo con su perfil, equipo nuevo, inscrito y
+      // verificado.
+      final repoP = RepositorioPilotos(uno);
+      final eva = await repoP.crear(
+          nombre: 'Eva', campeonatoId: 1, categoria: 'PLATA',
+          creditosIniciales: 12);
+      final fran = await repoP.crear(
+          nombre: 'Fran', campeonatoId: 1, categoria: 'BRONCE',
+          creditosIniciales: 8);
+      final eqC = await RepositorioEquipos(uno).crearN(
+          campeonatoId: 1, nombre: 'Equipo C', copa: 'GT2',
+          pilotoIds: [eva, fran]);
+      await RepositorioInscripcionesPrueba(uno)
+          .inscribir(pruebaId: _prueba, equipoId: eqC, preferenciaDia: 'Viernes');
+      await uno.into(uno.inscripciones).insert(
+          InscripcionesCompanion.insert(mangaId: _manga, equipoId: eqC));
+      await RepositorioVerificaciones(uno).guardar(
+          mangaId: _manga, equipoId: eqC, pesoInicial: 73, validado: false);
+
+      final r = await _traer(dos, uno);
+      expect((r.pilotos, r.equipos, r.perfiles, r.inscritos), (2, 1, 2, 1));
+
+      final c = (await equipoLlamado(dos, 'Equipo C'))!;
+      expect(c.copa, 'GT2');
+      final miembros = await (dos.select(dos.equipoPilotos)
+            ..where((t) => t.equipoId.equals(c.id))
+            ..orderBy([(t) => OrderingTerm.asc(t.orden)]))
+          .get();
+      final nombres = [
+        for (final m in miembros)
+          (await (dos.select(dos.pilotos)..where((t) => t.id.equals(m.pilotoId)))
+                  .getSingle())
+              .nombre
+      ];
+      expect(nombres, ['Eva', 'Fran']);
+      expect((await inscripcion(dos, c.id))!.preferenciaDia, 'Viernes');
+      // La verificación del equipo nuevo llega y encaja por uuid con el
+      // equipo recién creado aquí.
+      expect(r.verifNuevas, 1);
+      expect((await _verif(dos, c.id))!.pesoInicial, 73);
+      final perfilEva = await (dos.select(dos.pilotoCampeonato)
+            ..where((t) => t.categoria.equals('PLATA')))
+          .getSingle();
+      expect(perfilEva.creditosActuales, 12);
+
+      // Repetir no cambia nada, y de vuelta tampoco.
+      expect((await _traer(dos, uno)).cambios, 0);
+      expect((await _traer(uno, dos)).cambios, 0);
+    });
+
+    test('los cambios llegan y los créditos de cada Control se respetan',
+        () async {
+      // El 2 tiene créditos gastados que el 1 no conoce.
+      await (dos.update(dos.pilotoCampeonato)
+            ..where((t) => t.pilotoId.equals(1)))
+          .write(const PilotoCampeonatoCompanion(creditosActuales: Value(4)));
+      await (uno.update(uno.equipos)..where((t) => t.id.equals(_equipoA)))
+          .write(const EquiposCompanion(nombre: Value('Equipo A Racing')));
+      await (uno.update(uno.pilotoCampeonato)
+            ..where((t) => t.pilotoId.equals(1)))
+          .write(const PilotoCampeonatoCompanion(
+              categoria: Value('PLATINO'), creditosIniciales: Value(15)));
+
+      final r = await _traer(dos, uno);
+      expect((r.equipos, r.perfiles), (1, 1));
+      expect((await equipoLlamado(dos, 'Equipo A Racing'))!.id, _equipoA);
+      final perfil = await (dos.select(dos.pilotoCampeonato)
+            ..where((t) => t.pilotoId.equals(1)))
+          .getSingle();
+      expect(perfil.categoria, 'PLATINO');
+      // 4 que tenía + 5 iniciales más.
+      expect(perfil.creditosActuales, 9);
+    });
+
+    test('una baja se propaga y volver a inscribir después gana', () async {
+      final ins = (await inscripcion(uno, _equipoB))!;
+      await RepositorioInscripcionesPrueba(uno).quitar(ins.id);
+      expect((await _traer(dos, uno)).bajas, 1);
+      expect(await inscripcion(dos, _equipoB), isNull);
+
+      // Una inscripción vieja del 1 no resucita la baja...
+      expect((await _traer(uno, dos)).inscritos, 0);
+      // ...pero volver a inscribir después sí llega.
+      await pausa();
+      await RepositorioInscripcionesPrueba(dos)
+          .inscribir(pruebaId: _prueba, equipoId: _equipoB);
+      expect((await _traer(uno, dos)).inscritos, 1);
+      expect(await inscripcion(uno, _equipoB), isNotNull);
+    });
+
+    test('si los dos cambian el mismo equipo gana el último en ambos',
+        () async {
+      await (uno.update(uno.equipos)..where((t) => t.id.equals(_equipoA)))
+          .write(const EquiposCompanion(copa: Value('LMP')));
+      await pausa();
+      await (dos.update(dos.equipos)..where((t) => t.id.equals(_equipoA)))
+          .write(const EquiposCompanion(copa: Value('GT3')));
+
+      await _traer(uno, dos);
+      await _traer(dos, uno);
+      for (final db in [uno, dos]) {
+        final e = await (db.select(db.equipos)
+              ..where((t) => t.id.equals(_equipoA)))
+            .getSingle();
+        expect(e.copa, 'GT3');
+      }
+    });
+
+    test('dos altas a la vez con el mismo nombre no se pisan', () async {
+      await RepositorioEquipos(uno).crearN(
+          campeonatoId: 1, nombre: 'Equipo C', copa: 'GT', pilotoIds: [1]);
+      await RepositorioEquipos(dos).crearN(
+          campeonatoId: 1, nombre: 'Equipo C', copa: 'GT', pilotoIds: [3]);
+      await _traer(uno, dos);
+      await _traer(dos, uno);
+      for (final db in [uno, dos]) {
+        final cs = await (db.select(db.equipos)
+              ..where((t) => t.nombre.equals('Equipo C')))
+            .get();
+        expect(cs, hasLength(2));
+      }
+    });
+
+    test('un equipo borrado en un Control desaparece en el otro', () async {
+      final nuevo = await RepositorioEquipos(uno).crearN(
+          campeonatoId: 1, nombre: 'Equipo C', copa: 'GT', pilotoIds: [1]);
+      await _traer(dos, uno);
+      expect(await equipoLlamado(dos, 'Equipo C'), isNotNull);
+      await pausa();
+      await RepositorioEquipos(uno).borrar(nuevo);
+      expect((await _traer(dos, uno)).bajas, 1);
+      expect(await equipoLlamado(dos, 'Equipo C'), isNull);
+      // Y no vuelve al traer del que lo tenía.
+      await _traer(uno, dos);
+      expect(await equipoLlamado(uno, 'Equipo C'), isNull);
+    });
   });
 }

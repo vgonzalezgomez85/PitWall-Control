@@ -23,6 +23,9 @@ import 'package:drift/drift.dart';
 
 class Campeonatos extends Table {
   IntColumn get id => integer().autoIncrement()();
+  /// Identificador global, igual en todos los Controls (sincronización).
+  /// Las filas anteriores a la v1.34 lo reciben derivado de su id y nombre.
+  TextColumn get uuid => text().nullable()();
   TextColumn get nombre => text()();
   TextColumn get formato => text()(); // 'INDIVIDUAL' | 'PAREJAS'
   IntColumn get anio => integer()();
@@ -121,6 +124,13 @@ class Pilotos extends Table {
   /// Si true, este piloto es de coordinadora y su equipo no paga cuota.
   BoolColumn get esCoordinadora => boolean().withDefault(const Constant(false))();
   DateTimeColumn get creadoEn => dateTime().withDefault(currentDateAndTime)();
+  /// Identificador global, igual en todos los Controls (sincronización).
+  /// Las filas anteriores a la v1.34 lo reciben derivado de su id y nombre.
+  TextColumn get uuid => text().nullable()();
+  /// Último cambio sincronizable: ms y dispositivo. Lo firman triggers de
+  /// SQLite (ver sync_triggers.dart); al fusionar se escribe el remoto.
+  IntColumn get modMs => integer().nullable()();
+  TextColumn get modPor => text().nullable()();
 }
 
 class PilotoCampeonato extends Table {
@@ -136,6 +146,10 @@ class PilotoCampeonato extends Table {
   IntColumn get saldoTemporadaAnterior => integer().withDefault(const Constant(0))();
   IntColumn get bonificacionAplicada => integer().withDefault(const Constant(0))();
   TextColumn get palmaresLocal => text().nullable()();
+  /// Último cambio sincronizable: ms y dispositivo. Lo firman triggers de
+  /// SQLite (ver sync_triggers.dart); al fusionar se escribe el remoto.
+  IntColumn get modMs => integer().nullable()();
+  TextColumn get modPor => text().nullable()();
   @override
   Set<Column> get primaryKey => {pilotoId, campeonatoId};
 }
@@ -155,6 +169,13 @@ class Equipos extends Table {
   IntColumn get piloto1Id => integer().references(Pilotos, #id)();
   IntColumn get piloto2Id => integer().references(Pilotos, #id).nullable()();
   BoolColumn get activo => boolean().withDefault(const Constant(true))();
+  /// Identificador global, igual en todos los Controls (sincronización).
+  /// Las filas anteriores a la v1.34 lo reciben derivado de su id y nombre.
+  TextColumn get uuid => text().nullable()();
+  /// Último cambio sincronizable: ms y dispositivo. Lo firman triggers de
+  /// SQLite (ver sync_triggers.dart); al fusionar se escribe el remoto.
+  IntColumn get modMs => integer().nullable()();
+  TextColumn get modPor => text().nullable()();
 }
 
 /// Miembros de un equipo (tabla de unión). Fuente canónica de TODOS los pilotos
@@ -184,6 +205,9 @@ class Pruebas extends Table {
   /// (tanda o verificaciones). Permite reenviar verificaciones ligadas a la
   /// misma carrera en vez de que Manager tenga que adivinarla por nombre.
   IntColumn get managerRaceId => integer().nullable()();
+  /// Identificador global, igual en todos los Controls (sincronización).
+  /// Las filas anteriores a la v1.34 lo reciben derivado de su id y nombre.
+  TextColumn get uuid => text().nullable()();
 }
 
 class Mangas extends Table {
@@ -231,6 +255,10 @@ class InscripcionesPrueba extends Table {
   /// (pago, wildcard, "Coord. total"). null = nunca desde que existe la sync.
   IntColumn get copaModificadaMs => integer().nullable()();
   IntColumn get tesoreriaModificadaMs => integer().nullable()();
+  /// Último cambio sincronizable: ms y dispositivo. Lo firman triggers de
+  /// SQLite (ver sync_triggers.dart); al fusionar se escribe el remoto.
+  IntColumn get modMs => integer().nullable()();
+  TextColumn get modPor => text().nullable()();
 }
 
 class Resultados extends Table {
@@ -571,4 +599,27 @@ class BorradosSync extends Table {
   IntColumn get equipoId => integer().references(Equipos, #id)();
   IntColumn get borradoMs => integer()();
   TextColumn get borradoPor => text().nullable()();
+}
+
+/// Datos locales de la sincronización entre Controls (clave → valor), p. ej.
+/// el nombre de este dispositivo, que leen los triggers para firmar cambios.
+/// Se reescribe al abrir la BD: una copia restaurada no arrastra el ajeno.
+class SyncLocal extends Table {
+  TextColumn get clave => text()();
+  TextColumn get valor => text().nullable()();
+  @override
+  Set<Column> get primaryKey => {clave};
+}
+
+/// Borrados de filas sincronizables (equipos, perfiles de piloto en un
+/// campeonato, inscripciones a una prueba), para que viajen a los demás
+/// Controls. [clave] identifica la fila de forma portable (uuid o
+/// combinación de uuids). Lo rellenan triggers (sync_triggers.dart).
+class BorradosRegistro extends Table {
+  TextColumn get tabla => text()();
+  TextColumn get clave => text()();
+  IntColumn get borradoMs => integer()();
+  TextColumn get borradoPor => text().nullable()();
+  @override
+  Set<Column> get primaryKey => {tabla, clave};
 }

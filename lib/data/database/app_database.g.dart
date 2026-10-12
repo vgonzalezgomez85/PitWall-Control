@@ -22,6 +22,15 @@ class $CampeonatosTable extends Campeonatos
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _uuidMeta = const VerificationMeta('uuid');
+  @override
+  late final GeneratedColumn<String> uuid = GeneratedColumn<String>(
+    'uuid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _nombreMeta = const VerificationMeta('nombre');
   @override
   late final GeneratedColumn<String> nombre = GeneratedColumn<String>(
@@ -371,6 +380,7 @@ class $CampeonatosTable extends Campeonatos
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    uuid,
     nombre,
     formato,
     anio,
@@ -415,6 +425,12 @@ class $CampeonatosTable extends Campeonatos
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('uuid')) {
+      context.handle(
+        _uuidMeta,
+        uuid.isAcceptableOrUnknown(data['uuid']!, _uuidMeta),
+      );
     }
     if (data.containsKey('nombre')) {
       context.handle(
@@ -660,6 +676,10 @@ class $CampeonatosTable extends Campeonatos
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      uuid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uuid'],
+      ),
       nombre: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}nombre'],
@@ -787,6 +807,10 @@ class $CampeonatosTable extends Campeonatos
 
 class Campeonato extends DataClass implements Insertable<Campeonato> {
   final int id;
+
+  /// Identificador global, igual en todos los Controls (sincronización).
+  /// Las filas anteriores a la v1.34 lo reciben derivado de su id y nombre.
+  final String? uuid;
   final String nombre;
   final String formato;
   final int anio;
@@ -865,6 +889,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   final DateTime creadoEn;
   const Campeonato({
     required this.id,
+    this.uuid,
     required this.nombre,
     required this.formato,
     required this.anio,
@@ -899,6 +924,9 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    if (!nullToAbsent || uuid != null) {
+      map['uuid'] = Variable<String>(uuid);
+    }
     map['nombre'] = Variable<String>(nombre);
     map['formato'] = Variable<String>(formato);
     map['anio'] = Variable<int>(anio);
@@ -948,6 +976,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   CampeonatosCompanion toCompanion(bool nullToAbsent) {
     return CampeonatosCompanion(
       id: Value(id),
+      uuid: uuid == null && nullToAbsent ? const Value.absent() : Value(uuid),
       nombre: Value(nombre),
       formato: Value(formato),
       anio: Value(anio),
@@ -1001,6 +1030,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Campeonato(
       id: serializer.fromJson<int>(json['id']),
+      uuid: serializer.fromJson<String?>(json['uuid']),
       nombre: serializer.fromJson<String>(json['nombre']),
       formato: serializer.fromJson<String>(json['formato']),
       anio: serializer.fromJson<int>(json['anio']),
@@ -1041,6 +1071,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'uuid': serializer.toJson<String?>(uuid),
       'nombre': serializer.toJson<String>(nombre),
       'formato': serializer.toJson<String>(formato),
       'anio': serializer.toJson<int>(anio),
@@ -1075,6 +1106,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
 
   Campeonato copyWith({
     int? id,
+    Value<String?> uuid = const Value.absent(),
     String? nombre,
     String? formato,
     int? anio,
@@ -1106,6 +1138,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     DateTime? creadoEn,
   }) => Campeonato(
     id: id ?? this.id,
+    uuid: uuid.present ? uuid.value : this.uuid,
     nombre: nombre ?? this.nombre,
     formato: formato ?? this.formato,
     anio: anio ?? this.anio,
@@ -1145,6 +1178,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   Campeonato copyWithCompanion(CampeonatosCompanion data) {
     return Campeonato(
       id: data.id.present ? data.id.value : this.id,
+      uuid: data.uuid.present ? data.uuid.value : this.uuid,
       nombre: data.nombre.present ? data.nombre.value : this.nombre,
       formato: data.formato.present ? data.formato.value : this.formato,
       anio: data.anio.present ? data.anio.value : this.anio,
@@ -1219,6 +1253,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   String toString() {
     return (StringBuffer('Campeonato(')
           ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
           ..write('nombre: $nombre, ')
           ..write('formato: $formato, ')
           ..write('anio: $anio, ')
@@ -1255,6 +1290,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   @override
   int get hashCode => Object.hashAll([
     id,
+    uuid,
     nombre,
     formato,
     anio,
@@ -1290,6 +1326,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       identical(this, other) ||
       (other is Campeonato &&
           other.id == this.id &&
+          other.uuid == this.uuid &&
           other.nombre == this.nombre &&
           other.formato == this.formato &&
           other.anio == this.anio &&
@@ -1323,6 +1360,7 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
 
 class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   final Value<int> id;
+  final Value<String?> uuid;
   final Value<String> nombre;
   final Value<String> formato;
   final Value<int> anio;
@@ -1354,6 +1392,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   final Value<DateTime> creadoEn;
   const CampeonatosCompanion({
     this.id = const Value.absent(),
+    this.uuid = const Value.absent(),
     this.nombre = const Value.absent(),
     this.formato = const Value.absent(),
     this.anio = const Value.absent(),
@@ -1386,6 +1425,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   });
   CampeonatosCompanion.insert({
     this.id = const Value.absent(),
+    this.uuid = const Value.absent(),
     required String nombre,
     required String formato,
     required int anio,
@@ -1420,6 +1460,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
        anio = Value(anio);
   static Insertable<Campeonato> custom({
     Expression<int>? id,
+    Expression<String>? uuid,
     Expression<String>? nombre,
     Expression<String>? formato,
     Expression<int>? anio,
@@ -1452,6 +1493,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (uuid != null) 'uuid': uuid,
       if (nombre != null) 'nombre': nombre,
       if (formato != null) 'formato': formato,
       if (anio != null) 'anio': anio,
@@ -1488,6 +1530,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
 
   CampeonatosCompanion copyWith({
     Value<int>? id,
+    Value<String?>? uuid,
     Value<String>? nombre,
     Value<String>? formato,
     Value<int>? anio,
@@ -1520,6 +1563,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   }) {
     return CampeonatosCompanion(
       id: id ?? this.id,
+      uuid: uuid ?? this.uuid,
       nombre: nombre ?? this.nombre,
       formato: formato ?? this.formato,
       anio: anio ?? this.anio,
@@ -1557,6 +1601,9 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (uuid.present) {
+      map['uuid'] = Variable<String>(uuid.value);
     }
     if (nombre.present) {
       map['nombre'] = Variable<String>(nombre.value);
@@ -1654,6 +1701,7 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   String toString() {
     return (StringBuffer('CampeonatosCompanion(')
           ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
           ..write('nombre: $nombre, ')
           ..write('formato: $formato, ')
           ..write('anio: $anio, ')
@@ -2447,6 +2495,33 @@ class $PilotosTable extends Pilotos with TableInfo<$PilotosTable, Piloto> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _uuidMeta = const VerificationMeta('uuid');
+  @override
+  late final GeneratedColumn<String> uuid = GeneratedColumn<String>(
+    'uuid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modMsMeta = const VerificationMeta('modMs');
+  @override
+  late final GeneratedColumn<int> modMs = GeneratedColumn<int>(
+    'mod_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modPorMeta = const VerificationMeta('modPor');
+  @override
+  late final GeneratedColumn<String> modPor = GeneratedColumn<String>(
+    'mod_por',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2456,6 +2531,9 @@ class $PilotosTable extends Pilotos with TableInfo<$PilotosTable, Piloto> {
     email,
     esCoordinadora,
     creadoEn,
+    uuid,
+    modMs,
+    modPor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2516,6 +2594,24 @@ class $PilotosTable extends Pilotos with TableInfo<$PilotosTable, Piloto> {
         creadoEn.isAcceptableOrUnknown(data['creado_en']!, _creadoEnMeta),
       );
     }
+    if (data.containsKey('uuid')) {
+      context.handle(
+        _uuidMeta,
+        uuid.isAcceptableOrUnknown(data['uuid']!, _uuidMeta),
+      );
+    }
+    if (data.containsKey('mod_ms')) {
+      context.handle(
+        _modMsMeta,
+        modMs.isAcceptableOrUnknown(data['mod_ms']!, _modMsMeta),
+      );
+    }
+    if (data.containsKey('mod_por')) {
+      context.handle(
+        _modPorMeta,
+        modPor.isAcceptableOrUnknown(data['mod_por']!, _modPorMeta),
+      );
+    }
     return context;
   }
 
@@ -2553,6 +2649,18 @@ class $PilotosTable extends Pilotos with TableInfo<$PilotosTable, Piloto> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}creado_en'],
       )!,
+      uuid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uuid'],
+      ),
+      modMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}mod_ms'],
+      ),
+      modPor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mod_por'],
+      ),
     );
   }
 
@@ -2572,6 +2680,15 @@ class Piloto extends DataClass implements Insertable<Piloto> {
   /// Si true, este piloto es de coordinadora y su equipo no paga cuota.
   final bool esCoordinadora;
   final DateTime creadoEn;
+
+  /// Identificador global, igual en todos los Controls (sincronización).
+  /// Las filas anteriores a la v1.34 lo reciben derivado de su id y nombre.
+  final String? uuid;
+
+  /// Último cambio sincronizable: ms y dispositivo. Lo firman triggers de
+  /// SQLite (ver sync_triggers.dart); al fusionar se escribe el remoto.
+  final int? modMs;
+  final String? modPor;
   const Piloto({
     required this.id,
     required this.nombre,
@@ -2580,6 +2697,9 @@ class Piloto extends DataClass implements Insertable<Piloto> {
     this.email,
     required this.esCoordinadora,
     required this.creadoEn,
+    this.uuid,
+    this.modMs,
+    this.modPor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2597,6 +2717,15 @@ class Piloto extends DataClass implements Insertable<Piloto> {
     }
     map['es_coordinadora'] = Variable<bool>(esCoordinadora);
     map['creado_en'] = Variable<DateTime>(creadoEn);
+    if (!nullToAbsent || uuid != null) {
+      map['uuid'] = Variable<String>(uuid);
+    }
+    if (!nullToAbsent || modMs != null) {
+      map['mod_ms'] = Variable<int>(modMs);
+    }
+    if (!nullToAbsent || modPor != null) {
+      map['mod_por'] = Variable<String>(modPor);
+    }
     return map;
   }
 
@@ -2615,6 +2744,13 @@ class Piloto extends DataClass implements Insertable<Piloto> {
           : Value(email),
       esCoordinadora: Value(esCoordinadora),
       creadoEn: Value(creadoEn),
+      uuid: uuid == null && nullToAbsent ? const Value.absent() : Value(uuid),
+      modMs: modMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modMs),
+      modPor: modPor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modPor),
     );
   }
 
@@ -2631,6 +2767,9 @@ class Piloto extends DataClass implements Insertable<Piloto> {
       email: serializer.fromJson<String?>(json['email']),
       esCoordinadora: serializer.fromJson<bool>(json['esCoordinadora']),
       creadoEn: serializer.fromJson<DateTime>(json['creadoEn']),
+      uuid: serializer.fromJson<String?>(json['uuid']),
+      modMs: serializer.fromJson<int?>(json['modMs']),
+      modPor: serializer.fromJson<String?>(json['modPor']),
     );
   }
   @override
@@ -2644,6 +2783,9 @@ class Piloto extends DataClass implements Insertable<Piloto> {
       'email': serializer.toJson<String?>(email),
       'esCoordinadora': serializer.toJson<bool>(esCoordinadora),
       'creadoEn': serializer.toJson<DateTime>(creadoEn),
+      'uuid': serializer.toJson<String?>(uuid),
+      'modMs': serializer.toJson<int?>(modMs),
+      'modPor': serializer.toJson<String?>(modPor),
     };
   }
 
@@ -2655,6 +2797,9 @@ class Piloto extends DataClass implements Insertable<Piloto> {
     Value<String?> email = const Value.absent(),
     bool? esCoordinadora,
     DateTime? creadoEn,
+    Value<String?> uuid = const Value.absent(),
+    Value<int?> modMs = const Value.absent(),
+    Value<String?> modPor = const Value.absent(),
   }) => Piloto(
     id: id ?? this.id,
     nombre: nombre ?? this.nombre,
@@ -2665,6 +2810,9 @@ class Piloto extends DataClass implements Insertable<Piloto> {
     email: email.present ? email.value : this.email,
     esCoordinadora: esCoordinadora ?? this.esCoordinadora,
     creadoEn: creadoEn ?? this.creadoEn,
+    uuid: uuid.present ? uuid.value : this.uuid,
+    modMs: modMs.present ? modMs.value : this.modMs,
+    modPor: modPor.present ? modPor.value : this.modPor,
   );
   Piloto copyWithCompanion(PilotosCompanion data) {
     return Piloto(
@@ -2679,6 +2827,9 @@ class Piloto extends DataClass implements Insertable<Piloto> {
           ? data.esCoordinadora.value
           : this.esCoordinadora,
       creadoEn: data.creadoEn.present ? data.creadoEn.value : this.creadoEn,
+      uuid: data.uuid.present ? data.uuid.value : this.uuid,
+      modMs: data.modMs.present ? data.modMs.value : this.modMs,
+      modPor: data.modPor.present ? data.modPor.value : this.modPor,
     );
   }
 
@@ -2691,7 +2842,10 @@ class Piloto extends DataClass implements Insertable<Piloto> {
           ..write('telefono: $telefono, ')
           ..write('email: $email, ')
           ..write('esCoordinadora: $esCoordinadora, ')
-          ..write('creadoEn: $creadoEn')
+          ..write('creadoEn: $creadoEn, ')
+          ..write('uuid: $uuid, ')
+          ..write('modMs: $modMs, ')
+          ..write('modPor: $modPor')
           ..write(')'))
         .toString();
   }
@@ -2705,6 +2859,9 @@ class Piloto extends DataClass implements Insertable<Piloto> {
     email,
     esCoordinadora,
     creadoEn,
+    uuid,
+    modMs,
+    modPor,
   );
   @override
   bool operator ==(Object other) =>
@@ -2716,7 +2873,10 @@ class Piloto extends DataClass implements Insertable<Piloto> {
           other.telefono == this.telefono &&
           other.email == this.email &&
           other.esCoordinadora == this.esCoordinadora &&
-          other.creadoEn == this.creadoEn);
+          other.creadoEn == this.creadoEn &&
+          other.uuid == this.uuid &&
+          other.modMs == this.modMs &&
+          other.modPor == this.modPor);
 }
 
 class PilotosCompanion extends UpdateCompanion<Piloto> {
@@ -2727,6 +2887,9 @@ class PilotosCompanion extends UpdateCompanion<Piloto> {
   final Value<String?> email;
   final Value<bool> esCoordinadora;
   final Value<DateTime> creadoEn;
+  final Value<String?> uuid;
+  final Value<int?> modMs;
+  final Value<String?> modPor;
   const PilotosCompanion({
     this.id = const Value.absent(),
     this.nombre = const Value.absent(),
@@ -2735,6 +2898,9 @@ class PilotosCompanion extends UpdateCompanion<Piloto> {
     this.email = const Value.absent(),
     this.esCoordinadora = const Value.absent(),
     this.creadoEn = const Value.absent(),
+    this.uuid = const Value.absent(),
+    this.modMs = const Value.absent(),
+    this.modPor = const Value.absent(),
   });
   PilotosCompanion.insert({
     this.id = const Value.absent(),
@@ -2744,6 +2910,9 @@ class PilotosCompanion extends UpdateCompanion<Piloto> {
     this.email = const Value.absent(),
     this.esCoordinadora = const Value.absent(),
     this.creadoEn = const Value.absent(),
+    this.uuid = const Value.absent(),
+    this.modMs = const Value.absent(),
+    this.modPor = const Value.absent(),
   }) : nombre = Value(nombre);
   static Insertable<Piloto> custom({
     Expression<int>? id,
@@ -2753,6 +2922,9 @@ class PilotosCompanion extends UpdateCompanion<Piloto> {
     Expression<String>? email,
     Expression<bool>? esCoordinadora,
     Expression<DateTime>? creadoEn,
+    Expression<String>? uuid,
+    Expression<int>? modMs,
+    Expression<String>? modPor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2762,6 +2934,9 @@ class PilotosCompanion extends UpdateCompanion<Piloto> {
       if (email != null) 'email': email,
       if (esCoordinadora != null) 'es_coordinadora': esCoordinadora,
       if (creadoEn != null) 'creado_en': creadoEn,
+      if (uuid != null) 'uuid': uuid,
+      if (modMs != null) 'mod_ms': modMs,
+      if (modPor != null) 'mod_por': modPor,
     });
   }
 
@@ -2773,6 +2948,9 @@ class PilotosCompanion extends UpdateCompanion<Piloto> {
     Value<String?>? email,
     Value<bool>? esCoordinadora,
     Value<DateTime>? creadoEn,
+    Value<String?>? uuid,
+    Value<int?>? modMs,
+    Value<String?>? modPor,
   }) {
     return PilotosCompanion(
       id: id ?? this.id,
@@ -2782,6 +2960,9 @@ class PilotosCompanion extends UpdateCompanion<Piloto> {
       email: email ?? this.email,
       esCoordinadora: esCoordinadora ?? this.esCoordinadora,
       creadoEn: creadoEn ?? this.creadoEn,
+      uuid: uuid ?? this.uuid,
+      modMs: modMs ?? this.modMs,
+      modPor: modPor ?? this.modPor,
     );
   }
 
@@ -2809,6 +2990,15 @@ class PilotosCompanion extends UpdateCompanion<Piloto> {
     if (creadoEn.present) {
       map['creado_en'] = Variable<DateTime>(creadoEn.value);
     }
+    if (uuid.present) {
+      map['uuid'] = Variable<String>(uuid.value);
+    }
+    if (modMs.present) {
+      map['mod_ms'] = Variable<int>(modMs.value);
+    }
+    if (modPor.present) {
+      map['mod_por'] = Variable<String>(modPor.value);
+    }
     return map;
   }
 
@@ -2821,7 +3011,10 @@ class PilotosCompanion extends UpdateCompanion<Piloto> {
           ..write('telefono: $telefono, ')
           ..write('email: $email, ')
           ..write('esCoordinadora: $esCoordinadora, ')
-          ..write('creadoEn: $creadoEn')
+          ..write('creadoEn: $creadoEn, ')
+          ..write('uuid: $uuid, ')
+          ..write('modMs: $modMs, ')
+          ..write('modPor: $modPor')
           ..write(')'))
         .toString();
   }
@@ -2938,6 +3131,24 @@ class $PilotoCampeonatoTable extends PilotoCampeonato
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _modMsMeta = const VerificationMeta('modMs');
+  @override
+  late final GeneratedColumn<int> modMs = GeneratedColumn<int>(
+    'mod_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modPorMeta = const VerificationMeta('modPor');
+  @override
+  late final GeneratedColumn<String> modPor = GeneratedColumn<String>(
+    'mod_por',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     pilotoId,
@@ -2949,6 +3160,8 @@ class $PilotoCampeonatoTable extends PilotoCampeonato
     saldoTemporadaAnterior,
     bonificacionAplicada,
     palmaresLocal,
+    modMs,
+    modPor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3047,6 +3260,18 @@ class $PilotoCampeonatoTable extends PilotoCampeonato
         ),
       );
     }
+    if (data.containsKey('mod_ms')) {
+      context.handle(
+        _modMsMeta,
+        modMs.isAcceptableOrUnknown(data['mod_ms']!, _modMsMeta),
+      );
+    }
+    if (data.containsKey('mod_por')) {
+      context.handle(
+        _modPorMeta,
+        modPor.isAcceptableOrUnknown(data['mod_por']!, _modPorMeta),
+      );
+    }
     return context;
   }
 
@@ -3092,6 +3317,14 @@ class $PilotoCampeonatoTable extends PilotoCampeonato
         DriftSqlType.string,
         data['${effectivePrefix}palmares_local'],
       ),
+      modMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}mod_ms'],
+      ),
+      modPor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mod_por'],
+      ),
     );
   }
 
@@ -3116,6 +3349,11 @@ class PilotoCampeonatoData extends DataClass
   final int saldoTemporadaAnterior;
   final int bonificacionAplicada;
   final String? palmaresLocal;
+
+  /// Último cambio sincronizable: ms y dispositivo. Lo firman triggers de
+  /// SQLite (ver sync_triggers.dart); al fusionar se escribe el remoto.
+  final int? modMs;
+  final String? modPor;
   const PilotoCampeonatoData({
     required this.pilotoId,
     required this.campeonatoId,
@@ -3126,6 +3364,8 @@ class PilotoCampeonatoData extends DataClass
     required this.saldoTemporadaAnterior,
     required this.bonificacionAplicada,
     this.palmaresLocal,
+    this.modMs,
+    this.modPor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3142,6 +3382,12 @@ class PilotoCampeonatoData extends DataClass
     map['bonificacion_aplicada'] = Variable<int>(bonificacionAplicada);
     if (!nullToAbsent || palmaresLocal != null) {
       map['palmares_local'] = Variable<String>(palmaresLocal);
+    }
+    if (!nullToAbsent || modMs != null) {
+      map['mod_ms'] = Variable<int>(modMs);
+    }
+    if (!nullToAbsent || modPor != null) {
+      map['mod_por'] = Variable<String>(modPor);
     }
     return map;
   }
@@ -3161,6 +3407,12 @@ class PilotoCampeonatoData extends DataClass
       palmaresLocal: palmaresLocal == null && nullToAbsent
           ? const Value.absent()
           : Value(palmaresLocal),
+      modMs: modMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modMs),
+      modPor: modPor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modPor),
     );
   }
 
@@ -3183,6 +3435,8 @@ class PilotoCampeonatoData extends DataClass
         json['bonificacionAplicada'],
       ),
       palmaresLocal: serializer.fromJson<String?>(json['palmaresLocal']),
+      modMs: serializer.fromJson<int?>(json['modMs']),
+      modPor: serializer.fromJson<String?>(json['modPor']),
     );
   }
   @override
@@ -3198,6 +3452,8 @@ class PilotoCampeonatoData extends DataClass
       'saldoTemporadaAnterior': serializer.toJson<int>(saldoTemporadaAnterior),
       'bonificacionAplicada': serializer.toJson<int>(bonificacionAplicada),
       'palmaresLocal': serializer.toJson<String?>(palmaresLocal),
+      'modMs': serializer.toJson<int?>(modMs),
+      'modPor': serializer.toJson<String?>(modPor),
     };
   }
 
@@ -3211,6 +3467,8 @@ class PilotoCampeonatoData extends DataClass
     int? saldoTemporadaAnterior,
     int? bonificacionAplicada,
     Value<String?> palmaresLocal = const Value.absent(),
+    Value<int?> modMs = const Value.absent(),
+    Value<String?> modPor = const Value.absent(),
   }) => PilotoCampeonatoData(
     pilotoId: pilotoId ?? this.pilotoId,
     campeonatoId: campeonatoId ?? this.campeonatoId,
@@ -3226,6 +3484,8 @@ class PilotoCampeonatoData extends DataClass
     palmaresLocal: palmaresLocal.present
         ? palmaresLocal.value
         : this.palmaresLocal,
+    modMs: modMs.present ? modMs.value : this.modMs,
+    modPor: modPor.present ? modPor.value : this.modPor,
   );
   PilotoCampeonatoData copyWithCompanion(PilotoCampeonatoCompanion data) {
     return PilotoCampeonatoData(
@@ -3252,6 +3512,8 @@ class PilotoCampeonatoData extends DataClass
       palmaresLocal: data.palmaresLocal.present
           ? data.palmaresLocal.value
           : this.palmaresLocal,
+      modMs: data.modMs.present ? data.modMs.value : this.modMs,
+      modPor: data.modPor.present ? data.modPor.value : this.modPor,
     );
   }
 
@@ -3266,7 +3528,9 @@ class PilotoCampeonatoData extends DataClass
           ..write('creditosActuales: $creditosActuales, ')
           ..write('saldoTemporadaAnterior: $saldoTemporadaAnterior, ')
           ..write('bonificacionAplicada: $bonificacionAplicada, ')
-          ..write('palmaresLocal: $palmaresLocal')
+          ..write('palmaresLocal: $palmaresLocal, ')
+          ..write('modMs: $modMs, ')
+          ..write('modPor: $modPor')
           ..write(')'))
         .toString();
   }
@@ -3282,6 +3546,8 @@ class PilotoCampeonatoData extends DataClass
     saldoTemporadaAnterior,
     bonificacionAplicada,
     palmaresLocal,
+    modMs,
+    modPor,
   );
   @override
   bool operator ==(Object other) =>
@@ -3295,7 +3561,9 @@ class PilotoCampeonatoData extends DataClass
           other.creditosActuales == this.creditosActuales &&
           other.saldoTemporadaAnterior == this.saldoTemporadaAnterior &&
           other.bonificacionAplicada == this.bonificacionAplicada &&
-          other.palmaresLocal == this.palmaresLocal);
+          other.palmaresLocal == this.palmaresLocal &&
+          other.modMs == this.modMs &&
+          other.modPor == this.modPor);
 }
 
 class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
@@ -3308,6 +3576,8 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
   final Value<int> saldoTemporadaAnterior;
   final Value<int> bonificacionAplicada;
   final Value<String?> palmaresLocal;
+  final Value<int?> modMs;
+  final Value<String?> modPor;
   final Value<int> rowid;
   const PilotoCampeonatoCompanion({
     this.pilotoId = const Value.absent(),
@@ -3319,6 +3589,8 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     this.saldoTemporadaAnterior = const Value.absent(),
     this.bonificacionAplicada = const Value.absent(),
     this.palmaresLocal = const Value.absent(),
+    this.modMs = const Value.absent(),
+    this.modPor = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PilotoCampeonatoCompanion.insert({
@@ -3331,6 +3603,8 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     this.saldoTemporadaAnterior = const Value.absent(),
     this.bonificacionAplicada = const Value.absent(),
     this.palmaresLocal = const Value.absent(),
+    this.modMs = const Value.absent(),
+    this.modPor = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : pilotoId = Value(pilotoId),
        campeonatoId = Value(campeonatoId),
@@ -3347,6 +3621,8 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     Expression<int>? saldoTemporadaAnterior,
     Expression<int>? bonificacionAplicada,
     Expression<String>? palmaresLocal,
+    Expression<int>? modMs,
+    Expression<String>? modPor,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3361,6 +3637,8 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
       if (bonificacionAplicada != null)
         'bonificacion_aplicada': bonificacionAplicada,
       if (palmaresLocal != null) 'palmares_local': palmaresLocal,
+      if (modMs != null) 'mod_ms': modMs,
+      if (modPor != null) 'mod_por': modPor,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3375,6 +3653,8 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     Value<int>? saldoTemporadaAnterior,
     Value<int>? bonificacionAplicada,
     Value<String?>? palmaresLocal,
+    Value<int?>? modMs,
+    Value<String?>? modPor,
     Value<int>? rowid,
   }) {
     return PilotoCampeonatoCompanion(
@@ -3388,6 +3668,8 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
           saldoTemporadaAnterior ?? this.saldoTemporadaAnterior,
       bonificacionAplicada: bonificacionAplicada ?? this.bonificacionAplicada,
       palmaresLocal: palmaresLocal ?? this.palmaresLocal,
+      modMs: modMs ?? this.modMs,
+      modPor: modPor ?? this.modPor,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3424,6 +3706,12 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     if (palmaresLocal.present) {
       map['palmares_local'] = Variable<String>(palmaresLocal.value);
     }
+    if (modMs.present) {
+      map['mod_ms'] = Variable<int>(modMs.value);
+    }
+    if (modPor.present) {
+      map['mod_por'] = Variable<String>(modPor.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3442,6 +3730,8 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
           ..write('saldoTemporadaAnterior: $saldoTemporadaAnterior, ')
           ..write('bonificacionAplicada: $bonificacionAplicada, ')
           ..write('palmaresLocal: $palmaresLocal, ')
+          ..write('modMs: $modMs, ')
+          ..write('modPor: $modPor, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3539,6 +3829,33 @@ class $EquiposTable extends Equipos with TableInfo<$EquiposTable, Equipo> {
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _uuidMeta = const VerificationMeta('uuid');
+  @override
+  late final GeneratedColumn<String> uuid = GeneratedColumn<String>(
+    'uuid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modMsMeta = const VerificationMeta('modMs');
+  @override
+  late final GeneratedColumn<int> modMs = GeneratedColumn<int>(
+    'mod_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modPorMeta = const VerificationMeta('modPor');
+  @override
+  late final GeneratedColumn<String> modPor = GeneratedColumn<String>(
+    'mod_por',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3548,6 +3865,9 @@ class $EquiposTable extends Equipos with TableInfo<$EquiposTable, Equipo> {
     piloto1Id,
     piloto2Id,
     activo,
+    uuid,
+    modMs,
+    modPor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3611,6 +3931,24 @@ class $EquiposTable extends Equipos with TableInfo<$EquiposTable, Equipo> {
         activo.isAcceptableOrUnknown(data['activo']!, _activoMeta),
       );
     }
+    if (data.containsKey('uuid')) {
+      context.handle(
+        _uuidMeta,
+        uuid.isAcceptableOrUnknown(data['uuid']!, _uuidMeta),
+      );
+    }
+    if (data.containsKey('mod_ms')) {
+      context.handle(
+        _modMsMeta,
+        modMs.isAcceptableOrUnknown(data['mod_ms']!, _modMsMeta),
+      );
+    }
+    if (data.containsKey('mod_por')) {
+      context.handle(
+        _modPorMeta,
+        modPor.isAcceptableOrUnknown(data['mod_por']!, _modPorMeta),
+      );
+    }
     return context;
   }
 
@@ -3648,6 +3986,18 @@ class $EquiposTable extends Equipos with TableInfo<$EquiposTable, Equipo> {
         DriftSqlType.bool,
         data['${effectivePrefix}activo'],
       )!,
+      uuid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uuid'],
+      ),
+      modMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}mod_ms'],
+      ),
+      modPor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mod_por'],
+      ),
     );
   }
 
@@ -3669,6 +4019,15 @@ class Equipo extends DataClass implements Insertable<Equipo> {
   final int piloto1Id;
   final int? piloto2Id;
   final bool activo;
+
+  /// Identificador global, igual en todos los Controls (sincronización).
+  /// Las filas anteriores a la v1.34 lo reciben derivado de su id y nombre.
+  final String? uuid;
+
+  /// Último cambio sincronizable: ms y dispositivo. Lo firman triggers de
+  /// SQLite (ver sync_triggers.dart); al fusionar se escribe el remoto.
+  final int? modMs;
+  final String? modPor;
   const Equipo({
     required this.id,
     required this.campeonatoId,
@@ -3677,6 +4036,9 @@ class Equipo extends DataClass implements Insertable<Equipo> {
     required this.piloto1Id,
     this.piloto2Id,
     required this.activo,
+    this.uuid,
+    this.modMs,
+    this.modPor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3690,6 +4052,15 @@ class Equipo extends DataClass implements Insertable<Equipo> {
       map['piloto2_id'] = Variable<int>(piloto2Id);
     }
     map['activo'] = Variable<bool>(activo);
+    if (!nullToAbsent || uuid != null) {
+      map['uuid'] = Variable<String>(uuid);
+    }
+    if (!nullToAbsent || modMs != null) {
+      map['mod_ms'] = Variable<int>(modMs);
+    }
+    if (!nullToAbsent || modPor != null) {
+      map['mod_por'] = Variable<String>(modPor);
+    }
     return map;
   }
 
@@ -3704,6 +4075,13 @@ class Equipo extends DataClass implements Insertable<Equipo> {
           ? const Value.absent()
           : Value(piloto2Id),
       activo: Value(activo),
+      uuid: uuid == null && nullToAbsent ? const Value.absent() : Value(uuid),
+      modMs: modMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modMs),
+      modPor: modPor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modPor),
     );
   }
 
@@ -3720,6 +4098,9 @@ class Equipo extends DataClass implements Insertable<Equipo> {
       piloto1Id: serializer.fromJson<int>(json['piloto1Id']),
       piloto2Id: serializer.fromJson<int?>(json['piloto2Id']),
       activo: serializer.fromJson<bool>(json['activo']),
+      uuid: serializer.fromJson<String?>(json['uuid']),
+      modMs: serializer.fromJson<int?>(json['modMs']),
+      modPor: serializer.fromJson<String?>(json['modPor']),
     );
   }
   @override
@@ -3733,6 +4114,9 @@ class Equipo extends DataClass implements Insertable<Equipo> {
       'piloto1Id': serializer.toJson<int>(piloto1Id),
       'piloto2Id': serializer.toJson<int?>(piloto2Id),
       'activo': serializer.toJson<bool>(activo),
+      'uuid': serializer.toJson<String?>(uuid),
+      'modMs': serializer.toJson<int?>(modMs),
+      'modPor': serializer.toJson<String?>(modPor),
     };
   }
 
@@ -3744,6 +4128,9 @@ class Equipo extends DataClass implements Insertable<Equipo> {
     int? piloto1Id,
     Value<int?> piloto2Id = const Value.absent(),
     bool? activo,
+    Value<String?> uuid = const Value.absent(),
+    Value<int?> modMs = const Value.absent(),
+    Value<String?> modPor = const Value.absent(),
   }) => Equipo(
     id: id ?? this.id,
     campeonatoId: campeonatoId ?? this.campeonatoId,
@@ -3752,6 +4139,9 @@ class Equipo extends DataClass implements Insertable<Equipo> {
     piloto1Id: piloto1Id ?? this.piloto1Id,
     piloto2Id: piloto2Id.present ? piloto2Id.value : this.piloto2Id,
     activo: activo ?? this.activo,
+    uuid: uuid.present ? uuid.value : this.uuid,
+    modMs: modMs.present ? modMs.value : this.modMs,
+    modPor: modPor.present ? modPor.value : this.modPor,
   );
   Equipo copyWithCompanion(EquiposCompanion data) {
     return Equipo(
@@ -3764,6 +4154,9 @@ class Equipo extends DataClass implements Insertable<Equipo> {
       piloto1Id: data.piloto1Id.present ? data.piloto1Id.value : this.piloto1Id,
       piloto2Id: data.piloto2Id.present ? data.piloto2Id.value : this.piloto2Id,
       activo: data.activo.present ? data.activo.value : this.activo,
+      uuid: data.uuid.present ? data.uuid.value : this.uuid,
+      modMs: data.modMs.present ? data.modMs.value : this.modMs,
+      modPor: data.modPor.present ? data.modPor.value : this.modPor,
     );
   }
 
@@ -3776,14 +4169,27 @@ class Equipo extends DataClass implements Insertable<Equipo> {
           ..write('copa: $copa, ')
           ..write('piloto1Id: $piloto1Id, ')
           ..write('piloto2Id: $piloto2Id, ')
-          ..write('activo: $activo')
+          ..write('activo: $activo, ')
+          ..write('uuid: $uuid, ')
+          ..write('modMs: $modMs, ')
+          ..write('modPor: $modPor')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, campeonatoId, nombre, copa, piloto1Id, piloto2Id, activo);
+  int get hashCode => Object.hash(
+    id,
+    campeonatoId,
+    nombre,
+    copa,
+    piloto1Id,
+    piloto2Id,
+    activo,
+    uuid,
+    modMs,
+    modPor,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3794,7 +4200,10 @@ class Equipo extends DataClass implements Insertable<Equipo> {
           other.copa == this.copa &&
           other.piloto1Id == this.piloto1Id &&
           other.piloto2Id == this.piloto2Id &&
-          other.activo == this.activo);
+          other.activo == this.activo &&
+          other.uuid == this.uuid &&
+          other.modMs == this.modMs &&
+          other.modPor == this.modPor);
 }
 
 class EquiposCompanion extends UpdateCompanion<Equipo> {
@@ -3805,6 +4214,9 @@ class EquiposCompanion extends UpdateCompanion<Equipo> {
   final Value<int> piloto1Id;
   final Value<int?> piloto2Id;
   final Value<bool> activo;
+  final Value<String?> uuid;
+  final Value<int?> modMs;
+  final Value<String?> modPor;
   const EquiposCompanion({
     this.id = const Value.absent(),
     this.campeonatoId = const Value.absent(),
@@ -3813,6 +4225,9 @@ class EquiposCompanion extends UpdateCompanion<Equipo> {
     this.piloto1Id = const Value.absent(),
     this.piloto2Id = const Value.absent(),
     this.activo = const Value.absent(),
+    this.uuid = const Value.absent(),
+    this.modMs = const Value.absent(),
+    this.modPor = const Value.absent(),
   });
   EquiposCompanion.insert({
     this.id = const Value.absent(),
@@ -3822,6 +4237,9 @@ class EquiposCompanion extends UpdateCompanion<Equipo> {
     required int piloto1Id,
     this.piloto2Id = const Value.absent(),
     this.activo = const Value.absent(),
+    this.uuid = const Value.absent(),
+    this.modMs = const Value.absent(),
+    this.modPor = const Value.absent(),
   }) : campeonatoId = Value(campeonatoId),
        nombre = Value(nombre),
        copa = Value(copa),
@@ -3834,6 +4252,9 @@ class EquiposCompanion extends UpdateCompanion<Equipo> {
     Expression<int>? piloto1Id,
     Expression<int>? piloto2Id,
     Expression<bool>? activo,
+    Expression<String>? uuid,
+    Expression<int>? modMs,
+    Expression<String>? modPor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3843,6 +4264,9 @@ class EquiposCompanion extends UpdateCompanion<Equipo> {
       if (piloto1Id != null) 'piloto1_id': piloto1Id,
       if (piloto2Id != null) 'piloto2_id': piloto2Id,
       if (activo != null) 'activo': activo,
+      if (uuid != null) 'uuid': uuid,
+      if (modMs != null) 'mod_ms': modMs,
+      if (modPor != null) 'mod_por': modPor,
     });
   }
 
@@ -3854,6 +4278,9 @@ class EquiposCompanion extends UpdateCompanion<Equipo> {
     Value<int>? piloto1Id,
     Value<int?>? piloto2Id,
     Value<bool>? activo,
+    Value<String?>? uuid,
+    Value<int?>? modMs,
+    Value<String?>? modPor,
   }) {
     return EquiposCompanion(
       id: id ?? this.id,
@@ -3863,6 +4290,9 @@ class EquiposCompanion extends UpdateCompanion<Equipo> {
       piloto1Id: piloto1Id ?? this.piloto1Id,
       piloto2Id: piloto2Id ?? this.piloto2Id,
       activo: activo ?? this.activo,
+      uuid: uuid ?? this.uuid,
+      modMs: modMs ?? this.modMs,
+      modPor: modPor ?? this.modPor,
     );
   }
 
@@ -3890,6 +4320,15 @@ class EquiposCompanion extends UpdateCompanion<Equipo> {
     if (activo.present) {
       map['activo'] = Variable<bool>(activo.value);
     }
+    if (uuid.present) {
+      map['uuid'] = Variable<String>(uuid.value);
+    }
+    if (modMs.present) {
+      map['mod_ms'] = Variable<int>(modMs.value);
+    }
+    if (modPor.present) {
+      map['mod_por'] = Variable<String>(modPor.value);
+    }
     return map;
   }
 
@@ -3902,7 +4341,10 @@ class EquiposCompanion extends UpdateCompanion<Equipo> {
           ..write('copa: $copa, ')
           ..write('piloto1Id: $piloto1Id, ')
           ..write('piloto2Id: $piloto2Id, ')
-          ..write('activo: $activo')
+          ..write('activo: $activo, ')
+          ..write('uuid: $uuid, ')
+          ..write('modMs: $modMs, ')
+          ..write('modPor: $modPor')
           ..write(')'))
         .toString();
   }
@@ -4265,6 +4707,15 @@ class $PruebasTable extends Pruebas with TableInfo<$PruebasTable, Prueba> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _uuidMeta = const VerificationMeta('uuid');
+  @override
+  late final GeneratedColumn<String> uuid = GeneratedColumn<String>(
+    'uuid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4275,6 +4726,7 @@ class $PruebasTable extends Pruebas with TableInfo<$PruebasTable, Prueba> {
     orden,
     estado,
     managerRaceId,
+    uuid,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4345,6 +4797,12 @@ class $PruebasTable extends Pruebas with TableInfo<$PruebasTable, Prueba> {
         ),
       );
     }
+    if (data.containsKey('uuid')) {
+      context.handle(
+        _uuidMeta,
+        uuid.isAcceptableOrUnknown(data['uuid']!, _uuidMeta),
+      );
+    }
     return context;
   }
 
@@ -4386,6 +4844,10 @@ class $PruebasTable extends Pruebas with TableInfo<$PruebasTable, Prueba> {
         DriftSqlType.int,
         data['${effectivePrefix}manager_race_id'],
       ),
+      uuid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uuid'],
+      ),
     );
   }
 
@@ -4408,6 +4870,10 @@ class Prueba extends DataClass implements Insertable<Prueba> {
   /// (tanda o verificaciones). Permite reenviar verificaciones ligadas a la
   /// misma carrera en vez de que Manager tenga que adivinarla por nombre.
   final int? managerRaceId;
+
+  /// Identificador global, igual en todos los Controls (sincronización).
+  /// Las filas anteriores a la v1.34 lo reciben derivado de su id y nombre.
+  final String? uuid;
   const Prueba({
     required this.id,
     required this.campeonatoId,
@@ -4417,6 +4883,7 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     required this.orden,
     required this.estado,
     this.managerRaceId,
+    this.uuid,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4435,6 +4902,9 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     if (!nullToAbsent || managerRaceId != null) {
       map['manager_race_id'] = Variable<int>(managerRaceId);
     }
+    if (!nullToAbsent || uuid != null) {
+      map['uuid'] = Variable<String>(uuid);
+    }
     return map;
   }
 
@@ -4452,6 +4922,7 @@ class Prueba extends DataClass implements Insertable<Prueba> {
       managerRaceId: managerRaceId == null && nullToAbsent
           ? const Value.absent()
           : Value(managerRaceId),
+      uuid: uuid == null && nullToAbsent ? const Value.absent() : Value(uuid),
     );
   }
 
@@ -4469,6 +4940,7 @@ class Prueba extends DataClass implements Insertable<Prueba> {
       orden: serializer.fromJson<int>(json['orden']),
       estado: serializer.fromJson<String>(json['estado']),
       managerRaceId: serializer.fromJson<int?>(json['managerRaceId']),
+      uuid: serializer.fromJson<String?>(json['uuid']),
     );
   }
   @override
@@ -4483,6 +4955,7 @@ class Prueba extends DataClass implements Insertable<Prueba> {
       'orden': serializer.toJson<int>(orden),
       'estado': serializer.toJson<String>(estado),
       'managerRaceId': serializer.toJson<int?>(managerRaceId),
+      'uuid': serializer.toJson<String?>(uuid),
     };
   }
 
@@ -4495,6 +4968,7 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     int? orden,
     String? estado,
     Value<int?> managerRaceId = const Value.absent(),
+    Value<String?> uuid = const Value.absent(),
   }) => Prueba(
     id: id ?? this.id,
     campeonatoId: campeonatoId ?? this.campeonatoId,
@@ -4506,6 +4980,7 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     managerRaceId: managerRaceId.present
         ? managerRaceId.value
         : this.managerRaceId,
+    uuid: uuid.present ? uuid.value : this.uuid,
   );
   Prueba copyWithCompanion(PruebasCompanion data) {
     return Prueba(
@@ -4521,6 +4996,7 @@ class Prueba extends DataClass implements Insertable<Prueba> {
       managerRaceId: data.managerRaceId.present
           ? data.managerRaceId.value
           : this.managerRaceId,
+      uuid: data.uuid.present ? data.uuid.value : this.uuid,
     );
   }
 
@@ -4534,7 +5010,8 @@ class Prueba extends DataClass implements Insertable<Prueba> {
           ..write('fecha: $fecha, ')
           ..write('orden: $orden, ')
           ..write('estado: $estado, ')
-          ..write('managerRaceId: $managerRaceId')
+          ..write('managerRaceId: $managerRaceId, ')
+          ..write('uuid: $uuid')
           ..write(')'))
         .toString();
   }
@@ -4549,6 +5026,7 @@ class Prueba extends DataClass implements Insertable<Prueba> {
     orden,
     estado,
     managerRaceId,
+    uuid,
   );
   @override
   bool operator ==(Object other) =>
@@ -4561,7 +5039,8 @@ class Prueba extends DataClass implements Insertable<Prueba> {
           other.fecha == this.fecha &&
           other.orden == this.orden &&
           other.estado == this.estado &&
-          other.managerRaceId == this.managerRaceId);
+          other.managerRaceId == this.managerRaceId &&
+          other.uuid == this.uuid);
 }
 
 class PruebasCompanion extends UpdateCompanion<Prueba> {
@@ -4573,6 +5052,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
   final Value<int> orden;
   final Value<String> estado;
   final Value<int?> managerRaceId;
+  final Value<String?> uuid;
   const PruebasCompanion({
     this.id = const Value.absent(),
     this.campeonatoId = const Value.absent(),
@@ -4582,6 +5062,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     this.orden = const Value.absent(),
     this.estado = const Value.absent(),
     this.managerRaceId = const Value.absent(),
+    this.uuid = const Value.absent(),
   });
   PruebasCompanion.insert({
     this.id = const Value.absent(),
@@ -4592,6 +5073,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     required int orden,
     this.estado = const Value.absent(),
     this.managerRaceId = const Value.absent(),
+    this.uuid = const Value.absent(),
   }) : campeonatoId = Value(campeonatoId),
        nombre = Value(nombre),
        orden = Value(orden);
@@ -4604,6 +5086,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     Expression<int>? orden,
     Expression<String>? estado,
     Expression<int>? managerRaceId,
+    Expression<String>? uuid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4614,6 +5097,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
       if (orden != null) 'orden': orden,
       if (estado != null) 'estado': estado,
       if (managerRaceId != null) 'manager_race_id': managerRaceId,
+      if (uuid != null) 'uuid': uuid,
     });
   }
 
@@ -4626,6 +5110,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     Value<int>? orden,
     Value<String>? estado,
     Value<int?>? managerRaceId,
+    Value<String?>? uuid,
   }) {
     return PruebasCompanion(
       id: id ?? this.id,
@@ -4636,6 +5121,7 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
       orden: orden ?? this.orden,
       estado: estado ?? this.estado,
       managerRaceId: managerRaceId ?? this.managerRaceId,
+      uuid: uuid ?? this.uuid,
     );
   }
 
@@ -4666,6 +5152,9 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
     if (managerRaceId.present) {
       map['manager_race_id'] = Variable<int>(managerRaceId.value);
     }
+    if (uuid.present) {
+      map['uuid'] = Variable<String>(uuid.value);
+    }
     return map;
   }
 
@@ -4679,7 +5168,8 @@ class PruebasCompanion extends UpdateCompanion<Prueba> {
           ..write('fecha: $fecha, ')
           ..write('orden: $orden, ')
           ..write('estado: $estado, ')
-          ..write('managerRaceId: $managerRaceId')
+          ..write('managerRaceId: $managerRaceId, ')
+          ..write('uuid: $uuid')
           ..write(')'))
         .toString();
   }
@@ -5674,6 +6164,24 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _modMsMeta = const VerificationMeta('modMs');
+  @override
+  late final GeneratedColumn<int> modMs = GeneratedColumn<int>(
+    'mod_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modPorMeta = const VerificationMeta('modPor');
+  @override
+  late final GeneratedColumn<String> modPor = GeneratedColumn<String>(
+    'mod_por',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -5688,6 +6196,8 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
     copa,
     copaModificadaMs,
     tesoreriaModificadaMs,
+    modMs,
+    modPor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5789,6 +6299,18 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
         ),
       );
     }
+    if (data.containsKey('mod_ms')) {
+      context.handle(
+        _modMsMeta,
+        modMs.isAcceptableOrUnknown(data['mod_ms']!, _modMsMeta),
+      );
+    }
+    if (data.containsKey('mod_por')) {
+      context.handle(
+        _modPorMeta,
+        modPor.isAcceptableOrUnknown(data['mod_por']!, _modPorMeta),
+      );
+    }
     return context;
   }
 
@@ -5849,6 +6371,14 @@ class $InscripcionesPruebaTable extends InscripcionesPrueba
         DriftSqlType.int,
         data['${effectivePrefix}tesoreria_modificada_ms'],
       ),
+      modMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}mod_ms'],
+      ),
+      modPor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mod_por'],
+      ),
     );
   }
 
@@ -5885,6 +6415,11 @@ class InscripcionesPruebaData extends DataClass
   /// (pago, wildcard, "Coord. total"). null = nunca desde que existe la sync.
   final int? copaModificadaMs;
   final int? tesoreriaModificadaMs;
+
+  /// Último cambio sincronizable: ms y dispositivo. Lo firman triggers de
+  /// SQLite (ver sync_triggers.dart); al fusionar se escribe el remoto.
+  final int? modMs;
+  final String? modPor;
   const InscripcionesPruebaData({
     required this.id,
     required this.pruebaId,
@@ -5898,6 +6433,8 @@ class InscripcionesPruebaData extends DataClass
     this.copa,
     this.copaModificadaMs,
     this.tesoreriaModificadaMs,
+    this.modMs,
+    this.modPor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5924,6 +6461,12 @@ class InscripcionesPruebaData extends DataClass
     if (!nullToAbsent || tesoreriaModificadaMs != null) {
       map['tesoreria_modificada_ms'] = Variable<int>(tesoreriaModificadaMs);
     }
+    if (!nullToAbsent || modMs != null) {
+      map['mod_ms'] = Variable<int>(modMs);
+    }
+    if (!nullToAbsent || modPor != null) {
+      map['mod_por'] = Variable<String>(modPor);
+    }
     return map;
   }
 
@@ -5949,6 +6492,12 @@ class InscripcionesPruebaData extends DataClass
       tesoreriaModificadaMs: tesoreriaModificadaMs == null && nullToAbsent
           ? const Value.absent()
           : Value(tesoreriaModificadaMs),
+      modMs: modMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modMs),
+      modPor: modPor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modPor),
     );
   }
 
@@ -5972,6 +6521,8 @@ class InscripcionesPruebaData extends DataClass
       tesoreriaModificadaMs: serializer.fromJson<int?>(
         json['tesoreriaModificadaMs'],
       ),
+      modMs: serializer.fromJson<int?>(json['modMs']),
+      modPor: serializer.fromJson<String?>(json['modPor']),
     );
   }
   @override
@@ -5990,6 +6541,8 @@ class InscripcionesPruebaData extends DataClass
       'copa': serializer.toJson<String?>(copa),
       'copaModificadaMs': serializer.toJson<int?>(copaModificadaMs),
       'tesoreriaModificadaMs': serializer.toJson<int?>(tesoreriaModificadaMs),
+      'modMs': serializer.toJson<int?>(modMs),
+      'modPor': serializer.toJson<String?>(modPor),
     };
   }
 
@@ -6006,6 +6559,8 @@ class InscripcionesPruebaData extends DataClass
     Value<String?> copa = const Value.absent(),
     Value<int?> copaModificadaMs = const Value.absent(),
     Value<int?> tesoreriaModificadaMs = const Value.absent(),
+    Value<int?> modMs = const Value.absent(),
+    Value<String?> modPor = const Value.absent(),
   }) => InscripcionesPruebaData(
     id: id ?? this.id,
     pruebaId: pruebaId ?? this.pruebaId,
@@ -6025,6 +6580,8 @@ class InscripcionesPruebaData extends DataClass
     tesoreriaModificadaMs: tesoreriaModificadaMs.present
         ? tesoreriaModificadaMs.value
         : this.tesoreriaModificadaMs,
+    modMs: modMs.present ? modMs.value : this.modMs,
+    modPor: modPor.present ? modPor.value : this.modPor,
   );
   InscripcionesPruebaData copyWithCompanion(InscripcionesPruebaCompanion data) {
     return InscripcionesPruebaData(
@@ -6050,6 +6607,8 @@ class InscripcionesPruebaData extends DataClass
       tesoreriaModificadaMs: data.tesoreriaModificadaMs.present
           ? data.tesoreriaModificadaMs.value
           : this.tesoreriaModificadaMs,
+      modMs: data.modMs.present ? data.modMs.value : this.modMs,
+      modPor: data.modPor.present ? data.modPor.value : this.modPor,
     );
   }
 
@@ -6067,7 +6626,9 @@ class InscripcionesPruebaData extends DataClass
           ..write('exentoCoordinadora: $exentoCoordinadora, ')
           ..write('copa: $copa, ')
           ..write('copaModificadaMs: $copaModificadaMs, ')
-          ..write('tesoreriaModificadaMs: $tesoreriaModificadaMs')
+          ..write('tesoreriaModificadaMs: $tesoreriaModificadaMs, ')
+          ..write('modMs: $modMs, ')
+          ..write('modPor: $modPor')
           ..write(')'))
         .toString();
   }
@@ -6086,6 +6647,8 @@ class InscripcionesPruebaData extends DataClass
     copa,
     copaModificadaMs,
     tesoreriaModificadaMs,
+    modMs,
+    modPor,
   );
   @override
   bool operator ==(Object other) =>
@@ -6102,7 +6665,9 @@ class InscripcionesPruebaData extends DataClass
           other.exentoCoordinadora == this.exentoCoordinadora &&
           other.copa == this.copa &&
           other.copaModificadaMs == this.copaModificadaMs &&
-          other.tesoreriaModificadaMs == this.tesoreriaModificadaMs);
+          other.tesoreriaModificadaMs == this.tesoreriaModificadaMs &&
+          other.modMs == this.modMs &&
+          other.modPor == this.modPor);
 }
 
 class InscripcionesPruebaCompanion
@@ -6119,6 +6684,8 @@ class InscripcionesPruebaCompanion
   final Value<String?> copa;
   final Value<int?> copaModificadaMs;
   final Value<int?> tesoreriaModificadaMs;
+  final Value<int?> modMs;
+  final Value<String?> modPor;
   const InscripcionesPruebaCompanion({
     this.id = const Value.absent(),
     this.pruebaId = const Value.absent(),
@@ -6132,6 +6699,8 @@ class InscripcionesPruebaCompanion
     this.copa = const Value.absent(),
     this.copaModificadaMs = const Value.absent(),
     this.tesoreriaModificadaMs = const Value.absent(),
+    this.modMs = const Value.absent(),
+    this.modPor = const Value.absent(),
   });
   InscripcionesPruebaCompanion.insert({
     this.id = const Value.absent(),
@@ -6146,6 +6715,8 @@ class InscripcionesPruebaCompanion
     this.copa = const Value.absent(),
     this.copaModificadaMs = const Value.absent(),
     this.tesoreriaModificadaMs = const Value.absent(),
+    this.modMs = const Value.absent(),
+    this.modPor = const Value.absent(),
   }) : pruebaId = Value(pruebaId),
        equipoId = Value(equipoId);
   static Insertable<InscripcionesPruebaData> custom({
@@ -6161,6 +6732,8 @@ class InscripcionesPruebaCompanion
     Expression<String>? copa,
     Expression<int>? copaModificadaMs,
     Expression<int>? tesoreriaModificadaMs,
+    Expression<int>? modMs,
+    Expression<String>? modPor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -6176,6 +6749,8 @@ class InscripcionesPruebaCompanion
       if (copaModificadaMs != null) 'copa_modificada_ms': copaModificadaMs,
       if (tesoreriaModificadaMs != null)
         'tesoreria_modificada_ms': tesoreriaModificadaMs,
+      if (modMs != null) 'mod_ms': modMs,
+      if (modPor != null) 'mod_por': modPor,
     });
   }
 
@@ -6192,6 +6767,8 @@ class InscripcionesPruebaCompanion
     Value<String?>? copa,
     Value<int?>? copaModificadaMs,
     Value<int?>? tesoreriaModificadaMs,
+    Value<int?>? modMs,
+    Value<String?>? modPor,
   }) {
     return InscripcionesPruebaCompanion(
       id: id ?? this.id,
@@ -6207,6 +6784,8 @@ class InscripcionesPruebaCompanion
       copaModificadaMs: copaModificadaMs ?? this.copaModificadaMs,
       tesoreriaModificadaMs:
           tesoreriaModificadaMs ?? this.tesoreriaModificadaMs,
+      modMs: modMs ?? this.modMs,
+      modPor: modPor ?? this.modPor,
     );
   }
 
@@ -6251,6 +6830,12 @@ class InscripcionesPruebaCompanion
         tesoreriaModificadaMs.value,
       );
     }
+    if (modMs.present) {
+      map['mod_ms'] = Variable<int>(modMs.value);
+    }
+    if (modPor.present) {
+      map['mod_por'] = Variable<String>(modPor.value);
+    }
     return map;
   }
 
@@ -6268,7 +6853,9 @@ class InscripcionesPruebaCompanion
           ..write('exentoCoordinadora: $exentoCoordinadora, ')
           ..write('copa: $copa, ')
           ..write('copaModificadaMs: $copaModificadaMs, ')
-          ..write('tesoreriaModificadaMs: $tesoreriaModificadaMs')
+          ..write('tesoreriaModificadaMs: $tesoreriaModificadaMs, ')
+          ..write('modMs: $modMs, ')
+          ..write('modPor: $modPor')
           ..write(')'))
         .toString();
   }
@@ -17024,6 +17611,538 @@ class BorradosSyncCompanion extends UpdateCompanion<BorradosSyncData> {
   }
 }
 
+class $SyncLocalTable extends SyncLocal
+    with TableInfo<$SyncLocalTable, SyncLocalData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncLocalTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _claveMeta = const VerificationMeta('clave');
+  @override
+  late final GeneratedColumn<String> clave = GeneratedColumn<String>(
+    'clave',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valorMeta = const VerificationMeta('valor');
+  @override
+  late final GeneratedColumn<String> valor = GeneratedColumn<String>(
+    'valor',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [clave, valor];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_local';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncLocalData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('clave')) {
+      context.handle(
+        _claveMeta,
+        clave.isAcceptableOrUnknown(data['clave']!, _claveMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_claveMeta);
+    }
+    if (data.containsKey('valor')) {
+      context.handle(
+        _valorMeta,
+        valor.isAcceptableOrUnknown(data['valor']!, _valorMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {clave};
+  @override
+  SyncLocalData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncLocalData(
+      clave: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}clave'],
+      )!,
+      valor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}valor'],
+      ),
+    );
+  }
+
+  @override
+  $SyncLocalTable createAlias(String alias) {
+    return $SyncLocalTable(attachedDatabase, alias);
+  }
+}
+
+class SyncLocalData extends DataClass implements Insertable<SyncLocalData> {
+  final String clave;
+  final String? valor;
+  const SyncLocalData({required this.clave, this.valor});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['clave'] = Variable<String>(clave);
+    if (!nullToAbsent || valor != null) {
+      map['valor'] = Variable<String>(valor);
+    }
+    return map;
+  }
+
+  SyncLocalCompanion toCompanion(bool nullToAbsent) {
+    return SyncLocalCompanion(
+      clave: Value(clave),
+      valor: valor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(valor),
+    );
+  }
+
+  factory SyncLocalData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncLocalData(
+      clave: serializer.fromJson<String>(json['clave']),
+      valor: serializer.fromJson<String?>(json['valor']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'clave': serializer.toJson<String>(clave),
+      'valor': serializer.toJson<String?>(valor),
+    };
+  }
+
+  SyncLocalData copyWith({
+    String? clave,
+    Value<String?> valor = const Value.absent(),
+  }) => SyncLocalData(
+    clave: clave ?? this.clave,
+    valor: valor.present ? valor.value : this.valor,
+  );
+  SyncLocalData copyWithCompanion(SyncLocalCompanion data) {
+    return SyncLocalData(
+      clave: data.clave.present ? data.clave.value : this.clave,
+      valor: data.valor.present ? data.valor.value : this.valor,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncLocalData(')
+          ..write('clave: $clave, ')
+          ..write('valor: $valor')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(clave, valor);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncLocalData &&
+          other.clave == this.clave &&
+          other.valor == this.valor);
+}
+
+class SyncLocalCompanion extends UpdateCompanion<SyncLocalData> {
+  final Value<String> clave;
+  final Value<String?> valor;
+  final Value<int> rowid;
+  const SyncLocalCompanion({
+    this.clave = const Value.absent(),
+    this.valor = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncLocalCompanion.insert({
+    required String clave,
+    this.valor = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : clave = Value(clave);
+  static Insertable<SyncLocalData> custom({
+    Expression<String>? clave,
+    Expression<String>? valor,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (clave != null) 'clave': clave,
+      if (valor != null) 'valor': valor,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncLocalCompanion copyWith({
+    Value<String>? clave,
+    Value<String?>? valor,
+    Value<int>? rowid,
+  }) {
+    return SyncLocalCompanion(
+      clave: clave ?? this.clave,
+      valor: valor ?? this.valor,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (clave.present) {
+      map['clave'] = Variable<String>(clave.value);
+    }
+    if (valor.present) {
+      map['valor'] = Variable<String>(valor.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncLocalCompanion(')
+          ..write('clave: $clave, ')
+          ..write('valor: $valor, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BorradosRegistroTable extends BorradosRegistro
+    with TableInfo<$BorradosRegistroTable, BorradosRegistroData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BorradosRegistroTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _tablaMeta = const VerificationMeta('tabla');
+  @override
+  late final GeneratedColumn<String> tabla = GeneratedColumn<String>(
+    'tabla',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _claveMeta = const VerificationMeta('clave');
+  @override
+  late final GeneratedColumn<String> clave = GeneratedColumn<String>(
+    'clave',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _borradoMsMeta = const VerificationMeta(
+    'borradoMs',
+  );
+  @override
+  late final GeneratedColumn<int> borradoMs = GeneratedColumn<int>(
+    'borrado_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _borradoPorMeta = const VerificationMeta(
+    'borradoPor',
+  );
+  @override
+  late final GeneratedColumn<String> borradoPor = GeneratedColumn<String>(
+    'borrado_por',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [tabla, clave, borradoMs, borradoPor];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'borrados_registro';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BorradosRegistroData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('tabla')) {
+      context.handle(
+        _tablaMeta,
+        tabla.isAcceptableOrUnknown(data['tabla']!, _tablaMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tablaMeta);
+    }
+    if (data.containsKey('clave')) {
+      context.handle(
+        _claveMeta,
+        clave.isAcceptableOrUnknown(data['clave']!, _claveMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_claveMeta);
+    }
+    if (data.containsKey('borrado_ms')) {
+      context.handle(
+        _borradoMsMeta,
+        borradoMs.isAcceptableOrUnknown(data['borrado_ms']!, _borradoMsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_borradoMsMeta);
+    }
+    if (data.containsKey('borrado_por')) {
+      context.handle(
+        _borradoPorMeta,
+        borradoPor.isAcceptableOrUnknown(data['borrado_por']!, _borradoPorMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {tabla, clave};
+  @override
+  BorradosRegistroData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BorradosRegistroData(
+      tabla: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tabla'],
+      )!,
+      clave: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}clave'],
+      )!,
+      borradoMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}borrado_ms'],
+      )!,
+      borradoPor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}borrado_por'],
+      ),
+    );
+  }
+
+  @override
+  $BorradosRegistroTable createAlias(String alias) {
+    return $BorradosRegistroTable(attachedDatabase, alias);
+  }
+}
+
+class BorradosRegistroData extends DataClass
+    implements Insertable<BorradosRegistroData> {
+  final String tabla;
+  final String clave;
+  final int borradoMs;
+  final String? borradoPor;
+  const BorradosRegistroData({
+    required this.tabla,
+    required this.clave,
+    required this.borradoMs,
+    this.borradoPor,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['tabla'] = Variable<String>(tabla);
+    map['clave'] = Variable<String>(clave);
+    map['borrado_ms'] = Variable<int>(borradoMs);
+    if (!nullToAbsent || borradoPor != null) {
+      map['borrado_por'] = Variable<String>(borradoPor);
+    }
+    return map;
+  }
+
+  BorradosRegistroCompanion toCompanion(bool nullToAbsent) {
+    return BorradosRegistroCompanion(
+      tabla: Value(tabla),
+      clave: Value(clave),
+      borradoMs: Value(borradoMs),
+      borradoPor: borradoPor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(borradoPor),
+    );
+  }
+
+  factory BorradosRegistroData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BorradosRegistroData(
+      tabla: serializer.fromJson<String>(json['tabla']),
+      clave: serializer.fromJson<String>(json['clave']),
+      borradoMs: serializer.fromJson<int>(json['borradoMs']),
+      borradoPor: serializer.fromJson<String?>(json['borradoPor']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'tabla': serializer.toJson<String>(tabla),
+      'clave': serializer.toJson<String>(clave),
+      'borradoMs': serializer.toJson<int>(borradoMs),
+      'borradoPor': serializer.toJson<String?>(borradoPor),
+    };
+  }
+
+  BorradosRegistroData copyWith({
+    String? tabla,
+    String? clave,
+    int? borradoMs,
+    Value<String?> borradoPor = const Value.absent(),
+  }) => BorradosRegistroData(
+    tabla: tabla ?? this.tabla,
+    clave: clave ?? this.clave,
+    borradoMs: borradoMs ?? this.borradoMs,
+    borradoPor: borradoPor.present ? borradoPor.value : this.borradoPor,
+  );
+  BorradosRegistroData copyWithCompanion(BorradosRegistroCompanion data) {
+    return BorradosRegistroData(
+      tabla: data.tabla.present ? data.tabla.value : this.tabla,
+      clave: data.clave.present ? data.clave.value : this.clave,
+      borradoMs: data.borradoMs.present ? data.borradoMs.value : this.borradoMs,
+      borradoPor: data.borradoPor.present
+          ? data.borradoPor.value
+          : this.borradoPor,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BorradosRegistroData(')
+          ..write('tabla: $tabla, ')
+          ..write('clave: $clave, ')
+          ..write('borradoMs: $borradoMs, ')
+          ..write('borradoPor: $borradoPor')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(tabla, clave, borradoMs, borradoPor);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BorradosRegistroData &&
+          other.tabla == this.tabla &&
+          other.clave == this.clave &&
+          other.borradoMs == this.borradoMs &&
+          other.borradoPor == this.borradoPor);
+}
+
+class BorradosRegistroCompanion extends UpdateCompanion<BorradosRegistroData> {
+  final Value<String> tabla;
+  final Value<String> clave;
+  final Value<int> borradoMs;
+  final Value<String?> borradoPor;
+  final Value<int> rowid;
+  const BorradosRegistroCompanion({
+    this.tabla = const Value.absent(),
+    this.clave = const Value.absent(),
+    this.borradoMs = const Value.absent(),
+    this.borradoPor = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BorradosRegistroCompanion.insert({
+    required String tabla,
+    required String clave,
+    required int borradoMs,
+    this.borradoPor = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : tabla = Value(tabla),
+       clave = Value(clave),
+       borradoMs = Value(borradoMs);
+  static Insertable<BorradosRegistroData> custom({
+    Expression<String>? tabla,
+    Expression<String>? clave,
+    Expression<int>? borradoMs,
+    Expression<String>? borradoPor,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (tabla != null) 'tabla': tabla,
+      if (clave != null) 'clave': clave,
+      if (borradoMs != null) 'borrado_ms': borradoMs,
+      if (borradoPor != null) 'borrado_por': borradoPor,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BorradosRegistroCompanion copyWith({
+    Value<String>? tabla,
+    Value<String>? clave,
+    Value<int>? borradoMs,
+    Value<String?>? borradoPor,
+    Value<int>? rowid,
+  }) {
+    return BorradosRegistroCompanion(
+      tabla: tabla ?? this.tabla,
+      clave: clave ?? this.clave,
+      borradoMs: borradoMs ?? this.borradoMs,
+      borradoPor: borradoPor ?? this.borradoPor,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (tabla.present) {
+      map['tabla'] = Variable<String>(tabla.value);
+    }
+    if (clave.present) {
+      map['clave'] = Variable<String>(clave.value);
+    }
+    if (borradoMs.present) {
+      map['borrado_ms'] = Variable<int>(borradoMs.value);
+    }
+    if (borradoPor.present) {
+      map['borrado_por'] = Variable<String>(borradoPor.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BorradosRegistroCompanion(')
+          ..write('tabla: $tabla, ')
+          ..write('clave: $clave, ')
+          ..write('borradoMs: $borradoMs, ')
+          ..write('borradoPor: $borradoPor, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -17082,6 +18201,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $SyncColaTable syncCola = $SyncColaTable(this);
   late final $BorradosSyncTable borradosSync = $BorradosSyncTable(this);
+  late final $SyncLocalTable syncLocal = $SyncLocalTable(this);
+  late final $BorradosRegistroTable borradosRegistro = $BorradosRegistroTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -17120,12 +18243,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     hojasVinculadas,
     syncCola,
     borradosSync,
+    syncLocal,
+    borradosRegistro,
   ];
 }
 
 typedef $$CampeonatosTableCreateCompanionBuilder =
     CampeonatosCompanion Function({
       Value<int> id,
+      Value<String?> uuid,
       required String nombre,
       required String formato,
       required int anio,
@@ -17159,6 +18285,7 @@ typedef $$CampeonatosTableCreateCompanionBuilder =
 typedef $$CampeonatosTableUpdateCompanionBuilder =
     CampeonatosCompanion Function({
       Value<int> id,
+      Value<String?> uuid,
       Value<String> nombre,
       Value<String> formato,
       Value<int> anio,
@@ -17414,6 +18541,11 @@ class $$CampeonatosTableFilterComposer
   });
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uuid => $composableBuilder(
+    column: $table.uuid,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17802,6 +18934,11 @@ class $$CampeonatosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get uuid => $composableBuilder(
+    column: $table.uuid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get nombre => $composableBuilder(
     column: $table.nombre,
     builder: (column) => ColumnOrderings(column),
@@ -17959,6 +19096,9 @@ class $$CampeonatosTableAnnotationComposer
   });
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get uuid =>
+      $composableBuilder(column: $table.uuid, builder: (column) => column);
 
   GeneratedColumn<String> get nombre =>
       $composableBuilder(column: $table.nombre, builder: (column) => column);
@@ -18353,6 +19493,7 @@ class $$CampeonatosTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
                 Value<String> nombre = const Value.absent(),
                 Value<String> formato = const Value.absent(),
                 Value<int> anio = const Value.absent(),
@@ -18384,6 +19525,7 @@ class $$CampeonatosTableTableManager
                 Value<DateTime> creadoEn = const Value.absent(),
               }) => CampeonatosCompanion(
                 id: id,
+                uuid: uuid,
                 nombre: nombre,
                 formato: formato,
                 anio: anio,
@@ -18417,6 +19559,7 @@ class $$CampeonatosTableTableManager
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
                 required String nombre,
                 required String formato,
                 required int anio,
@@ -18448,6 +19591,7 @@ class $$CampeonatosTableTableManager
                 Value<DateTime> creadoEn = const Value.absent(),
               }) => CampeonatosCompanion.insert(
                 id: id,
+                uuid: uuid,
                 nombre: nombre,
                 formato: formato,
                 anio: anio,
@@ -19369,6 +20513,9 @@ typedef $$PilotosTableCreateCompanionBuilder =
       Value<String?> email,
       Value<bool> esCoordinadora,
       Value<DateTime> creadoEn,
+      Value<String?> uuid,
+      Value<int?> modMs,
+      Value<String?> modPor,
     });
 typedef $$PilotosTableUpdateCompanionBuilder =
     PilotosCompanion Function({
@@ -19379,6 +20526,9 @@ typedef $$PilotosTableUpdateCompanionBuilder =
       Value<String?> email,
       Value<bool> esCoordinadora,
       Value<DateTime> creadoEn,
+      Value<String?> uuid,
+      Value<int?> modMs,
+      Value<String?> modPor,
     });
 
 final class $$PilotosTableReferences
@@ -19551,6 +20701,21 @@ class $$PilotosTableFilterComposer
 
   ColumnFilters<DateTime> get creadoEn => $composableBuilder(
     column: $table.creadoEn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uuid => $composableBuilder(
+    column: $table.uuid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get modMs => $composableBuilder(
+    column: $table.modMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get modPor => $composableBuilder(
+    column: $table.modPor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -19748,6 +20913,21 @@ class $$PilotosTableOrderingComposer
     column: $table.creadoEn,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get uuid => $composableBuilder(
+    column: $table.uuid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get modMs => $composableBuilder(
+    column: $table.modMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get modPor => $composableBuilder(
+    column: $table.modPor,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PilotosTableAnnotationComposer
@@ -19783,6 +20963,15 @@ class $$PilotosTableAnnotationComposer
 
   GeneratedColumn<DateTime> get creadoEn =>
       $composableBuilder(column: $table.creadoEn, builder: (column) => column);
+
+  GeneratedColumn<String> get uuid =>
+      $composableBuilder(column: $table.uuid, builder: (column) => column);
+
+  GeneratedColumn<int> get modMs =>
+      $composableBuilder(column: $table.modMs, builder: (column) => column);
+
+  GeneratedColumn<String> get modPor =>
+      $composableBuilder(column: $table.modPor, builder: (column) => column);
 
   Expression<T> pilotoCampeonatoRefs<T extends Object>(
     Expression<T> Function($$PilotoCampeonatoTableAnnotationComposer a) f,
@@ -19978,6 +21167,9 @@ class $$PilotosTableTableManager
                 Value<String?> email = const Value.absent(),
                 Value<bool> esCoordinadora = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
+                Value<int?> modMs = const Value.absent(),
+                Value<String?> modPor = const Value.absent(),
               }) => PilotosCompanion(
                 id: id,
                 nombre: nombre,
@@ -19986,6 +21178,9 @@ class $$PilotosTableTableManager
                 email: email,
                 esCoordinadora: esCoordinadora,
                 creadoEn: creadoEn,
+                uuid: uuid,
+                modMs: modMs,
+                modPor: modPor,
               ),
           createCompanionCallback:
               ({
@@ -19996,6 +21191,9 @@ class $$PilotosTableTableManager
                 Value<String?> email = const Value.absent(),
                 Value<bool> esCoordinadora = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
+                Value<int?> modMs = const Value.absent(),
+                Value<String?> modPor = const Value.absent(),
               }) => PilotosCompanion.insert(
                 id: id,
                 nombre: nombre,
@@ -20004,6 +21202,9 @@ class $$PilotosTableTableManager
                 email: email,
                 esCoordinadora: esCoordinadora,
                 creadoEn: creadoEn,
+                uuid: uuid,
+                modMs: modMs,
+                modPor: modPor,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -20201,6 +21402,8 @@ typedef $$PilotoCampeonatoTableCreateCompanionBuilder =
       Value<int> saldoTemporadaAnterior,
       Value<int> bonificacionAplicada,
       Value<String?> palmaresLocal,
+      Value<int?> modMs,
+      Value<String?> modPor,
       Value<int> rowid,
     });
 typedef $$PilotoCampeonatoTableUpdateCompanionBuilder =
@@ -20214,6 +21417,8 @@ typedef $$PilotoCampeonatoTableUpdateCompanionBuilder =
       Value<int> saldoTemporadaAnterior,
       Value<int> bonificacionAplicada,
       Value<String?> palmaresLocal,
+      Value<int?> modMs,
+      Value<String?> modPor,
       Value<int> rowid,
     });
 
@@ -20316,6 +21521,16 @@ class $$PilotoCampeonatoTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get modMs => $composableBuilder(
+    column: $table.modMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get modPor => $composableBuilder(
+    column: $table.modPor,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$PilotosTableFilterComposer get pilotoId {
     final $$PilotosTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -20404,6 +21619,16 @@ class $$PilotoCampeonatoTableOrderingComposer
 
   ColumnOrderings<String> get palmaresLocal => $composableBuilder(
     column: $table.palmaresLocal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get modMs => $composableBuilder(
+    column: $table.modMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get modPor => $composableBuilder(
+    column: $table.modPor,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -20496,6 +21721,12 @@ class $$PilotoCampeonatoTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get modMs =>
+      $composableBuilder(column: $table.modMs, builder: (column) => column);
+
+  GeneratedColumn<String> get modPor =>
+      $composableBuilder(column: $table.modPor, builder: (column) => column);
+
   $$PilotosTableAnnotationComposer get pilotoId {
     final $$PilotosTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -20582,6 +21813,8 @@ class $$PilotoCampeonatoTableTableManager
                 Value<int> saldoTemporadaAnterior = const Value.absent(),
                 Value<int> bonificacionAplicada = const Value.absent(),
                 Value<String?> palmaresLocal = const Value.absent(),
+                Value<int?> modMs = const Value.absent(),
+                Value<String?> modPor = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PilotoCampeonatoCompanion(
                 pilotoId: pilotoId,
@@ -20593,6 +21826,8 @@ class $$PilotoCampeonatoTableTableManager
                 saldoTemporadaAnterior: saldoTemporadaAnterior,
                 bonificacionAplicada: bonificacionAplicada,
                 palmaresLocal: palmaresLocal,
+                modMs: modMs,
+                modPor: modPor,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -20606,6 +21841,8 @@ class $$PilotoCampeonatoTableTableManager
                 Value<int> saldoTemporadaAnterior = const Value.absent(),
                 Value<int> bonificacionAplicada = const Value.absent(),
                 Value<String?> palmaresLocal = const Value.absent(),
+                Value<int?> modMs = const Value.absent(),
+                Value<String?> modPor = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PilotoCampeonatoCompanion.insert(
                 pilotoId: pilotoId,
@@ -20617,6 +21854,8 @@ class $$PilotoCampeonatoTableTableManager
                 saldoTemporadaAnterior: saldoTemporadaAnterior,
                 bonificacionAplicada: bonificacionAplicada,
                 palmaresLocal: palmaresLocal,
+                modMs: modMs,
+                modPor: modPor,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -20712,6 +21951,9 @@ typedef $$EquiposTableCreateCompanionBuilder =
       required int piloto1Id,
       Value<int?> piloto2Id,
       Value<bool> activo,
+      Value<String?> uuid,
+      Value<int?> modMs,
+      Value<String?> modPor,
     });
 typedef $$EquiposTableUpdateCompanionBuilder =
     EquiposCompanion Function({
@@ -20722,6 +21964,9 @@ typedef $$EquiposTableUpdateCompanionBuilder =
       Value<int> piloto1Id,
       Value<int?> piloto2Id,
       Value<bool> activo,
+      Value<String?> uuid,
+      Value<int?> modMs,
+      Value<String?> modPor,
     });
 
 final class $$EquiposTableReferences
@@ -20971,6 +22216,21 @@ class $$EquiposTableFilterComposer
 
   ColumnFilters<bool> get activo => $composableBuilder(
     column: $table.activo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uuid => $composableBuilder(
+    column: $table.uuid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get modMs => $composableBuilder(
+    column: $table.modMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get modPor => $composableBuilder(
+    column: $table.modPor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -21273,6 +22533,21 @@ class $$EquiposTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get uuid => $composableBuilder(
+    column: $table.uuid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get modMs => $composableBuilder(
+    column: $table.modMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get modPor => $composableBuilder(
+    column: $table.modPor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CampeonatosTableOrderingComposer get campeonatoId {
     final $$CampeonatosTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -21363,6 +22638,15 @@ class $$EquiposTableAnnotationComposer
 
   GeneratedColumn<bool> get activo =>
       $composableBuilder(column: $table.activo, builder: (column) => column);
+
+  GeneratedColumn<String> get uuid =>
+      $composableBuilder(column: $table.uuid, builder: (column) => column);
+
+  GeneratedColumn<int> get modMs =>
+      $composableBuilder(column: $table.modMs, builder: (column) => column);
+
+  GeneratedColumn<String> get modPor =>
+      $composableBuilder(column: $table.modPor, builder: (column) => column);
 
   $$CampeonatosTableAnnotationComposer get campeonatoId {
     final $$CampeonatosTableAnnotationComposer composer = $composerBuilder(
@@ -21683,6 +22967,9 @@ class $$EquiposTableTableManager
                 Value<int> piloto1Id = const Value.absent(),
                 Value<int?> piloto2Id = const Value.absent(),
                 Value<bool> activo = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
+                Value<int?> modMs = const Value.absent(),
+                Value<String?> modPor = const Value.absent(),
               }) => EquiposCompanion(
                 id: id,
                 campeonatoId: campeonatoId,
@@ -21691,6 +22978,9 @@ class $$EquiposTableTableManager
                 piloto1Id: piloto1Id,
                 piloto2Id: piloto2Id,
                 activo: activo,
+                uuid: uuid,
+                modMs: modMs,
+                modPor: modPor,
               ),
           createCompanionCallback:
               ({
@@ -21701,6 +22991,9 @@ class $$EquiposTableTableManager
                 required int piloto1Id,
                 Value<int?> piloto2Id = const Value.absent(),
                 Value<bool> activo = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
+                Value<int?> modMs = const Value.absent(),
+                Value<String?> modPor = const Value.absent(),
               }) => EquiposCompanion.insert(
                 id: id,
                 campeonatoId: campeonatoId,
@@ -21709,6 +23002,9 @@ class $$EquiposTableTableManager
                 piloto1Id: piloto1Id,
                 piloto2Id: piloto2Id,
                 activo: activo,
+                uuid: uuid,
+                modMs: modMs,
+                modPor: modPor,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -22381,6 +23677,7 @@ typedef $$PruebasTableCreateCompanionBuilder =
       required int orden,
       Value<String> estado,
       Value<int?> managerRaceId,
+      Value<String?> uuid,
     });
 typedef $$PruebasTableUpdateCompanionBuilder =
     PruebasCompanion Function({
@@ -22392,6 +23689,7 @@ typedef $$PruebasTableUpdateCompanionBuilder =
       Value<int> orden,
       Value<String> estado,
       Value<int?> managerRaceId,
+      Value<String?> uuid,
     });
 
 final class $$PruebasTableReferences
@@ -22617,6 +23915,11 @@ class $$PruebasTableFilterComposer
 
   ColumnFilters<int> get managerRaceId => $composableBuilder(
     column: $table.managerRaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uuid => $composableBuilder(
+    column: $table.uuid,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -22863,6 +24166,11 @@ class $$PruebasTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get uuid => $composableBuilder(
+    column: $table.uuid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CampeonatosTableOrderingComposer get campeonatoId {
     final $$CampeonatosTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -22918,6 +24226,9 @@ class $$PruebasTableAnnotationComposer
     column: $table.managerRaceId,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get uuid =>
+      $composableBuilder(column: $table.uuid, builder: (column) => column);
 
   $$CampeonatosTableAnnotationComposer get campeonatoId {
     final $$CampeonatosTableAnnotationComposer composer = $composerBuilder(
@@ -23166,6 +24477,7 @@ class $$PruebasTableTableManager
                 Value<int> orden = const Value.absent(),
                 Value<String> estado = const Value.absent(),
                 Value<int?> managerRaceId = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
               }) => PruebasCompanion(
                 id: id,
                 campeonatoId: campeonatoId,
@@ -23175,6 +24487,7 @@ class $$PruebasTableTableManager
                 orden: orden,
                 estado: estado,
                 managerRaceId: managerRaceId,
+                uuid: uuid,
               ),
           createCompanionCallback:
               ({
@@ -23186,6 +24499,7 @@ class $$PruebasTableTableManager
                 required int orden,
                 Value<String> estado = const Value.absent(),
                 Value<int?> managerRaceId = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
               }) => PruebasCompanion.insert(
                 id: id,
                 campeonatoId: campeonatoId,
@@ -23195,6 +24509,7 @@ class $$PruebasTableTableManager
                 orden: orden,
                 estado: estado,
                 managerRaceId: managerRaceId,
+                uuid: uuid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -24580,6 +25895,8 @@ typedef $$InscripcionesPruebaTableCreateCompanionBuilder =
       Value<String?> copa,
       Value<int?> copaModificadaMs,
       Value<int?> tesoreriaModificadaMs,
+      Value<int?> modMs,
+      Value<String?> modPor,
     });
 typedef $$InscripcionesPruebaTableUpdateCompanionBuilder =
     InscripcionesPruebaCompanion Function({
@@ -24595,6 +25912,8 @@ typedef $$InscripcionesPruebaTableUpdateCompanionBuilder =
       Value<String?> copa,
       Value<int?> copaModificadaMs,
       Value<int?> tesoreriaModificadaMs,
+      Value<int?> modMs,
+      Value<String?> modPor,
     });
 
 final class $$InscripcionesPruebaTableReferences
@@ -24708,6 +26027,16 @@ class $$InscripcionesPruebaTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get modMs => $composableBuilder(
+    column: $table.modMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get modPor => $composableBuilder(
+    column: $table.modPor,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$PruebasTableFilterComposer get pruebaId {
     final $$PruebasTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -24814,6 +26143,16 @@ class $$InscripcionesPruebaTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get modMs => $composableBuilder(
+    column: $table.modMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get modPor => $composableBuilder(
+    column: $table.modPor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PruebasTableOrderingComposer get pruebaId {
     final $$PruebasTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -24910,6 +26249,12 @@ class $$InscripcionesPruebaTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get modMs =>
+      $composableBuilder(column: $table.modMs, builder: (column) => column);
+
+  GeneratedColumn<String> get modPor =>
+      $composableBuilder(column: $table.modPor, builder: (column) => column);
+
   $$PruebasTableAnnotationComposer get pruebaId {
     final $$PruebasTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -25005,6 +26350,8 @@ class $$InscripcionesPruebaTableTableManager
                 Value<String?> copa = const Value.absent(),
                 Value<int?> copaModificadaMs = const Value.absent(),
                 Value<int?> tesoreriaModificadaMs = const Value.absent(),
+                Value<int?> modMs = const Value.absent(),
+                Value<String?> modPor = const Value.absent(),
               }) => InscripcionesPruebaCompanion(
                 id: id,
                 pruebaId: pruebaId,
@@ -25018,6 +26365,8 @@ class $$InscripcionesPruebaTableTableManager
                 copa: copa,
                 copaModificadaMs: copaModificadaMs,
                 tesoreriaModificadaMs: tesoreriaModificadaMs,
+                modMs: modMs,
+                modPor: modPor,
               ),
           createCompanionCallback:
               ({
@@ -25033,6 +26382,8 @@ class $$InscripcionesPruebaTableTableManager
                 Value<String?> copa = const Value.absent(),
                 Value<int?> copaModificadaMs = const Value.absent(),
                 Value<int?> tesoreriaModificadaMs = const Value.absent(),
+                Value<int?> modMs = const Value.absent(),
+                Value<String?> modPor = const Value.absent(),
               }) => InscripcionesPruebaCompanion.insert(
                 id: id,
                 pruebaId: pruebaId,
@@ -25046,6 +26397,8 @@ class $$InscripcionesPruebaTableTableManager
                 copa: copa,
                 copaModificadaMs: copaModificadaMs,
                 tesoreriaModificadaMs: tesoreriaModificadaMs,
+                modMs: modMs,
+                modPor: modPor,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -33426,6 +34779,339 @@ typedef $$BorradosSyncTableProcessedTableManager =
       BorradosSyncData,
       PrefetchHooks Function({bool mangaId, bool equipoId})
     >;
+typedef $$SyncLocalTableCreateCompanionBuilder =
+    SyncLocalCompanion Function({
+      required String clave,
+      Value<String?> valor,
+      Value<int> rowid,
+    });
+typedef $$SyncLocalTableUpdateCompanionBuilder =
+    SyncLocalCompanion Function({
+      Value<String> clave,
+      Value<String?> valor,
+      Value<int> rowid,
+    });
+
+class $$SyncLocalTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncLocalTable> {
+  $$SyncLocalTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get clave => $composableBuilder(
+    column: $table.clave,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get valor => $composableBuilder(
+    column: $table.valor,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncLocalTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncLocalTable> {
+  $$SyncLocalTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get clave => $composableBuilder(
+    column: $table.clave,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get valor => $composableBuilder(
+    column: $table.valor,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncLocalTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncLocalTable> {
+  $$SyncLocalTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get clave =>
+      $composableBuilder(column: $table.clave, builder: (column) => column);
+
+  GeneratedColumn<String> get valor =>
+      $composableBuilder(column: $table.valor, builder: (column) => column);
+}
+
+class $$SyncLocalTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SyncLocalTable,
+          SyncLocalData,
+          $$SyncLocalTableFilterComposer,
+          $$SyncLocalTableOrderingComposer,
+          $$SyncLocalTableAnnotationComposer,
+          $$SyncLocalTableCreateCompanionBuilder,
+          $$SyncLocalTableUpdateCompanionBuilder,
+          (
+            SyncLocalData,
+            BaseReferences<_$AppDatabase, $SyncLocalTable, SyncLocalData>,
+          ),
+          SyncLocalData,
+          PrefetchHooks Function()
+        > {
+  $$SyncLocalTableTableManager(_$AppDatabase db, $SyncLocalTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncLocalTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncLocalTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncLocalTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> clave = const Value.absent(),
+                Value<String?> valor = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) =>
+                  SyncLocalCompanion(clave: clave, valor: valor, rowid: rowid),
+          createCompanionCallback:
+              ({
+                required String clave,
+                Value<String?> valor = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncLocalCompanion.insert(
+                clave: clave,
+                valor: valor,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncLocalTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SyncLocalTable,
+      SyncLocalData,
+      $$SyncLocalTableFilterComposer,
+      $$SyncLocalTableOrderingComposer,
+      $$SyncLocalTableAnnotationComposer,
+      $$SyncLocalTableCreateCompanionBuilder,
+      $$SyncLocalTableUpdateCompanionBuilder,
+      (
+        SyncLocalData,
+        BaseReferences<_$AppDatabase, $SyncLocalTable, SyncLocalData>,
+      ),
+      SyncLocalData,
+      PrefetchHooks Function()
+    >;
+typedef $$BorradosRegistroTableCreateCompanionBuilder =
+    BorradosRegistroCompanion Function({
+      required String tabla,
+      required String clave,
+      required int borradoMs,
+      Value<String?> borradoPor,
+      Value<int> rowid,
+    });
+typedef $$BorradosRegistroTableUpdateCompanionBuilder =
+    BorradosRegistroCompanion Function({
+      Value<String> tabla,
+      Value<String> clave,
+      Value<int> borradoMs,
+      Value<String?> borradoPor,
+      Value<int> rowid,
+    });
+
+class $$BorradosRegistroTableFilterComposer
+    extends Composer<_$AppDatabase, $BorradosRegistroTable> {
+  $$BorradosRegistroTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get tabla => $composableBuilder(
+    column: $table.tabla,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get clave => $composableBuilder(
+    column: $table.clave,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get borradoMs => $composableBuilder(
+    column: $table.borradoMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get borradoPor => $composableBuilder(
+    column: $table.borradoPor,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$BorradosRegistroTableOrderingComposer
+    extends Composer<_$AppDatabase, $BorradosRegistroTable> {
+  $$BorradosRegistroTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get tabla => $composableBuilder(
+    column: $table.tabla,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get clave => $composableBuilder(
+    column: $table.clave,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get borradoMs => $composableBuilder(
+    column: $table.borradoMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get borradoPor => $composableBuilder(
+    column: $table.borradoPor,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BorradosRegistroTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BorradosRegistroTable> {
+  $$BorradosRegistroTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get tabla =>
+      $composableBuilder(column: $table.tabla, builder: (column) => column);
+
+  GeneratedColumn<String> get clave =>
+      $composableBuilder(column: $table.clave, builder: (column) => column);
+
+  GeneratedColumn<int> get borradoMs =>
+      $composableBuilder(column: $table.borradoMs, builder: (column) => column);
+
+  GeneratedColumn<String> get borradoPor => $composableBuilder(
+    column: $table.borradoPor,
+    builder: (column) => column,
+  );
+}
+
+class $$BorradosRegistroTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BorradosRegistroTable,
+          BorradosRegistroData,
+          $$BorradosRegistroTableFilterComposer,
+          $$BorradosRegistroTableOrderingComposer,
+          $$BorradosRegistroTableAnnotationComposer,
+          $$BorradosRegistroTableCreateCompanionBuilder,
+          $$BorradosRegistroTableUpdateCompanionBuilder,
+          (
+            BorradosRegistroData,
+            BaseReferences<
+              _$AppDatabase,
+              $BorradosRegistroTable,
+              BorradosRegistroData
+            >,
+          ),
+          BorradosRegistroData,
+          PrefetchHooks Function()
+        > {
+  $$BorradosRegistroTableTableManager(
+    _$AppDatabase db,
+    $BorradosRegistroTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BorradosRegistroTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BorradosRegistroTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BorradosRegistroTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> tabla = const Value.absent(),
+                Value<String> clave = const Value.absent(),
+                Value<int> borradoMs = const Value.absent(),
+                Value<String?> borradoPor = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BorradosRegistroCompanion(
+                tabla: tabla,
+                clave: clave,
+                borradoMs: borradoMs,
+                borradoPor: borradoPor,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String tabla,
+                required String clave,
+                required int borradoMs,
+                Value<String?> borradoPor = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BorradosRegistroCompanion.insert(
+                tabla: tabla,
+                clave: clave,
+                borradoMs: borradoMs,
+                borradoPor: borradoPor,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$BorradosRegistroTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BorradosRegistroTable,
+      BorradosRegistroData,
+      $$BorradosRegistroTableFilterComposer,
+      $$BorradosRegistroTableOrderingComposer,
+      $$BorradosRegistroTableAnnotationComposer,
+      $$BorradosRegistroTableCreateCompanionBuilder,
+      $$BorradosRegistroTableUpdateCompanionBuilder,
+      (
+        BorradosRegistroData,
+        BaseReferences<
+          _$AppDatabase,
+          $BorradosRegistroTable,
+          BorradosRegistroData
+        >,
+      ),
+      BorradosRegistroData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -33496,4 +35182,8 @@ class $AppDatabaseManager {
       $$SyncColaTableTableManager(_db, _db.syncCola);
   $$BorradosSyncTableTableManager get borradosSync =>
       $$BorradosSyncTableTableManager(_db, _db.borradosSync);
+  $$SyncLocalTableTableManager get syncLocal =>
+      $$SyncLocalTableTableManager(_db, _db.syncLocal);
+  $$BorradosRegistroTableTableManager get borradosRegistro =>
+      $$BorradosRegistroTableTableManager(_db, _db.borradosRegistro);
 }

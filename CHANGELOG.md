@@ -14,6 +14,14 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.34.0] — 2026-10-12
+### Añadido
+- **«Verificar en equipo (wifi)» comparte también las altas.** Además de verificaciones, copa y cobros, ahora viajan solos entre los Controls conectados: **pilotos nuevos** y los cambios en su ficha, **equipos** nuevos o editados (con sus miembros), el **perfil del piloto en el campeonato** (categoría, créditos iniciales…) y las **inscripciones a la prueba**, con sus **bajas** y los equipos borrados. Si dos Controls tocan lo mismo, gana el último cambio; si en uno se da de baja y en otro se vuelve a inscribir después, gana la inscripción. Los créditos actuales los sigue calculando cada Control con sus verificaciones.
+- Las tandas, los carriles, los resultados, los catálogos y la configuración del campeonato todavía no viajan: se montan en un Control y se reparte la copia.
+
+### Mejorado
+- Cada piloto, equipo, campeonato y prueba tiene ahora un identificador global, igual en todos los Controls, y los cambios se firman solos en la base de datos (esquema 50). Los datos que ya existían reciben el suyo al actualizar, sin tocar nada.
+
 ## [1.33.0] — 2026-10-12
 ### Añadido
 - **Aviso de versión nueva, con descarga desde la propia app.** Al arrancar y al volver a la app (si pasaron más de 6 horas), PitWall Control pregunta a la web (`https://www.pitwall.es/software/pitwall-control/version.json`); si la versión publicada es posterior a la instalada, **Inicio** muestra una tarjeta con el botón **Actualizar**, que **descarga el APK** (con porcentaje y **Cancelar**, y se corta sola si se atasca), comprueba que llegue completo y abre el instalador de Android (la primera vez Android pide permitir a la app «instalar apps desconocidas»; después hay que volver a pulsar). Sin red o si la web no responde, no molesta. **Más tarde** descarta la tarjeta hasta la próxima vez que se abre la app.
