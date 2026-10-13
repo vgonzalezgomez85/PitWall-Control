@@ -8252,6 +8252,66 @@ abstract class Textos {
   /// In es, this message translates to:
   /// **'{hoja} fila {fila}: {detalle}'**
   String errorFilaDetalle(String hoja, int fila, String detalle);
+
+  /// No description provided for @diaLunes.
+  ///
+  /// In es, this message translates to:
+  /// **'Lunes'**
+  String get diaLunes;
+
+  /// No description provided for @diaMartes.
+  ///
+  /// In es, this message translates to:
+  /// **'Martes'**
+  String get diaMartes;
+
+  /// No description provided for @diaMiercoles.
+  ///
+  /// In es, this message translates to:
+  /// **'Miércoles'**
+  String get diaMiercoles;
+
+  /// No description provided for @diaJueves.
+  ///
+  /// In es, this message translates to:
+  /// **'Jueves'**
+  String get diaJueves;
+
+  /// No description provided for @diaViernes.
+  ///
+  /// In es, this message translates to:
+  /// **'Viernes'**
+  String get diaViernes;
+
+  /// No description provided for @diaSabado.
+  ///
+  /// In es, this message translates to:
+  /// **'Sábado'**
+  String get diaSabado;
+
+  /// No description provided for @diaDomingo.
+  ///
+  /// In es, this message translates to:
+  /// **'Domingo'**
+  String get diaDomingo;
+
+  /// No description provided for @diaQueCorre.
+  ///
+  /// In es, this message translates to:
+  /// **'Día que corre'**
+  String get diaQueCorre;
+
+  /// No description provided for @sinPreferenciaDeDia.
+  ///
+  /// In es, this message translates to:
+  /// **'— sin preferencia —'**
+  String get sinPreferenciaDeDia;
+
+  /// No description provided for @cambiarDiaQueCorre.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar día que corre'**
+  String get cambiarDiaQueCorre;
 }
 
 class _TextosDelegate extends LocalizationsDelegate<Textos> {

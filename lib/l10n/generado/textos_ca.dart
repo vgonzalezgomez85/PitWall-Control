@@ -5236,4 +5236,34 @@ class TextosCa extends Textos {
   String errorFilaDetalle(String hoja, int fila, String detalle) {
     return '$hoja fila $fila: $detalle';
   }
+
+  @override
+  String get diaLunes => 'Dilluns';
+
+  @override
+  String get diaMartes => 'Dimarts';
+
+  @override
+  String get diaMiercoles => 'Dimecres';
+
+  @override
+  String get diaJueves => 'Dijous';
+
+  @override
+  String get diaViernes => 'Divendres';
+
+  @override
+  String get diaSabado => 'Dissabte';
+
+  @override
+  String get diaDomingo => 'Diumenge';
+
+  @override
+  String get diaQueCorre => 'Dia que corre';
+
+  @override
+  String get sinPreferenciaDeDia => '— sense preferència —';
+
+  @override
+  String get cambiarDiaQueCorre => 'Canviar dia que corre';
 }

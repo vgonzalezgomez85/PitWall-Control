@@ -5263,4 +5263,34 @@ class TextosFr extends Textos {
   String errorFilaDetalle(String hoja, int fila, String detalle) {
     return '$hoja ligne $fila : $detalle';
   }
+
+  @override
+  String get diaLunes => 'Lundi';
+
+  @override
+  String get diaMartes => 'Mardi';
+
+  @override
+  String get diaMiercoles => 'Mercredi';
+
+  @override
+  String get diaJueves => 'Jeudi';
+
+  @override
+  String get diaViernes => 'Vendredi';
+
+  @override
+  String get diaSabado => 'Samedi';
+
+  @override
+  String get diaDomingo => 'Dimanche';
+
+  @override
+  String get diaQueCorre => 'Jour de course';
+
+  @override
+  String get sinPreferenciaDeDia => '— sans préférence —';
+
+  @override
+  String get cambiarDiaQueCorre => 'Changer le jour de course';
 }

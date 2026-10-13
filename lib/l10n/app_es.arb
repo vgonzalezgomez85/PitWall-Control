@@ -3564,5 +3564,15 @@
         "type": "String"
       }
     }
-  }
+  },
+  "diaLunes": "Lunes",
+  "diaMartes": "Martes",
+  "diaMiercoles": "Miércoles",
+  "diaJueves": "Jueves",
+  "diaViernes": "Viernes",
+  "diaSabado": "Sábado",
+  "diaDomingo": "Domingo",
+  "diaQueCorre": "Día que corre",
+  "sinPreferenciaDeDia": "— sin preferencia —",
+  "cambiarDiaQueCorre": "Cambiar día que corre"
 }

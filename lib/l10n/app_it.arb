@@ -1352,5 +1352,15 @@
   "noSePudoComprobarSinConexion": "Impossibile controllare (senza connessione?)",
   "conexionFallida": "Impossibile connettersi",
   "accionSubir": "Carica",
-  "errorFilaDetalle": "{hoja} riga {fila}: {detalle}"
+  "errorFilaDetalle": "{hoja} riga {fila}: {detalle}",
+  "diaLunes": "Lunedì",
+  "diaMartes": "Martedì",
+  "diaMiercoles": "Mercoledì",
+  "diaJueves": "Giovedì",
+  "diaViernes": "Venerdì",
+  "diaSabado": "Sabato",
+  "diaDomingo": "Domenica",
+  "diaQueCorre": "Giorno di gara",
+  "sinPreferenciaDeDia": "— nessuna preferenza —",
+  "cambiarDiaQueCorre": "Cambia giorno di gara"
 }

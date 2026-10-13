@@ -5230,4 +5230,34 @@ class TextosEn extends Textos {
   String errorFilaDetalle(String hoja, int fila, String detalle) {
     return '$hoja row $fila: $detalle';
   }
+
+  @override
+  String get diaLunes => 'Monday';
+
+  @override
+  String get diaMartes => 'Tuesday';
+
+  @override
+  String get diaMiercoles => 'Wednesday';
+
+  @override
+  String get diaJueves => 'Thursday';
+
+  @override
+  String get diaViernes => 'Friday';
+
+  @override
+  String get diaSabado => 'Saturday';
+
+  @override
+  String get diaDomingo => 'Sunday';
+
+  @override
+  String get diaQueCorre => 'Race day';
+
+  @override
+  String get sinPreferenciaDeDia => '— no preference —';
+
+  @override
+  String get cambiarDiaQueCorre => 'Change race day';
 }

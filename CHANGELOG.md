@@ -14,6 +14,12 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.42.0] — 2026-10-13
+### Añadido
+- **Buscador en «Inscritos a la prueba»**: arriba de la lista, para encontrar rápido un piloto o equipo (por nombre del equipo o de sus pilotos).
+- **Día que corre al inscribir a mano**: al añadir pilotos/equipos se elige el día (o «sin preferencia») y se aplica a todos los marcados. El generador de tandas lo usa para colocarlos en las tandas de ese día.
+- **Editar el día que corre una vez inscrito**: nueva opción «Cambiar día que corre» en el menú de cada inscrito.
+
 ## [1.41.3] — 2026-10-13
 ### Corregido
 - **Al dar de alta un piloto salía «No se pudo guardar: Bad state: Too many elements» aunque el piloto sí se guardaba.** Tras crearlo, la pantalla lo buscaba por nombre y fallaba si ya existía otro con el mismo nombre; entonces no se guardaba la marca de «Piloto de coordinadora». Ahora usa directamente el id del piloto recién creado.

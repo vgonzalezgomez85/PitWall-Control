@@ -231,6 +231,12 @@ class RepositorioInscripcionesPrueba {
     }
   }
 
+  /// Cambia (o quita, con `null`) el día en que corre un inscrito.
+  Future<void> fijarPreferenciaDia(int id, String? dia) async {
+    await (db.update(db.inscripcionesPrueba)..where((t) => t.id.equals(id)))
+        .write(InscripcionesPruebaCompanion(preferenciaDia: Value(dia)));
+  }
+
   Future<void> marcarAsignada(int id, bool asignada) async {
     await (db.update(db.inscripcionesPrueba)..where((t) => t.id.equals(id)))
         .write(InscripcionesPruebaCompanion(asignada: Value(asignada)));

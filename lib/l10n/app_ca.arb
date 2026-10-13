@@ -1352,5 +1352,15 @@
   "noSePudoComprobarSinConexion": "No s'ha pogut comprovar (sense connexió?)",
   "conexionFallida": "No s'ha pogut connectar",
   "accionSubir": "Puja",
-  "errorFilaDetalle": "{hoja} fila {fila}: {detalle}"
+  "errorFilaDetalle": "{hoja} fila {fila}: {detalle}",
+  "diaLunes": "Dilluns",
+  "diaMartes": "Dimarts",
+  "diaMiercoles": "Dimecres",
+  "diaJueves": "Dijous",
+  "diaViernes": "Divendres",
+  "diaSabado": "Dissabte",
+  "diaDomingo": "Diumenge",
+  "diaQueCorre": "Dia que corre",
+  "sinPreferenciaDeDia": "— sense preferència —",
+  "cambiarDiaQueCorre": "Canviar dia que corre"
 }

@@ -202,42 +202,7 @@ class PantallaInscritos extends ConsumerWidget {
             );
           }
 
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-            children: [
-              Card(
-                color: cs.surfaceContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Icon(
-                          esIndividual
-                              ? Icons.person_outline
-                              : Icons.groups_outlined,
-                          color: cs.primary),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          esIndividual
-                              ? context
-                                  .l
-                                  .pilotosInscritosGenerarTandas(
-                                      inscritos.length)
-                              : context
-                                  .l
-                                  .equiposInscritosGenerarTandas(
-                                      inscritos.length),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...inscritos.map((i) => _TarjetaInscrito(inscrito: i)),
-            ],
-          );
+          return _ListaInscritos(inscritos: inscritos, esIndividual: esIndividual);
         },
       ),
     );
@@ -249,6 +214,155 @@ class PantallaInscritos extends ConsumerWidget {
       isScrollControlled: true,
       builder: (_) => _HojaAnadirManual(pruebaId: pruebaId),
     );
+  }
+}
+
+/// Lista de inscritos con buscador por equipo/piloto.
+class _ListaInscritos extends StatefulWidget {
+  const _ListaInscritos({required this.inscritos, required this.esIndividual});
+
+  final List<InscritoPrueba> inscritos;
+  final bool esIndividual;
+
+  @override
+  State<_ListaInscritos> createState() => _ListaInscritosState();
+}
+
+class _ListaInscritosState extends State<_ListaInscritos> {
+  String _busqueda = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final inscritos = widget.inscritos;
+    final esIndividual = widget.esIndividual;
+    final visibles = _busqueda.isEmpty
+        ? inscritos
+        : inscritos
+            .where((i) => '${i.equipo.nombre} ${i.nombrePilotos}'
+                .toLowerCase()
+                .contains(_busqueda))
+            .toList();
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+      children: [
+        TextField(
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search),
+            hintText: esIndividual
+                ? context.l.buscarPiloto
+                : context.l.buscarEquipoOPiloto,
+          ),
+          onChanged: (v) => setState(() => _busqueda = v.trim().toLowerCase()),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          color: cs.surfaceContainer,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Icon(esIndividual ? Icons.person_outline : Icons.groups_outlined,
+                    color: cs.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    esIndividual
+                        ? context.l.pilotosInscritosGenerarTandas(inscritos.length)
+                        : context.l.equiposInscritosGenerarTandas(inscritos.length),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...visibles.map((i) => _TarjetaInscrito(inscrito: i)),
+      ],
+    );
+  }
+}
+
+/// Días de la semana que entiende el generador de tandas (se guardan en
+/// español, igual que los que llegan de las hojas importadas).
+const _diasSemana = [
+  'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo',
+];
+
+String _etiquetaDia(BuildContext context, String dia) {
+  final l = context.l;
+  return switch (dia) {
+    'Lunes' => l.diaLunes,
+    'Martes' => l.diaMartes,
+    'Miércoles' => l.diaMiercoles,
+    'Jueves' => l.diaJueves,
+    'Viernes' => l.diaViernes,
+    'Sábado' => l.diaSabado,
+    'Domingo' => l.diaDomingo,
+    _ => dia,
+  };
+}
+
+/// Desplegable «Día que corre». Si el valor actual es un texto libre (de una
+/// importación) se conserva como una opción más.
+class _SelectorDia extends StatelessWidget {
+  const _SelectorDia({required this.valor, required this.onChanged});
+
+  final String? valor;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final extra = valor != null && !_diasSemana.contains(valor) ? valor : null;
+    return DropdownButtonFormField<String?>(
+      initialValue: valor,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: context.l.diaQueCorre,
+        prefixIcon: const Icon(Icons.event_outlined),
+        isDense: true,
+      ),
+      items: [
+        DropdownMenuItem(value: null, child: Text(context.l.sinPreferenciaDeDia)),
+        for (final d in _diasSemana)
+          DropdownMenuItem(value: d, child: Text(_etiquetaDia(context, d))),
+        if (extra != null) DropdownMenuItem(value: extra, child: Text(extra)),
+      ],
+      onChanged: onChanged,
+    );
+  }
+}
+
+/// Cambia el día que corre un ya inscrito.
+Future<void> _editarDiaInscrito(
+    BuildContext context, WidgetRef ref, InscritoPrueba inscrito) async {
+  var dia = inscrito.inscripcion.preferenciaDia;
+  final l = context.l;
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setSt) => AlertDialog(
+        title: Text(inscrito.equipo.nombre),
+        content: SizedBox(
+          width: 320,
+          child: _SelectorDia(
+              valor: dia, onChanged: (v) => setSt(() => dia = v)),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l.cancelar)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l.guardar)),
+        ],
+      ),
+    ),
+  );
+  if (ok == true) {
+    await ref
+        .read(repoInscripcionesPruebaProvider)
+        .fijarPreferenciaDia(inscrito.inscripcion.id, dia);
   }
 }
 
@@ -278,15 +392,17 @@ class _TarjetaInscrito extends ConsumerWidget {
         subtitle: Text(
           esIndividual
               ? '${context.l.copaDosPuntos(inscrito.copa)}'
-                  '${inscrito.inscripcion.preferenciaDia != null ? "  ·  ${inscrito.inscripcion.preferenciaDia}" : ""}'
+                  '${inscrito.inscripcion.preferenciaDia != null ? "  ·  ${_etiquetaDia(context, inscrito.inscripcion.preferenciaDia!)}" : ""}'
               : '${inscrito.nombrePilotos}\n${context.l.copaDosPuntos(inscrito.copa)}'
-                  '${inscrito.inscripcion.preferenciaDia != null ? "  ·  ${inscrito.inscripcion.preferenciaDia}" : ""}',
+                  '${inscrito.inscripcion.preferenciaDia != null ? "  ·  ${_etiquetaDia(context, inscrito.inscripcion.preferenciaDia!)}" : ""}',
         ),
         isThreeLine: !esIndividual,
         trailing: PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
           onSelected: (op) async {
-            if (op == 'quitar') {
+            if (op == 'dia') {
+              await _editarDiaInscrito(context, ref, inscrito);
+            } else if (op == 'quitar') {
               if (await confirmarBajaPrueba(context, inscrito.equipo.nombre)) {
                 await ref
                     .read(repoInscripcionesPruebaProvider)
@@ -295,6 +411,7 @@ class _TarjetaInscrito extends ConsumerWidget {
             }
           },
           itemBuilder: (_) => [
+            PopupMenuItem(value: 'dia', child: Text(context.l.cambiarDiaQueCorre)),
             PopupMenuItem(value: 'quitar', child: Text(context.l.darDeBaja)),
           ],
         ),
@@ -318,6 +435,7 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
   final Set<int> _equiposSeleccionados = {};
   final Set<int> _pilotosSeleccionados = {};
   String? _copaNueva;
+  String? _dia;
   bool _guardando = false;
 
   int get _totalSeleccionados =>
@@ -328,7 +446,8 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
     setState(() => _guardando = true);
     final repoIns = ref.read(repoInscripcionesPruebaProvider);
     for (final id in _equiposSeleccionados) {
-      await repoIns.inscribir(pruebaId: widget.pruebaId, equipoId: id);
+      await repoIns.inscribir(
+          pruebaId: widget.pruebaId, equipoId: id, preferenciaDia: _dia);
     }
     if (_pilotosSeleccionados.isNotEmpty && copaNuevasInscripciones != null) {
       final repoEq = ref.read(repoEquiposProvider);
@@ -344,7 +463,10 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
           copa: copaNuevasInscripciones,
           pilotoIds: [pilotoId],
         );
-        await repoIns.inscribir(pruebaId: widget.pruebaId, equipoId: equipoId);
+        await repoIns.inscribir(
+            pruebaId: widget.pruebaId,
+            equipoId: equipoId,
+            preferenciaDia: _dia);
       }
     }
     if (!mounted) return;
@@ -600,6 +722,8 @@ class _HojaAnadirManualState extends ConsumerState<_HojaAnadirManual> {
                 },
               ),
             ),
+            const SizedBox(height: 8),
+            _SelectorDia(valor: _dia, onChanged: (v) => setState(() => _dia = v)),
             const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,

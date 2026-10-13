@@ -1352,5 +1352,15 @@
   "noSePudoComprobarSinConexion": "Impossible de vérifier (hors ligne ?)",
   "conexionFallida": "Connexion impossible",
   "accionSubir": "Téléverser",
-  "errorFilaDetalle": "{hoja} ligne {fila} : {detalle}"
+  "errorFilaDetalle": "{hoja} ligne {fila} : {detalle}",
+  "diaLunes": "Lundi",
+  "diaMartes": "Mardi",
+  "diaMiercoles": "Mercredi",
+  "diaJueves": "Jeudi",
+  "diaViernes": "Vendredi",
+  "diaSabado": "Samedi",
+  "diaDomingo": "Dimanche",
+  "diaQueCorre": "Jour de course",
+  "sinPreferenciaDeDia": "— sans préférence —",
+  "cambiarDiaQueCorre": "Changer le jour de course"
 }

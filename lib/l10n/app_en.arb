@@ -1352,5 +1352,15 @@
   "noSePudoComprobarSinConexion": "Could not check (offline?)",
   "conexionFallida": "Could not connect",
   "accionSubir": "Upload",
-  "errorFilaDetalle": "{hoja} row {fila}: {detalle}"
+  "errorFilaDetalle": "{hoja} row {fila}: {detalle}",
+  "diaLunes": "Monday",
+  "diaMartes": "Tuesday",
+  "diaMiercoles": "Wednesday",
+  "diaJueves": "Thursday",
+  "diaViernes": "Friday",
+  "diaSabado": "Saturday",
+  "diaDomingo": "Sunday",
+  "diaQueCorre": "Race day",
+  "sinPreferenciaDeDia": "— no preference —",
+  "cambiarDiaQueCorre": "Change race day"
 }
