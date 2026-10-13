@@ -603,6 +603,20 @@ class TextosEs extends Textos {
       'No se envía el orden de carril: la parrilla se asigna en PitWall tras la pole';
 
   @override
+  String get activarCategoria => 'Activar categoría';
+
+  @override
+  String get activarCategoriaAyuda =>
+      'Se envía la categoría/copa de cada equipo y PitWall la activa en la carrera';
+
+  @override
+  String get activarCoche => 'Activar coche';
+
+  @override
+  String get activarCocheAyuda =>
+      'Se envía el coche de cada equipo desde las verificaciones y PitWall lo activa en la carrera';
+
+  @override
   String get enviar => 'Enviar';
 
   @override

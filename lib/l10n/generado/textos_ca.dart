@@ -605,6 +605,20 @@ class TextosCa extends Textos {
       'No s\'envia l\'ordre de carril: la graella s\'assigna a PitWall després de la pole';
 
   @override
+  String get activarCategoria => 'Activar categoria';
+
+  @override
+  String get activarCategoriaAyuda =>
+      'S\'envia la categoria/copa de cada equip i PitWall l\'activa a la cursa';
+
+  @override
+  String get activarCoche => 'Activar cotxe';
+
+  @override
+  String get activarCocheAyuda =>
+      'S\'envia el cotxe de cada equip des de les verificacions i PitWall l\'activa a la cursa';
+
+  @override
   String get enviar => 'Enviar';
 
   @override

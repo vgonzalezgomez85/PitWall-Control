@@ -602,6 +602,20 @@ class TextosIt extends Textos {
       'L\'ordine delle corsie non viene inviato: la griglia si assegna in PitWall dopo la pole';
 
   @override
+  String get activarCategoria => 'Attiva categoria';
+
+  @override
+  String get activarCategoriaAyuda =>
+      'Invia la categoria/coppa di ogni squadra e PitWall la attiva nella gara';
+
+  @override
+  String get activarCoche => 'Attiva auto';
+
+  @override
+  String get activarCocheAyuda =>
+      'Invia l\'auto di ogni squadra dalle verifiche e PitWall la attiva nella gara';
+
+  @override
   String get enviar => 'Invia';
 
   @override

@@ -57,7 +57,10 @@ class GeneradorTandaJson {
   /// pole en PitWall, así que NO se envía el carril de salida: entran TODOS los
   /// inscritos (tengan o no carril asignado) solo con nombre/copa/pilotos.
   Future<Map<String, dynamic>> generar(
-      {required int pruebaId, bool pole = false}) async {
+      {required int pruebaId,
+      bool pole = false,
+      bool hasCategoria = false,
+      bool hasCoche = false}) async {
     final db = ref.read(dbProvider);
     final prueba = await (db.select(db.pruebas)
           ..where((t) => t.id.equals(pruebaId)))
@@ -97,9 +100,26 @@ class GeneradorTandaJson {
             .getSingle();
         final pilotos = await _pilotos(db, eq);
 
+        // Coche del equipo desde su verificación (solo si la carrera lo activa).
+        String? coche;
+        if (hasCoche) {
+          final ver = await (db.select(db.verificaciones)
+                ..where((t) =>
+                    t.mangaId.equals(m.id) & t.equipoId.equals(ins.equipoId))
+                ..limit(1))
+              .getSingleOrNull();
+          if (ver?.cocheCatalogoId != null) {
+            final c = await (db.select(db.catalogoCoches)
+                  ..where((t) => t.id.equals(ver!.cocheCatalogoId!)))
+                .getSingleOrNull();
+            coche = c?.nombre;
+          }
+        }
+
         equipos.add({
           'nombre': eq.nombre,
           'copa': copasPrueba[eq.id] ?? eq.copa,
+          if (hasCoche && coche != null) 'coche': coche,
           if (!pole) 'carril_salida': carril ?? 0, // 0 = descanso
           if (!pole) 'descanso': ?descanso,
           'pilotos': pilotos,
@@ -135,6 +155,8 @@ class GeneradorTandaJson {
           ? maxCarril
           : (maxNumCarriles > 0 ? maxNumCarriles : 8),
       if (pole) 'pole': true,
+      if (hasCategoria) 'has_categoria': true,
+      if (hasCoche) 'has_coche': true,
       'tandas': tandas,
     };
   }

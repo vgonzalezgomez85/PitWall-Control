@@ -56,6 +56,8 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
   final _pinCtrl = TextEditingController();
   bool _enviando = false;
   bool _pole = false; // ¿la carrera tiene pole? → PitWall crea la sesión
+  bool _categoria = false; // ¿activar la categoría/copa por participante?
+  bool _coche = false; // ¿activar el coche (de las verificaciones)?
 
   @override
   void initState() {
@@ -90,7 +92,10 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
       // decide en PitWall tras correr la pole) y entran todos los inscritos.
       final payload = await widget.ref
           .read(generadorTandaJsonProvider)
-          .generar(pruebaId: widget.pruebaId, pole: _pole);
+          .generar(pruebaId: widget.pruebaId,
+              pole: _pole,
+              hasCategoria: _categoria,
+              hasCoche: _coche);
       final tandas = (payload['tandas'] as List?) ?? const [];
       if (tandas.isEmpty) {
         messenger.showSnackBar(SnackBar(
@@ -155,6 +160,26 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
               title: Text(context.l.carreraTienePoleSi),
               subtitle: Text(
                   context.l.carreraTienePoleAyuda),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              value: _categoria,
+              onChanged: _enviando
+                  ? null
+                  : (v) => setState(() => _categoria = v),
+              title: Text(context.l.activarCategoria),
+              subtitle: Text(context.l.activarCategoriaAyuda),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              value: _coche,
+              onChanged: _enviando
+                  ? null
+                  : (v) => setState(() => _coche = v),
+              title: Text(context.l.activarCoche),
+              subtitle: Text(context.l.activarCocheAyuda),
             ),
           ],
         ),

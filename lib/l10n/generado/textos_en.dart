@@ -601,6 +601,20 @@ class TextosEn extends Textos {
       'The lane order is not sent: the grid is set in PitWall after the pole';
 
   @override
+  String get activarCategoria => 'Activate category';
+
+  @override
+  String get activarCategoriaAyuda =>
+      'Sends each team\'s category/cup and PitWall activates it in the race';
+
+  @override
+  String get activarCoche => 'Activate car';
+
+  @override
+  String get activarCocheAyuda =>
+      'Sends each team\'s car from the verifications and PitWall activates it in the race';
+
+  @override
   String get enviar => 'Send';
 
   @override

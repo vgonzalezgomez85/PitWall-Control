@@ -14,6 +14,10 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.43.0] — 2026-10-13
+### Añadido
+- **Activar categoría y coche al enviar tandas a PitWall**: en el asistente «Enviar a PitWall», además de indicar si la carrera tiene pole, ahora se puede indicar si se quiere activar la categoría y el coche (dos interruptores). Al activarlos, cada participante viaja con su categoría/copa y con el coche de su verificación, y PitWall lo activa en la carrera.
+
 ## [1.42.0] — 2026-10-13
 ### Añadido
 - **Buscador en «Inscritos a la prueba»**: arriba de la lista, para encontrar rápido un piloto o equipo (por nombre del equipo o de sus pilotos).

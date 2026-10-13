@@ -1117,6 +1117,30 @@ abstract class Textos {
   /// **'No se envía el orden de carril: la parrilla se asigna en PitWall tras la pole'**
   String get carreraTienePoleAyuda;
 
+  /// No description provided for @activarCategoria.
+  ///
+  /// In es, this message translates to:
+  /// **'Activar categoría'**
+  String get activarCategoria;
+
+  /// No description provided for @activarCategoriaAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Se envía la categoría/copa de cada equipo y PitWall la activa en la carrera'**
+  String get activarCategoriaAyuda;
+
+  /// No description provided for @activarCoche.
+  ///
+  /// In es, this message translates to:
+  /// **'Activar coche'**
+  String get activarCoche;
+
+  /// No description provided for @activarCocheAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Se envía el coche de cada equipo desde las verificaciones y PitWall lo activa en la carrera'**
+  String get activarCocheAyuda;
+
   /// No description provided for @enviar.
   ///
   /// In es, this message translates to:
