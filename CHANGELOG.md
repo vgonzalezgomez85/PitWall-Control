@@ -14,6 +14,10 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.41.3] — 2026-10-13
+### Corregido
+- **Al dar de alta un piloto salía «No se pudo guardar: Bad state: Too many elements» aunque el piloto sí se guardaba.** Tras crearlo, la pantalla lo buscaba por nombre y fallaba si ya existía otro con el mismo nombre; entonces no se guardaba la marca de «Piloto de coordinadora». Ahora usa directamente el id del piloto recién creado.
+
 ## [1.41.2] — 2026-10-12
 ### Corregido
 - **La app se quedaba cargando al abrir una base de datos de una versión antigua** (con el esquema retrasado): una migración intentaba borrar una columna que ya no estaba y el error abortaba el arranque. Ahora esa migración comprueba antes si la columna existe (y hay un test que lo cubre con una base «antigua» de verdad). Afectaba a cualquier base venida de una versión anterior o restaurada de una copia.

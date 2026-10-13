@@ -120,8 +120,9 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
     final repo = ref.read(repoPilotosProvider);
 
     try {
+      int? idCreado;
       if (widget.pilotoId == null) {
-        await repo.crear(
+        idCreado = await repo.crear(
           nombre: _nombre.text.trim(),
           palmaresGlobal: _txtOrNull(_palmares),
           telefono: _txtOrNull(_telefono),
@@ -169,11 +170,7 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
       }
       // Actualizar el flag esCoordinadora (no está en el repo, lo hago directo)
       final db = ref.read(dbProvider);
-      final pilotoIdParaUpdate = widget.pilotoId ??
-          (await (db.select(db.pilotos)
-                ..where((t) => t.nombre.equals(_nombre.text.trim())))
-              .getSingle())
-              .id;
+      final pilotoIdParaUpdate = widget.pilotoId ?? idCreado!;
       await (db.update(db.pilotos)
             ..where((t) => t.id.equals(pilotoIdParaUpdate)))
           .write(PilotosCompanion(
