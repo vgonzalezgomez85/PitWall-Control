@@ -1141,6 +1141,47 @@ abstract class Textos {
   /// **'Se envía el coche de cada equipo desde las verificaciones y PitWall lo activa en la carrera'**
   String get activarCocheAyuda;
 
+  /// No description provided for @actualizarCarreraEnviada.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualizar la carrera ya enviada'**
+  String get actualizarCarreraEnviada;
+
+  /// No description provided for @actualizarCarreraEnviadaAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Carrera n.º {id} de PitWall: las tandas ya corridas no se tocan; las pendientes se rehacen con los datos actuales'**
+  String actualizarCarreraEnviadaAyuda(String id);
+
+  /// No description provided for @carreraCreadaPitwall.
+  ///
+  /// In es, this message translates to:
+  /// **'Carrera creada: {nombre} — {tandas} tanda(s), {equipos} equipo(s).'**
+  String carreraCreadaPitwall(String nombre, String tandas, String equipos);
+
+  /// No description provided for @carreraActualizadaPitwall.
+  ///
+  /// In es, this message translates to:
+  /// **'Carrera actualizada: {nombre} — {actualizadas} tanda(s) rehecha(s), {nuevas} nueva(s), {borradas} eliminada(s).'**
+  String carreraActualizadaPitwall(
+    String nombre,
+    String actualizadas,
+    String nuevas,
+    String borradas,
+  );
+
+  /// No description provided for @tandasCorridasSinTocar.
+  ///
+  /// In es, this message translates to:
+  /// **'Tandas ya corridas, sin tocar: {lista}.'**
+  String tandasCorridasSinTocar(String lista);
+
+  /// No description provided for @poleActualizadaPitwall.
+  ///
+  /// In es, this message translates to:
+  /// **'Pole actualizada: {nombre} — {equipos} participante(s).'**
+  String poleActualizadaPitwall(String nombre, String equipos);
+
   /// No description provided for @enviar.
   ///
   /// In es, this message translates to:

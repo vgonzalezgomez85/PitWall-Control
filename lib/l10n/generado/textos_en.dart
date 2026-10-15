@@ -615,6 +615,39 @@ class TextosEn extends Textos {
       'Sends each team\'s car from the verifications and PitWall activates it in the race';
 
   @override
+  String get actualizarCarreraEnviada => 'Update the race already sent';
+
+  @override
+  String actualizarCarreraEnviadaAyuda(String id) {
+    return 'PitWall race #$id: rounds already run are left untouched; pending ones are rebuilt with the current data';
+  }
+
+  @override
+  String carreraCreadaPitwall(String nombre, String tandas, String equipos) {
+    return 'Race created: $nombre — $tandas round(s), $equipos team(s).';
+  }
+
+  @override
+  String carreraActualizadaPitwall(
+    String nombre,
+    String actualizadas,
+    String nuevas,
+    String borradas,
+  ) {
+    return 'Race updated: $nombre — $actualizadas round(s) rebuilt, $nuevas new, $borradas removed.';
+  }
+
+  @override
+  String tandasCorridasSinTocar(String lista) {
+    return 'Rounds already run, left untouched: $lista.';
+  }
+
+  @override
+  String poleActualizadaPitwall(String nombre, String equipos) {
+    return 'Pole updated: $nombre — $equipos participant(s).';
+  }
+
+  @override
   String get enviar => 'Send';
 
   @override

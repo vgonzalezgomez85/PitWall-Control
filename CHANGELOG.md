@@ -14,6 +14,13 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.44.0] — 2026-10-16
+### Añadido
+- **Actualizar en PitWall las tandas ya enviadas**: si la prueba ya se envió, el asistente «Enviar a PitWall» ofrece «Actualizar la carrera ya enviada» (activado por defecto) en vez de crear otra carrera. Las tandas que ya se han corrido se quedan como están; las pendientes se rehacen con los pilotos, equipos, carriles, categorías y coches actuales; las tandas nuevas se añaden y las que se han quitado en Control desaparecen (si no se han corrido). Con pole, se cambian los participantes mientras la pole no haya empezado. Necesita PitWall Manager 1.63.0 o posterior.
+
+### Mejorado
+- El aviso tras enviar a PitWall sale traducido e indica qué tandas se han rehecho, añadido o eliminado y cuáles ya estaban corridas.
+
 ## [1.43.0] — 2026-10-13
 ### Añadido
 - **Activar categoría y coche al enviar tandas a PitWall**: en el asistente «Enviar a PitWall», además de indicar si la carrera tiene pole, ahora se puede indicar si se quiere activar la categoría y el coche (dos interruptores). Al activarlos, cada participante viaja con su categoría/copa y con el coche de su verificación, y PitWall lo activa en la carrera.

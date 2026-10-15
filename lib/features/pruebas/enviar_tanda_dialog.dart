@@ -19,12 +19,14 @@
 // Diálogo "Enviar a PitWall": descubre managers en la LAN por mDNS
 // (_pitwall-manager._tcp, que ya anuncia PitWall Manager por Bonjour), permite
 // elegir uno o teclear la IP a mano, pide el PIN de emparejamiento y POSTea la
-// tanda. Manager autocrea la carrera.
+// tanda. Manager autocrea la carrera; si la prueba ya se envió (managerRaceId),
+// por defecto la actualiza sin tocar las tandas que ya se han corrido.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/idioma.dart';
+import '../../core/proveedores.dart';
 import '../../services/almacen_local.dart';
 import '../../services/enviar_tanda_service.dart';
 import '../../services/generador_tanda_json.dart';
@@ -58,6 +60,8 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
   bool _pole = false; // ¿la carrera tiene pole? → PitWall crea la sesión
   bool _categoria = false; // ¿activar la categoría/copa por participante?
   bool _coche = false; // ¿activar el coche (de las verificaciones)?
+  int? _raceIdEnviada; // carrera de PitWall a la que ya se envió la prueba
+  bool _actualizar = true; // ¿actualizarla en vez de crear otra?
 
   @override
   void initState() {
@@ -65,6 +69,16 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
     final almacen = widget.ref.read(almacenSyncProvider);
     _hostCtrl.text = almacen.readSync(key: _kHostKey) ?? '';
     _pinCtrl.text = almacen.readSync(key: _kPinKey) ?? '';
+    _cargarRaceId();
+  }
+
+  Future<void> _cargarRaceId() async {
+    final db = widget.ref.read(dbProvider);
+    final prueba = await (db.select(db.pruebas)
+          ..where((t) => t.id.equals(widget.pruebaId)))
+        .getSingleOrNull();
+    if (!mounted || prueba?.managerRaceId == null) return;
+    setState(() => _raceIdEnviada = prueba!.managerRaceId);
   }
 
   @override
@@ -93,6 +107,7 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
       final payload = await widget.ref
           .read(generadorTandaJsonProvider)
           .generar(pruebaId: widget.pruebaId,
+              raceId: _actualizar ? _raceIdEnviada : null,
               pole: _pole,
               hasCategoria: _categoria,
               hasCoche: _coche);
@@ -150,6 +165,18 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
               ),
             ),
             const SizedBox(height: 4),
+            if (_raceIdEnviada != null)
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                value: _actualizar,
+                onChanged: _enviando
+                    ? null
+                    : (v) => setState(() => _actualizar = v),
+                title: Text(context.l.actualizarCarreraEnviada),
+                subtitle: Text(context.l
+                    .actualizarCarreraEnviadaAyuda('$_raceIdEnviada')),
+              ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               dense: true,

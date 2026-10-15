@@ -18,6 +18,8 @@
 //
 // Envía una tanda (JSON `pitwall.tanda/v1`) por HTTP a PitWall Manager en la LAN.
 // Manager crea la carrera y devuelve { ok, raceId, url, tandas, teams, name }.
+// Si el payload trae `race_id`, la actualiza y añade `actualizada: true` con las
+// tandas rehechas/nuevas/borradas y las ya corridas que no ha tocado.
 
 import 'dart:convert';
 
@@ -73,7 +75,7 @@ Future<EnvioTandaResultado> enviarTanda({
     if (r.statusCode == 200 && j['ok'] == true) {
       return EnvioTandaResultado(
         true,
-        'Carrera creada: ${j['name'] ?? ''} — ${j['tandas'] ?? '?'} tanda(s), ${j['teams'] ?? '?'} equipo(s).',
+        _mensajeOk(l, j),
         url: j['url']?.toString(),
         raceId: (j['raceId'] as num?)?.toInt(),
       );
@@ -89,4 +91,22 @@ Future<EnvioTandaResultado> enviarTanda({
   } catch (e) {
     return EnvioTandaResultado(false, l.noSePudoConectarPitwall('$e'));
   }
+}
+
+String _mensajeOk(Textos l, Map<String, dynamic> j) {
+  final nombre = '${j['name'] ?? ''}';
+  if (j['actualizada'] != true) {
+    return l.carreraCreadaPitwall(
+        nombre, '${j['tandas'] ?? '?'}', '${j['teams'] ?? '?'}');
+  }
+  if (j['pole'] == true) {
+    return l.poleActualizadaPitwall(nombre, '${j['teams'] ?? '?'}');
+  }
+  int n(String k) => (j[k] as List?)?.length ?? 0;
+  final bloqueadas = (j['bloqueadas'] as List?) ?? const [];
+  return [
+    l.carreraActualizadaPitwall(nombre, '${n('actualizadas')}',
+        '${n('nuevas')}', '${n('borradas')}'),
+    if (bloqueadas.isNotEmpty) l.tandasCorridasSinTocar(bloqueadas.join(', ')),
+  ].join(' ');
 }

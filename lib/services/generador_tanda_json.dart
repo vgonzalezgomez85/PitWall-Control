@@ -56,8 +56,12 @@ class GeneradorTandaJson {
   /// Con [pole] la carrera decidirá el orden de carril DESPUÉS de correr la
   /// pole en PitWall, así que NO se envía el carril de salida: entran TODOS los
   /// inscritos (tengan o no carril asignado) solo con nombre/copa/pilotos.
+  ///
+  /// Con [raceId] el envío ACTUALIZA esa carrera de Manager: las tandas que ya
+  /// han rodado no se tocan y el resto se rehace (se casan por `numero`).
   Future<Map<String, dynamic>> generar(
       {required int pruebaId,
+      int? raceId,
       bool pole = false,
       bool hasCategoria = false,
       bool hasCoche = false}) async {
@@ -146,6 +150,7 @@ class GeneradorTandaJson {
 
     return {
       'schema': schema,
+      'race_id': ?raceId,
       'prueba': {
         'nombre': prueba.nombre,
         'sede': prueba.sede,

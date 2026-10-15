@@ -616,6 +616,39 @@ class TextosIt extends Textos {
       'Invia l\'auto di ogni squadra dalle verifiche e PitWall la attiva nella gara';
 
   @override
+  String get actualizarCarreraEnviada => 'Aggiorna la gara già inviata';
+
+  @override
+  String actualizarCarreraEnviadaAyuda(String id) {
+    return 'Gara n. $id di PitWall: le batterie già corse non si toccano; quelle in attesa si rifanno con i dati attuali';
+  }
+
+  @override
+  String carreraCreadaPitwall(String nombre, String tandas, String equipos) {
+    return 'Gara creata: $nombre — $tandas batteria/e, $equipos squadra/e.';
+  }
+
+  @override
+  String carreraActualizadaPitwall(
+    String nombre,
+    String actualizadas,
+    String nuevas,
+    String borradas,
+  ) {
+    return 'Gara aggiornata: $nombre — $actualizadas batteria/e rifatta/e, $nuevas nuova/e, $borradas eliminata/e.';
+  }
+
+  @override
+  String tandasCorridasSinTocar(String lista) {
+    return 'Batterie già corse, non toccate: $lista.';
+  }
+
+  @override
+  String poleActualizadaPitwall(String nombre, String equipos) {
+    return 'Pole aggiornata: $nombre — $equipos partecipante/i.';
+  }
+
+  @override
   String get enviar => 'Invia';
 
   @override
