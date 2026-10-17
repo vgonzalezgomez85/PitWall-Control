@@ -129,6 +129,12 @@ class RepositorioPilotos {
     String? palmaresLocal,
   }) async {
     await db.transaction(() async {
+      final previo = await (db.select(db.pilotos)
+            ..where((t) => t.id.equals(pilotoId)))
+          .getSingleOrNull();
+      if (previo != null) {
+        await _renombrarEquiposIndividuales(pilotoId, previo.nombre, nombre);
+      }
       await (db.update(db.pilotos)..where((t) => t.id.equals(pilotoId))).write(
         PilotosCompanion(
           nombre: Value(nombre),
@@ -150,6 +156,28 @@ class RepositorioPilotos {
         ),
       );
     });
+  }
+
+  /// En los campeonatos individuales el equipo del piloto lleva su nombre, y
+  /// es ese nombre el que sale en inscritos, verificaciones y clasificaciones.
+  /// Al renombrar al piloto se renombran también sus equipos de un solo
+  /// piloto que se llamaban como él (los que tienen otro nombre se respetan).
+  Future<void> _renombrarEquiposIndividuales(
+      int pilotoId, String anterior, String nuevo) async {
+    String norm(String s) => s.trim().toLowerCase();
+    if (anterior.trim() == nuevo.trim()) return;
+    final equipos = await (db.select(db.equipos)
+          ..where((t) => t.piloto1Id.equals(pilotoId) & t.piloto2Id.isNull()))
+        .get();
+    for (final e in equipos) {
+      if (norm(e.nombre) != norm(anterior)) continue;
+      final miembros = await (db.select(db.equipoPilotos)
+            ..where((t) => t.equipoId.equals(e.id)))
+          .get();
+      if (miembros.any((m) => m.pilotoId != pilotoId)) continue;
+      await (db.update(db.equipos)..where((t) => t.id.equals(e.id)))
+          .write(EquiposCompanion(nombre: Value(nuevo.trim())));
+    }
   }
 
   /// Inscribe un piloto existente en otro campeonato.
