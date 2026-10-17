@@ -420,7 +420,9 @@ class _Pendientes extends ConsumerWidget {
     final pagos = p != null && usaTesoreria
         ? ref.watch(pagosPruebaProvider(p.id)).asData?.value
         : null;
-    final sinCobrar = pagos?.where((x) => !x.saldado).length ?? 0;
+    final pendientesPago =
+        pagos?.where((x) => !x.saldado).toList() ?? const <PagoEquipo>[];
+    final sinCobrar = pendientesPago.length;
     void abrir(Widget destino) => Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => destino));
 
@@ -438,6 +440,7 @@ class _Pendientes extends ConsumerWidget {
           numero: sinCobrar,
           texto: context.l.pendPagos(sinCobrar),
           detalle: p.nombre,
+          nombres: pendientesPago.map((x) => x.nombreEquipo).join(', '),
           onTap: () => abrir(DetallePrueba(
               pruebaId: p.id, pestanaInicial: PestanaPrueba.caja)),
         ),
@@ -481,11 +484,14 @@ class _TarjetaPendiente extends StatelessWidget {
     required this.texto,
     required this.detalle,
     required this.onTap,
+    this.nombres,
   });
 
   final int numero;
   final String texto;
   final String detalle;
+  /// Quiénes están pendientes (p. ej. los que no han pagado), bajo el detalle.
+  final String? nombres;
   final VoidCallback onTap;
 
   @override
@@ -513,6 +519,13 @@ class _TarjetaPendiente extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: cs.outline, fontSize: 13)),
+                if (nombres != null && nombres!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(nombres!,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall),
+                ],
               ],
             ),
           ),

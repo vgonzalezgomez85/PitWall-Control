@@ -14,6 +14,14 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.44.2] — 2026-10-17
+### Mejorado
+- **Inicio → Pendientes: la tarjeta de «pagos sin cobrar» dice quién falta por pagar.** Debajo del nombre de la prueba salen los pilotos o equipos que aún no han pagado (hasta tres líneas; si no caben, se cortan con «…»).
+
+## [1.44.1] — 2026-10-17
+### Corregido
+- **Al renombrar un piloto en un campeonato individual, inscritos, verificaciones y clasificaciones seguían mostrando el nombre antiguo.** Lo que se ve ahí es el nombre de su equipo, que no cambiaba. Ahora, al cambiar el nombre del piloto, también se renombran sus equipos de un solo piloto que se llamaban como él (si el equipo tiene otro nombre, se respeta).
+
 ## [1.44.0] — 2026-10-16
 ### Añadido
 - **Actualizar en PitWall las tandas ya enviadas**: si la prueba ya se envió, el asistente «Enviar a PitWall» ofrece «Actualizar la carrera ya enviada» (activado por defecto) en vez de crear otra carrera. Las tandas que ya se han corrido se quedan como están; las pendientes se rehacen con los pilotos, equipos, carriles, categorías y coches actuales; las tandas nuevas se añaden y las que se han quitado en Control desaparecen (si no se han corrido). Con pole, se cambian los participantes mientras la pole no haya empezado. Necesita PitWall Manager 1.63.0 o posterior.
