@@ -1367,7 +1367,19 @@ class TextosFr extends Textos {
 
   @override
   String get sinPuntosEsteAnio =>
-      'Aucun point cette année → triées par solde de l\'année précédente (0 sinon).';
+      'Première épreuve : ordonnées selon le score précédent importé (0 sinon).';
+
+  @override
+  String get puntosIniciales => 'Points initiaux';
+
+  @override
+  String puntosInicialesHeredados(String campeonato, String puntos) {
+    return 'Hérités de $campeonato : $puntos (vide = ceux-ci). Ils servent seulement à ordonner les batteries de la première épreuve ; ils ne comptent pas au classement.';
+  }
+
+  @override
+  String get puntosInicialesAyuda =>
+      'Ils servent seulement à ordonner les batteries de la première épreuve ; ils ne comptent pas au classement.';
 
   @override
   String get paso1CarrilesPista => '1. Voies de la piste';
@@ -3719,6 +3731,44 @@ class TextosFr extends Textos {
 
   @override
   String get noImportar => 'Ne pas importer';
+
+  @override
+  String get ordenPrimeraPrueba => 'Ordre de la première épreuve';
+
+  @override
+  String get ordenPrimeraPruebaAyuda =>
+      'Comment les batteries de la première épreuve sont réparties tant que le championnat n\'a pas encore de points. Les points hérités ne servent qu\'à ordonner : ils ne comptent ni au classement ni pour rien d\'autre.';
+
+  @override
+  String get ordenHeredarPuntos =>
+      'Hériter des points d\'un championnat précédent';
+
+  @override
+  String get ordenHeredarPuntosAyuda =>
+      'Les batteries sont ordonnées selon les points nets de son classement final.';
+
+  @override
+  String get ordenEmpezarSinPuntos =>
+      'Commencer sans points : on fait une pole';
+
+  @override
+  String get ordenEmpezarSinPuntosAyuda =>
+      'Pas d\'ordre par points ; en envoyant les batteries à PitWall, « La course a une pole » est coché.';
+
+  @override
+  String get campeonatoDeOrigen => 'Championnat d\'origine';
+
+  @override
+  String get puntuacionPreviaImportada => 'Score précédent importé à la main';
+
+  @override
+  String ordenadosPorPuntosHeredados(String campeonato) {
+    return 'Première épreuve : ordonnées selon les points nets de $campeonato.';
+  }
+
+  @override
+  String get ordenPrimeraPruebaPole =>
+      'Première épreuve sans points : c\'est la pole qui décide de l\'ordre.';
 
   @override
   String tesoreriaNoCuadra(String suma, String pagat) {

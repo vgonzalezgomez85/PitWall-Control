@@ -1364,7 +1364,19 @@ class TextosIt extends Textos {
 
   @override
   String get sinPuntosEsteAnio =>
-      'Nessun punto quest\'anno → ordinate per saldo dell\'anno precedente (0 se non c\'è).';
+      'Prima gara: ordinate per il punteggio precedente importato (0 se non c\'è).';
+
+  @override
+  String get puntosIniciales => 'Punti iniziali';
+
+  @override
+  String puntosInicialesHeredados(String campeonato, String puntos) {
+    return 'Ereditati da $campeonato: $puntos (vuoto = quelli). Servono solo a ordinare le batterie della prima gara; non contano in classifica.';
+  }
+
+  @override
+  String get puntosInicialesAyuda =>
+      'Servono solo a ordinare le batterie della prima gara; non contano in classifica.';
 
   @override
   String get paso1CarrilesPista => '1. Corsie della pista';
@@ -3711,6 +3723,44 @@ class TextosIt extends Textos {
 
   @override
   String get noImportar => 'Non importare';
+
+  @override
+  String get ordenPrimeraPrueba => 'Ordine della prima gara';
+
+  @override
+  String get ordenPrimeraPruebaAyuda =>
+      'Come si distribuiscono le batterie della prima gara, finché il campionato non ha ancora punti. I punti ereditati servono solo per ordinare: non contano in classifica né per altro.';
+
+  @override
+  String get ordenHeredarPuntos =>
+      'Eredita i punti da un campionato precedente';
+
+  @override
+  String get ordenHeredarPuntosAyuda =>
+      'Le batterie sono ordinate per i punti netti della sua classifica finale.';
+
+  @override
+  String get ordenEmpezarSinPuntos => 'Inizia senza punti: si fa la pole';
+
+  @override
+  String get ordenEmpezarSinPuntosAyuda =>
+      'Nessun ordine per punti; inviando le batterie a PitWall si spunta «La gara ha la pole».';
+
+  @override
+  String get campeonatoDeOrigen => 'Campionato di origine';
+
+  @override
+  String get puntuacionPreviaImportada =>
+      'Punteggio precedente importato a mano';
+
+  @override
+  String ordenadosPorPuntosHeredados(String campeonato) {
+    return 'Prima gara: ordinate per i punti netti di $campeonato.';
+  }
+
+  @override
+  String get ordenPrimeraPruebaPole =>
+      'Prima gara senza punti: l\'ordine lo decide la pole.';
 
   @override
   String tesoreriaNoCuadra(String suma, String pagat) {

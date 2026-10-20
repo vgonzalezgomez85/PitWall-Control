@@ -123,10 +123,10 @@ class _PantallaImportarPuntuacionState
           saltados++;
           continue;
         }
-        await repo.actualizarSaldoAnterior(
+        await repo.fijarPuntosIniciales(
           pilotoId: f.pilotoId!,
           campeonatoId: activo.id,
-          saldo: f.puntuacion,
+          puntos: f.puntuacion,
         );
         ok++;
       }

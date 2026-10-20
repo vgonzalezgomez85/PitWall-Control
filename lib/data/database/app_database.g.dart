@@ -351,6 +351,28 @@ class $CampeonatosTable extends Campeonatos
     type: DriftSqlType.blob,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _ordenPrimeraPruebaMeta =
+      const VerificationMeta('ordenPrimeraPrueba');
+  @override
+  late final GeneratedColumn<String> ordenPrimeraPrueba =
+      GeneratedColumn<String>(
+        'orden_primera_prueba',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('HEREDAR'),
+      );
+  static const VerificationMeta _campeonatoSemillaIdMeta =
+      const VerificationMeta('campeonatoSemillaId');
+  @override
+  late final GeneratedColumn<int> campeonatoSemillaId = GeneratedColumn<int>(
+    'campeonato_semilla_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _esVerificacionLibreMeta =
       const VerificationMeta('esVerificacionLibre');
   @override
@@ -408,6 +430,8 @@ class $CampeonatosTable extends Campeonatos
     marcaLema,
     clubOrganizador,
     logoClub,
+    ordenPrimeraPrueba,
+    campeonatoSemillaId,
     esVerificacionLibre,
     creadoEn,
   ];
@@ -648,6 +672,24 @@ class $CampeonatosTable extends Campeonatos
         logoClub.isAcceptableOrUnknown(data['logo_club']!, _logoClubMeta),
       );
     }
+    if (data.containsKey('orden_primera_prueba')) {
+      context.handle(
+        _ordenPrimeraPruebaMeta,
+        ordenPrimeraPrueba.isAcceptableOrUnknown(
+          data['orden_primera_prueba']!,
+          _ordenPrimeraPruebaMeta,
+        ),
+      );
+    }
+    if (data.containsKey('campeonato_semilla_id')) {
+      context.handle(
+        _campeonatoSemillaIdMeta,
+        campeonatoSemillaId.isAcceptableOrUnknown(
+          data['campeonato_semilla_id']!,
+          _campeonatoSemillaIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('es_verificacion_libre')) {
       context.handle(
         _esVerificacionLibreMeta,
@@ -788,6 +830,14 @@ class $CampeonatosTable extends Campeonatos
         DriftSqlType.blob,
         data['${effectivePrefix}logo_club'],
       ),
+      ordenPrimeraPrueba: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}orden_primera_prueba'],
+      )!,
+      campeonatoSemillaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}campeonato_semilla_id'],
+      ),
       esVerificacionLibre: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}es_verificacion_libre'],
@@ -881,6 +931,17 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
   final String? clubOrganizador;
   final Uint8List? logoClub;
 
+  /// Cómo se ordenan las tandas de la primera prueba, cuando el campeonato
+  /// aún no tiene puntos propios: 'HEREDAR' (puntos de otro campeonato) o
+  /// 'POLE' (sin puntos: el orden lo decide la pole). Esos puntos heredados
+  /// solo sirven para ordenar; no cuentan en la clasificación.
+  final String ordenPrimeraPrueba;
+
+  /// Con 'HEREDAR', campeonato cuya clasificación (puntos netos) se hereda.
+  /// Si es null se usa la puntuación previa importada a mano
+  /// (PilotoCampeonato.saldoTemporadaAnterior).
+  final int? campeonatoSemillaId;
+
   /// Si true, no es un campeonato real sino el contenedor interno de una
   /// sesión de "verificación libre" (carrera esporádica, control en el club…):
   /// guarda su reglamento de verificación y no aparece en el selector ni en
@@ -917,6 +978,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     this.marcaLema,
     this.clubOrganizador,
     this.logoClub,
+    required this.ordenPrimeraPrueba,
+    this.campeonatoSemillaId,
     required this.esVerificacionLibre,
     required this.creadoEn,
   });
@@ -968,6 +1031,10 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     if (!nullToAbsent || logoClub != null) {
       map['logo_club'] = Variable<Uint8List>(logoClub);
     }
+    map['orden_primera_prueba'] = Variable<String>(ordenPrimeraPrueba);
+    if (!nullToAbsent || campeonatoSemillaId != null) {
+      map['campeonato_semilla_id'] = Variable<int>(campeonatoSemillaId);
+    }
     map['es_verificacion_libre'] = Variable<bool>(esVerificacionLibre);
     map['creado_en'] = Variable<DateTime>(creadoEn);
     return map;
@@ -1018,6 +1085,10 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       logoClub: logoClub == null && nullToAbsent
           ? const Value.absent()
           : Value(logoClub),
+      ordenPrimeraPrueba: Value(ordenPrimeraPrueba),
+      campeonatoSemillaId: campeonatoSemillaId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(campeonatoSemillaId),
       esVerificacionLibre: Value(esVerificacionLibre),
       creadoEn: Value(creadoEn),
     );
@@ -1060,6 +1131,12 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       marcaLema: serializer.fromJson<String?>(json['marcaLema']),
       clubOrganizador: serializer.fromJson<String?>(json['clubOrganizador']),
       logoClub: serializer.fromJson<Uint8List?>(json['logoClub']),
+      ordenPrimeraPrueba: serializer.fromJson<String>(
+        json['ordenPrimeraPrueba'],
+      ),
+      campeonatoSemillaId: serializer.fromJson<int?>(
+        json['campeonatoSemillaId'],
+      ),
       esVerificacionLibre: serializer.fromJson<bool>(
         json['esVerificacionLibre'],
       ),
@@ -1099,6 +1176,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
       'marcaLema': serializer.toJson<String?>(marcaLema),
       'clubOrganizador': serializer.toJson<String?>(clubOrganizador),
       'logoClub': serializer.toJson<Uint8List?>(logoClub),
+      'ordenPrimeraPrueba': serializer.toJson<String>(ordenPrimeraPrueba),
+      'campeonatoSemillaId': serializer.toJson<int?>(campeonatoSemillaId),
       'esVerificacionLibre': serializer.toJson<bool>(esVerificacionLibre),
       'creadoEn': serializer.toJson<DateTime>(creadoEn),
     };
@@ -1134,6 +1213,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     Value<String?> marcaLema = const Value.absent(),
     Value<String?> clubOrganizador = const Value.absent(),
     Value<Uint8List?> logoClub = const Value.absent(),
+    String? ordenPrimeraPrueba,
+    Value<int?> campeonatoSemillaId = const Value.absent(),
     bool? esVerificacionLibre,
     DateTime? creadoEn,
   }) => Campeonato(
@@ -1172,6 +1253,10 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
         ? clubOrganizador.value
         : this.clubOrganizador,
     logoClub: logoClub.present ? logoClub.value : this.logoClub,
+    ordenPrimeraPrueba: ordenPrimeraPrueba ?? this.ordenPrimeraPrueba,
+    campeonatoSemillaId: campeonatoSemillaId.present
+        ? campeonatoSemillaId.value
+        : this.campeonatoSemillaId,
     esVerificacionLibre: esVerificacionLibre ?? this.esVerificacionLibre,
     creadoEn: creadoEn ?? this.creadoEn,
   );
@@ -1242,6 +1327,12 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           ? data.clubOrganizador.value
           : this.clubOrganizador,
       logoClub: data.logoClub.present ? data.logoClub.value : this.logoClub,
+      ordenPrimeraPrueba: data.ordenPrimeraPrueba.present
+          ? data.ordenPrimeraPrueba.value
+          : this.ordenPrimeraPrueba,
+      campeonatoSemillaId: data.campeonatoSemillaId.present
+          ? data.campeonatoSemillaId.value
+          : this.campeonatoSemillaId,
       esVerificacionLibre: data.esVerificacionLibre.present
           ? data.esVerificacionLibre.value
           : this.esVerificacionLibre,
@@ -1281,6 +1372,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           ..write('marcaLema: $marcaLema, ')
           ..write('clubOrganizador: $clubOrganizador, ')
           ..write('logoClub: $logoClub, ')
+          ..write('ordenPrimeraPrueba: $ordenPrimeraPrueba, ')
+          ..write('campeonatoSemillaId: $campeonatoSemillaId, ')
           ..write('esVerificacionLibre: $esVerificacionLibre, ')
           ..write('creadoEn: $creadoEn')
           ..write(')'))
@@ -1318,6 +1411,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
     marcaLema,
     clubOrganizador,
     $driftBlobEquality.hash(logoClub),
+    ordenPrimeraPrueba,
+    campeonatoSemillaId,
     esVerificacionLibre,
     creadoEn,
   ]);
@@ -1354,6 +1449,8 @@ class Campeonato extends DataClass implements Insertable<Campeonato> {
           other.marcaLema == this.marcaLema &&
           other.clubOrganizador == this.clubOrganizador &&
           $driftBlobEquality.equals(other.logoClub, this.logoClub) &&
+          other.ordenPrimeraPrueba == this.ordenPrimeraPrueba &&
+          other.campeonatoSemillaId == this.campeonatoSemillaId &&
           other.esVerificacionLibre == this.esVerificacionLibre &&
           other.creadoEn == this.creadoEn);
 }
@@ -1388,6 +1485,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
   final Value<String?> marcaLema;
   final Value<String?> clubOrganizador;
   final Value<Uint8List?> logoClub;
+  final Value<String> ordenPrimeraPrueba;
+  final Value<int?> campeonatoSemillaId;
   final Value<bool> esVerificacionLibre;
   final Value<DateTime> creadoEn;
   const CampeonatosCompanion({
@@ -1420,6 +1519,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.marcaLema = const Value.absent(),
     this.clubOrganizador = const Value.absent(),
     this.logoClub = const Value.absent(),
+    this.ordenPrimeraPrueba = const Value.absent(),
+    this.campeonatoSemillaId = const Value.absent(),
     this.esVerificacionLibre = const Value.absent(),
     this.creadoEn = const Value.absent(),
   });
@@ -1453,6 +1554,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     this.marcaLema = const Value.absent(),
     this.clubOrganizador = const Value.absent(),
     this.logoClub = const Value.absent(),
+    this.ordenPrimeraPrueba = const Value.absent(),
+    this.campeonatoSemillaId = const Value.absent(),
     this.esVerificacionLibre = const Value.absent(),
     this.creadoEn = const Value.absent(),
   }) : nombre = Value(nombre),
@@ -1488,6 +1591,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Expression<String>? marcaLema,
     Expression<String>? clubOrganizador,
     Expression<Uint8List>? logoClub,
+    Expression<String>? ordenPrimeraPrueba,
+    Expression<int>? campeonatoSemillaId,
     Expression<bool>? esVerificacionLibre,
     Expression<DateTime>? creadoEn,
   }) {
@@ -1522,6 +1627,10 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       if (marcaLema != null) 'marca_lema': marcaLema,
       if (clubOrganizador != null) 'club_organizador': clubOrganizador,
       if (logoClub != null) 'logo_club': logoClub,
+      if (ordenPrimeraPrueba != null)
+        'orden_primera_prueba': ordenPrimeraPrueba,
+      if (campeonatoSemillaId != null)
+        'campeonato_semilla_id': campeonatoSemillaId,
       if (esVerificacionLibre != null)
         'es_verificacion_libre': esVerificacionLibre,
       if (creadoEn != null) 'creado_en': creadoEn,
@@ -1558,6 +1667,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     Value<String?>? marcaLema,
     Value<String?>? clubOrganizador,
     Value<Uint8List?>? logoClub,
+    Value<String>? ordenPrimeraPrueba,
+    Value<int?>? campeonatoSemillaId,
     Value<bool>? esVerificacionLibre,
     Value<DateTime>? creadoEn,
   }) {
@@ -1591,6 +1702,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
       marcaLema: marcaLema ?? this.marcaLema,
       clubOrganizador: clubOrganizador ?? this.clubOrganizador,
       logoClub: logoClub ?? this.logoClub,
+      ordenPrimeraPrueba: ordenPrimeraPrueba ?? this.ordenPrimeraPrueba,
+      campeonatoSemillaId: campeonatoSemillaId ?? this.campeonatoSemillaId,
       esVerificacionLibre: esVerificacionLibre ?? this.esVerificacionLibre,
       creadoEn: creadoEn ?? this.creadoEn,
     );
@@ -1688,6 +1801,12 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
     if (logoClub.present) {
       map['logo_club'] = Variable<Uint8List>(logoClub.value);
     }
+    if (ordenPrimeraPrueba.present) {
+      map['orden_primera_prueba'] = Variable<String>(ordenPrimeraPrueba.value);
+    }
+    if (campeonatoSemillaId.present) {
+      map['campeonato_semilla_id'] = Variable<int>(campeonatoSemillaId.value);
+    }
     if (esVerificacionLibre.present) {
       map['es_verificacion_libre'] = Variable<bool>(esVerificacionLibre.value);
     }
@@ -1729,6 +1848,8 @@ class CampeonatosCompanion extends UpdateCompanion<Campeonato> {
           ..write('marcaLema: $marcaLema, ')
           ..write('clubOrganizador: $clubOrganizador, ')
           ..write('logoClub: $logoClub, ')
+          ..write('ordenPrimeraPrueba: $ordenPrimeraPrueba, ')
+          ..write('campeonatoSemillaId: $campeonatoSemillaId, ')
           ..write('esVerificacionLibre: $esVerificacionLibre, ')
           ..write('creadoEn: $creadoEn')
           ..write(')'))
@@ -3109,6 +3230,17 @@ class $PilotoCampeonatoTable extends PilotoCampeonato
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _puntosInicialesMeta = const VerificationMeta(
+    'puntosIniciales',
+  );
+  @override
+  late final GeneratedColumn<int> puntosIniciales = GeneratedColumn<int>(
+    'puntos_iniciales',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _bonificacionAplicadaMeta =
       const VerificationMeta('bonificacionAplicada');
   @override
@@ -3158,6 +3290,7 @@ class $PilotoCampeonatoTable extends PilotoCampeonato
     creditosIniciales,
     creditosActuales,
     saldoTemporadaAnterior,
+    puntosIniciales,
     bonificacionAplicada,
     palmaresLocal,
     modMs,
@@ -3242,6 +3375,15 @@ class $PilotoCampeonatoTable extends PilotoCampeonato
         ),
       );
     }
+    if (data.containsKey('puntos_iniciales')) {
+      context.handle(
+        _puntosInicialesMeta,
+        puntosIniciales.isAcceptableOrUnknown(
+          data['puntos_iniciales']!,
+          _puntosInicialesMeta,
+        ),
+      );
+    }
     if (data.containsKey('bonificacion_aplicada')) {
       context.handle(
         _bonificacionAplicadaMeta,
@@ -3309,6 +3451,10 @@ class $PilotoCampeonatoTable extends PilotoCampeonato
         DriftSqlType.int,
         data['${effectivePrefix}saldo_temporada_anterior'],
       )!,
+      puntosIniciales: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}puntos_iniciales'],
+      ),
       bonificacionAplicada: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}bonificacion_aplicada'],
@@ -3347,6 +3493,12 @@ class PilotoCampeonatoData extends DataClass
   final int creditosIniciales;
   final int creditosActuales;
   final int saldoTemporadaAnterior;
+
+  /// Puntos iniciales puestos a mano (ficha del piloto o importación de la
+  /// puntuación previa). Si es null se usan los heredados según el «orden de
+  /// la primera prueba» del campeonato. Solo sirven para ordenar las tandas
+  /// de la primera prueba: no cuentan en la clasificación.
+  final int? puntosIniciales;
   final int bonificacionAplicada;
   final String? palmaresLocal;
 
@@ -3362,6 +3514,7 @@ class PilotoCampeonatoData extends DataClass
     required this.creditosIniciales,
     required this.creditosActuales,
     required this.saldoTemporadaAnterior,
+    this.puntosIniciales,
     required this.bonificacionAplicada,
     this.palmaresLocal,
     this.modMs,
@@ -3379,6 +3532,9 @@ class PilotoCampeonatoData extends DataClass
     map['creditos_iniciales'] = Variable<int>(creditosIniciales);
     map['creditos_actuales'] = Variable<int>(creditosActuales);
     map['saldo_temporada_anterior'] = Variable<int>(saldoTemporadaAnterior);
+    if (!nullToAbsent || puntosIniciales != null) {
+      map['puntos_iniciales'] = Variable<int>(puntosIniciales);
+    }
     map['bonificacion_aplicada'] = Variable<int>(bonificacionAplicada);
     if (!nullToAbsent || palmaresLocal != null) {
       map['palmares_local'] = Variable<String>(palmaresLocal);
@@ -3403,6 +3559,9 @@ class PilotoCampeonatoData extends DataClass
       creditosIniciales: Value(creditosIniciales),
       creditosActuales: Value(creditosActuales),
       saldoTemporadaAnterior: Value(saldoTemporadaAnterior),
+      puntosIniciales: puntosIniciales == null && nullToAbsent
+          ? const Value.absent()
+          : Value(puntosIniciales),
       bonificacionAplicada: Value(bonificacionAplicada),
       palmaresLocal: palmaresLocal == null && nullToAbsent
           ? const Value.absent()
@@ -3431,6 +3590,7 @@ class PilotoCampeonatoData extends DataClass
       saldoTemporadaAnterior: serializer.fromJson<int>(
         json['saldoTemporadaAnterior'],
       ),
+      puntosIniciales: serializer.fromJson<int?>(json['puntosIniciales']),
       bonificacionAplicada: serializer.fromJson<int>(
         json['bonificacionAplicada'],
       ),
@@ -3450,6 +3610,7 @@ class PilotoCampeonatoData extends DataClass
       'creditosIniciales': serializer.toJson<int>(creditosIniciales),
       'creditosActuales': serializer.toJson<int>(creditosActuales),
       'saldoTemporadaAnterior': serializer.toJson<int>(saldoTemporadaAnterior),
+      'puntosIniciales': serializer.toJson<int?>(puntosIniciales),
       'bonificacionAplicada': serializer.toJson<int>(bonificacionAplicada),
       'palmaresLocal': serializer.toJson<String?>(palmaresLocal),
       'modMs': serializer.toJson<int?>(modMs),
@@ -3465,6 +3626,7 @@ class PilotoCampeonatoData extends DataClass
     int? creditosIniciales,
     int? creditosActuales,
     int? saldoTemporadaAnterior,
+    Value<int?> puntosIniciales = const Value.absent(),
     int? bonificacionAplicada,
     Value<String?> palmaresLocal = const Value.absent(),
     Value<int?> modMs = const Value.absent(),
@@ -3480,6 +3642,9 @@ class PilotoCampeonatoData extends DataClass
     creditosActuales: creditosActuales ?? this.creditosActuales,
     saldoTemporadaAnterior:
         saldoTemporadaAnterior ?? this.saldoTemporadaAnterior,
+    puntosIniciales: puntosIniciales.present
+        ? puntosIniciales.value
+        : this.puntosIniciales,
     bonificacionAplicada: bonificacionAplicada ?? this.bonificacionAplicada,
     palmaresLocal: palmaresLocal.present
         ? palmaresLocal.value
@@ -3506,6 +3671,9 @@ class PilotoCampeonatoData extends DataClass
       saldoTemporadaAnterior: data.saldoTemporadaAnterior.present
           ? data.saldoTemporadaAnterior.value
           : this.saldoTemporadaAnterior,
+      puntosIniciales: data.puntosIniciales.present
+          ? data.puntosIniciales.value
+          : this.puntosIniciales,
       bonificacionAplicada: data.bonificacionAplicada.present
           ? data.bonificacionAplicada.value
           : this.bonificacionAplicada,
@@ -3527,6 +3695,7 @@ class PilotoCampeonatoData extends DataClass
           ..write('creditosIniciales: $creditosIniciales, ')
           ..write('creditosActuales: $creditosActuales, ')
           ..write('saldoTemporadaAnterior: $saldoTemporadaAnterior, ')
+          ..write('puntosIniciales: $puntosIniciales, ')
           ..write('bonificacionAplicada: $bonificacionAplicada, ')
           ..write('palmaresLocal: $palmaresLocal, ')
           ..write('modMs: $modMs, ')
@@ -3544,6 +3713,7 @@ class PilotoCampeonatoData extends DataClass
     creditosIniciales,
     creditosActuales,
     saldoTemporadaAnterior,
+    puntosIniciales,
     bonificacionAplicada,
     palmaresLocal,
     modMs,
@@ -3560,6 +3730,7 @@ class PilotoCampeonatoData extends DataClass
           other.creditosIniciales == this.creditosIniciales &&
           other.creditosActuales == this.creditosActuales &&
           other.saldoTemporadaAnterior == this.saldoTemporadaAnterior &&
+          other.puntosIniciales == this.puntosIniciales &&
           other.bonificacionAplicada == this.bonificacionAplicada &&
           other.palmaresLocal == this.palmaresLocal &&
           other.modMs == this.modMs &&
@@ -3574,6 +3745,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
   final Value<int> creditosIniciales;
   final Value<int> creditosActuales;
   final Value<int> saldoTemporadaAnterior;
+  final Value<int?> puntosIniciales;
   final Value<int> bonificacionAplicada;
   final Value<String?> palmaresLocal;
   final Value<int?> modMs;
@@ -3587,6 +3759,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     this.creditosIniciales = const Value.absent(),
     this.creditosActuales = const Value.absent(),
     this.saldoTemporadaAnterior = const Value.absent(),
+    this.puntosIniciales = const Value.absent(),
     this.bonificacionAplicada = const Value.absent(),
     this.palmaresLocal = const Value.absent(),
     this.modMs = const Value.absent(),
@@ -3601,6 +3774,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     required int creditosIniciales,
     required int creditosActuales,
     this.saldoTemporadaAnterior = const Value.absent(),
+    this.puntosIniciales = const Value.absent(),
     this.bonificacionAplicada = const Value.absent(),
     this.palmaresLocal = const Value.absent(),
     this.modMs = const Value.absent(),
@@ -3619,6 +3793,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     Expression<int>? creditosIniciales,
     Expression<int>? creditosActuales,
     Expression<int>? saldoTemporadaAnterior,
+    Expression<int>? puntosIniciales,
     Expression<int>? bonificacionAplicada,
     Expression<String>? palmaresLocal,
     Expression<int>? modMs,
@@ -3634,6 +3809,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
       if (creditosActuales != null) 'creditos_actuales': creditosActuales,
       if (saldoTemporadaAnterior != null)
         'saldo_temporada_anterior': saldoTemporadaAnterior,
+      if (puntosIniciales != null) 'puntos_iniciales': puntosIniciales,
       if (bonificacionAplicada != null)
         'bonificacion_aplicada': bonificacionAplicada,
       if (palmaresLocal != null) 'palmares_local': palmaresLocal,
@@ -3651,6 +3827,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
     Value<int>? creditosIniciales,
     Value<int>? creditosActuales,
     Value<int>? saldoTemporadaAnterior,
+    Value<int?>? puntosIniciales,
     Value<int>? bonificacionAplicada,
     Value<String?>? palmaresLocal,
     Value<int?>? modMs,
@@ -3666,6 +3843,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
       creditosActuales: creditosActuales ?? this.creditosActuales,
       saldoTemporadaAnterior:
           saldoTemporadaAnterior ?? this.saldoTemporadaAnterior,
+      puntosIniciales: puntosIniciales ?? this.puntosIniciales,
       bonificacionAplicada: bonificacionAplicada ?? this.bonificacionAplicada,
       palmaresLocal: palmaresLocal ?? this.palmaresLocal,
       modMs: modMs ?? this.modMs,
@@ -3700,6 +3878,9 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
         saldoTemporadaAnterior.value,
       );
     }
+    if (puntosIniciales.present) {
+      map['puntos_iniciales'] = Variable<int>(puntosIniciales.value);
+    }
     if (bonificacionAplicada.present) {
       map['bonificacion_aplicada'] = Variable<int>(bonificacionAplicada.value);
     }
@@ -3728,6 +3909,7 @@ class PilotoCampeonatoCompanion extends UpdateCompanion<PilotoCampeonatoData> {
           ..write('creditosIniciales: $creditosIniciales, ')
           ..write('creditosActuales: $creditosActuales, ')
           ..write('saldoTemporadaAnterior: $saldoTemporadaAnterior, ')
+          ..write('puntosIniciales: $puntosIniciales, ')
           ..write('bonificacionAplicada: $bonificacionAplicada, ')
           ..write('palmaresLocal: $palmaresLocal, ')
           ..write('modMs: $modMs, ')
@@ -18625,6 +18807,8 @@ typedef $$CampeonatosTableCreateCompanionBuilder =
       Value<String?> marcaLema,
       Value<String?> clubOrganizador,
       Value<Uint8List?> logoClub,
+      Value<String> ordenPrimeraPrueba,
+      Value<int?> campeonatoSemillaId,
       Value<bool> esVerificacionLibre,
       Value<DateTime> creadoEn,
     });
@@ -18659,6 +18843,8 @@ typedef $$CampeonatosTableUpdateCompanionBuilder =
       Value<String?> marcaLema,
       Value<String?> clubOrganizador,
       Value<Uint8List?> logoClub,
+      Value<String> ordenPrimeraPrueba,
+      Value<int?> campeonatoSemillaId,
       Value<bool> esVerificacionLibre,
       Value<DateTime> creadoEn,
     });
@@ -19027,6 +19213,16 @@ class $$CampeonatosTableFilterComposer
 
   ColumnFilters<Uint8List> get logoClub => $composableBuilder(
     column: $table.logoClub,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ordenPrimeraPrueba => $composableBuilder(
+    column: $table.ordenPrimeraPrueba,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get campeonatoSemillaId => $composableBuilder(
+    column: $table.campeonatoSemillaId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -19420,6 +19616,16 @@ class $$CampeonatosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get ordenPrimeraPrueba => $composableBuilder(
+    column: $table.ordenPrimeraPrueba,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get campeonatoSemillaId => $composableBuilder(
+    column: $table.campeonatoSemillaId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get esVerificacionLibre => $composableBuilder(
     column: $table.esVerificacionLibre,
     builder: (column) => ColumnOrderings(column),
@@ -19562,6 +19768,16 @@ class $$CampeonatosTableAnnotationComposer
 
   GeneratedColumn<Uint8List> get logoClub =>
       $composableBuilder(column: $table.logoClub, builder: (column) => column);
+
+  GeneratedColumn<String> get ordenPrimeraPrueba => $composableBuilder(
+    column: $table.ordenPrimeraPrueba,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get campeonatoSemillaId => $composableBuilder(
+    column: $table.campeonatoSemillaId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get esVerificacionLibre => $composableBuilder(
     column: $table.esVerificacionLibre,
@@ -19867,6 +20083,8 @@ class $$CampeonatosTableTableManager
                 Value<String?> marcaLema = const Value.absent(),
                 Value<String?> clubOrganizador = const Value.absent(),
                 Value<Uint8List?> logoClub = const Value.absent(),
+                Value<String> ordenPrimeraPrueba = const Value.absent(),
+                Value<int?> campeonatoSemillaId = const Value.absent(),
                 Value<bool> esVerificacionLibre = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
               }) => CampeonatosCompanion(
@@ -19899,6 +20117,8 @@ class $$CampeonatosTableTableManager
                 marcaLema: marcaLema,
                 clubOrganizador: clubOrganizador,
                 logoClub: logoClub,
+                ordenPrimeraPrueba: ordenPrimeraPrueba,
+                campeonatoSemillaId: campeonatoSemillaId,
                 esVerificacionLibre: esVerificacionLibre,
                 creadoEn: creadoEn,
               ),
@@ -19933,6 +20153,8 @@ class $$CampeonatosTableTableManager
                 Value<String?> marcaLema = const Value.absent(),
                 Value<String?> clubOrganizador = const Value.absent(),
                 Value<Uint8List?> logoClub = const Value.absent(),
+                Value<String> ordenPrimeraPrueba = const Value.absent(),
+                Value<int?> campeonatoSemillaId = const Value.absent(),
                 Value<bool> esVerificacionLibre = const Value.absent(),
                 Value<DateTime> creadoEn = const Value.absent(),
               }) => CampeonatosCompanion.insert(
@@ -19965,6 +20187,8 @@ class $$CampeonatosTableTableManager
                 marcaLema: marcaLema,
                 clubOrganizador: clubOrganizador,
                 logoClub: logoClub,
+                ordenPrimeraPrueba: ordenPrimeraPrueba,
+                campeonatoSemillaId: campeonatoSemillaId,
                 esVerificacionLibre: esVerificacionLibre,
                 creadoEn: creadoEn,
               ),
@@ -21746,6 +21970,7 @@ typedef $$PilotoCampeonatoTableCreateCompanionBuilder =
       required int creditosIniciales,
       required int creditosActuales,
       Value<int> saldoTemporadaAnterior,
+      Value<int?> puntosIniciales,
       Value<int> bonificacionAplicada,
       Value<String?> palmaresLocal,
       Value<int?> modMs,
@@ -21761,6 +21986,7 @@ typedef $$PilotoCampeonatoTableUpdateCompanionBuilder =
       Value<int> creditosIniciales,
       Value<int> creditosActuales,
       Value<int> saldoTemporadaAnterior,
+      Value<int?> puntosIniciales,
       Value<int> bonificacionAplicada,
       Value<String?> palmaresLocal,
       Value<int?> modMs,
@@ -21854,6 +22080,11 @@ class $$PilotoCampeonatoTableFilterComposer
 
   ColumnFilters<int> get saldoTemporadaAnterior => $composableBuilder(
     column: $table.saldoTemporadaAnterior,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get puntosIniciales => $composableBuilder(
+    column: $table.puntosIniciales,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -21958,6 +22189,11 @@ class $$PilotoCampeonatoTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get puntosIniciales => $composableBuilder(
+    column: $table.puntosIniciales,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get bonificacionAplicada => $composableBuilder(
     column: $table.bonificacionAplicada,
     builder: (column) => ColumnOrderings(column),
@@ -22054,6 +22290,11 @@ class $$PilotoCampeonatoTableAnnotationComposer
 
   GeneratedColumn<int> get saldoTemporadaAnterior => $composableBuilder(
     column: $table.saldoTemporadaAnterior,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get puntosIniciales => $composableBuilder(
+    column: $table.puntosIniciales,
     builder: (column) => column,
   );
 
@@ -22157,6 +22398,7 @@ class $$PilotoCampeonatoTableTableManager
                 Value<int> creditosIniciales = const Value.absent(),
                 Value<int> creditosActuales = const Value.absent(),
                 Value<int> saldoTemporadaAnterior = const Value.absent(),
+                Value<int?> puntosIniciales = const Value.absent(),
                 Value<int> bonificacionAplicada = const Value.absent(),
                 Value<String?> palmaresLocal = const Value.absent(),
                 Value<int?> modMs = const Value.absent(),
@@ -22170,6 +22412,7 @@ class $$PilotoCampeonatoTableTableManager
                 creditosIniciales: creditosIniciales,
                 creditosActuales: creditosActuales,
                 saldoTemporadaAnterior: saldoTemporadaAnterior,
+                puntosIniciales: puntosIniciales,
                 bonificacionAplicada: bonificacionAplicada,
                 palmaresLocal: palmaresLocal,
                 modMs: modMs,
@@ -22185,6 +22428,7 @@ class $$PilotoCampeonatoTableTableManager
                 required int creditosIniciales,
                 required int creditosActuales,
                 Value<int> saldoTemporadaAnterior = const Value.absent(),
+                Value<int?> puntosIniciales = const Value.absent(),
                 Value<int> bonificacionAplicada = const Value.absent(),
                 Value<String?> palmaresLocal = const Value.absent(),
                 Value<int?> modMs = const Value.absent(),
@@ -22198,6 +22442,7 @@ class $$PilotoCampeonatoTableTableManager
                 creditosIniciales: creditosIniciales,
                 creditosActuales: creditosActuales,
                 saldoTemporadaAnterior: saldoTemporadaAnterior,
+                puntosIniciales: puntosIniciales,
                 bonificacionAplicada: bonificacionAplicada,
                 palmaresLocal: palmaresLocal,
                 modMs: modMs,

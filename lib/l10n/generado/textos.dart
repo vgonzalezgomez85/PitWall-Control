@@ -2223,8 +2223,26 @@ abstract class Textos {
   /// No description provided for @sinPuntosEsteAnio.
   ///
   /// In es, this message translates to:
-  /// **'Sin puntos este año → ordenados por saldo año anterior (0 si no hay).'**
+  /// **'Primera prueba: ordenados por la puntuación previa importada (0 si no hay).'**
   String get sinPuntosEsteAnio;
+
+  /// No description provided for @puntosIniciales.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntos iniciales'**
+  String get puntosIniciales;
+
+  /// No description provided for @puntosInicialesHeredados.
+  ///
+  /// In es, this message translates to:
+  /// **'Heredados de {campeonato}: {puntos} (vacío = esos). Solo ordenan las tandas de la primera prueba; no cuentan en la clasificación.'**
+  String puntosInicialesHeredados(String campeonato, String puntos);
+
+  /// No description provided for @puntosInicialesAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo ordenan las tandas de la primera prueba; no cuentan en la clasificación.'**
+  String get puntosInicialesAyuda;
 
   /// No description provided for @paso1CarrilesPista.
   ///
@@ -5848,6 +5866,66 @@ abstract class Textos {
   /// In es, this message translates to:
   /// **'No importar'**
   String get noImportar;
+
+  /// No description provided for @ordenPrimeraPrueba.
+  ///
+  /// In es, this message translates to:
+  /// **'Orden de la primera prueba'**
+  String get ordenPrimeraPrueba;
+
+  /// No description provided for @ordenPrimeraPruebaAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Cómo se reparten las tandas de la primera prueba, mientras el campeonato aún no tiene puntos. Los puntos heredados solo sirven para ordenar: no cuentan en la clasificación ni para nada más.'**
+  String get ordenPrimeraPruebaAyuda;
+
+  /// No description provided for @ordenHeredarPuntos.
+  ///
+  /// In es, this message translates to:
+  /// **'Heredar puntos de un campeonato anterior'**
+  String get ordenHeredarPuntos;
+
+  /// No description provided for @ordenHeredarPuntosAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Las tandas se ordenan por los puntos netos de su clasificación final.'**
+  String get ordenHeredarPuntosAyuda;
+
+  /// No description provided for @ordenEmpezarSinPuntos.
+  ///
+  /// In es, this message translates to:
+  /// **'Empezar sin puntos: se hace pole'**
+  String get ordenEmpezarSinPuntos;
+
+  /// No description provided for @ordenEmpezarSinPuntosAyuda.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin orden por puntos; al enviar las tandas a PitWall se marca «La carrera tiene pole».'**
+  String get ordenEmpezarSinPuntosAyuda;
+
+  /// No description provided for @campeonatoDeOrigen.
+  ///
+  /// In es, this message translates to:
+  /// **'Campeonato de origen'**
+  String get campeonatoDeOrigen;
+
+  /// No description provided for @puntuacionPreviaImportada.
+  ///
+  /// In es, this message translates to:
+  /// **'Puntuación previa importada a mano'**
+  String get puntuacionPreviaImportada;
+
+  /// No description provided for @ordenadosPorPuntosHeredados.
+  ///
+  /// In es, this message translates to:
+  /// **'Primera prueba: ordenados por los puntos netos de {campeonato}.'**
+  String ordenadosPorPuntosHeredados(String campeonato);
+
+  /// No description provided for @ordenPrimeraPruebaPole.
+  ///
+  /// In es, this message translates to:
+  /// **'Primera prueba sin puntos: el orden lo decide la pole.'**
+  String get ordenPrimeraPruebaPole;
 
   /// No description provided for @tesoreriaNoCuadra.
   ///

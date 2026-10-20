@@ -576,6 +576,10 @@ class FusionadorSync {
         creditosIniciales: Value(iniciales),
         saldoTemporadaAnterior:
             Value((j['saldoTemporadaAnterior'] as num?)?.toInt() ?? 0),
+        // Un Control anterior no lo envía: entonces no se toca.
+        puntosIniciales: j.containsKey('puntosIniciales')
+            ? Value((j['puntosIniciales'] as num?)?.toInt())
+            : const Value.absent(),
         palmaresLocal: Value(j['palmaresLocal'] as String?),
         modMs: Value(tsR),
         modPor: Value(porR),

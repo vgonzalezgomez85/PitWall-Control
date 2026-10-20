@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import '../pruebas/repositorio_pruebas.dart';
 import 'repositorio_pilotos.dart';
 
 class EditorPiloto extends ConsumerStatefulWidget {
@@ -42,6 +43,13 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
   final _creditosIniciales = TextEditingController();
   final _creditosActuales = TextEditingController();
   final _palmaresLocal = TextEditingController();
+  final _puntosIniciales = TextEditingController();
+
+  /// Puntos iniciales heredados (sin lo puesto a mano) y de qué campeonato
+  /// salen. Con pole no hay puntos iniciales y el campo no se muestra.
+  int _puntosHeredados = 0;
+  String? _campeonatoOrigen;
+  bool _conPole = false;
 
   String _categoria = 'BRONCE';
   bool _esCoordinadora = false;
@@ -55,14 +63,23 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
   }
 
   Future<void> _cargar() async {
+    final db = ref.read(dbProvider);
+    final activo = ref.read(campeonatoActivoProvider)!;
+    final heredados =
+        await puntosIniciales(db, activo.id, soloHeredados: true);
+    _conPole = heredados.origen == OrigenSemilla.pole;
+    _campeonatoOrigen = heredados.campeonatoOrigen;
+    if (widget.pilotoId != null) {
+      _puntosHeredados =
+          (heredados.puntos[widget.pilotoId!] ?? 0).round();
+    }
+    _puntosIniciales.text = '$_puntosHeredados';
+
     if (widget.pilotoId == null) {
       _aplicarCategoria('BRONCE');
       setState(() => _cargando = false);
       return;
     }
-
-    final db = ref.read(dbProvider);
-    final activo = ref.read(campeonatoActivoProvider)!;
 
     final piloto = await (db.select(db.pilotos)
           ..where((t) => t.id.equals(widget.pilotoId!)))
@@ -83,6 +100,8 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
       _creditosIniciales.text = perfil.creditosIniciales.toString();
       _creditosActuales.text = perfil.creditosActuales.toString();
       _palmaresLocal.text = perfil.palmaresLocal ?? '';
+      _puntosIniciales.text =
+          '${perfil.puntosIniciales ?? _puntosHeredados}';
     } else {
       _aplicarCategoria(_categoria);
     }
@@ -108,6 +127,7 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
     _creditosIniciales.dispose();
     _creditosActuales.dispose();
     _palmaresLocal.dispose();
+    _puntosIniciales.dispose();
     super.dispose();
   }
 
@@ -171,6 +191,16 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
       // Actualizar el flag esCoordinadora (no está en el repo, lo hago directo)
       final db = ref.read(dbProvider);
       final pilotoIdParaUpdate = widget.pilotoId ?? idCreado!;
+      if (!_conPole) {
+        // Vacío o igual a lo heredado = sin corrección a mano (así sigue a
+        // lo heredado si cambia la clasificación de origen).
+        final pts = int.tryParse(_puntosIniciales.text.trim());
+        await repo.fijarPuntosIniciales(
+          pilotoId: pilotoIdParaUpdate,
+          campeonatoId: activo.id,
+          puntos: pts == null || pts == _puntosHeredados ? null : pts,
+        );
+      }
       await (db.update(db.pilotos)
             ..where((t) => t.id.equals(pilotoIdParaUpdate)))
           .write(PilotosCompanion(
@@ -347,6 +377,25 @@ class _EditorPilotoState extends ConsumerState<EditorPiloto> {
                 ),
               ],
             ),
+            if (!_conPole) ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _puntosIniciales,
+                decoration: InputDecoration(
+                  labelText: context.l.puntosIniciales,
+                  helperText: _campeonatoOrigen != null
+                      ? context.l.puntosInicialesHeredados(
+                          _campeonatoOrigen!, '$_puntosHeredados')
+                      : context.l.puntosInicialesAyuda,
+                  helperMaxLines: 3,
+                  prefixIcon: const Icon(Icons.flag_outlined),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? null
+                    : _validarEntero(v),
+              ),
+            ],
             const SizedBox(height: 12),
             TextFormField(
               controller: _palmaresLocal,

@@ -82,6 +82,16 @@ class Campeonatos extends Table {
   /// exportaciones.
   TextColumn get clubOrganizador => text().nullable()();
   BlobColumn get logoClub => blob().nullable()();
+  /// Cómo se ordenan las tandas de la primera prueba, cuando el campeonato
+  /// aún no tiene puntos propios: 'HEREDAR' (puntos de otro campeonato) o
+  /// 'POLE' (sin puntos: el orden lo decide la pole). Esos puntos heredados
+  /// solo sirven para ordenar; no cuentan en la clasificación.
+  TextColumn get ordenPrimeraPrueba =>
+      text().withDefault(const Constant('HEREDAR'))();
+  /// Con 'HEREDAR', campeonato cuya clasificación (puntos netos) se hereda.
+  /// Si es null se usa la puntuación previa importada a mano
+  /// (PilotoCampeonato.saldoTemporadaAnterior).
+  IntColumn get campeonatoSemillaId => integer().nullable()();
   /// Si true, no es un campeonato real sino el contenedor interno de una
   /// sesión de "verificación libre" (carrera esporádica, control en el club…):
   /// guarda su reglamento de verificación y no aparece en el selector ni en
@@ -144,6 +154,11 @@ class PilotoCampeonato extends Table {
   IntColumn get creditosIniciales => integer()();
   IntColumn get creditosActuales => integer()();
   IntColumn get saldoTemporadaAnterior => integer().withDefault(const Constant(0))();
+  /// Puntos iniciales puestos a mano (ficha del piloto o importación de la
+  /// puntuación previa). Si es null se usan los heredados según el «orden de
+  /// la primera prueba» del campeonato. Solo sirven para ordenar las tandas
+  /// de la primera prueba: no cuentan en la clasificación.
+  IntColumn get puntosIniciales => integer().nullable()();
   IntColumn get bonificacionAplicada => integer().withDefault(const Constant(0))();
   TextColumn get palmaresLocal => text().nullable()();
   /// Último cambio sincronizable: ms y dispositivo. Lo firman triggers de

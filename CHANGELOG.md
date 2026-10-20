@@ -14,6 +14,19 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.45.0] — 2026-10-20
+### Añadido
+- **Orden de la primera prueba** (nueva sección al crear o editar un campeonato): decide cómo se reparten las tandas de la primera prueba, mientras el campeonato aún no tiene puntos.
+  - **Heredar puntos de un campeonato anterior**: las tandas se ordenan por los puntos netos (con descartes) de la clasificación final del campeonato elegido. Esos puntos solo sirven para ordenar: no cuentan en la clasificación ni para nada más. También se puede seguir usando la «Puntuación previa (1ª prueba)» importada a mano.
+  - **Empezar sin puntos: se hace pole**: no se ordena por puntos y, al enviar las tandas a PitWall, «La carrera tiene pole» ya sale marcado.
+  - Al crear un campeonato importando los pilotos de otro, ese mismo campeonato queda propuesto como origen de los puntos.
+- **Puntos iniciales en la ficha del piloto** («En este campeonato»): muestra los puntos con los que entra en la primera prueba (los heredados, indicando de qué campeonato) y se pueden cambiar a mano, por ejemplo para un piloto dado de alta a mano al que no se le traspasaron sus puntos. Si se deja vacío o igual a lo heredado, sigue a lo heredado. La importación de «Puntuación previa (1ª prueba)» escribe en este mismo campo. Viaja con la sincronización entre Controls.
+- El asistente «Generar tandas» indica de dónde sale el orden (puntos del campeonato, heredados de otro campeonato, puntuación previa o pole).
+
+### Corregido
+- **Al importar pilotos de un campeonato finalizado, su saldo de créditos se usaba como puntuación para ordenar la primera prueba.** Ahora los créditos solo van a créditos; los puntos se heredan con el «Orden de la primera prueba».
+- El orden por puntos de las tandas sumaba dos veces una prueba con resultados corregidos a mano (manga «IMPORTADA»); ahora cuenta como en la clasificación.
+
 ## [1.44.2] — 2026-10-17
 ### Mejorado
 - **Inicio → Pendientes: la tarjeta de «pagos sin cobrar» dice quién falta por pagar.** Debajo del nombre de la prueba salen los pilotos o equipos que aún no han pagado (hasta tres líneas; si no caben, se cortan con «…»).

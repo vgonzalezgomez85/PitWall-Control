@@ -52,6 +52,20 @@ final _campeonatosFinalizadosProvider =
       .get();
 });
 
+/// Campeonatos de los que se pueden heredar puntos para ordenar la primera
+/// prueba (todos menos las sesiones de verificación libre).
+final _campeonatosSemillaProvider =
+    FutureProvider.autoDispose<List<Campeonato>>((ref) async {
+  final db = ref.watch(dbProvider);
+  return (db.select(db.campeonatos)
+        ..where((t) => t.esVerificacionLibre.equals(false))
+        ..orderBy([
+          (t) => OrderingTerm.desc(t.anio),
+          (t) => OrderingTerm.asc(t.nombre),
+        ]))
+      .get();
+});
+
 class EditorCampeonato extends ConsumerStatefulWidget {
   const EditorCampeonato({super.key, this.campeonatoId});
   final int? campeonatoId;
@@ -90,6 +104,10 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
   bool _finalizado = false;
   bool _finalizadoOriginal = false;
   int? _importarDesdeId;
+  /// Orden de la primera prueba: 'HEREDAR' (de [_semillaId], o de la
+  /// puntuación previa importada si es null) o 'POLE'.
+  String _ordenPrimera = 'HEREDAR';
+  int? _semillaId;
   Set<String> _copasSel = {};
   /// Tipo de motor: 'ORGANIZACION', 'PROPIO' o 'MIXTO' (en BD, null). Al
   /// crear empieza sin elegir y hay que marcar uno para guardar.
@@ -153,6 +171,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
     _usaTesoreria = c.usaTesoreria;
     _finalizado = c.finalizado;
     _finalizadoOriginal = c.finalizado;
+    _ordenPrimera = c.ordenPrimeraPrueba;
+    _semillaId = c.campeonatoSemillaId;
     try {
       final raw = json.decode(c.copasJson);
       if (raw is List) {
@@ -226,11 +246,77 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                   child: Text('${c.nombre} (${c.anio})'),
                 ),
             ],
-            onChanged: (v) => setState(() => _importarDesdeId = v),
+            onChanged: (v) => setState(() {
+              _importarDesdeId = v;
+              // Lo normal es heredar los puntos del mismo campeonato.
+              _semillaId ??= v;
+            }),
           ),
         );
       },
       orElse: () => const SizedBox.shrink(),
+    );
+  }
+
+  /// Sección «Orden de la primera prueba»: heredar los puntos de otro
+  /// campeonato (solo para ordenar las tandas) o empezar sin puntos con pole.
+  Widget _seccionOrdenPrimeraPrueba() {
+    final l = context.l;
+    final candidatos = (ref.watch(_campeonatosSemillaProvider).value ??
+            const <Campeonato>[])
+        .where((c) => c.id != widget.campeonatoId)
+        .toList();
+    return _Seccion(
+      titulo: l.ordenPrimeraPrueba,
+      descripcion: l.ordenPrimeraPruebaAyuda,
+      children: [
+        RadioGroup<String>(
+          groupValue: _ordenPrimera,
+          onChanged: (v) => setState(() => _ordenPrimera = v ?? 'HEREDAR'),
+          child: Column(
+            children: [
+              RadioListTile<String>(
+                value: 'HEREDAR',
+                title: Text(l.ordenHeredarPuntos),
+                subtitle: Text(l.ordenHeredarPuntosAyuda),
+              ),
+              if (_ordenPrimera == 'HEREDAR')
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(56, 0, 16, 8),
+                  child: DropdownButtonFormField<int?>(
+                    // La key fuerza a reconstruir al cambiar desde fuera
+                    // (al elegir de dónde importar pilotos).
+                    key: ValueKey(
+                        'semilla-$_semillaId-${candidatos.length}'),
+                    initialValue: candidatos.any((c) => c.id == _semillaId)
+                        ? _semillaId
+                        : null,
+                    isExpanded: true,
+                    decoration:
+                        InputDecoration(labelText: l.campeonatoDeOrigen),
+                    items: [
+                      DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text(l.puntuacionPreviaImportada),
+                      ),
+                      for (final c in candidatos)
+                        DropdownMenuItem<int?>(
+                          value: c.id,
+                          child: Text('${c.nombre} (${c.anio})'),
+                        ),
+                    ],
+                    onChanged: (v) => setState(() => _semillaId = v),
+                  ),
+                ),
+              RadioListTile<String>(
+                value: 'POLE',
+                title: Text(l.ordenEmpezarSinPuntos),
+                subtitle: Text(l.ordenEmpezarSinPuntosAyuda),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -344,6 +430,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
             marcaLema: Value(mLema.isEmpty ? null : mLema),
             clubOrganizador: Value(club.isEmpty ? null : club),
             logoClub: Value(_logoClub),
+            ordenPrimeraPrueba: Value(_ordenPrimera),
+            campeonatoSemillaId: Value(_semillaId),
           ),
         );
         if (_usaCreditos && _importarDesdeId != null) {
@@ -384,6 +472,8 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
           marcaLema: Value(mLema.isEmpty ? null : mLema),
           clubOrganizador: Value(club.isEmpty ? null : club),
           logoClub: Value(_logoClub),
+          ordenPrimeraPrueba: Value(_ordenPrimera),
+          campeonatoSemillaId: Value(_semillaId),
         ));
         // Al finalizar, el peso mínimo y los créditos de sus coches quedan
         // fijados con los del catálogo (lo ya fijado no se toca): cambiar
@@ -798,6 +888,7 @@ class _EditorCampeonatoState extends ConsumerState<EditorCampeonato> {
                 const SizedBox(height: 24),
               ],
             ),
+            _seccionOrdenPrimeraPrueba(),
             // Al crear, lo opcional queda plegado. Visibility mantiene los
             // campos montados para que el formulario los siga validando.
             if (esNuevo && !_masOpciones)

@@ -23,34 +23,93 @@ import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/generador_mangas.dart';
+import '../clasificacion/repositorio_clasificacion.dart';
 
-/// Puntos con los que se ordena a los pilotos al hacer mangas y carriles:
-/// los puntos brutos acumulados en el campeonato y, si aún no hay ninguno,
-/// la puntuación previa (saldo de la temporada anterior).
-Future<Map<int, num>> puntosSemillaPorPiloto(
-    AppDatabase db, int campeonatoId) async {
+/// De dónde salen los puntos con los que se ordenan las tandas.
+enum OrigenSemilla {
+  /// Puntos brutos acumulados en el propio campeonato.
+  campeonato,
+  /// Puntos netos heredados de otro campeonato (primera prueba).
+  heredados,
+  /// Puntuación previa importada a mano (primera prueba).
+  puntuacionPrevia,
+  /// Primera prueba sin puntos: el orden lo decide la pole.
+  pole,
+}
+
+/// Puntos para ordenar a los pilotos al hacer tandas y carriles, y su origen.
+class SemillaOrden {
+  const SemillaOrden(this.puntos, this.origen, {this.campeonatoOrigen});
+  final Map<int, num> puntos;
+  final OrigenSemilla origen;
+  /// Con [OrigenSemilla.heredados], nombre del campeonato del que se heredan.
+  final String? campeonatoOrigen;
+}
+
+/// Puntos con los que se ordena a los pilotos al hacer tandas y carriles: los
+/// puntos brutos acumulados en el campeonato y, mientras no haya ninguno
+/// (primera prueba), lo que diga su «orden de la primera prueba»: los puntos
+/// netos de otro campeonato, la puntuación previa importada o nada (pole).
+/// Lo heredado solo sirve para ordenar: no cuenta en la clasificación.
+Future<SemillaOrden> semillaOrden(AppDatabase db, int campeonatoId) async {
   final pruebas = await (db.select(db.pruebas)
         ..where((t) => t.campeonatoId.equals(campeonatoId)))
       .get();
-  final mangas = await (db.select(db.mangas)
-        ..where((t) => t.pruebaId.isIn(pruebas.map((p) => p.id))))
-      .get();
-  final mangaIds = mangas.map((m) => m.id).toSet();
-  final resultados = mangaIds.isEmpty
-      ? <Resultado>[]
-      : await (db.select(db.resultados)
-            ..where((t) => t.mangaId.isIn(mangaIds)))
-          .get();
-  final bruto = <int, num>{};
-  for (final r in resultados) {
-    bruto.update(r.pilotoId, (v) => v + r.puntos, ifAbsent: () => r.puntos);
+  final (:porPiloto, disputadas: _) =
+      await resultadosPorPiloto(db, pruebas.map((p) => p.id).toSet());
+  final bruto = <int, num>{
+    for (final e in porPiloto.entries)
+      e.key: e.value.puntosPorPrueba.values.fold<int>(0, (a, b) => a + b),
+  };
+  if (bruto.values.any((v) => v > 0)) {
+    return SemillaOrden(bruto, OrigenSemilla.campeonato);
   }
-  if (bruto.values.any((v) => v > 0)) return bruto;
+  return puntosIniciales(db, campeonatoId);
+}
+
+/// Puntos iniciales de cada piloto (los de la primera prueba): los heredados
+/// según el «orden de la primera prueba» y, encima, los puestos a mano en la
+/// ficha del piloto ([PilotoCampeonato.puntosIniciales]). Con pole, ninguno.
+/// Con [soloHeredados] no se aplican los puestos a mano.
+Future<SemillaOrden> puntosIniciales(AppDatabase db, int campeonatoId,
+    {bool soloHeredados = false}) async {
+  final camp = await (db.select(db.campeonatos)
+        ..where((t) => t.id.equals(campeonatoId)))
+      .getSingleOrNull();
+  if (camp?.ordenPrimeraPrueba == 'POLE') {
+    return const SemillaOrden({}, OrigenSemilla.pole);
+  }
   final perfiles = await (db.select(db.pilotoCampeonato)
         ..where((t) => t.campeonatoId.equals(campeonatoId)))
       .get();
-  return {for (final p in perfiles) p.pilotoId: p.saldoTemporadaAnterior};
+  final aMano = {
+    if (!soloHeredados)
+      for (final p in perfiles)
+        if (p.puntosIniciales != null) p.pilotoId: p.puntosIniciales!,
+  };
+  final semillaId = camp?.campeonatoSemillaId;
+  final origen = semillaId == null
+      ? null
+      : await (db.select(db.campeonatos)
+            ..where((t) => t.id.equals(semillaId)))
+          .getSingleOrNull();
+  if (origen != null) {
+    return SemillaOrden({
+      ...await puntosNetosPorPiloto(db, origen.id),
+      ...aMano,
+    }, OrigenSemilla.heredados, campeonatoOrigen: origen.nombre);
+  }
+  // Sin campeonato de origen: la puntuación previa de versiones anteriores.
+  return SemillaOrden({
+    for (final p in perfiles) p.pilotoId: p.saldoTemporadaAnterior,
+    ...aMano,
+  }, OrigenSemilla.puntuacionPrevia);
 }
+
+/// Solo los puntos de [semillaOrden].
+Future<Map<int, num>> puntosSemillaPorPiloto(
+        AppDatabase db, int campeonatoId) async =>
+    (await semillaOrden(db, campeonatoId)).puntos;
 
 const estadosPrueba = ['PROGRAMADA', 'EN_CURSO', 'TERMINADA', 'CANCELADA'];
 

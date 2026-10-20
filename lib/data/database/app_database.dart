@@ -70,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 52;
+  int get schemaVersion => 54;
 
   /// Nombre con el que este dispositivo firma sus cambios (lo fija main.dart
   /// con el de la sincronización). Se guarda en `sync_local` al abrir la BD.
@@ -580,6 +580,18 @@ class AppDatabase extends _$AppDatabase {
               await _aplicar(() => customStatement(
                   'ALTER TABLE pruebas ADD COLUMN $c'));
             }
+          }
+          if (from < 53) {
+            // Orden de la primera prueba: heredar puntos o empezar con pole.
+            await _aplicar(() => customStatement(
+                "ALTER TABLE campeonatos ADD COLUMN orden_primera_prueba TEXT NOT NULL DEFAULT 'HEREDAR'"));
+            await _aplicar(() => customStatement(
+                'ALTER TABLE campeonatos ADD COLUMN campeonato_semilla_id INTEGER'));
+          }
+          if (from < 54) {
+            // Puntos iniciales de cada piloto, editables en su ficha.
+            await _aplicar(() => customStatement(
+                'ALTER TABLE piloto_campeonato ADD COLUMN puntos_iniciales INTEGER'));
           }
         },
       );

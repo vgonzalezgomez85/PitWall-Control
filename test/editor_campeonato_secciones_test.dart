@@ -63,6 +63,8 @@ void main() {
     expect(find.text('Categorías / copas *'), findsOneWidget);
     expect(find.text('Motor *'), findsOneWidget);
     expect(find.text('Créditos y tesorería'), findsOneWidget);
+    expect(find.text('Orden de la primera prueba'), findsOneWidget);
+    expect(find.text('Empezar sin puntos: se hace pole'), findsOneWidget);
     expect(find.text('Puntuación'), findsNothing);
     expect(find.text('Estado'), findsNothing);
 

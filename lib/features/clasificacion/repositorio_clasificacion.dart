@@ -116,52 +116,8 @@ final clasificacionProvider =
       }
     }
 
-    // Resultados de todas las mangas de las pruebas del campeonato
-    final mangasCamp = await (db.select(db.mangas)
-          ..where((t) => t.pruebaId.isIn(pruebaIds)))
-        .get();
-    final pruebaPorManga = {for (final m in mangasCamp) m.id: m.pruebaId};
-    final mangaIds = mangasCamp.map((m) => m.id).toSet();
-    // Mangas "IMPORTADA": canal de edición manual. Su valor PISA (override) el
-    // de la prueba en vez de sumarse a los resultados de las mangas reales.
-    final importadaIds = mangasCamp
-        .where((m) => m.nombre == 'IMPORTADA')
-        .map((m) => m.id)
-        .toSet();
-    final resultados = await (db.select(db.resultados)
-          ..where((t) => t.mangaId.isIn(mangaIds)))
-        .get();
-
-    // Pruebas ya disputadas: las que tienen algún resultado registrado. En
-    // ellas, un piloto sin puntos cuenta 0 (su peor resultado → descarte).
-    final disputadas = <int>{};
-    for (final r in resultados) {
-      final pid = pruebaPorManga[r.mangaId];
-      if (pid != null) disputadas.add(pid);
-    }
-
-    // Agrupar resultados por pilotoId → prueba → (puntos, aRestar).
-    // 1) Mangas reales: se suman. 2) Manga IMPORTADA: pisa el total.
-    final byPiloto = <int, FilaResultados>{};
-    for (final r in resultados) {
-      if (importadaIds.contains(r.mangaId)) continue;
-      final pruebaId = pruebaPorManga[r.mangaId];
-      if (pruebaId == null) continue;
-      final f = byPiloto.putIfAbsent(
-          r.pilotoId, () => FilaResultados({}, {}));
-      f.puntosPorPrueba
-          .update(pruebaId, (v) => v + r.puntos, ifAbsent: () => r.puntos);
-      f.aRestarPorPrueba
-          .update(pruebaId, (v) => v + r.aRestar, ifAbsent: () => r.aRestar);
-    }
-    for (final r in resultados) {
-      if (!importadaIds.contains(r.mangaId)) continue;
-      final pruebaId = pruebaPorManga[r.mangaId];
-      if (pruebaId == null) continue;
-      final f = byPiloto.putIfAbsent(
-          r.pilotoId, () => FilaResultados({}, {}));
-      f.puntosPorPrueba[pruebaId] = r.puntos; // override manual
-    }
+    final (porPiloto: byPiloto, disputadas: disputadas) =
+        await resultadosPorPiloto(db, pruebaIds);
 
     // Nombre de cada piloto
     final pilotos = await db.select(db.pilotos).get();
@@ -335,6 +291,89 @@ final clasificacionProvider =
     );
   }
 });
+
+/// Puntos de cada piloto por prueba (pilotoId → prueba → puntos y "a restar")
+/// y las pruebas ya disputadas (con algún resultado: en ellas un piloto sin
+/// puntos cuenta 0, su peor resultado → descarte).
+/// Las mangas reales se suman; la manga "IMPORTADA" (canal de edición manual)
+/// PISA el total de la prueba en vez de sumarse.
+Future<({Map<int, FilaResultados> porPiloto, Set<int> disputadas})>
+    resultadosPorPiloto(AppDatabase db, Set<int> pruebaIds) async {
+  final mangas = pruebaIds.isEmpty
+      ? <Manga>[]
+      : await (db.select(db.mangas)..where((t) => t.pruebaId.isIn(pruebaIds)))
+          .get();
+  final pruebaPorManga = {for (final m in mangas) m.id: m.pruebaId};
+  final importadaIds =
+      mangas.where((m) => m.nombre == 'IMPORTADA').map((m) => m.id).toSet();
+  final resultados = pruebaPorManga.isEmpty
+      ? <Resultado>[]
+      : await (db.select(db.resultados)
+            ..where((t) => t.mangaId.isIn(pruebaPorManga.keys)))
+          .get();
+
+  final disputadas = <int>{};
+  for (final r in resultados) {
+    final pid = pruebaPorManga[r.mangaId];
+    if (pid != null) disputadas.add(pid);
+  }
+
+  final porPiloto = <int, FilaResultados>{};
+  for (final r in resultados) {
+    if (importadaIds.contains(r.mangaId)) continue;
+    final pruebaId = pruebaPorManga[r.mangaId];
+    if (pruebaId == null) continue;
+    final f = porPiloto.putIfAbsent(r.pilotoId, () => FilaResultados({}, {}));
+    f.puntosPorPrueba
+        .update(pruebaId, (v) => v + r.puntos, ifAbsent: () => r.puntos);
+    f.aRestarPorPrueba
+        .update(pruebaId, (v) => v + r.aRestar, ifAbsent: () => r.aRestar);
+  }
+  for (final r in resultados) {
+    if (!importadaIds.contains(r.mangaId)) continue;
+    final pruebaId = pruebaPorManga[r.mangaId];
+    if (pruebaId == null) continue;
+    final f = porPiloto.putIfAbsent(r.pilotoId, () => FilaResultados({}, {}));
+    f.puntosPorPrueba[pruebaId] = r.puntos; // override manual
+  }
+  return (porPiloto: porPiloto, disputadas: disputadas);
+}
+
+/// Puntos NETOS (con descartes) de cada piloto que ha puntuado en el
+/// campeonato: los de su clasificación general. Se usan para ordenar la
+/// primera prueba del campeonato siguiente.
+Future<Map<int, int>> puntosNetosPorPiloto(
+    AppDatabase db, int campeonatoId) async {
+  final camp = await (db.select(db.campeonatos)
+        ..where((t) => t.id.equals(campeonatoId)))
+      .getSingleOrNull();
+  if (camp == null) return {};
+  final pruebas = await (db.select(db.pruebas)
+        ..where((t) => t.campeonatoId.equals(campeonatoId)))
+      .get();
+  final (:porPiloto, :disputadas) =
+      await resultadosPorPiloto(db, pruebas.map((p) => p.id).toSet());
+  final filas = CalculoClasificacion.calcular(
+    pilotos: [
+      for (final id in porPiloto.keys)
+        PilotoBase(
+          pilotoId: id,
+          nombre: '',
+          equipoId: 0,
+          equipoNombre: '',
+          copa: '',
+          categoria: '',
+          creditosIniciales: 0,
+          creditosActuales: 0,
+        ),
+    ],
+    resultadosPorPiloto: porPiloto,
+    numDescartes: camp.numDescartes,
+    pruebasDisputadas: disputadas,
+    ordenarPorNeto: true,
+  );
+  return {for (final f in filas) f.pilotoId: f.totalNeto};
+}
 
 /// Combina los streams relevantes en un único tick.
 Stream<void> _streamRefresco(AppDatabase db, int campeonatoId) async* {

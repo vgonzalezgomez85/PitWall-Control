@@ -1361,7 +1361,19 @@ class TextosEs extends Textos {
 
   @override
   String get sinPuntosEsteAnio =>
-      'Sin puntos este año → ordenados por saldo año anterior (0 si no hay).';
+      'Primera prueba: ordenados por la puntuación previa importada (0 si no hay).';
+
+  @override
+  String get puntosIniciales => 'Puntos iniciales';
+
+  @override
+  String puntosInicialesHeredados(String campeonato, String puntos) {
+    return 'Heredados de $campeonato: $puntos (vacío = esos). Solo ordenan las tandas de la primera prueba; no cuentan en la clasificación.';
+  }
+
+  @override
+  String get puntosInicialesAyuda =>
+      'Solo ordenan las tandas de la primera prueba; no cuentan en la clasificación.';
 
   @override
   String get paso1CarrilesPista => '1. Carriles de la pista';
@@ -3703,6 +3715,42 @@ class TextosEs extends Textos {
 
   @override
   String get noImportar => 'No importar';
+
+  @override
+  String get ordenPrimeraPrueba => 'Orden de la primera prueba';
+
+  @override
+  String get ordenPrimeraPruebaAyuda =>
+      'Cómo se reparten las tandas de la primera prueba, mientras el campeonato aún no tiene puntos. Los puntos heredados solo sirven para ordenar: no cuentan en la clasificación ni para nada más.';
+
+  @override
+  String get ordenHeredarPuntos => 'Heredar puntos de un campeonato anterior';
+
+  @override
+  String get ordenHeredarPuntosAyuda =>
+      'Las tandas se ordenan por los puntos netos de su clasificación final.';
+
+  @override
+  String get ordenEmpezarSinPuntos => 'Empezar sin puntos: se hace pole';
+
+  @override
+  String get ordenEmpezarSinPuntosAyuda =>
+      'Sin orden por puntos; al enviar las tandas a PitWall se marca «La carrera tiene pole».';
+
+  @override
+  String get campeonatoDeOrigen => 'Campeonato de origen';
+
+  @override
+  String get puntuacionPreviaImportada => 'Puntuación previa importada a mano';
+
+  @override
+  String ordenadosPorPuntosHeredados(String campeonato) {
+    return 'Primera prueba: ordenados por los puntos netos de $campeonato.';
+  }
+
+  @override
+  String get ordenPrimeraPruebaPole =>
+      'Primera prueba sin puntos: el orden lo decide la pole.';
 
   @override
   String tesoreriaNoCuadra(String suma, String pagat) {

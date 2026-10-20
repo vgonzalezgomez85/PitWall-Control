@@ -213,20 +213,20 @@ class RepositorioPilotos {
         .go();
   }
 
-  /// Actualiza el saldo de temporada anterior de un piloto ya inscrito en
-  /// el campeonato (semilla de orden para la primera prueba, hasta que el
-  /// campeonato tenga resultados propios).
-  Future<void> actualizarSaldoAnterior({
+  /// Pone a mano los puntos iniciales de un piloto ya inscrito en el
+  /// campeonato (orden de la primera prueba, hasta que el campeonato tenga
+  /// resultados propios). Mandan sobre los heredados; null vuelve a ellos.
+  Future<void> fijarPuntosIniciales({
     required int pilotoId,
     required int campeonatoId,
-    required int saldo,
+    required int? puntos,
   }) async {
     await (db.update(db.pilotoCampeonato)
           ..where((t) =>
               t.pilotoId.equals(pilotoId) &
               t.campeonatoId.equals(campeonatoId)))
         .write(PilotoCampeonatoCompanion(
-            saldoTemporadaAnterior: Value(saldo)));
+            puntosIniciales: Value(puntos)));
   }
 }
 

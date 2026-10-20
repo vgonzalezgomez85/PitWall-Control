@@ -77,8 +77,14 @@ class _EnviarTandaDialogState extends State<_EnviarTandaDialog> {
     final prueba = await (db.select(db.pruebas)
           ..where((t) => t.id.equals(widget.pruebaId)))
         .getSingleOrNull();
-    if (!mounted || prueba?.managerRaceId == null) return;
-    setState(() => _raceIdEnviada = prueba!.managerRaceId);
+    if (!mounted || prueba == null) return;
+    // Primera prueba de un campeonato que empieza sin puntos: se hace pole.
+    final semilla = await semillaOrden(db, prueba.campeonatoId);
+    if (!mounted) return;
+    setState(() {
+      _raceIdEnviada = prueba.managerRaceId;
+      if (semilla.origen == OrigenSemilla.pole) _pole = true;
+    });
   }
 
   @override

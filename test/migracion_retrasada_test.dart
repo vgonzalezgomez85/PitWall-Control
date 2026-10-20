@@ -45,7 +45,7 @@ void main() {
     final version = await db
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(version.data.values.first, 52);
+    expect(version.data.values.first, db.schemaVersion);
     await db.close();
 
     dir.deleteSync(recursive: true);

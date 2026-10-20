@@ -64,8 +64,9 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
   bool get _conCarriles => _esIndividual && _asignarCarriles;
   bool get _conPisters => _esIndividual && _asignarPisters;
 
-  /// Cache de puntuaciones por piloto.
+  /// Cache de puntuaciones por piloto y de dónde salen.
   Map<int, num> _puntosPorPiloto = {};
+  SemillaOrden _semilla = const SemillaOrden({}, OrigenSemilla.campeonato);
   bool _listo = false;
 
   ResultadoGeneracion? _resultado;
@@ -82,8 +83,10 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
     final db = ref.read(dbProvider);
     final activo = ref.read(campeonatoActivoProvider)!;
 
-    // 1) Puntos del campeonato (o puntuación previa si aún no hay).
-    _puntosPorPiloto = await puntosSemillaPorPiloto(db, activo.id);
+    // 1) Puntos del campeonato (o, en la primera prueba, lo que diga su
+    //    «orden de la primera prueba»).
+    _semilla = await semillaOrden(db, activo.id);
+    _puntosPorPiloto = _semilla.puntos;
 
     // 3) Calcular sugerencia de mangas según las preferencias de día.
     final semillasTmp = widget.inscritos.map((i) {
@@ -260,7 +263,6 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
     }
     final cs = Theme.of(context).colorScheme;
     final total = widget.inscritos.length;
-    final hayPuntos = _puntosPorPiloto.values.any((v) => v > 0);
 
     return Scaffold(
       appBar: AppBar(title: Text(context.l.generarTandas)),
@@ -287,9 +289,17 @@ class _GenerarMangasWizardState extends ConsumerState<GenerarMangasWizard> {
                               fontWeight: FontWeight.w600),
                         ),
                         Text(
-                          hayPuntos
-                              ? context.l.ordenadosPorPuntos
-                              : context.l.sinPuntosEsteAnio,
+                          switch (_semilla.origen) {
+                            OrigenSemilla.campeonato =>
+                              context.l.ordenadosPorPuntos,
+                            OrigenSemilla.heredados => context.l
+                                .ordenadosPorPuntosHeredados(
+                                    _semilla.campeonatoOrigen ?? ''),
+                            OrigenSemilla.puntuacionPrevia =>
+                              context.l.sinPuntosEsteAnio,
+                            OrigenSemilla.pole =>
+                              context.l.ordenPrimeraPruebaPole,
+                          },
                           style: TextStyle(
                               color: cs.onPrimaryContainer.withValues(alpha: 0.8),
                               fontSize: 13),

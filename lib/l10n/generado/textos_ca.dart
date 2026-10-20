@@ -1360,7 +1360,19 @@ class TextosCa extends Textos {
 
   @override
   String get sinPuntosEsteAnio =>
-      'Sense punts aquest any → ordenats pel saldo de l\'any anterior (0 si no n\'hi ha).';
+      'Primera prova: ordenats per la puntuació prèvia importada (0 si no n\'hi ha).';
+
+  @override
+  String get puntosIniciales => 'Punts inicials';
+
+  @override
+  String puntosInicialesHeredados(String campeonato, String puntos) {
+    return 'Heretats de $campeonato: $puntos (buit = aquests). Només ordenen les tandes de la primera prova; no compten a la classificació.';
+  }
+
+  @override
+  String get puntosInicialesAyuda =>
+      'Només ordenen les tandes de la primera prova; no compten a la classificació.';
 
   @override
   String get paso1CarrilesPista => '1. Carrils de la pista';
@@ -3702,6 +3714,42 @@ class TextosCa extends Textos {
 
   @override
   String get noImportar => 'No importar';
+
+  @override
+  String get ordenPrimeraPrueba => 'Ordre de la primera prova';
+
+  @override
+  String get ordenPrimeraPruebaAyuda =>
+      'Com es reparteixen les tandes de la primera prova, mentre el campionat encara no té punts. Els punts heretats només serveixen per ordenar: no compten a la classificació ni per a res més.';
+
+  @override
+  String get ordenHeredarPuntos => 'Heretar punts d\'un campionat anterior';
+
+  @override
+  String get ordenHeredarPuntosAyuda =>
+      'Les tandes s\'ordenen pels punts nets de la seva classificació final.';
+
+  @override
+  String get ordenEmpezarSinPuntos => 'Començar sense punts: es fa pole';
+
+  @override
+  String get ordenEmpezarSinPuntosAyuda =>
+      'Sense ordre per punts; en enviar les tandes a PitWall es marca «La cursa té pole».';
+
+  @override
+  String get campeonatoDeOrigen => 'Campionat d\'origen';
+
+  @override
+  String get puntuacionPreviaImportada => 'Puntuació prèvia importada a mà';
+
+  @override
+  String ordenadosPorPuntosHeredados(String campeonato) {
+    return 'Primera prova: ordenats pels punts nets de $campeonato.';
+  }
+
+  @override
+  String get ordenPrimeraPruebaPole =>
+      'Primera prova sense punts: l\'ordre el decideix la pole.';
 
   @override
   String tesoreriaNoCuadra(String suma, String pagat) {

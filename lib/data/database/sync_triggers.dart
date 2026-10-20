@@ -60,8 +60,10 @@ WHEN NEW.mod_ms IS NULL BEGIN
   UPDATE $tabla SET ${uuid ? 'uuid = coalesce(NEW.uuid, $_uuidNuevo), ' : ''}mod_ms = $_ahora, mod_por = $_yo
   WHERE $donde;
 END''';
-  String firmarUpdate(String tabla, List<String> cols, String donde) => '''
-CREATE TRIGGER IF NOT EXISTS sync1_${tabla}_upd AFTER UPDATE OF ${cols.join(', ')} ON $tabla
+  String firmarUpdate(String tabla, List<String> cols, String donde,
+          {String sufijo = 'upd'}) =>
+      '''
+CREATE TRIGGER IF NOT EXISTS sync1_${tabla}_$sufijo AFTER UPDATE OF ${cols.join(', ')} ON $tabla
 WHEN NEW.mod_ms IS OLD.mod_ms AND (${_distinto(cols)}) BEGIN
   UPDATE $tabla SET mod_ms = $_ahora, mod_por = $_yo WHERE $donde;
 END''';
@@ -105,6 +107,10 @@ CREATE TRIGGER IF NOT EXISTS sync1_equipo_pilotos_del AFTER DELETE ON equipo_pil
 END''',
     firmarInsert('piloto_campeonato', pc),
     firmarUpdate('piloto_campeonato', colsPerfil, pc),
+    // Columna añadida después: trigger propio para no tener que renombrar
+    // el de arriba.
+    firmarUpdate('piloto_campeonato', ['puntos_iniciales'], pc,
+        sufijo: 'pts_upd'),
     borrado('piloto_campeonato',
         "(SELECT uuid FROM pilotos WHERE id = OLD.piloto_id) || '|' || "
         '(SELECT uuid FROM campeonatos WHERE id = OLD.campeonato_id)'),

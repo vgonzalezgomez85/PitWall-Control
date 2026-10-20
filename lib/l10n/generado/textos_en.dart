@@ -1357,7 +1357,19 @@ class TextosEn extends Textos {
 
   @override
   String get sinPuntosEsteAnio =>
-      'No points this year → sorted by last year\'s balance (0 if none).';
+      'First race: ordered by the imported previous score (0 if none).';
+
+  @override
+  String get puntosIniciales => 'Starting points';
+
+  @override
+  String puntosInicialesHeredados(String campeonato, String puntos) {
+    return 'Inherited from $campeonato: $puntos (empty = those). They only order the rounds of the first race; they do not count in the standings.';
+  }
+
+  @override
+  String get puntosInicialesAyuda =>
+      'They only order the rounds of the first race; they do not count in the standings.';
 
   @override
   String get paso1CarrilesPista => '1. Track lanes';
@@ -3693,6 +3705,43 @@ class TextosEn extends Textos {
 
   @override
   String get noImportar => 'Do not import';
+
+  @override
+  String get ordenPrimeraPrueba => 'First race order';
+
+  @override
+  String get ordenPrimeraPruebaAyuda =>
+      'How the rounds of the first race are filled while the championship has no points yet. Inherited points are only used for ordering: they do not count in the standings or for anything else.';
+
+  @override
+  String get ordenHeredarPuntos =>
+      'Inherit points from a previous championship';
+
+  @override
+  String get ordenHeredarPuntosAyuda =>
+      'Rounds are ordered by the net points of its final standings.';
+
+  @override
+  String get ordenEmpezarSinPuntos => 'Start without points: run a pole';
+
+  @override
+  String get ordenEmpezarSinPuntosAyuda =>
+      'No points order; when sending the rounds to PitWall, “The race has a pole” is ticked.';
+
+  @override
+  String get campeonatoDeOrigen => 'Source championship';
+
+  @override
+  String get puntuacionPreviaImportada => 'Previous score imported by hand';
+
+  @override
+  String ordenadosPorPuntosHeredados(String campeonato) {
+    return 'First race: ordered by the net points of $campeonato.';
+  }
+
+  @override
+  String get ordenPrimeraPruebaPole =>
+      'First race without points: the pole decides the order.';
 
   @override
   String tesoreriaNoCuadra(String suma, String pagat) {

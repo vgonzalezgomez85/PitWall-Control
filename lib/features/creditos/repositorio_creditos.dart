@@ -176,7 +176,7 @@ class RepositorioCreditos {
 
   /// Importa los pilotos de un campeonato finalizado a [destinoId], usando su
   /// saldo de cierre como créditos iniciales del nuevo campeonato. Conserva la
-  /// categoría y guarda el saldo de origen en saldoTemporadaAnterior.
+  /// categoría de cierre (promoción/descenso) como inicial.
   /// Devuelve el nº de pilotos importados (no duplica los ya presentes).
   Future<int> importarDesdeCampeonato({
     required int origenId,
@@ -204,7 +204,9 @@ class RepositorioCreditos {
               categoria: pc.categoriaFinal ?? pc.categoria,
               creditosIniciales: saldoCierre,
               creditosActuales: saldoCierre,
-              saldoTemporadaAnterior: Value(saldoCierre),
+              // saldoTemporadaAnterior es la puntuación previa (orden de la
+              // primera prueba), no créditos: se queda a 0. Los puntos se
+              // heredan con el «orden de la primera prueba» del campeonato.
             ),
           );
       importados++;

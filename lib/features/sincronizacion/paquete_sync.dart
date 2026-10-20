@@ -216,6 +216,7 @@ Future<Map<String, dynamic>> generarPaqueteSync(
             'categoriaFinal': pc.categoriaFinal,
             'creditosIniciales': pc.creditosIniciales,
             'saldoTemporadaAnterior': pc.saldoTemporadaAnterior,
+            'puntosIniciales': pc.puntosIniciales,
             'palmaresLocal': pc.palmaresLocal,
             'modMs': pc.modMs ?? 0,
             'modPor': pc.modPor,

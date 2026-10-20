@@ -318,15 +318,63 @@
   "activarCocheAyuda": "Se envía el coche de cada equipo desde las verificaciones y PitWall lo activa en la carrera",
   "actualizarCarreraEnviada": "Actualizar la carrera ya enviada",
   "actualizarCarreraEnviadaAyuda": "Carrera n.º {id} de PitWall: las tandas ya corridas no se tocan; las pendientes se rehacen con los datos actuales",
-  "@actualizarCarreraEnviadaAyuda": {"placeholders": {"id": {"type": "String"}}},
+  "@actualizarCarreraEnviadaAyuda": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
   "carreraCreadaPitwall": "Carrera creada: {nombre} — {tandas} tanda(s), {equipos} equipo(s).",
-  "@carreraCreadaPitwall": {"placeholders": {"nombre": {"type": "String"}, "tandas": {"type": "String"}, "equipos": {"type": "String"}}},
+  "@carreraCreadaPitwall": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      },
+      "tandas": {
+        "type": "String"
+      },
+      "equipos": {
+        "type": "String"
+      }
+    }
+  },
   "carreraActualizadaPitwall": "Carrera actualizada: {nombre} — {actualizadas} tanda(s) rehecha(s), {nuevas} nueva(s), {borradas} eliminada(s).",
-  "@carreraActualizadaPitwall": {"placeholders": {"nombre": {"type": "String"}, "actualizadas": {"type": "String"}, "nuevas": {"type": "String"}, "borradas": {"type": "String"}}},
+  "@carreraActualizadaPitwall": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      },
+      "actualizadas": {
+        "type": "String"
+      },
+      "nuevas": {
+        "type": "String"
+      },
+      "borradas": {
+        "type": "String"
+      }
+    }
+  },
   "tandasCorridasSinTocar": "Tandas ya corridas, sin tocar: {lista}.",
-  "@tandasCorridasSinTocar": {"placeholders": {"lista": {"type": "String"}}},
+  "@tandasCorridasSinTocar": {
+    "placeholders": {
+      "lista": {
+        "type": "String"
+      }
+    }
+  },
   "poleActualizadaPitwall": "Pole actualizada: {nombre} — {equipos} participante(s).",
-  "@poleActualizadaPitwall": {"placeholders": {"nombre": {"type": "String"}, "equipos": {"type": "String"}}},
+  "@poleActualizadaPitwall": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      },
+      "equipos": {
+        "type": "String"
+      }
+    }
+  },
   "enviar": "Enviar",
   "pitwallEnLaRed": "PitWall en la red",
   "buscarDeNuevo": "Buscar de nuevo",
@@ -823,7 +871,20 @@
     }
   },
   "ordenadosPorPuntos": "Ordenados por puntos brutos acumulados.",
-  "sinPuntosEsteAnio": "Sin puntos este año → ordenados por saldo año anterior (0 si no hay).",
+  "sinPuntosEsteAnio": "Primera prueba: ordenados por la puntuación previa importada (0 si no hay).",
+  "puntosIniciales": "Puntos iniciales",
+  "puntosInicialesHeredados": "Heredados de {campeonato}: {puntos} (vacío = esos). Solo ordenan las tandas de la primera prueba; no cuentan en la clasificación.",
+  "@puntosInicialesHeredados": {
+    "placeholders": {
+      "campeonato": {
+        "type": "String"
+      },
+      "puntos": {
+        "type": "String"
+      }
+    }
+  },
+  "puntosInicialesAyuda": "Solo ordenan las tandas de la primera prueba; no cuentan en la clasificación.",
   "paso1CarrilesPista": "1. Carriles de la pista",
   "paso1CarrilesTexto": "Cuántos coches corren a la vez. Marca el máximo de equipos por tanda para repartirlos bien.",
   "carrilesMin": "carriles",
@@ -2638,6 +2699,23 @@
   "importarPilotosFinalizado": "Importar pilotos de un campeonato finalizado",
   "importarPilotosFinalizadoAyuda": "Trae sus pilotos con el saldo de cierre como créditos iniciales.",
   "noImportar": "No importar",
+  "ordenPrimeraPrueba": "Orden de la primera prueba",
+  "ordenPrimeraPruebaAyuda": "Cómo se reparten las tandas de la primera prueba, mientras el campeonato aún no tiene puntos. Los puntos heredados solo sirven para ordenar: no cuentan en la clasificación ni para nada más.",
+  "ordenHeredarPuntos": "Heredar puntos de un campeonato anterior",
+  "ordenHeredarPuntosAyuda": "Las tandas se ordenan por los puntos netos de su clasificación final.",
+  "ordenEmpezarSinPuntos": "Empezar sin puntos: se hace pole",
+  "ordenEmpezarSinPuntosAyuda": "Sin orden por puntos; al enviar las tandas a PitWall se marca «La carrera tiene pole».",
+  "campeonatoDeOrigen": "Campeonato de origen",
+  "puntuacionPreviaImportada": "Puntuación previa importada a mano",
+  "ordenadosPorPuntosHeredados": "Primera prueba: ordenados por los puntos netos de {campeonato}.",
+  "@ordenadosPorPuntosHeredados": {
+    "placeholders": {
+      "campeonato": {
+        "type": "String"
+      }
+    }
+  },
+  "ordenPrimeraPruebaPole": "Primera prueba sin puntos: el orden lo decide la pole.",
   "tesoreriaNoCuadra": "Tesorería: Coordinadora + Club deben sumar el Pagat ({suma} ≠ {pagat}).",
   "@tesoreriaNoCuadra": {
     "placeholders": {
