@@ -456,31 +456,76 @@ class RepositorioInscripciones {
       final prueba = await (db.select(db.pruebas)
             ..where((t) => t.id.equals(manga.pruebaId)))
           .getSingle();
-      final puntos = await puntosSemillaPorPiloto(db, prueba.campeonatoId);
-      final ins = await (db.select(db.inscripciones)
-            ..where((t) => t.mangaId.equals(mangaId)))
-          .get();
-      final filas = <(Inscripcione, num, String)>[];
-      for (final i in ins) {
-        final eq = await (db.select(db.equipos)
-              ..where((t) => t.id.equals(i.equipoId)))
-            .getSingle();
-        final pts = (puntos[eq.piloto1Id] ?? 0) +
-            (eq.piloto2Id == null ? 0 : (puntos[eq.piloto2Id!] ?? 0));
-        filas.add((i, pts, eq.nombre));
-      }
-      filas.sort((a, b) {
-        final c = b.$2.compareTo(a.$2);
-        return c != 0 ? c : a.$3.compareTo(b.$3);
-      });
+      final filas = await _inscripcionesPorPuntos(mangaId, prueba.campeonatoId);
       final carriles =
           GeneradorMangas.carrilesSalida(filas.length, manga.numCarriles);
       for (var k = 0; k < filas.length; k++) {
         await cambiarCarril(
-            inscripcionId: filas[k].$1.id,
+            inscripcionId: filas[k].id,
             carrilSalida: carriles[k],
             seedDirecto: false);
       }
+    });
+  }
+
+  /// Inscripciones de la manga por puntos de más a menos (desempate por
+  /// nombre del equipo), como las ordena el generador.
+  Future<List<Inscripcione>> _inscripcionesPorPuntos(
+      int mangaId, int campeonatoId) async {
+    final puntos = await puntosSemillaPorPiloto(db, campeonatoId);
+    final ins = await (db.select(db.inscripciones)
+          ..where((t) => t.mangaId.equals(mangaId)))
+        .get();
+    final filas = <(Inscripcione, num, String)>[];
+    for (final i in ins) {
+      final eq = await (db.select(db.equipos)
+            ..where((t) => t.id.equals(i.equipoId)))
+          .getSingle();
+      final pts = (puntos[eq.piloto1Id] ?? 0) +
+          (eq.piloto2Id == null ? 0 : (puntos[eq.piloto2Id!] ?? 0));
+      filas.add((i, pts, eq.nombre));
+    }
+    filas.sort((a, b) {
+      final c = b.$2.compareTo(a.$2);
+      return c != 0 ? c : a.$3.compareTo(b.$3);
+    });
+    return [for (final f in filas) f.$1];
+  }
+
+  /// Parte la manga en dos: crea otra con [nombreNueva] (mismos carriles) y
+  /// le pasa los equipos con más puntos, como hace el generador (los mejores
+  /// corren en la tanda más tardía). El reparto es el del generador: 12 →
+  /// 6 + 6; 11 con 6 carriles → 5 + 6. Si la manga tenía carriles asignados
+  /// se renumeran las dos. Devuelve el id de la manga nueva.
+  Future<int> dividirManga(int mangaId, {required String nombreNueva}) async {
+    return db.transaction(() async {
+      final manga = await (db.select(db.mangas)
+            ..where((t) => t.id.equals(mangaId)))
+          .getSingle();
+      final prueba = await (db.select(db.pruebas)
+            ..where((t) => t.id.equals(manga.pruebaId)))
+          .getSingle();
+      final filas = await _inscripcionesPorPuntos(mangaId, prueba.campeonatoId);
+      if (filas.length < 2) {
+        throw StateError('Hacen falta al menos 2 equipos para dividir');
+      }
+      final conCarriles = filas.any((i) => i.carrilSalida != null);
+      final tamanos = GeneradorMangas.distribuirEquipos(filas.length, 2,
+          tamMax: manga.numCarriles);
+      final nuevaId = await db.into(db.mangas).insert(MangasCompanion.insert(
+            pruebaId: manga.pruebaId,
+            nombre: nombreNueva,
+            numCarriles: Value(manga.numCarriles),
+          ));
+      // Los de más puntos (los primeros) se van a la nueva.
+      for (final i in filas.take(tamanos[1])) {
+        await moverAManga(i.id, nuevaId);
+      }
+      if (conCarriles) {
+        await renumerarCarriles(mangaId);
+        await renumerarCarriles(nuevaId);
+      }
+      return nuevaId;
     });
   }
 

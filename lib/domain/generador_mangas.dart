@@ -81,7 +81,7 @@ class GeneradorMangas {
   ///
   /// Para cada GRUPO de mangas del mismo día, se aplica la regla de reparto:
   /// - `tamMaxManga` = carriles (default 10). La última manga del día nunca
-  ///   deja carriles vacíos si se puede evitar (ver [_distribuirEquipos]).
+  ///   deja carriles vacíos si se puede evitar (ver [distribuirEquipos]).
   /// - Los equipos con MÁS puntos van a la manga más TARDÍA del día
   ///   (las mangas se llenan de la última a la primera).
   ///
@@ -167,7 +167,7 @@ class GeneradorMangas {
         sinManga.addAll(eqs);
         continue;
       }
-      final tamanos = _distribuirEquipos(eqs.length, indices.length,
+      final tamanos = distribuirEquipos(eqs.length, indices.length,
           tamMax: config.tamMaxManga);
       // Orden de llenado: última manga del día primero.
       final ordenLlenado = [for (var k = indices.length - 1; k >= 0; k--) k];
@@ -230,7 +230,7 @@ class GeneradorMangas {
   ///   5 + 6 + 6; 11 con 10 en 2 → 5 + 6.
   /// - Si todas llenan los carriles, va a las PRIMERAS: 17 con 6 en 2
   ///   mangas → 9 + 8.
-  static List<int> _distribuirEquipos(int total, int numMangas,
+  static List<int> distribuirEquipos(int total, int numMangas,
       {int tamMax = 10}) {
     if (total <= 0 || numMangas <= 0) return [];
     if (numMangas == 1) return [total];

@@ -1385,5 +1385,9 @@
   "diaDomingo": "Diumenge",
   "diaQueCorre": "Dia que corre",
   "sinPreferenciaDeDia": "— sense preferència —",
-  "cambiarDiaQueCorre": "Canviar dia que corre"
+  "cambiarDiaQueCorre": "Canviar dia que corre",
+  "dividirTanda": "Dividir tanda",
+  "dividir": "Dividir",
+  "dividirTandaTexto": "Els {nueva} amb més punts de \"{nombre}\" passen a una tanda nova i {quedan} s'hi queden. Si tenia carrils assignats, es renumeren totes dues.",
+  "nombreTandaNueva": "Nom de la tanda nova"
 }

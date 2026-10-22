@@ -5374,4 +5374,18 @@ class TextosIt extends Textos {
 
   @override
   String get cambiarDiaQueCorre => 'Cambia giorno di gara';
+
+  @override
+  String get dividirTanda => 'Dividi batteria';
+
+  @override
+  String get dividir => 'Dividi';
+
+  @override
+  String dividirTandaTexto(String nombre, int nueva, int quedan) {
+    return 'I $nueva con più punti di \"$nombre\" passano a una nuova batteria e $quedan restano. Se aveva corsie assegnate, vengono rinumerate entrambe.';
+  }
+
+  @override
+  String get nombreTandaNueva => 'Nome della nuova batteria';
 }

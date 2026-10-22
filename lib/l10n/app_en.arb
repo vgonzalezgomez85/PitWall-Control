@@ -1385,5 +1385,9 @@
   "diaDomingo": "Sunday",
   "diaQueCorre": "Race day",
   "sinPreferenciaDeDia": "— no preference —",
-  "cambiarDiaQueCorre": "Change race day"
+  "cambiarDiaQueCorre": "Change race day",
+  "dividirTanda": "Split round",
+  "dividir": "Split",
+  "dividirTandaTexto": "The {nueva} with the most points in \"{nombre}\" move to a new round and {quedan} stay. If it had lanes assigned, both are renumbered.",
+  "nombreTandaNueva": "Name of the new round"
 }

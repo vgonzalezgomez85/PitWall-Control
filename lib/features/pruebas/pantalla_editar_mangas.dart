@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../data/database/app_database.dart';
+import 'detalle_manga.dart';
 import 'pantalla_inscritos.dart';
 import 'repositorio_inscripciones_prueba.dart';
 import 'repositorio_pruebas.dart';
@@ -191,6 +192,14 @@ class _MangaCard extends ConsumerWidget {
                   ),
                   Text(context.l.nEquiposAbrev(manga.equipos.length),
                       style: TextStyle(color: cs.outline)),
+                  IconButton(
+                    tooltip: context.l.dividirTanda,
+                    icon: const Icon(Icons.call_split),
+                    onPressed: manga.equipos.length < 2
+                        ? null
+                        : () => dividirMangaConDialogo(context, ref,
+                            manga.manga, manga.equipos.length),
+                  ),
                 ],
               ),
               const Divider(),

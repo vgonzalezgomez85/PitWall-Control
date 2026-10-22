@@ -5363,4 +5363,18 @@ class TextosEs extends Textos {
 
   @override
   String get cambiarDiaQueCorre => 'Cambiar día que corre';
+
+  @override
+  String get dividirTanda => 'Dividir tanda';
+
+  @override
+  String get dividir => 'Dividir';
+
+  @override
+  String dividirTandaTexto(String nombre, int nueva, int quedan) {
+    return 'Los $nueva con más puntos de \"$nombre\" pasan a una tanda nueva y $quedan se quedan en ella. Si tenía carriles asignados, se renumeran las dos.';
+  }
+
+  @override
+  String get nombreTandaNueva => 'Nombre de la tanda nueva';
 }

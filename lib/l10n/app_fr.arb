@@ -1385,5 +1385,9 @@
   "diaDomingo": "Dimanche",
   "diaQueCorre": "Jour de course",
   "sinPreferenciaDeDia": "— sans préférence —",
-  "cambiarDiaQueCorre": "Changer le jour de course"
+  "cambiarDiaQueCorre": "Changer le jour de course",
+  "dividirTanda": "Diviser la série",
+  "dividir": "Diviser",
+  "dividirTandaTexto": "Les {nueva} ayant le plus de points dans « {nombre} » passent dans une nouvelle série et {quedan} y restent. Si elle avait des voies attribuées, les deux sont renumérotées.",
+  "nombreTandaNueva": "Nom de la nouvelle série"
 }

@@ -3667,5 +3667,22 @@
   "diaDomingo": "Domingo",
   "diaQueCorre": "Día que corre",
   "sinPreferenciaDeDia": "— sin preferencia —",
-  "cambiarDiaQueCorre": "Cambiar día que corre"
+  "cambiarDiaQueCorre": "Cambiar día que corre",
+  "dividirTanda": "Dividir tanda",
+  "dividir": "Dividir",
+  "dividirTandaTexto": "Los {nueva} con más puntos de \"{nombre}\" pasan a una tanda nueva y {quedan} se quedan en ella. Si tenía carriles asignados, se renumeran las dos.",
+  "@dividirTandaTexto": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      },
+      "nueva": {
+        "type": "int"
+      },
+      "quedan": {
+        "type": "int"
+      }
+    }
+  },
+  "nombreTandaNueva": "Nombre de la tanda nueva"
 }

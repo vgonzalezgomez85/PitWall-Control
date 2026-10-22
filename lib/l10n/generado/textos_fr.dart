@@ -5390,4 +5390,18 @@ class TextosFr extends Textos {
 
   @override
   String get cambiarDiaQueCorre => 'Changer le jour de course';
+
+  @override
+  String get dividirTanda => 'Diviser la série';
+
+  @override
+  String get dividir => 'Diviser';
+
+  @override
+  String dividirTandaTexto(String nombre, int nueva, int quedan) {
+    return 'Les $nueva ayant le plus de points dans « $nombre » passent dans une nouvelle série et $quedan y restent. Si elle avait des voies attribuées, les deux sont renumérotées.';
+  }
+
+  @override
+  String get nombreTandaNueva => 'Nom de la nouvelle série';
 }

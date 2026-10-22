@@ -1385,5 +1385,9 @@
   "diaDomingo": "Domenica",
   "diaQueCorre": "Giorno di gara",
   "sinPreferenciaDeDia": "— nessuna preferenza —",
-  "cambiarDiaQueCorre": "Cambia giorno di gara"
+  "cambiarDiaQueCorre": "Cambia giorno di gara",
+  "dividirTanda": "Dividi batteria",
+  "dividir": "Dividi",
+  "dividirTandaTexto": "I {nueva} con più punti di \"{nombre}\" passano a una nuova batteria e {quedan} restano. Se aveva corsie assegnate, vengono rinumerate entrambe.",
+  "nombreTandaNueva": "Nome della nuova batteria"
 }

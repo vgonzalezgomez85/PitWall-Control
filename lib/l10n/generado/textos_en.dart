@@ -5356,4 +5356,18 @@ class TextosEn extends Textos {
 
   @override
   String get cambiarDiaQueCorre => 'Change race day';
+
+  @override
+  String get dividirTanda => 'Split round';
+
+  @override
+  String get dividir => 'Split';
+
+  @override
+  String dividirTandaTexto(String nombre, int nueva, int quedan) {
+    return 'The $nueva with the most points in \"$nombre\" move to a new round and $quedan stay. If it had lanes assigned, both are renumbered.';
+  }
+
+  @override
+  String get nombreTandaNueva => 'Name of the new round';
 }

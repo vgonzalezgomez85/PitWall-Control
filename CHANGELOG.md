@@ -14,6 +14,10 @@ sección que toque: **Añadido** (nuevo), **Mejorado** (existente a mejor),
 
 ---
 
+## [1.46.0] — 2026-10-23
+### Añadido
+- **Dividir una tanda en dos** (botón junto al número de pilotos de cada tanda en «Editar tandas», y en el menú «⋯» del detalle de la tanda): útil cuando ya están hechas las tandas y, al apuntar a alguien más, una se queda con demasiados (p. ej. de 11 a 12). Se pide el nombre de la tanda nueva y los pilotos con más puntos pasan a ella, con el mismo reparto que «Generar tandas» (12 → 6 + 6; 11 con 6 carriles → 5 + 6). Si la tanda tenía carriles asignados, se renumeran las dos. El resto de tandas no se toca.
+
 ## [1.45.0] — 2026-10-20
 ### Añadido
 - **Orden de la primera prueba** (nueva sección al crear o editar un campeonato): decide cómo se reparten las tandas de la primera prueba, mientras el campeonato aún no tiene puntos.

@@ -22,6 +22,7 @@ import '../../core/idioma.dart';
 import '../../core/proveedores.dart';
 import '../../core/widgets/acciones_barra.dart';
 import '../../data/database/app_database.dart';
+import '../../domain/generador_mangas.dart';
 import '../equipos/repositorio_equipos.dart';
 import '../resultados/pantalla_resultados_manga.dart';
 import '../verificaciones/lista_verificaciones.dart';
@@ -29,6 +30,57 @@ import 'editor_manga.dart';
 import 'pantalla_inscritos.dart';
 import 'repositorio_inscripciones_prueba.dart';
 import 'repositorio_pruebas.dart';
+
+/// Pide el nombre de la tanda nueva y parte [manga] (con [numEquipos]) en
+/// dos: los de más puntos pasan a la nueva.
+Future<void> dividirMangaConDialogo(
+  BuildContext context,
+  WidgetRef ref,
+  Manga manga,
+  int numEquipos,
+) async {
+  if (numEquipos < 2) return;
+  final l = context.l;
+  final tamanos = GeneradorMangas.distribuirEquipos(numEquipos, 2,
+      tamMax: manga.numCarriles);
+  final nombre = TextEditingController(text: '${manga.nombre} (2)');
+  final nombreNueva = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.dividirTanda),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l.dividirTandaTexto(manga.nombre, tamanos[1], tamanos[0])),
+          const SizedBox(height: 16),
+          TextField(
+            controller: nombre,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: l.nombreTandaNueva,
+              prefixIcon: const Icon(Icons.flag_outlined),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l.cancelar),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, nombre.text.trim()),
+          child: Text(l.dividir),
+        ),
+      ],
+    ),
+  );
+  nombre.dispose();
+  if (nombreNueva == null) return;
+  await ref.read(repoInscripcionesProvider).dividirManga(manga.id,
+      nombreNueva: nombreNueva.isEmpty ? '${manga.nombre} (2)' : nombreNueva);
+}
 
 class DetalleManga extends ConsumerWidget {
   const DetalleManga({super.key, required this.mangaId});
@@ -87,6 +139,15 @@ class DetalleManga extends ConsumerWidget {
                           ),
                         ),
                       ),
+                    ),
+                    AccionBarra(
+                      icono: Icons.call_split,
+                      etiqueta: context.l.dividirTanda,
+                      principal: false,
+                      habilitada:
+                          (inscritosAsync.value?.length ?? 0) >= 2,
+                      onPressed: () => dividirMangaConDialogo(context, ref, m,
+                          inscritosAsync.value?.length ?? 0),
                     ),
                     if (esIndividual)
                       AccionBarra(

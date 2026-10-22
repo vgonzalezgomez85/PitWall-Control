@@ -8455,6 +8455,30 @@ abstract class Textos {
   /// In es, this message translates to:
   /// **'Cambiar día que corre'**
   String get cambiarDiaQueCorre;
+
+  /// No description provided for @dividirTanda.
+  ///
+  /// In es, this message translates to:
+  /// **'Dividir tanda'**
+  String get dividirTanda;
+
+  /// No description provided for @dividir.
+  ///
+  /// In es, this message translates to:
+  /// **'Dividir'**
+  String get dividir;
+
+  /// No description provided for @dividirTandaTexto.
+  ///
+  /// In es, this message translates to:
+  /// **'Los {nueva} con más puntos de \"{nombre}\" pasan a una tanda nueva y {quedan} se quedan en ella. Si tenía carriles asignados, se renumeran las dos.'**
+  String dividirTandaTexto(String nombre, int nueva, int quedan);
+
+  /// No description provided for @nombreTandaNueva.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre de la tanda nueva'**
+  String get nombreTandaNueva;
 }
 
 class _TextosDelegate extends LocalizationsDelegate<Textos> {

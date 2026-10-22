@@ -5361,4 +5361,18 @@ class TextosCa extends Textos {
 
   @override
   String get cambiarDiaQueCorre => 'Canviar dia que corre';
+
+  @override
+  String get dividirTanda => 'Dividir tanda';
+
+  @override
+  String get dividir => 'Dividir';
+
+  @override
+  String dividirTandaTexto(String nombre, int nueva, int quedan) {
+    return 'Els $nueva amb més punts de \"$nombre\" passen a una tanda nova i $quedan s\'hi queden. Si tenia carrils assignats, es renumeren totes dues.';
+  }
+
+  @override
+  String get nombreTandaNueva => 'Nom de la tanda nova';
 }
